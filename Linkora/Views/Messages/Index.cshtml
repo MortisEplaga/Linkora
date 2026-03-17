@@ -1,0 +1,251 @@
+﻿@using Linkora.Models
+@{
+    var conversations = (List<Conversation>)ViewBag.Conversations;
+    var activeId = (int?)ViewBag.ActiveId;
+    var activeConv = (Conversation?)ViewBag.ActiveConv;
+    var messages = (List<Message>?)ViewBag.Messages;
+    var myId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+    ViewData["Title"] = "Messages";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/messages.css" />
+}
+
+<div class="msg-page">
+    <!-- Список диалогов -->
+    <div class="msg-sidebar @(activeId.HasValue ? "msg-sidebar-hidden-mobile" : "")">
+        <div class="msg-sidebar-header">
+            <h2 class="msg-sidebar-title">Messages</h2>
+        </div>
+        <div class="msg-conv-list">
+            @foreach (var c in conversations)
+            {
+                <a class="msg-conv-item @(c.Id == activeId ? "msg-conv-active" : "")"
+                   href="/Messages/Index/@c.Id">
+                    <div class="msg-conv-avatar">
+                        @if (c.OtherUserAvatar != null)
+                        {
+                            <img src="@c.OtherUserAvatar" onerror="this.src='/img/no-photo.svg'" />
+                        }
+                        else
+                        {
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                        }
+                        @if (c.UnreadCount > 0)
+                        {
+                            <span class="msg-conv-badge">@c.UnreadCount</span>
+                        }
+                    </div>
+                    <div class="msg-conv-body">
+                        <div class="msg-conv-top">
+                            <span class="msg-conv-name">@(c.OtherUserName ?? "Unknown")</span>
+                            <span class="msg-conv-time">@(c.LastMessageAt?.ToString("dd MMM") ?? "")</span>
+                        </div>
+                        @if (c.ProductName != null)
+                        {
+                            <div class="msg-conv-product">@c.ProductName</div>
+                        }
+                        <div class="msg-conv-last">@c.LastMessage</div>
+                    </div>
+                </a>
+            }
+            @if (!conversations.Any())
+            {
+                <div class="msg-empty-list">No conversations yet</div>
+            }
+        </div>
+    </div>
+
+    <!-- Область чата -->
+    <div class="msg-chat @(activeId == null ? "msg-chat-hidden-mobile" : "")">
+        @if (activeConv != null && messages != null)
+        {
+            <!-- Шапка чата -->
+            <div class="msg-chat-header">
+                <a class="msg-chat-back" href="/Messages/Index">←</a>
+                <div class="msg-chat-header-avatar">
+                    @if (activeConv.OtherUserAvatar != null)
+                    {
+                        <img src="@activeConv.OtherUserAvatar" onerror="this.src='/img/no-photo.svg'" />
+                    }
+                    else
+                    {
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
+                    }
+                </div>
+                <div class="msg-chat-header-info">
+                    <a class="msg-chat-header-name" href="/Seller/Index/@activeConv.OtherUserId">
+                        @(activeConv.OtherUserName ?? "Unknown")
+                    </a>
+                </div>
+            </div>
+
+            <!-- Карточка объявления -->
+            @if (activeConv.ProductId.HasValue)
+            {
+                <div class="msg-product-card">
+                    @if (activeConv.ProductImage != null)
+                    {
+                        <img src="@activeConv.ProductImage" onerror="this.src='/img/no-photo.svg'" />
+                    }
+                    <a class="msg-product-name" href="/Product/Details/@activeConv.ProductId">
+                        @activeConv.ProductName
+                    </a>
+                </div>
+            }
+
+            <!-- Сообщения -->
+            <div class="msg-messages" id="msgMessages">
+                @{
+                    DateTime? lastDate = null;
+                }
+                @foreach (var m in messages)
+                {
+                    if (lastDate == null || lastDate.Value.Date != m.SentAt.Date)
+                    {
+                        <div class="msg-date-divider">@m.SentAt.ToString("dd MMMM yyyy")</div>
+                        lastDate = m.SentAt;
+                    }
+                    var isMine = m.SenderId == myId;
+                    <div class="msg-bubble-wrap @(isMine ? "msg-bubble-mine" : "msg-bubble-theirs")">
+                        <div class="msg-bubble">
+                            <div class="msg-bubble-text">@m.Text</div>
+                            <div class="msg-bubble-time">@m.SentAt.ToString("HH:mm")</div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Поле ввода -->
+            <div class="msg-input-wrap">
+                <textarea class="msg-input" id="msgInput" placeholder="Write a message..."
+                      onkeydown="msgKeyDown(event)" rows="1"
+                      oninput="autoResize(this)"></textarea>
+                <button class="msg-send-btn" onclick="sendMessage()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13" />
+                        <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                    </svg>
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="msg-chat-empty">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                <p>Select a conversation</p>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    <script>
+        const myId = @myId;
+        const activeConvId = @(activeId.HasValue? activeId.Value.ToString() : "null");
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/hubs/messages")
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on("ReceiveMessage", (msg) => {
+            if (msg.conversationId === activeConvId) {
+                appendMessage(msg);
+                scrollBottom();
+                connection.invoke("MarkRead", activeConvId);
+            }
+            // Обновить превью в списке диалогов
+            updateConvPreview(msg.conversationId, msg.text);
+        });
+
+        connection.on("UnreadCountChanged", () => {
+            updateUnreadBadge();
+        });
+
+        connection.start().then(() => {
+            if (activeConvId) {
+                connection.invoke("JoinConversation", activeConvId);
+            }
+        });
+
+        function appendMessage(msg) {
+            const wrap = document.createElement('div');
+            wrap.className = `msg-bubble-wrap ${msg.senderId === myId ? 'msg-bubble-mine' : 'msg-bubble-theirs'}`;
+            wrap.innerHTML = `
+                <div class="msg-bubble">
+                    <div class="msg-bubble-text">${escHtml(msg.text)}</div>
+                    <div class="msg-bubble-time">${formatTime(msg.sentAt)}</div>
+                </div>`;
+            document.getElementById('msgMessages').appendChild(wrap);
+        }
+
+        function scrollBottom() {
+            const el = document.getElementById('msgMessages');
+            if (el) el.scrollTop = el.scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('msgInput');
+            const text = input?.value.trim();
+            if (!text || !activeConvId) return;
+            connection.invoke("SendMessage", activeConvId, text);
+            input.value = '';
+            autoResize(input);
+        }
+
+        function msgKeyDown(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function autoResize(el) {
+            el.style.height = 'auto';
+            el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+        }
+
+        function updateConvPreview(convId, text) {
+            const items = document.querySelectorAll('.msg-conv-item');
+            items.forEach(item => {
+                if (item.href?.endsWith('/' + convId)) {
+                    const last = item.querySelector('.msg-conv-last');
+                    if (last) last.textContent = text;
+                }
+            });
+        }
+
+        async function updateUnreadBadge() {
+            const res = await fetch('/Messages/UnreadCount');
+            const { count } = await res.json();
+            const badge = document.getElementById('msgNavBadge');
+            if (badge) {
+                badge.textContent = count;
+                badge.style.display = count > 0 ? 'flex' : 'none';
+            }
+        }
+
+        function escHtml(str) {
+            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        function formatTime(iso) {
+            const d = new Date(iso);
+            return d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+        }
+
+        // Скролл вниз при загрузке
+        document.addEventListener('DOMContentLoaded', scrollBottom);
+    </script>
+}

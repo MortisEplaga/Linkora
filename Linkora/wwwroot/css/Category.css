@@ -1,0 +1,632 @@
+/* ============================================================
+   Category page
+   ============================================================ */
+
+.listing-region-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 38px;
+    padding: 0 8px;
+    background: transparent;
+    border: none;
+    color: #000;
+    font-size: 15px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
+}
+
+    .listing-region-btn:hover {
+        color: var(--accent);
+        opacity: 0.8;
+    }
+
+.listing-region-icon {
+    height: 18px;
+    filter: brightness(100);
+}
+/* ── Хлебные крошки ── */
+.breadcrumb-nav {
+    margin: 16px 0 8px;
+    font-size: 14px;
+    color: #666;
+}
+.filter-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.param-apply-btn {
+    flex: 1;
+    padding: 10px;
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+    .param-apply-btn:hover {
+        background: #333;
+    }
+
+.param-reset-btn {
+    padding: 10px 16px;
+    background: none;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #666;
+    cursor: pointer;
+    transition: border-color 0.15s;
+}
+
+    .param-reset-btn:hover {
+        border-color: #aaa;
+    }
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: ">";
+    padding: 0 6px;
+    color: #999;
+}
+
+.breadcrumb-item a {
+    color: #333;
+    text-decoration: none;
+}
+
+.breadcrumb-item a:hover {
+    text-decoration: underline;
+}
+
+.breadcrumb-item.active {
+    color: #999;
+}
+
+/* ── Заголовок категории ── */
+.category-header {
+    margin: 8px 0 24px;
+}
+
+.category-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.category-count {
+    font-size: 28px;
+    font-weight: 400;
+    color: #aaa;
+}
+
+/* ── Тело страницы ── */
+.category-body {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+}
+
+.category-left {
+    display: flex;
+    flex-direction: column;
+    width: 240px;
+    flex-shrink: 0;
+    gap: 24px;
+}
+/* ── Сайдбар с категориями ── */
+.category-sidebar {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 2px;
+}
+.category-content {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+}
+
+.listing-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    width: 100%;
+}
+.sidebar-parent {
+    display: block;
+    color: #555;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 4px 0;
+    margin-bottom: 4px;
+}
+
+.sidebar-parent:hover {
+    color: #00b0a3;
+}
+
+.sidebar-current {
+    display: block;
+    font-weight: 700;
+    font-size: 15px;
+    color: #1a1a1a;
+    padding: 4px 0;
+    margin-bottom: 2px;
+}
+
+.sidebar-child {
+    display: block;
+    color: #333;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 3px 0 3px 12px; /* отступ как вложенность */
+}
+
+.sidebar-child:hover {
+    color: #00b0a3;
+}
+/* ── Параметры (фильтры) ── */
+.param-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.param-block {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 100%;
+}
+
+.param-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+}
+.param-check-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #333;
+}
+.param-check-input {
+    justify-self: end;
+}
+
+.param-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    padding: 4px 0;
+}
+
+    /* Кастомные чекбоксы */
+    .param-option input[type="checkbox"],
+    .param-check-input {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 18px;
+        height: 18px;
+        border: 2px solid #ccc;
+        border-radius: 4px;
+        background: #fff;
+        cursor: pointer;
+        flex-shrink: 0;
+        position: relative;
+        transition: background 0.15s, border-color 0.15s;
+    }
+
+        .param-option input[type="checkbox"]:checked,
+        .param-check-input:checked {
+            background: #1a1a1a;
+            border-color: #1a1a1a;
+        }
+
+            .param-option input[type="checkbox"]:checked::after,
+            .param-check-input:checked::after {
+                content: '';
+                position: absolute;
+                left: 4px;
+                top: 0px;
+                width: 7px;
+                height: 10px;
+                border: 2px solid #fff;
+                border-top: none;
+                border-left: none;
+                transform: rotate(45deg);
+            }
+.param-check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+}
+
+/* Pill-кнопки */
+.param-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.param-pill {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    color: #333;
+    background: #fff;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.param-show-more {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 4px 12px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    background: #fff;
+    font-size: 13px;
+    color: #555;
+    cursor: pointer;
+}
+
+    .param-show-more:hover {
+        border-color: #aaa;
+        color: #1a1a1a;
+    }
+    .param-pill:hover {
+        border-color: #aaa;
+    }
+
+.param-pill-active {
+    background: #1a1a1a;
+    color: #fff;
+    border-color: #1a1a1a;
+}
+
+/* Range */
+.param-range {
+    display: flex;
+    gap: 8px;
+}
+
+.param-range-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #f5f5f5;
+    color: #333;
+    outline: none;
+}
+
+    .param-range-input:focus {
+        border-color: #aaa;
+        background: #fff;
+    }
+/* ── Тулбар ── */
+.listing-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.listing-view-btns {
+    display: flex;
+    gap: 4px;
+}
+
+.listing-view-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #aaa;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+    .listing-view-btn.active,
+    .listing-view-btn:hover {
+        color: #1a1a1a;
+        border-color: #aaa;
+    }
+
+.listing-sort-wrap {
+    position: relative;
+}
+
+.listing-sort-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    color: #333;
+}
+
+.listing-sort-drop {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    z-index: 200;
+    min-width: 180px;
+    overflow: hidden;
+}
+
+    .listing-sort-drop.open {
+        display: block;
+    }
+.listing-sort-item {
+    display: block;
+    padding: 10px 16px;
+    font-size: 14px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.1s;
+}
+
+    .listing-sort-item:hover,
+    .listing-sort-item.active {
+        background: #f5f5f5;
+        color: #1a1a1a;
+    }
+
+/* ── Grid режим ── */
+.listing-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+    .listing-grid .product-card-desc {
+        display: none;
+    }
+
+/* ── List режим ── */
+.listing-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+    .listing-list .product-card {
+        flex-direction: row;
+        height: 240px;
+        align-items: stretch;
+    }
+
+    .listing-list .product-card-img {
+        width: 240px;
+        min-width: 240px;
+        max-width: 240px;
+        flex-shrink: 0;
+        aspect-ratio: 1 / 1;
+        height: 100%;
+        align-self: center;
+    }
+
+    .listing-list .product-card-seller {
+        min-width: 200px;
+        width: 200px;
+        max-width: 200px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+        .listing-list .product-card-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .listing-list .product-card-body {
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .listing-list .product-card-name {
+        white-space: normal;
+    }
+
+    .listing-list .product-card-desc {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        font-size: 13px;
+        color: #666;
+        margin-top: 4px;
+    }
+
+/* ── Карточка ── */
+.product-card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    background: #fff;
+    transition: box-shadow 0.15s;
+}
+
+    .product-card:hover {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+.product-card-img {
+    position: relative;
+    aspect-ratio: 1;
+    background: #f5f5f5;
+    overflow: hidden;
+}
+
+    .product-card-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+.product-card-no-img {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ccc;
+    font-size: 13px;
+}
+
+.product-card-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.product-card-action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #aaa;
+    transition: color 0.15s, background 0.15s;
+}
+
+    .product-card-action-btn:hover {
+        color: #00b0a3;
+        background: #fff;
+    }
+
+.product-card-action-active {
+    color: #00b0a3 !important;
+}
+.product-card-body {
+    padding: 10px 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.product-card-price {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.product-card-name {
+    font-size: 14px;
+    color: #333;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.product-card-address,
+.product-card-date {
+    font-size: 12px;
+    color: #aaa;
+}
+.listing-grid .product-card-seller {
+    display: none;
+}
+
+.seller-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ccc;
+}
+
+.seller-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.seller-btn {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    background: #fff;
+    font-size: 13px;
+    color: #333;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.15s;
+}
+
+    .seller-btn:hover {
+        background: #f5f5f5;
+    }
+.seller-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #e8f5ff;
+    color: #0077cc;
+    font-size: 11px;
+    font-weight: 600;
+}

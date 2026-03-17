@@ -1,0 +1,618 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_Слой_1" data-name="Слой_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 1920 3240">
+  <!-- Generator: Adobe Illustrator 29.8.2, SVG Export Plug-In . SVG Version: 2.1.1 Build 3)  -->
+  <defs>
+    <style>
+      .st0, .st1, .st2, .st3, .st4, .st5, .st6, .st7, .st8, .st9, .st10, .st11, .st12, .st13, .st14, .st15, .st16 {
+        stroke-miterlimit: 10;
+      }
+
+      .st0, .st3, .st4, .st5, .st11, .st14, .st15, .st16 {
+        stroke-width: .5px;
+      }
+
+      .st0, .st4, .st5, .st11, .st12, .st14, .st15, .st16 {
+        stroke: #fff;
+      }
+
+      .st0, .st9 {
+        fill: #f7f7f7;
+      }
+
+      .st1 {
+        fill: none;
+      }
+
+      .st1, .st2, .st3, .st6, .st7, .st8, .st9, .st13 {
+        stroke: #000;
+      }
+
+      .st17, .st18, .st2, .st19, .st20, .st21, .st3, .st22, .st5, .st6, .st23, .st24, .st8, .st25, .st26, .st10, .st27, .st28, .st29, .st12, .st13, .st30, .st14, .st31, .st32, .st33 {
+        font-family: MyriadPro-Regular, 'Myriad Pro';
+      }
+
+      .st17, .st3, .st22, .st26 {
+        font-size: 21px;
+      }
+
+      .st17, .st23, .st34, .st35, .st16, .st31, .st33 {
+        fill: #999;
+      }
+
+      .st18 {
+        font-size: 12.14px;
+      }
+
+      .st2, .st6, .st8, .st10, .st12, .st13 {
+        stroke-width: .25px;
+      }
+
+      .st2, .st27, .st28, .st12, .st30, .st14, .st31 {
+        font-size: 12px;
+      }
+
+      .st19, .st6, .st32 {
+        font-size: 36px;
+      }
+
+      .st19, .st25, .st27 {
+        fill: gray;
+      }
+
+      .st20, .st25 {
+        font-size: 11px;
+      }
+
+      .st21, .st22, .st4, .st5, .st36, .st37, .st28, .st12, .st14 {
+        fill: #fff;
+      }
+
+      .st21, .st5, .st29 {
+        font-size: 24px;
+      }
+
+      .st38, .st39, .st10 {
+        fill: #00b2aa;
+      }
+
+      .st23, .st24 {
+        font-size: 16px;
+      }
+
+      .st34, .st37, .st40 {
+        fill-rule: evenodd;
+      }
+
+      .st7 {
+        fill: #333;
+      }
+
+      .st41 {
+        fill: #fcee21;
+      }
+
+      .st41, .st39, .st42 {
+        opacity: .33;
+      }
+
+      .st8, .st10, .st33 {
+        font-size: 14px;
+      }
+
+      .st10 {
+        stroke: #00b2aa;
+      }
+
+      .st11, .st42, .st43 {
+        fill: #ccc;
+      }
+
+      .st13 {
+        font-size: 18px;
+      }
+
+      .st44 {
+        fill: #efd126;
+      }
+    </style>
+  </defs>
+  <rect class="st9" y="3038.66" width="1920" height="201.62"/>
+  <rect class="st7" y="-.03" width="1920" height="40.51"/>
+  <path class="st1" d="M1622.21,3240"/>
+  <line class="st1" x1="301.6" y1="111.6" x2="1618.4" y2="111.6"/>
+  <line class="st1" x1="301.6" y1="224.14" x2="1618.4" y2="224.14"/>
+  <polyline class="st1" points="301.6 151.57 301.6 182.06 301.6 1432.11 301.6 2210.42 301.6 3240 301.6 0 301.6 0 301.6 151.57"/>
+  <line class="st1" x1="1371.64" y1="463.67" x2="1372.02" y2="2597.26"/>
+  <polyline class="st1" points="1618.4 77.48 1618.4 77.48 1618.4 107.05 1618.4 1469.64 1618.4 2247.95 1619.4 2788.42 1619.4 3240"/>
+  <line class="st1" x1="630.83" y1="347.77" x2="1618.4" y2="347.55"/>
+  <line class="st1" x1="630.83" y1="301.62" x2="629.52" y2="3038.65"/>
+  <line class="st1" x1="1124.86" y1="251.94" x2="1124.86" y2="347.77"/>
+  <line class="st1" x1="1371.88" y1="251.94" x2="1371.88" y2="347.78"/>
+  <line class="st1" x1="630.77" y1="386.19" x2="1618.46" y2="386.19"/>
+  <line class="st1" x1="630.83" y1="2597.26" x2="1618.4" y2="2597.26"/>
+  <line class="st1" x1="630.83" y1="2672.39" x2="1618.4" y2="2672.39"/>
+  <line class="st1" x1="630.83" y1="2721.01" x2="1618.4" y2="2721.01"/>
+  <line class="st1" x1="301.6" y1="152.93" x2="1618.4" y2="152.93"/>
+  <line class="st1" x1="877.84" y1="251.94" x2="877.84" y2="347.55"/>
+  <path d="M659.79,366.83c.5.06.9.49.9,1.01v5.16c-.05.48-.42.86-.9.91h-5.2c-.48-.05-.85-.43-.9-.91v-5.16c0-.52.39-.96.9-1.01h5.2M655.29,372.29h3.8v-3.84h-3.8v3.84ZM666.69,372.19h-4.6v-1.62h4.6v1.62ZM670.69,368.96h-8.6v-1.62h8.6v1.62ZM659.79,357.73c.5.06.9.49.9,1.01v5.16c-.05.48-.42.86-.9.91h-5.2c-.48-.05-.85-.43-.9-.91v-5.16c0-.52.39-.96.9-1.01h5.2M655.29,363.19h3.8v-3.84h-3.8v3.84ZM666.69,363.09h-4.6v-1.62h4.6v1.62ZM670.69,359.85h-8.6v-1.62h8.6v1.62Z"/>
+  <path d="M695.79,366.83c.5.06.9.49.9,1.01v5.16c-.05.48-.42.86-.9.91h-5.2c-.48-.05-.85-.43-.9-.91v-5.16c0-.52.39-.96.9-1.01h5.2M704.79,366.83c.5.06.9.49.9,1.01v5.16c-.05.48-.42.86-.9.91h-5.2c-.48-.05-.85-.43-.9-.91v-5.16c0-.52.39-.96.9-1.01h5.2M691.29,372.29h3.8v-3.84h-3.8v3.84ZM700.29,372.29h3.8v-3.84h-3.8v3.84ZM695.79,357.73c.5.06.9.49.9,1.01v5.16c-.05.48-.42.86-.9.91h-5.2c-.48-.05-.85-.43-.9-.91v-5.16c0-.52.39-.96.9-1.01h5.2M704.79,357.73c.5.06.9.49.9,1.01v5.16c-.05.48-.42.86-.9.91h-5.2c-.48-.05-.85-.43-.9-.91v-5.16c0-.52.39-.96.9-1.01h5.2M691.29,363.19h3.8v-3.84h-3.8v3.84ZM700.29,363.19h3.8v-3.84h-3.8v3.84Z"/>
+  <g>
+    <path d="M730.43,358.36l.31-.68c-.18-.09-.4-.1-.59-.02l.28.7Z"/>
+    <polygon points="730.43 370.94 730.71 371.62 731.17 371.43 731.17 370.93 730.43 370.94"/>
+    <path d="M735.45,373.26l-.31.67c.2.1.4.11.6.02l-.29-.69Z"/>
+    <path d="M740.35,371.22l-.28-.7.28.7Z"/>
+    <path d="M725.61,372.95l.26.65-.26-.65Z"/>
+    <path d="M740.26,358.69l.28.68-.28-.68Z"/>
+    <path d="M725.51,360.41l.28.69-.28-.69Z"/>
+    <polygon points="725.79 361.09 730.71 359.04 730.15 357.66 725.23 359.73 725.79 361.09"/>
+    <polygon points="729.69 358.35 729.69 370.93 731.17 370.93 731.17 358.36 729.69 358.35"/>
+    <polygon points="730.14 370.23 725.31 372.25 725.88 373.63 730.7 371.61 730.14 370.23"/>
+    <rect x="724.69" y="360.53" width="1.48" height="12.3"/>
+    <polygon points="730.13 359.02 735.13 361.37 735.75 360.01 730.75 357.68 730.13 359.02"/>
+    <polygon points="735.73 361.38 740.55 359.36 739.98 357.98 735.16 360 735.73 361.38"/>
+    <polygon points="739.7 358.79 739.7 371.09 741.18 371.09 741.18 358.8 739.7 358.79"/>
+    <polygon points="740.08 370.52 735.16 372.57 735.72 373.96 740.65 371.9 740.08 370.52"/>
+    <polygon points="734.7 360.69 734.7 373.27 736.18 373.27 736.18 360.7 734.7 360.69"/>
+    <polygon points="735.76 372.58 730.76 370.24 730.14 371.59 735.14 373.93 735.76 372.58"/>
+    <path d="M739.7,371.09c0-.25.16-.48.38-.58l.57,1.39c.32-.14.52-.46.53-.81h-1.48Z"/>
+    <path d="M725.33,372.24c.39-.16.85.11.85.58h-1.49c0,.48.38.84.85.88.09,0,.24-.02.35-.07l-.55-1.39Z"/>
+    <path d="M740.54,359.37c-.3.14-.66,0-.8-.3-.04-.08-.06-.18-.05-.27h1.48c0-.48-.37-.87-.85-.88-.12,0-.24.02-.35.07l.57,1.38Z"/>
+    <path d="M725.23,359.73c-.32.14-.53.46-.54.81h1.48c0,.25-.16.48-.38.57l-.56-1.38Z"/>
+  </g>
+  <g>
+    <g>
+      <path d="M778.53,372.44l-.65.86c.23.33.87.61,1.27,0l-.62-.86Z"/>
+      <path d="M777.78,360.46v11.97c0,.17.14.31.3.31h.87c.17,0,.3-.14.3-.31v-11.96c0-.17-.13-.31-.3-.31h-.87c-.17,0-.3.13-.3.3Z"/>
+      <path d="M779.08,372.45l-2.82-4.06c-.1-.14-.28-.17-.42-.07l-.71.51c-.14.1-.17.29-.07.43l2.83,4.05c.1.14.28.17.42.07l.71-.5c.14-.1.17-.29.07-.43Z"/>
+      <path d="M779.15,373.3l2.82-4.05c.1-.14.06-.33-.07-.43l-.71-.51c-.14-.1-.33-.06-.42.07l-2.82,4.06c-.1.14-.06.33.07.43l.7.5c.14.1.33.06.42-.07Z"/>
+    </g>
+    <g>
+      <path d="M785.53,360.92l.65-.86c-.23-.33-.87-.61-1.27,0l.62.86Z"/>
+      <path d="M786.29,372.89v-11.97c0-.17-.14-.31-.3-.31h-.87c-.17,0-.3.14-.3.31v11.96c0,.17.13.31.3.31h.87c.17,0,.3-.13.3-.3Z"/>
+      <path d="M784.98,360.91l2.82,4.06c.1.14.28.17.42.07l.71-.51c.14-.1.17-.29.07-.43l-2.83-4.05c-.1-.14-.28-.17-.42-.07l-.71.5c-.14.1-.17.29-.07.43Z"/>
+      <path d="M784.91,360.05l-2.82,4.05c-.1.14-.06.33.07.43l.71.51c.14.1.33.06.42-.07l2.82-4.06c.1-.14.06-.33-.07-.43l-.7-.5c-.14-.1-.33-.06-.42.07Z"/>
+    </g>
+  </g>
+  <text class="st30" transform="translate(793.93 371.24) scale(.99 1)"><tspan x="0" y="0">Sorting</tspan></text>
+  <text class="st27" transform="translate(317.42 136.52) scale(.99 1)"><tspan x="0" y="0">Path of categories</tspan></text>
+  <text class="st32" transform="translate(317.16 201.2) scale(.99 1)"><tspan x="0" y="0">Title of the last category</tspan></text>
+  <text class="st14" transform="translate(346.02 26.95)"><tspan x="0" y="0">For business</tspan></text>
+  <text class="st14" transform="translate(487.63 28.5)"><tspan x="0" y="0">Career</tspan></text>
+  <text class="st14" transform="translate(619.08 28.5)"><tspan x="0" y="0">Help</tspan></text>
+  <text class="st14" transform="translate(736.02 28.5)"><tspan x="0" y="0">Catalogs</tspan></text>
+  <text class="st28" transform="translate(878.33 28.5)"><tspan x="0" y="0">. . .</tspan></text>
+  <text class="st14" transform="translate(1420.87 28.5)"><tspan x="0" y="0">Login and registration</tspan></text>
+  <rect class="st4" x="1541.2" y="10.16" width="67.42" height="26.61" rx="3.98" ry="3.98"/>
+  <text class="st2" transform="translate(1546.68 27.73)"><tspan x="0" y="0">Place an ad</tspan></text>
+  <path class="st36" d="M1391.08,30.29c.97,0,1.75.78,1.75,1.75s-.78,1.75-1.75,1.75-1.75-.78-1.75-1.75.78-1.75,1.75-1.75M1400.08,30.29c.97,0,1.75.78,1.75,1.75s-.78,1.75-1.75,1.75-1.75-.78-1.75-1.75.78-1.75,1.75-1.75M1389.68,18.29h14.65l-2.35,7.59c-.36,1.16-1.38,1.99-2.59,2.1l-7.79.74c-.5.05-.96-.29-1.07-.78l-.3-1.34-2.9-10.9,1.55-.41.8,3Z"/>
+  <path class="st36" d="M1367.22,18.31c1.96-2.06,5.22-2.13,7.28-.17.06.05.11.11.17.17,2.05,2.15,2.05,5.53,0,7.68l-7.48,7.72-7.44-7.69c-2.05-2.14-2.05-5.52,0-7.66,1.94-2.04,5.17-2.13,7.21-.19.06.06.13.13.19.19l.07-.05Z"/>
+  <path class="st38" d="M323.17,88.38h-10.3v-4.41h10.3v4.41ZM312.86,62.97h-4.12v25.42h4.12v-25.42Z"/>
+  <g>
+    <path class="st38" d="M328.15,68.02c1.51,0,2.73-1.22,2.73-2.73s-1.22-2.73-2.73-2.73-2.73,1.22-2.73,2.73,1.22,2.73,2.73,2.73Z"/>
+    <rect class="st38" x="326.09" y="69.88" width="4.12" height="18.5"/>
+  </g>
+  <path class="st38" d="M350.99,77.05c-.36-9.8-11.64-8.03-12.66-4.93v-2.25h-4.12v18.5h4.12v-11.86c0-4.38,6.15-4.75,7.9-1.53.26.49.64,1.47.64,4.43,0,0,0,0,0,0v8.96h4.12v-11.32h0Z"/>
+  <polygon class="st38" points="370.83 88.38 362.36 78.49 370.1 70.11 365.38 70.11 358.4 77.94 358.4 63.17 354.28 63.17 354.28 88.38 358.4 88.38 358.4 79.48 365.91 88.38 370.83 88.38"/>
+  <path class="st38" d="M404.96,70.05s-.06-.08-1.38-.04c-1.43.03-2.57.54-2.57.54-1.25.56-2.18,1.53-2.2,2.45v-3.01h-4.12v18.5h4.12v-11.36s.23-1.78,2.01-2.74c1.78-.96,4.14-.03,4.14-.03v-4.31Z"/>
+  <path class="st38" d="M421.42,69.99v3c-1.58-2.11-3.9-3.47-6.53-3.47-4.74,0-8.59,4.35-8.59,9.72s3.85,9.72,8.59,9.72c2.63,0,4.95-1.37,6.53-3.47v3h4.12v-18.5h-4.12ZM415.86,85.77c-3.07,0-5.56-2.89-5.56-6.46s2.49-6.46,5.56-6.46,5.56,2.89,5.56,6.46-2.49,6.46-5.56,6.46Z"/>
+  <path class="st38" d="M435.43,84.62l8.73-8.28s2.16-2.21,2.34-4.29c.31-3.38-.39-4.46-1.06-5.56-.65-1.06-2.27-2.45-3.42-2.92-1.16-.48-3.76-.88-5.01-.72-1.13.15-2.19.14-4.37,1.42-3.47,2.04-3.47,5.24-3.47,5.24l3.92,1.79s.32-4.55,4.67-4.7c3.7-.13,4.54,2.55,4.6,3.6.15,2.54-1.7,4.29-1.7,4.29l-11.49,10.12v3.87h18.5v-3.87h-12.24Z"/>
+  <path class="st38" d="M469.89,80.08h-2.66v-16.48h-6.22l-11.01,16.48v3.55h13.11v4.86h4.12v-4.86h2.66v-3.55ZM454.53,80.08l8.08-12.66h.5v12.66h-8.58Z"/>
+  <path class="st44" d="M391.46,91.66l-3.12,1.66s.46,6.15-6.06,6.56c-2.1.13-5.62-2.27-5.27-6.56.08-.98.51-2.36,1.09-3.25,1.36-2.09,2.53-3.15,4.79-4.58.55-.35,1.89-1.14,1.89-1.14,3.51-1.53,6.35-4.56,6.35-8.68,0-5.02-3.96-9.1-8.85-9.1s-8.85,4.07-8.85,9.1c0,3.9,2.38,7.22,5.73,8.52,0,0-5.75,3.9-5.73,10.46,0,4.01,2.66,8.39,8.97,8.39,10.63,0,9.05-11.38,9.05-11.38ZM377.09,75.75c0-3.14,2.42-5.69,5.4-5.69s5.4,2.55,5.4,5.69-2.42,5.69-5.4,5.69-5.4-2.55-5.4-5.69Z"/>
+  <circle class="st38" cx="387.83" cy="88.97" r="2.67"/>
+  <text class="st19" transform="translate(707.69 201.2) scale(.99 1)"><tspan x="0" y="0">Number of results</tspan></text>
+  <rect class="st38" x="480.68" y="53.39" width="187.63" height="44.67" rx="10" ry="10"/>
+  <text class="st5" transform="translate(525.78 82.82)"><tspan x="0" y="0">All categores</tspan></text>
+  <g>
+    <path class="st37" d="M510.31,79.5c1.16,0,2.23-.36,3.11-.97l2.6,2.6c.23.23.59.22.81,0l.17-.17c.23-.23.23-.6,0-.83l-2.53-2.52c2.02-2.34,1.73-5.9-.68-7.87-2.22-1.82-5.6-1.58-7.55.54-2.1,2.3-1.88,5.86.46,7.89,1,.87,2.28,1.34,3.6,1.34M510.31,78.1c2.92,0,5.13-3.05,3.61-6.14-.64-1.29-2-2.07-3.44-2.07h0c-2.11,0-4,1.51-4.25,3.61-.29,2.49,1.64,4.6,4.08,4.6"/>
+    <path class="st36" d="M516.43,81.54c-.22,0-.43-.09-.58-.24l-2.45-2.45c-.92.59-1.98.9-3.08.9h0c-1.38,0-2.72-.5-3.77-1.4-1.19-1.03-1.89-2.45-1.98-4.02-.09-1.56.44-3.06,1.5-4.22,2.03-2.21,5.57-2.47,7.89-.57,1.22.99,1.96,2.4,2.09,3.96.13,1.48-.31,2.93-1.23,4.08l2.37,2.36c.33.33.33.86,0,1.18l-.17.17c-.16.16-.36.24-.58.24h0ZM513.45,78.2l2.74,2.74c.06.06.16.08.23.1.09,0,.17-.03.23-.1l.17-.17c.13-.13.13-.35,0-.48l-2.69-2.68.15-.18c.94-1.08,1.39-2.47,1.26-3.89-.12-1.43-.8-2.71-1.91-3.62-2.12-1.74-5.35-1.5-7.2.52-.97,1.06-1.46,2.43-1.37,3.86.08,1.43.73,2.73,1.81,3.67.96.83,2.18,1.28,3.44,1.28,1.07,0,2.1-.32,2.97-.93l.17-.12ZM510.31,78.35h0c-1.24,0-2.43-.53-3.26-1.46-.83-.93-1.21-2.18-1.07-3.42.26-2.18,2.19-3.83,4.5-3.83,1.57,0,3.01.87,3.67,2.21.74,1.5.69,3.12-.14,4.44-.8,1.29-2.18,2.05-3.7,2.05ZM510.31,77.85h0c1.34,0,2.56-.68,3.27-1.82.73-1.17.77-2.62.11-3.96-.58-1.17-1.84-1.93-3.22-1.93-2.05,0-3.77,1.46-4,3.39-.13,1.12.2,2.2.95,3.03.73.82,1.78,1.29,2.88,1.29h0Z"/>
+  </g>
+  <g>
+    <rect class="st36" x="494.15" y="67.61" width="7.36" height="1.72" rx=".58" ry=".58"/>
+    <path class="st36" d="M500.93,69.58h-6.2c-.46,0-.83-.37-.83-.83v-.55c0-.46.37-.83.83-.83h6.2c.46,0,.83.37.83.83v.55c0,.46-.37.83-.83.83ZM494.73,67.86c-.18,0-.33.15-.33.33v.55c0,.18.15.33.33.33h6.2c.18,0,.33-.15.33-.33v-.55c0-.18-.15-.33-.33-.33h-6.2Z"/>
+  </g>
+  <g>
+    <rect class="st36" x="493.93" y="73.39" width="5.6" height="1.96" rx=".66" ry=".66"/>
+    <path class="st36" d="M498.88,75.6h-4.29c-.5,0-.91-.41-.91-.91v-.65c0-.5.41-.91.91-.91h4.29c.5,0,.91.41.91.91v.65c0,.5-.41.91-.91.91ZM494.59,73.64c-.22,0-.41.18-.41.41v.65c0,.22.18.41.41.41h4.29c.22,0,.41-.18.41-.41v-.65c0-.22-.18-.41-.41-.41h-4.29Z"/>
+  </g>
+  <g>
+    <rect class="st36" x="493.93" y="79.4" width="8.4" height="1.96" rx=".67" ry=".67"/>
+    <path class="st36" d="M501.66,81.61h-7.06c-.51,0-.92-.41-.92-.92v-.62c0-.51.41-.92.92-.92h7.06c.51,0,.92.41.92.92v.62c0,.51-.41.92-.92.92ZM494.6,79.65c-.23,0-.42.19-.42.42v.62c0,.23.19.42.42.42h7.06c.23,0,.42-.19.42-.42v-.62c0-.23-.19-.42-.42-.42h-7.06Z"/>
+  </g>
+  <rect class="st38" x="677.61" y="53.96" width="749" height="44.62" rx="10.1" ry="10.1"/>
+  <rect class="st0" x="680.78" y="57.1" width="660.91" height="38.35" rx="6.65" ry="6.65"/>
+  <text class="st21" transform="translate(1350.66 82.75)"><tspan x="0" y="0">Search</tspan></text>
+  <g id="_01_align_center">
+    <path d="M1456.03,86.73l-.6-.51c-.82-.69-7.99-6.88-7.99-11.41s3.84-8.59,8.59-8.59,8.59,3.84,8.59,8.59-7.17,10.72-7.99,11.41l-.6.51ZM1456.03,68.08c-3.71,0-6.72,3.01-6.73,6.73,0,2.85,4.41,7.39,6.73,9.47,2.32-2.08,6.73-6.63,6.73-9.47,0-3.71-3.01-6.72-6.73-6.73Z"/>
+    <path d="M1456.03,78.21c-1.88,0-3.4-1.52-3.4-3.4s1.52-3.4,3.4-3.4,3.4,1.52,3.4,3.4-1.52,3.4-3.4,3.4ZM1456.03,73.11c-.94,0-1.7.76-1.7,1.7s.76,1.7,1.7,1.7,1.7-.76,1.7-1.7-.76-1.7-1.7-1.7Z"/>
+  </g>
+  <text class="st29" transform="translate(1470.34 84.8)"><tspan x="0" y="0">In all regions</tspan></text>
+  <line class="st1" x1="630.83" y1="251.94" x2="1618.4" y2="251.94"/>
+  <path class="st1" d="M630.83,362.38"/>
+  <path class="st1" d="M630.83,224.14"/>
+  <text class="st30" transform="translate(1548.45 371.21) scale(.99 1)"><tspan x="0" y="0">Save search</tspan></text>
+  <path class="st40" d="M1536.4,361.74h-.19c-2.76,0-5,2.23-5,4.99,0,2.76,2.23,5,4.99,5,1.11,0,2.18-.37,3.06-1.04l2.41,2.4.89-.89-2.4-2.41c.69-.89,1.06-1.99,1.04-3.12-.39.23-.84.29-1.27.21-.08,2.05-1.8,3.66-3.86,3.58-2.05-.08-3.66-1.8-3.58-3.86.08-2.05,1.8-3.65,3.85-3.58-.07-.42-.05-.85.05-1.27"/>
+  <path class="st40" d="M1538.04,361.33c.61-.61,1.58-.64,2.22-.06.65-.61,1.67-.58,2.28.06s.58,1.67-.06,2.28l-1.83,1.82c-.21.21-.55.21-.76,0l-1.83-1.82c-.63-.64-.63-1.65,0-2.28M1539.67,361.93l.59.53.59-.53c.3-.26.76-.23,1.02.07.25.28.24.71-.03.98l-1.59,1.57-1.59-1.57c-.28-.29-.27-.75.02-1.03.27-.26.7-.27.98-.03"/>
+  <text class="st8" transform="translate(641.77 242.16) scale(.99 1)"><tspan x="0" y="0">Populare on Linkora</tspan></text>
+  <text class="st10" transform="translate(770.84 243.07) scale(.99 1)"><tspan x="0" y="0">All</tspan></text>
+  <text class="st20" transform="translate(642.88 269.47) scale(.99 1)"><tspan x="0" y="0">Populare on Linkora</tspan></text>
+  <text class="st20" transform="translate(642.88 287.18) scale(.99 1)"><tspan x="0" y="0">Populare on Linkora</tspan></text>
+  <text class="st20" transform="translate(642.88 304.89) scale(.99 1)"><tspan x="0" y="0">Populare on Linkora</tspan></text>
+  <text class="st20" transform="translate(642.88 322.84) scale(.99 1)"><tspan x="0" y="0">Populare on Linkora</tspan></text>
+  <text class="st20" transform="translate(642.88 340.79) scale(.99 1)"><tspan x="0" y="0">Populare on Linkora</tspan></text>
+  <text class="st25" transform="translate(746.76 269.59) scale(.99 1)"><tspan x="0" y="0">Number of results</tspan></text>
+  <text class="st25" transform="translate(746.76 287.22) scale(.99 1)"><tspan x="0" y="0">Number of results</tspan></text>
+  <text class="st25" transform="translate(746.76 304.85) scale(.99 1)"><tspan x="0" y="0">Number of results</tspan></text>
+  <text class="st25" transform="translate(746.76 322.72) scale(.99 1)"><tspan x="0" y="0">Number of results</tspan></text>
+  <text class="st25" transform="translate(746.76 340.59) scale(.99 1)"><tspan x="0" y="0">Number of results</tspan></text>
+  <text class="st20" transform="translate(890.43 269.7) scale(.99 1)"><tspan x="0" y="0">Populare on Linkora</tspan></text>
+  <text class="st20" transform="translate(890.43 287.42) scale(.99 1)"><tspan x="0" y="0">Populare on Linkora</tspan></text>
+  <text class="st20" transform="translate(890.43 305.13) scale(.99 1)"><tspan x="0" y="0">Populare on Linkora</tspan></text>
+  <text class="st20" transform="translate(890.43 323.08) scale(.99 1)"><tspan x="0" y="0">Populare on Linkora</tspan></text>
+  <text class="st20" transform="translate(890.43 341.02) scale(.99 1)"><tspan x="0" y="0">Populare on Linkora</tspan></text>
+  <text class="st25" transform="translate(994.32 269.82) scale(.99 1)"><tspan x="0" y="0">Number of results</tspan></text>
+  <text class="st25" transform="translate(994.32 287.46) scale(.99 1)"><tspan x="0" y="0">Number of results</tspan></text>
+  <text class="st25" transform="translate(994.32 305.09) scale(.99 1)"><tspan x="0" y="0">Number of results</tspan></text>
+  <text class="st25" transform="translate(994.32 322.96) scale(.99 1)"><tspan x="0" y="0">Number of results</tspan></text>
+  <text class="st25" transform="translate(994.32 340.82) scale(.99 1)"><tspan x="0" y="0">Number of results</tspan></text>
+  <text class="st20" transform="translate(1138.12 267.98) scale(.99 1)"><tspan x="0" y="0">Populare on Linkora</tspan></text>
+  <text class="st20" transform="translate(1138.12 285.69) scale(.99 1)"><tspan x="0" y="0">Populare on Linkora</tspan></text>
+  <text class="st20" transform="translate(1138.12 303.41) scale(.99 1)"><tspan x="0" y="0">Populare on Linkora</tspan></text>
+  <text class="st20" transform="translate(1138.12 321.35) scale(.99 1)"><tspan x="0" y="0">Populare on Linkora</tspan></text>
+  <text class="st20" transform="translate(1138.12 339.3) scale(.99 1)"><tspan x="0" y="0">Populare on Linkora</tspan></text>
+  <text class="st25" transform="translate(1242 268.1) scale(.99 1)"><tspan x="0" y="0">Number of results</tspan></text>
+  <text class="st25" transform="translate(1242 285.73) scale(.99 1)"><tspan x="0" y="0">Number of results</tspan></text>
+  <text class="st25" transform="translate(1242 303.37) scale(.99 1)"><tspan x="0" y="0">Number of results</tspan></text>
+  <text class="st25" transform="translate(1242 321.23) scale(.99 1)"><tspan x="0" y="0">Number of results</tspan></text>
+  <text class="st25" transform="translate(1242 339.1) scale(.99 1)"><tspan x="0" y="0">Number of results</tspan></text>
+  <text class="st20" transform="translate(1385.8 267.69) scale(.99 1)"><tspan x="0" y="0">Populare on Linkora</tspan></text>
+  <text class="st20" transform="translate(1385.8 285.4) scale(.99 1)"><tspan x="0" y="0">Populare on Linkora</tspan></text>
+  <text class="st20" transform="translate(1385.8 303.11) scale(.99 1)"><tspan x="0" y="0">Populare on Linkora</tspan></text>
+  <text class="st20" transform="translate(1385.8 321.06) scale(.99 1)"><tspan x="0" y="0">Populare on Linkora</tspan></text>
+  <text class="st20" transform="translate(1385.8 339.01) scale(.99 1)"><tspan x="0" y="0">Populare on Linkora</tspan></text>
+  <text class="st25" transform="translate(1489.68 267.81) scale(.99 1)"><tspan x="0" y="0">Number of results</tspan></text>
+  <text class="st25" transform="translate(1489.68 285.44) scale(.99 1)"><tspan x="0" y="0">Number of results</tspan></text>
+  <text class="st25" transform="translate(1489.68 303.08) scale(.99 1)"><tspan x="0" y="0">Number of results</tspan></text>
+  <text class="st25" transform="translate(1489.68 320.94) scale(.99 1)"><tspan x="0" y="0">Number of results</tspan></text>
+  <text class="st25" transform="translate(1489.68 338.81) scale(.99 1)"><tspan x="0" y="0">Number of results</tspan></text>
+  <rect class="st38" x="650.55" y="406.79" width="234.04" height="234.04" rx="18.73" ry="18.73"/>
+  <line class="st1" x1="631.02" y1="661.43" x2="1618.71" y2="661.43"/>
+  <text class="st18" transform="translate(1389.23 412.66) scale(.99 1)"><tspan x="0" y="0">Name of seller</tspan></text>
+  <polygon class="st44" points="1398.88 417.4 1400.95 423.76 1407.63 423.76 1402.23 427.68 1404.29 434.04 1398.88 430.11 1393.48 434.04 1395.54 427.68 1390.14 423.76 1396.82 423.76 1398.88 417.4"/>
+  <polygon class="st44" points="1420.15 417.4 1422.22 423.76 1428.9 423.76 1423.49 427.68 1425.56 434.04 1420.15 430.11 1414.75 434.04 1416.81 427.68 1411.41 423.76 1418.09 423.76 1420.15 417.4"/>
+  <polygon class="st44" points="1441.42 417.4 1443.48 423.75 1450.16 423.75 1444.76 427.68 1446.82 434.03 1441.42 430.11 1436.01 434.03 1438.08 427.68 1432.67 423.75 1439.35 423.75 1441.42 417.4"/>
+  <polygon class="st44" points="1462.69 417.41 1464.75 423.76 1471.43 423.76 1466.03 427.69 1468.09 434.04 1462.69 430.11 1457.28 434.04 1459.35 427.69 1453.94 423.76 1460.62 423.76 1462.69 417.41"/>
+  <polygon class="st44" points="1483.95 417.4 1486.02 423.75 1492.7 423.75 1487.29 427.68 1489.36 434.03 1483.95 430.11 1478.55 434.03 1480.61 427.68 1475.21 423.75 1481.89 423.75 1483.95 417.4"/>
+  <polygon class="st43" points="1483.95 430.11 1489.36 434.03 1487.29 427.68 1492.7 423.75 1486.02 423.75 1483.95 417.4 1483.95 430.11"/>
+  <text class="st30" transform="translate(1501.59 429.98)"><tspan x="0" y="0">4.5 · 45 reviews</tspan></text>
+  <rect class="st39" x="1390.63" y="445.39" width="101.57" height="19.96" rx="3.44" ry="3.44"/>
+  <text class="st18" transform="translate(1417.98 458.96) scale(.99 1)"><tspan x="0" y="0">Some tag</tspan></text>
+  <rect class="st42" x="1390.63" y="476.69" width="209.32" height="30.74" rx="8.33" ry="8.33"/>
+  <text class="st18" transform="translate(1446.63 495.62) scale(.99 1)"><tspan x="0" y="0">Show phone number</tspan></text>
+  <rect class="st42" x="1390.63" y="518.78" width="209.32" height="30.74" rx="8.33" ry="8.33"/>
+  <text class="st18" transform="translate(1486.13 537.71) scale(.99 1)"><tspan x="0" y="0">Write</tspan></text>
+  <rect class="st41" x="1501.49" y="445.39" width="101.57" height="19.96" rx="3.44" ry="3.44"/>
+  <text class="st18" transform="translate(1528.84 458.96) scale(.99 1)"><tspan x="0" y="0">Some tag</tspan></text>
+  <text class="st26" transform="translate(904.32 427.16)"><tspan x="0" y="0">Title of the sale advertisement</tspan></text>
+  <text class="st3" transform="translate(904.32 451.58)"><tspan x="0" y="0">Selling price + currency ($/¥/€)</tspan></text>
+  <path class="st38" d="M1081.64,475.98l-8.3-9.64c-.55-.64-1.29-.99-2.06-.99h-158.92c-2.62,0-3.93,3.74-2.06,5.9l4.08,4.73c1.16,1.35,1.16,3.56,0,4.91l-4.08,4.73c-1.87,2.17-.56,5.9,2.06,5.9h158.92c.77,0,1.51-.36,2.06-.99l8.3-9.64c1.16-1.35,1.16-3.56,0-4.91Z"/>
+  <path class="st43" d="M1250.86,475.69l-8.05-9.35c-.55-.64-1.29-.99-2.06-.99h-158.92c-2.62,0-3.93,3.74-2.06,5.9l3.89,4.52c1.26,1.47,1.26,3.86,0,5.33l-3.89,4.52c-1.87,2.17-.56,5.9,2.06,5.9h158.92c.77,0,1.51-.36,2.06-.99l8.05-9.35c1.3-1.51,1.3-3.98,0-5.49Z"/>
+  <text class="st22" transform="translate(924.04 484.78)"><tspan x="0" y="0">Some options</tspan></text>
+  <text class="st22" transform="translate(1091.63 484.78)"><tspan x="0" y="0">Some options</tspan></text>
+  <text class="st24" transform="translate(904.32 514.12)"><tspan x="0" y="0">Any specifications</tspan></text>
+  <text class="st24" transform="translate(922.48 535.17)"><tspan x="0" y="0">Any adress</tspan></text>
+  <path d="M911.2,537.88l-.48-.41c-1.5-1.27-6.39-5.67-6.39-9.07,0-3.79,3.08-6.87,6.87-6.87s6.87,3.08,6.87,6.87c0,3.39-4.89,7.8-6.39,9.07,0,0-.48.41-.48.41ZM911.2,522.22c-3.41,0-6.19,2.78-6.19,6.19,0,3.18,5.12,7.68,6.15,8.55l.04.03.04-.03c1.03-.87,6.15-5.36,6.15-8.55,0-3.41-2.78-6.19-6.19-6.19Z"/>
+  <path d="M911.2,531.07c-1.5,0-2.72-1.22-2.72-2.72s1.22-2.72,2.72-2.72,2.72,1.22,2.72,2.72-1.22,2.72-2.72,2.72ZM911.2,526.3c-1.13,0-2.04.92-2.04,2.04s.92,2.04,2.04,2.04,2.04-.92,2.04-2.04-.92-2.04-2.04-2.04Z"/>
+  <text class="st33" transform="translate(904.32 555.32)"><tspan x="0" y="0">Some text Nevienu nedrīkst turēt verdzībā vai dzimtbūtniecībā; </tspan><tspan x="0" y="16.8">visa veida verdzība un vergu tirdzniecība ir jāaizliedz.</tspan><tspan x="0" y="33.6">Nevienu nedrīkst pakļaut spīdzināšanai vai cietsirdīgi, necilvēcīgi </tspan><tspan x="0" y="50.4">ar viņu apieties vai sodīt, pazemojot viņa cilvēcisko cieņu</tspan></text>
+  <text class="st23" transform="translate(905.21 623.78)"><tspan x="0" y="0">When the ad was posted</tspan></text>
+  <path class="st35" d="M1080.83,610.61h0c.54,0,1.06.21,1.44.6h0l6.68,6.89h-4.72v8.85h-6.81v-8.85h-4.73l6.69-6.88c.39-.39.91-.61,1.45-.61h0Z"/>
+  <path class="st38" d="M1355.09,397.39c-2.5,0-4.78,1.85-5.75,4.35-.97-2.5-3.25-4.35-5.75-4.35-3.45,0-6.25,2.8-6.25,6.25,0,6.76,9.75,14.07,11.71,15.47l.29.21.29-.21c1.96-1.4,11.71-8.71,11.71-15.47,0-3.45-2.8-6.25-6.25-6.25ZM1349.34,418.08c-5.14-3.74-11-9.67-11-14.44,0-2.89,2.36-5.25,5.25-5.25s5.25,2.86,5.25,6h1c0-3.14,2.5-6,5.25-6,2.9,0,5.25,2.36,5.25,5.25,0,4.77-5.86,10.71-11,14.44Z"/>
+  <rect class="st38" x="650.3" y="683.35" width="234.04" height="234.04" rx="18.73" ry="18.73"/>
+  <line class="st1" x1="630.77" y1="937.99" x2="1618.46" y2="937.99"/>
+  <text class="st18" transform="translate(1388.98 689.22) scale(.99 1)"><tspan x="0" y="0">Name of seller</tspan></text>
+  <polygon class="st44" points="1398.63 693.97 1400.7 700.32 1407.38 700.32 1401.98 704.25 1404.04 710.6 1398.63 706.67 1393.23 710.6 1395.29 704.25 1389.89 700.32 1396.57 700.32 1398.63 693.97"/>
+  <polygon class="st44" points="1419.9 693.97 1421.97 700.32 1428.65 700.32 1423.24 704.25 1425.31 710.6 1419.9 706.67 1414.5 710.6 1416.56 704.25 1411.16 700.32 1417.84 700.32 1419.9 693.97"/>
+  <polygon class="st44" points="1441.17 693.96 1443.23 700.32 1449.91 700.32 1444.51 704.24 1446.57 710.6 1441.17 706.67 1435.76 710.6 1437.83 704.24 1432.42 700.32 1439.1 700.32 1441.17 693.96"/>
+  <polygon class="st44" points="1462.44 693.97 1464.5 700.32 1471.18 700.32 1465.78 704.25 1467.84 710.6 1462.44 706.68 1457.03 710.6 1459.1 704.25 1453.69 700.32 1460.37 700.32 1462.44 693.97"/>
+  <polygon class="st44" points="1483.7 693.96 1485.77 700.32 1492.45 700.32 1487.04 704.24 1489.11 710.6 1483.7 706.67 1478.3 710.6 1480.36 704.24 1474.96 700.32 1481.64 700.32 1483.7 693.96"/>
+  <polygon class="st43" points="1483.7 706.67 1489.11 710.6 1487.04 704.24 1492.45 700.32 1485.77 700.32 1483.7 693.96 1483.7 706.67"/>
+  <text class="st30" transform="translate(1501.34 706.54)"><tspan x="0" y="0">4.5 · 45 reviews</tspan></text>
+  <rect class="st39" x="1390.38" y="721.95" width="101.57" height="19.96" rx="3.44" ry="3.44"/>
+  <text class="st18" transform="translate(1417.73 735.52) scale(.99 1)"><tspan x="0" y="0">Some tag</tspan></text>
+  <rect class="st42" x="1390.38" y="753.25" width="209.32" height="30.74" rx="8.33" ry="8.33"/>
+  <text class="st18" transform="translate(1446.38 772.18) scale(.99 1)"><tspan x="0" y="0">Show phone number</tspan></text>
+  <rect class="st42" x="1390.38" y="795.34" width="209.32" height="30.74" rx="8.33" ry="8.33"/>
+  <text class="st18" transform="translate(1485.88 814.27) scale(.99 1)"><tspan x="0" y="0">Write</tspan></text>
+  <rect class="st41" x="1501.24" y="721.95" width="101.57" height="19.96" rx="3.44" ry="3.44"/>
+  <text class="st18" transform="translate(1528.59 735.52) scale(.99 1)"><tspan x="0" y="0">Some tag</tspan></text>
+  <text class="st26" transform="translate(904.07 703.72)"><tspan x="0" y="0">Title of the sale advertisement</tspan></text>
+  <text class="st3" transform="translate(904.07 728.14)"><tspan x="0" y="0">Selling price + currency ($/¥/€)</tspan></text>
+  <path class="st38" d="M1081.39,752.54l-8.3-9.64c-.55-.64-1.29-.99-2.06-.99h-158.92c-2.62,0-3.93,3.74-2.06,5.9l4.08,4.73c1.16,1.35,1.16,3.56,0,4.91l-4.08,4.73c-1.87,2.17-.56,5.9,2.06,5.9h158.92c.77,0,1.51-.36,2.06-.99l8.3-9.64c1.16-1.35,1.16-3.56,0-4.91Z"/>
+  <path class="st43" d="M1250.61,752.25l-8.05-9.35c-.55-.64-1.29-.99-2.06-.99h-158.92c-2.62,0-3.93,3.74-2.06,5.9l3.89,4.52c1.26,1.47,1.26,3.86,0,5.33l-3.89,4.52c-1.87,2.17-.56,5.9,2.06,5.9h158.92c.77,0,1.51-.36,2.06-.99l8.05-9.35c1.3-1.51,1.3-3.98,0-5.49Z"/>
+  <text class="st22" transform="translate(923.79 761.34)"><tspan x="0" y="0">Some options</tspan></text>
+  <text class="st22" transform="translate(1091.38 761.34)"><tspan x="0" y="0">Some options</tspan></text>
+  <text class="st24" transform="translate(904.07 790.68)"><tspan x="0" y="0">Any specifications</tspan></text>
+  <text class="st24" transform="translate(922.23 811.73)"><tspan x="0" y="0">Any adress</tspan></text>
+  <path d="M910.95,814.44l-.48-.41c-1.5-1.27-6.39-5.67-6.39-9.07,0-3.79,3.08-6.87,6.87-6.87s6.87,3.08,6.87,6.87c0,3.39-4.89,7.8-6.39,9.07l-.48.41ZM910.95,798.78c-3.41,0-6.19,2.78-6.19,6.19,0,3.18,5.12,7.68,6.15,8.55l.04.03.04-.03c1.03-.87,6.15-5.36,6.15-8.55,0-3.41-2.78-6.19-6.19-6.19Z"/>
+  <path d="M910.95,807.63c-1.5,0-2.72-1.22-2.72-2.72s1.22-2.72,2.72-2.72,2.72,1.22,2.72,2.72-1.22,2.72-2.72,2.72ZM910.95,802.86c-1.13,0-2.04.92-2.04,2.04s.92,2.04,2.04,2.04,2.04-.92,2.04-2.04-.92-2.04-2.04-2.04Z"/>
+  <text class="st33" transform="translate(904.07 831.88)"><tspan x="0" y="0">Some text Nevienu nedrīkst turēt verdzībā vai dzimtbūtniecībā; </tspan><tspan x="0" y="16.8">visa veida verdzība un vergu tirdzniecība ir jāaizliedz.</tspan><tspan x="0" y="33.6">Nevienu nedrīkst pakļaut spīdzināšanai vai cietsirdīgi, necilvēcīgi </tspan><tspan x="0" y="50.4">ar viņu apieties vai sodīt, pazemojot viņa cilvēcisko cieņu</tspan></text>
+  <text class="st23" transform="translate(904.96 900.35)"><tspan x="0" y="0">When the ad was posted</tspan></text>
+  <path class="st35" d="M1080.58,887.17h0c.54,0,1.06.21,1.44.6h0l6.68,6.89h-4.72v8.85h-6.81v-8.85h-4.73l6.69-6.88c.39-.39.91-.61,1.45-.61h0Z"/>
+  <path class="st38" d="M1354.84,673.95c-2.5,0-4.78,1.85-5.75,4.35-.97-2.5-3.25-4.35-5.75-4.35-3.45,0-6.25,2.8-6.25,6.25,0,6.76,9.75,14.07,11.71,15.47l.29.21.29-.21c1.96-1.4,11.71-8.71,11.71-15.47,0-3.45-2.8-6.25-6.25-6.25ZM1349.09,694.64c-5.14-3.74-11-9.67-11-14.44,0-2.89,2.36-5.25,5.25-5.25s5.25,2.86,5.25,6h1c0-3.14,2.5-6,5.25-6,2.9,0,5.25,2.36,5.25,5.25,0,4.77-5.86,10.71-11,14.44Z"/>
+  <rect class="st38" x="650.55" y="967.98" width="234.04" height="234.04" rx="18.73" ry="18.73"/>
+  <line class="st1" x1="631.02" y1="1222.62" x2="1618.71" y2="1222.62"/>
+  <text class="st18" transform="translate(1389.23 973.86) scale(.99 1)"><tspan x="0" y="0">Name of seller</tspan></text>
+  <polygon class="st44" points="1398.88 978.6 1400.95 984.95 1407.63 984.95 1402.23 988.88 1404.29 995.24 1398.88 991.31 1393.48 995.24 1395.54 988.88 1390.14 984.95 1396.82 984.95 1398.88 978.6"/>
+  <polygon class="st44" points="1420.15 978.6 1422.22 984.95 1428.9 984.95 1423.49 988.88 1425.56 995.24 1420.15 991.31 1414.75 995.24 1416.81 988.88 1411.41 984.95 1418.09 984.95 1420.15 978.6"/>
+  <polygon class="st44" points="1441.42 978.6 1443.48 984.95 1450.16 984.95 1444.76 988.88 1446.82 995.23 1441.42 991.31 1436.01 995.23 1438.08 988.88 1432.67 984.95 1439.35 984.95 1441.42 978.6"/>
+  <polygon class="st44" points="1462.69 978.6 1464.75 984.96 1471.43 984.96 1466.03 988.89 1468.09 995.24 1462.69 991.31 1457.28 995.24 1459.35 988.89 1453.94 984.96 1460.62 984.96 1462.69 978.6"/>
+  <polygon class="st44" points="1483.95 978.6 1486.02 984.95 1492.7 984.95 1487.29 988.88 1489.36 995.23 1483.95 991.31 1478.55 995.23 1480.61 988.88 1475.21 984.95 1481.89 984.95 1483.95 978.6"/>
+  <polygon class="st43" points="1483.95 991.31 1489.36 995.23 1487.29 988.88 1492.7 984.95 1486.02 984.95 1483.95 978.6 1483.95 991.31"/>
+  <text class="st30" transform="translate(1501.59 991.18)"><tspan x="0" y="0">4.5 · 45 reviews</tspan></text>
+  <rect class="st39" x="1390.63" y="1006.59" width="101.57" height="19.96" rx="3.44" ry="3.44"/>
+  <text class="st18" transform="translate(1417.98 1020.15) scale(.99 1)"><tspan x="0" y="0">Some tag</tspan></text>
+  <rect class="st42" x="1390.63" y="1037.89" width="209.32" height="30.74" rx="8.33" ry="8.33"/>
+  <text class="st18" transform="translate(1446.63 1056.82) scale(.99 1)"><tspan x="0" y="0">Show phone number</tspan></text>
+  <rect class="st42" x="1390.63" y="1079.98" width="209.32" height="30.74" rx="8.33" ry="8.33"/>
+  <text class="st18" transform="translate(1486.13 1098.91) scale(.99 1)"><tspan x="0" y="0">Write</tspan></text>
+  <rect class="st41" x="1501.49" y="1006.59" width="101.57" height="19.96" rx="3.44" ry="3.44"/>
+  <text class="st18" transform="translate(1528.84 1020.15) scale(.99 1)"><tspan x="0" y="0">Some tag</tspan></text>
+  <text class="st26" transform="translate(904.32 988.36)"><tspan x="0" y="0">Title of the sale advertisement</tspan></text>
+  <text class="st3" transform="translate(904.32 1012.77)"><tspan x="0" y="0">Selling price + currency ($/¥/€)</tspan></text>
+  <path class="st38" d="M1081.64,1037.18l-8.3-9.64c-.55-.64-1.29-.99-2.06-.99h-158.92c-2.62,0-3.93,3.74-2.06,5.9l4.08,4.73c1.16,1.35,1.16,3.56,0,4.91l-4.08,4.73c-1.87,2.17-.56,5.9,2.06,5.9h158.92c.77,0,1.51-.36,2.06-.99l8.3-9.64c1.16-1.35,1.16-3.56,0-4.91Z"/>
+  <path class="st43" d="M1250.86,1036.88l-8.05-9.35c-.55-.64-1.29-.99-2.06-.99h-158.92c-2.62,0-3.93,3.74-2.06,5.9l3.89,4.52c1.26,1.47,1.26,3.86,0,5.33l-3.89,4.52c-1.87,2.17-.56,5.9,2.06,5.9h158.92c.77,0,1.51-.36,2.06-.99l8.05-9.35c1.3-1.51,1.3-3.98,0-5.49Z"/>
+  <text class="st22" transform="translate(924.04 1045.98)"><tspan x="0" y="0">Some options</tspan></text>
+  <text class="st22" transform="translate(1091.63 1045.98)"><tspan x="0" y="0">Some options</tspan></text>
+  <text class="st24" transform="translate(904.32 1075.31)"><tspan x="0" y="0">Any specifications</tspan></text>
+  <text class="st24" transform="translate(922.48 1096.36)"><tspan x="0" y="0">Any adress</tspan></text>
+  <path d="M911.2,1099.07l-.48-.41c-1.5-1.27-6.39-5.67-6.39-9.07,0-3.79,3.08-6.87,6.87-6.87s6.87,3.08,6.87,6.87c0,3.39-4.89,7.8-6.39,9.07l-.48.41ZM911.2,1083.41c-3.41,0-6.19,2.78-6.19,6.19,0,3.18,5.12,7.68,6.15,8.55l.04.03.04-.03c1.03-.87,6.15-5.36,6.15-8.55,0-3.41-2.78-6.19-6.19-6.19Z"/>
+  <path d="M911.2,1092.27c-1.5,0-2.72-1.22-2.72-2.72s1.22-2.72,2.72-2.72,2.72,1.22,2.72,2.72-1.22,2.72-2.72,2.72ZM911.2,1087.5c-1.13,0-2.04.92-2.04,2.04s.92,2.04,2.04,2.04,2.04-.92,2.04-2.04-.92-2.04-2.04-2.04Z"/>
+  <text class="st33" transform="translate(904.32 1116.52)"><tspan x="0" y="0">Some text Nevienu nedrīkst turēt verdzībā vai dzimtbūtniecībā; </tspan><tspan x="0" y="16.8">visa veida verdzība un vergu tirdzniecība ir jāaizliedz.</tspan><tspan x="0" y="33.6">Nevienu nedrīkst pakļaut spīdzināšanai vai cietsirdīgi, necilvēcīgi </tspan><tspan x="0" y="50.4">ar viņu apieties vai sodīt, pazemojot viņa cilvēcisko cieņu</tspan></text>
+  <text class="st23" transform="translate(905.21 1184.98)"><tspan x="0" y="0">When the ad was posted</tspan></text>
+  <path class="st35" d="M1080.83,1171.81h0c.54,0,1.06.21,1.44.6h0l6.68,6.89h-4.72v8.85h-6.81v-8.85h-4.73l6.69-6.88c.39-.39.91-.61,1.45-.61h0Z"/>
+  <path class="st38" d="M1355.09,958.59c-2.5,0-4.78,1.85-5.75,4.35-.97-2.5-3.25-4.35-5.75-4.35-3.45,0-6.25,2.8-6.25,6.25,0,6.76,9.75,14.07,11.71,15.47l.29.21.29-.21c1.96-1.4,11.71-8.71,11.71-15.47,0-3.45-2.8-6.25-6.25-6.25ZM1349.34,979.28c-5.14-3.74-11-9.67-11-14.44,0-2.89,2.36-5.25,5.25-5.25s5.25,2.86,5.25,6h1c0-3.14,2.5-6,5.25-6,2.9,0,5.25,2.36,5.25,5.25,0,4.77-5.86,10.71-11,14.44Z"/>
+  <rect class="st38" x="650.45" y="1245.48" width="234.04" height="234.04" rx="18.73" ry="18.73"/>
+  <line class="st1" x1="630.91" y1="1500.12" x2="1618.6" y2="1500.12"/>
+  <text class="st18" transform="translate(1389.12 1251.35) scale(.99 1)"><tspan x="0" y="0">Name of seller</tspan></text>
+  <polygon class="st44" points="1398.78 1256.1 1400.84 1262.45 1407.52 1262.45 1402.12 1266.38 1404.18 1272.73 1398.78 1268.8 1393.37 1272.73 1395.44 1266.38 1390.03 1262.45 1396.71 1262.45 1398.78 1256.1"/>
+  <polygon class="st44" points="1420.04 1256.1 1422.11 1262.45 1428.79 1262.45 1423.39 1266.38 1425.45 1272.73 1420.04 1268.8 1414.64 1272.73 1416.7 1266.38 1411.3 1262.45 1417.98 1262.45 1420.04 1256.1"/>
+  <polygon class="st44" points="1441.31 1256.09 1443.38 1262.45 1450.06 1262.45 1444.65 1266.37 1446.72 1272.73 1441.31 1268.8 1435.91 1272.73 1437.97 1266.37 1432.57 1262.45 1439.25 1262.45 1441.31 1256.09"/>
+  <polygon class="st44" points="1462.58 1256.1 1464.64 1262.45 1471.32 1262.45 1465.92 1266.38 1467.98 1272.73 1462.58 1268.81 1457.17 1272.73 1459.24 1266.38 1453.83 1262.45 1460.51 1262.45 1462.58 1256.1"/>
+  <polygon class="st44" points="1483.85 1256.09 1485.91 1262.45 1492.59 1262.45 1487.19 1266.37 1489.25 1272.73 1483.85 1268.8 1478.44 1272.73 1480.51 1266.37 1475.1 1262.45 1481.78 1262.45 1483.85 1256.09"/>
+  <polygon class="st43" points="1483.85 1268.8 1489.25 1272.73 1487.19 1266.37 1492.59 1262.45 1485.91 1262.45 1483.85 1256.09 1483.85 1268.8"/>
+  <text class="st30" transform="translate(1501.48 1268.67)"><tspan x="0" y="0">4.5 · 45 reviews</tspan></text>
+  <rect class="st39" x="1390.53" y="1284.08" width="101.57" height="19.96" rx="3.44" ry="3.44"/>
+  <text class="st18" transform="translate(1417.87 1297.65) scale(.99 1)"><tspan x="0" y="0">Some tag</tspan></text>
+  <rect class="st42" x="1390.53" y="1315.38" width="209.32" height="30.74" rx="8.33" ry="8.33"/>
+  <text class="st18" transform="translate(1446.52 1334.31) scale(.99 1)"><tspan x="0" y="0">Show phone number</tspan></text>
+  <rect class="st42" x="1390.53" y="1357.47" width="209.32" height="30.74" rx="8.33" ry="8.33"/>
+  <text class="st18" transform="translate(1486.02 1376.4) scale(.99 1)"><tspan x="0" y="0">Write</tspan></text>
+  <rect class="st41" x="1501.39" y="1284.08" width="101.57" height="19.96" rx="3.44" ry="3.44"/>
+  <text class="st18" transform="translate(1528.73 1297.65) scale(.99 1)"><tspan x="0" y="0">Some tag</tspan></text>
+  <text class="st26" transform="translate(904.22 1265.85)"><tspan x="0" y="0">Title of the sale advertisement</tspan></text>
+  <text class="st3" transform="translate(904.22 1290.27)"><tspan x="0" y="0">Selling price + currency ($/¥/€)</tspan></text>
+  <path class="st38" d="M1081.53,1314.67l-8.3-9.64c-.55-.64-1.29-.99-2.06-.99h-158.92c-2.62,0-3.93,3.74-2.06,5.9l4.08,4.73c1.16,1.35,1.16,3.56,0,4.91l-4.08,4.73c-1.87,2.17-.56,5.9,2.06,5.9h158.92c.77,0,1.51-.36,2.06-.99l8.3-9.64c1.16-1.35,1.16-3.56,0-4.91Z"/>
+  <path class="st43" d="M1250.75,1314.38l-8.05-9.35c-.55-.64-1.29-.99-2.06-.99h-158.92c-2.62,0-3.93,3.74-2.06,5.9l3.89,4.52c1.26,1.47,1.26,3.86,0,5.33l-3.89,4.52c-1.87,2.17-.56,5.9,2.06,5.9h158.92c.77,0,1.51-.36,2.06-.99l8.05-9.35c1.3-1.51,1.3-3.98,0-5.49Z"/>
+  <text class="st22" transform="translate(923.94 1323.47)"><tspan x="0" y="0">Some options</tspan></text>
+  <text class="st22" transform="translate(1091.52 1323.47)"><tspan x="0" y="0">Some options</tspan></text>
+  <text class="st24" transform="translate(904.22 1352.81)"><tspan x="0" y="0">Any specifications</tspan></text>
+  <text class="st24" transform="translate(922.37 1373.86)"><tspan x="0" y="0">Any adress</tspan></text>
+  <path d="M911.09,1376.57l-.48-.41c-1.5-1.27-6.39-5.67-6.39-9.07,0-3.79,3.08-6.87,6.87-6.87s6.87,3.08,6.87,6.87c0,3.39-4.89,7.8-6.39,9.07l-.48.41ZM911.09,1360.91c-3.41,0-6.19,2.78-6.19,6.19,0,3.18,5.12,7.68,6.15,8.55l.04.03.04-.03c1.03-.87,6.15-5.36,6.15-8.55,0-3.41-2.78-6.19-6.19-6.19Z"/>
+  <path d="M911.09,1369.76c-1.5,0-2.72-1.22-2.72-2.72s1.22-2.72,2.72-2.72,2.72,1.22,2.72,2.72-1.22,2.72-2.72,2.72ZM911.09,1364.99c-1.13,0-2.04.92-2.04,2.04s.92,2.04,2.04,2.04,2.04-.92,2.04-2.04-.92-2.04-2.04-2.04Z"/>
+  <text class="st33" transform="translate(904.22 1394.01)"><tspan x="0" y="0">Some text Nevienu nedrīkst turēt verdzībā vai dzimtbūtniecībā; </tspan><tspan x="0" y="16.8">visa veida verdzība un vergu tirdzniecība ir jāaizliedz.</tspan><tspan x="0" y="33.6">Nevienu nedrīkst pakļaut spīdzināšanai vai cietsirdīgi, necilvēcīgi </tspan><tspan x="0" y="50.4">ar viņu apieties vai sodīt, pazemojot viņa cilvēcisko cieņu</tspan></text>
+  <text class="st23" transform="translate(905.1 1462.47)"><tspan x="0" y="0">When the ad was posted</tspan></text>
+  <path class="st35" d="M1080.73,1449.3h0c.54,0,1.06.21,1.44.6h0l6.68,6.89h-4.72v8.85h-6.81v-8.85h-4.73l6.69-6.88c.39-.39.91-.61,1.45-.61h0Z"/>
+  <rect class="st38" x="650.5" y="1521.66" width="234.04" height="234.04" rx="18.73" ry="18.73"/>
+  <line class="st1" x1="630.97" y1="1776.3" x2="1618.65" y2="1776.3"/>
+  <text class="st18" transform="translate(1389.17 1527.53) scale(.99 1)"><tspan x="0" y="0">Name of seller</tspan></text>
+  <polygon class="st44" points="1398.83 1532.28 1400.9 1538.63 1407.58 1538.63 1402.17 1542.56 1404.24 1548.91 1398.83 1544.99 1393.43 1548.91 1395.49 1542.56 1390.09 1538.63 1396.77 1538.63 1398.83 1532.28"/>
+  <polygon class="st44" points="1420.1 1532.28 1422.16 1538.63 1428.84 1538.63 1423.44 1542.56 1425.5 1548.91 1420.1 1544.99 1414.69 1548.91 1416.76 1542.56 1411.35 1538.63 1418.03 1538.63 1420.1 1532.28"/>
+  <polygon class="st44" points="1441.37 1532.27 1443.43 1538.63 1450.11 1538.63 1444.71 1542.56 1446.77 1548.91 1441.37 1544.98 1435.96 1548.91 1438.03 1542.56 1432.62 1538.63 1439.3 1538.63 1441.37 1532.27"/>
+  <polygon class="st44" points="1462.63 1532.28 1464.7 1538.64 1471.38 1538.64 1465.97 1542.56 1468.04 1548.92 1462.63 1544.99 1457.23 1548.92 1459.29 1542.56 1453.89 1538.64 1460.57 1538.64 1462.63 1532.28"/>
+  <polygon class="st44" points="1483.9 1532.27 1485.96 1538.63 1492.65 1538.63 1487.24 1542.56 1489.31 1548.91 1483.9 1544.98 1478.5 1548.91 1480.56 1542.56 1475.15 1538.63 1481.84 1538.63 1483.9 1532.27"/>
+  <polygon class="st43" points="1483.9 1544.98 1489.31 1548.91 1487.24 1542.56 1492.65 1538.63 1485.96 1538.63 1483.9 1532.27 1483.9 1544.98"/>
+  <text class="st30" transform="translate(1501.54 1544.85)"><tspan x="0" y="0">4.5 · 45 reviews</tspan></text>
+  <rect class="st39" x="1390.58" y="1560.26" width="101.57" height="19.96" rx="3.44" ry="3.44"/>
+  <text class="st18" transform="translate(1417.92 1573.83) scale(.99 1)"><tspan x="0" y="0">Some tag</tspan></text>
+  <rect class="st42" x="1390.58" y="1591.56" width="209.32" height="30.74" rx="8.33" ry="8.33"/>
+  <text class="st18" transform="translate(1446.57 1610.49) scale(.99 1)"><tspan x="0" y="0">Show phone number</tspan></text>
+  <rect class="st42" x="1390.58" y="1633.65" width="209.32" height="30.74" rx="8.33" ry="8.33"/>
+  <text class="st18" transform="translate(1486.07 1652.58) scale(.99 1)"><tspan x="0" y="0">Write</tspan></text>
+  <rect class="st41" x="1501.44" y="1560.26" width="101.57" height="19.96" rx="3.44" ry="3.44"/>
+  <text class="st18" transform="translate(1528.78 1573.83) scale(.99 1)"><tspan x="0" y="0">Some tag</tspan></text>
+  <text class="st26" transform="translate(904.27 1542.04)"><tspan x="0" y="0">Title of the sale advertisement</tspan></text>
+  <text class="st3" transform="translate(904.27 1566.45)"><tspan x="0" y="0">Selling price + currency ($/¥/€)</tspan></text>
+  <path class="st38" d="M1081.58,1590.85l-8.3-9.64c-.55-.64-1.29-.99-2.06-.99h-158.92c-2.62,0-3.93,3.74-2.06,5.9l4.08,4.73c1.16,1.35,1.16,3.56,0,4.91l-4.08,4.73c-1.87,2.17-.56,5.9,2.06,5.9h158.92c.77,0,1.51-.36,2.06-.99l8.3-9.64c1.16-1.35,1.16-3.56,0-4.91Z"/>
+  <path class="st43" d="M1250.81,1590.56l-8.05-9.35c-.55-.64-1.29-.99-2.06-.99h-158.92c-2.62,0-3.93,3.74-2.06,5.9l3.89,4.52c1.26,1.47,1.26,3.86,0,5.33l-3.89,4.52c-1.87,2.17-.56,5.9,2.06,5.9h158.92c.77,0,1.51-.36,2.06-.99l8.05-9.35c1.3-1.51,1.3-3.98,0-5.49Z"/>
+  <text class="st22" transform="translate(923.99 1599.65)"><tspan x="0" y="0">Some options</tspan></text>
+  <text class="st22" transform="translate(1091.57 1599.65)"><tspan x="0" y="0">Some options</tspan></text>
+  <text class="st24" transform="translate(904.27 1628.99)"><tspan x="0" y="0">Any specifications</tspan></text>
+  <text class="st24" transform="translate(922.42 1650.04)"><tspan x="0" y="0">Any adress</tspan></text>
+  <path d="M911.14,1652.75l-.48-.41c-1.5-1.27-6.39-5.67-6.39-9.07,0-3.79,3.08-6.87,6.87-6.87s6.87,3.08,6.87,6.87c0,3.39-4.89,7.8-6.39,9.07l-.48.41ZM911.14,1637.09c-3.41,0-6.19,2.78-6.19,6.19,0,3.18,5.12,7.68,6.15,8.55l.04.03.04-.03c1.03-.87,6.15-5.36,6.15-8.55,0-3.41-2.78-6.19-6.19-6.19Z"/>
+  <path d="M911.14,1645.94c-1.5,0-2.72-1.22-2.72-2.72s1.22-2.72,2.72-2.72,2.72,1.22,2.72,2.72-1.22,2.72-2.72,2.72ZM911.14,1641.18c-1.13,0-2.04.92-2.04,2.04s.92,2.04,2.04,2.04,2.04-.92,2.04-2.04-.92-2.04-2.04-2.04Z"/>
+  <text class="st33" transform="translate(904.27 1670.19)"><tspan x="0" y="0">Some text Nevienu nedrīkst turēt verdzībā vai dzimtbūtniecībā; </tspan><tspan x="0" y="16.8">visa veida verdzība un vergu tirdzniecība ir jāaizliedz.</tspan><tspan x="0" y="33.6">Nevienu nedrīkst pakļaut spīdzināšanai vai cietsirdīgi, necilvēcīgi </tspan><tspan x="0" y="50.4">ar viņu apieties vai sodīt, pazemojot viņa cilvēcisko cieņu</tspan></text>
+  <text class="st23" transform="translate(905.15 1738.66)"><tspan x="0" y="0">When the ad was posted</tspan></text>
+  <path class="st35" d="M1080.78,1725.48h0c.54,0,1.06.21,1.44.6h0l6.68,6.89h-4.72v8.85h-6.81v-8.85h-4.73l6.69-6.88c.39-.39.91-.61,1.45-.61h0Z"/>
+  <text class="st27" transform="translate(420.61 136.52) scale(.99 1)"><tspan x="0" y="0">Path of categories</tspan></text>
+  <path class="st34" d="M412.06,129.25l3.64,3.64-3.64,3.64-.63-.64,3-3-3-3,.63-.64Z"/>
+  <path class="st34" d="M515.05,129.25l3.64,3.64-3.64,3.64-.63-.64,3-3-3-3,.63-.64Z"/>
+  <text class="st27" transform="translate(524.73 136.52) scale(.99 1)"><tspan x="0" y="0">Path of categories</tspan></text>
+  <text class="st13" transform="translate(321.61 254.94) scale(.99 1)"><tspan x="0" y="0">Some criterion</tspan></text>
+  <text class="st20" transform="translate(339.67 273.94) scale(.99 1)"><tspan x="0" y="0">Var 1</tspan></text>
+  <text class="st20" transform="translate(339.72 287.72) scale(.99 1)"><tspan x="0" y="0">Var 2</tspan></text>
+  <text class="st20" transform="translate(339.67 301.5) scale(.99 1)"><tspan x="0" y="0">Var 3</tspan></text>
+  <text class="st20" transform="translate(339.67 315.28) scale(.99 1)"><tspan x="0" y="0">Var 4</tspan></text>
+  <rect x="327.12" y="265.25" width="9.7" height="9.7" rx="2.45" ry="2.45"/>
+  <rect class="st35" x="327.12" y="279.03" width="9.7" height="9.7" rx="2.45" ry="2.45"/>
+  <rect class="st35" x="327.12" y="292.81" width="9.7" height="9.7" rx="2.45" ry="2.45"/>
+  <rect class="st35" x="327.12" y="306.59" width="9.7" height="9.7" rx="2.45" ry="2.45"/>
+  <text class="st13" transform="translate(322 338.78) scale(.99 1)"><tspan x="0" y="0">Some criterion</tspan></text>
+  <rect class="st15" x="323.68" y="347.61" width="67.42" height="26.61" rx="3.98" ry="3.98"/>
+  <text class="st28" transform="translate(344.84 365.18)"><tspan x="0" y="0">Var 1</tspan></text>
+  <rect class="st16" x="395.66" y="347.61" width="67.42" height="26.61" rx="3.98" ry="3.98"/>
+  <text class="st28" transform="translate(416.82 365.18)"><tspan x="0" y="0">Var 2</tspan></text>
+  <rect class="st16" x="467.64" y="347.61" width="67.42" height="26.61" rx="3.98" ry="3.98"/>
+  <text class="st28" transform="translate(488.8 365.18)"><tspan x="0" y="0">Var 3</tspan></text>
+  <path class="st36" d="M335.16,267.84c.14.14.14.38,0,.52l-4.02,4.02c-.14.14-.37.14-.51,0,0,0,0,0,0,0l-1.83-1.83c-.14-.14-.14-.37,0-.52.14-.14.37-.14.52,0h0l1.57,1.57,3.76-3.76c.14-.14.37-.14.51,0,0,0,0,0,0,0"/>
+  <text class="st13" transform="translate(322 396.75) scale(.99 1)"><tspan x="0" y="0">Some criterion</tspan></text>
+  <rect class="st11" x="323.68" y="405.58" width="139.4" height="26.61" rx="3.98" ry="3.98"/>
+  <rect class="st11" x="468.82" y="406.79" width="143.91" height="25.41" rx="3.98" ry="3.98"/>
+  <text class="st31" transform="translate(473.26 423.15)"><tspan x="0" y="0">To</tspan></text>
+  <text class="st31" transform="translate(329 423.15)"><tspan x="0" y="0">From</tspan></text>
+  <text class="st12" transform="translate(463.84 396.7)"><tspan x="0" y="0">Var 1</tspan></text>
+  <path class="st38" d="M865.42,2032.81c10.34,0,18.73-8.39,18.73-18.73v-196.58c0-10.34-8.39-18.73-18.73-18.73h-196.58c-10.34,0-18.73,8.39-18.73,18.73v196.58c0,10.34,8.39,18.73,18.73,18.73"/>
+  <line class="st1" x1="630.57" y1="2053.41" x2="1618.26" y2="2053.41"/>
+  <text class="st18" transform="translate(1388.78 1804.64) scale(.99 1)"><tspan x="0" y="0">Name of seller</tspan></text>
+  <polygon class="st44" points="1398.44 1809.39 1400.5 1815.74 1407.18 1815.74 1401.78 1819.67 1403.84 1826.02 1398.44 1822.1 1393.03 1826.02 1395.1 1819.67 1389.69 1815.74 1396.37 1815.74 1398.44 1809.39"/>
+  <polygon class="st44" points="1419.71 1809.39 1421.77 1815.74 1428.45 1815.74 1423.05 1819.67 1425.11 1826.02 1419.71 1822.1 1414.3 1826.02 1416.37 1819.67 1410.96 1815.74 1417.64 1815.74 1419.71 1809.39"/>
+  <polygon class="st44" points="1440.97 1809.39 1443.04 1815.74 1449.72 1815.74 1444.31 1819.67 1446.38 1826.02 1440.97 1822.09 1435.57 1826.02 1437.63 1819.67 1432.23 1815.74 1438.91 1815.74 1440.97 1809.39"/>
+  <polygon class="st44" points="1462.24 1809.39 1464.3 1815.75 1470.99 1815.75 1465.58 1819.67 1467.65 1826.03 1462.24 1822.1 1456.84 1826.03 1458.9 1819.67 1453.49 1815.75 1460.18 1815.75 1462.24 1809.39"/>
+  <polygon class="st44" points="1483.51 1809.39 1485.57 1815.74 1492.25 1815.74 1486.85 1819.67 1488.91 1826.02 1483.51 1822.09 1478.1 1826.02 1480.17 1819.67 1474.76 1815.74 1481.44 1815.74 1483.51 1809.39"/>
+  <polygon class="st43" points="1483.51 1822.09 1488.91 1826.02 1486.85 1819.67 1492.25 1815.74 1485.57 1815.74 1483.51 1809.39 1483.51 1822.09"/>
+  <text class="st30" transform="translate(1501.14 1821.96)"><tspan x="0" y="0">4.5 · 45 reviews</tspan></text>
+  <rect class="st39" x="1390.19" y="1837.37" width="101.57" height="19.96" rx="3.44" ry="3.44"/>
+  <text class="st18" transform="translate(1417.53 1850.94) scale(.99 1)"><tspan x="0" y="0">Some tag</tspan></text>
+  <rect class="st42" x="1390.19" y="1868.68" width="209.32" height="30.74" rx="8.33" ry="8.33"/>
+  <text class="st18" transform="translate(1446.18 1887.6) scale(.99 1)"><tspan x="0" y="0">Show phone number</tspan></text>
+  <rect class="st42" x="1390.19" y="1910.77" width="209.32" height="30.74" rx="8.33" ry="8.33"/>
+  <text class="st18" transform="translate(1485.68 1929.7) scale(.99 1)"><tspan x="0" y="0">Write</tspan></text>
+  <rect class="st41" x="1501.05" y="1837.37" width="101.57" height="19.96" rx="3.44" ry="3.44"/>
+  <text class="st18" transform="translate(1528.39 1850.94) scale(.99 1)"><tspan x="0" y="0">Some tag</tspan></text>
+  <text class="st26" transform="translate(903.88 1819.15)"><tspan x="0" y="0">Title of the sale advertisement</tspan></text>
+  <text class="st3" transform="translate(903.88 1843.56)"><tspan x="0" y="0">Selling price + currency ($/¥/€)</tspan></text>
+  <path class="st38" d="M1081.19,1867.97l-8.3-9.64c-.55-.64-1.29-.99-2.06-.99h-158.92c-2.62,0-3.93,3.74-2.06,5.9l4.08,4.73c1.16,1.35,1.16,3.56,0,4.91l-4.08,4.73c-1.87,2.17-.56,5.9,2.06,5.9h158.92c.77,0,1.51-.36,2.06-.99l8.3-9.64c1.16-1.35,1.16-3.56,0-4.91Z"/>
+  <path class="st43" d="M1250.41,1867.67l-8.05-9.35c-.55-.64-1.29-.99-2.06-.99h-158.92c-2.62,0-3.93,3.74-2.06,5.9l3.89,4.52c1.26,1.47,1.26,3.86,0,5.33l-3.89,4.52c-1.87,2.17-.56,5.9,2.06,5.9h158.92c.77,0,1.51-.36,2.06-.99l8.05-9.35c1.3-1.51,1.3-3.98,0-5.49Z"/>
+  <text class="st22" transform="translate(923.6 1876.77)"><tspan x="0" y="0">Some options</tspan></text>
+  <text class="st22" transform="translate(1091.18 1876.77)"><tspan x="0" y="0">Some options</tspan></text>
+  <text class="st24" transform="translate(903.88 1906.1)"><tspan x="0" y="0">Any specifications</tspan></text>
+  <text class="st24" transform="translate(922.03 1927.15)"><tspan x="0" y="0">Any adress</tspan></text>
+  <path d="M910.75,1929.86l-.48-.41c-1.5-1.27-6.39-5.67-6.39-9.07,0-3.79,3.08-6.87,6.87-6.87s6.87,3.08,6.87,6.87c0,3.39-4.89,7.8-6.39,9.07l-.48.41ZM910.75,1914.2c-3.41,0-6.19,2.78-6.19,6.19,0,3.18,5.12,7.68,6.15,8.55l.04.03.04-.03c1.03-.87,6.15-5.36,6.15-8.55,0-3.41-2.78-6.19-6.19-6.19Z"/>
+  <path d="M910.75,1923.05c-1.5,0-2.72-1.22-2.72-2.72s1.22-2.72,2.72-2.72,2.72,1.22,2.72,2.72-1.22,2.72-2.72,2.72ZM910.75,1918.29c-1.13,0-2.04.92-2.04,2.04s.92,2.04,2.04,2.04,2.04-.92,2.04-2.04-.92-2.04-2.04-2.04Z"/>
+  <text class="st33" transform="translate(903.88 1947.3)"><tspan x="0" y="0">Some text Nevienu nedrīkst turēt verdzībā vai dzimtbūtniecībā; </tspan><tspan x="0" y="16.8">visa veida verdzība un vergu tirdzniecība ir jāaizliedz.</tspan><tspan x="0" y="33.6">Nevienu nedrīkst pakļaut spīdzināšanai vai cietsirdīgi, necilvēcīgi </tspan><tspan x="0" y="50.4">ar viņu apieties vai sodīt, pazemojot viņa cilvēcisko cieņu</tspan></text>
+  <text class="st23" transform="translate(904.76 2015.77)"><tspan x="0" y="0">When the ad was posted</tspan></text>
+  <path class="st35" d="M1080.39,2002.59h0c.54,0,1.06.21,1.44.6h0l6.68,6.89h-4.72v8.85h-6.81v-8.85h-4.73l6.69-6.88c.39-.39.91-.61,1.45-.61h0Z"/>
+  <text class="st6" transform="translate(643.64 2709.31) scale(.99 1)"><tspan x="0" y="0">Populare</tspan></text>
+  <path class="st38" d="M868.85,2923.52c8.45,0,15.3-6.85,15.3-15.3v-160.55c0-8.45-6.85-15.3-15.3-15.3h-160.55c-8.45,0-15.3,6.85-15.3,15.3v160.55c0,8.45,6.85,15.3,15.3,15.3"/>
+  <path class="st38" d="M1089.85,2923.52c8.45,0,15.3-6.85,15.3-15.3v-160.55c0-8.45-6.85-15.3-15.3-15.3h-160.55c-8.45,0-15.3,6.85-15.3,15.3v160.55c0,8.45,6.85,15.3,15.3,15.3"/>
+  <path class="st38" d="M1314.97,2923.52c8.45,0,15.3-6.85,15.3-15.3v-160.55c0-8.45-6.85-15.3-15.3-15.3h-160.55c-8.45,0-15.3,6.85-15.3,15.3v160.55c0,8.45,6.85,15.3,15.3,15.3"/>
+  <path class="st38" d="M1540.08,2923.52c8.45,0,15.3-6.85,15.3-15.3v-160.55c0-8.45-6.85-15.3-15.3-15.3h-160.55c-8.45,0-15.3,6.85-15.3,15.3v160.55c0,8.45,6.85,15.3,15.3,15.3"/>
+  <text class="st26" transform="translate(1396.12 2949.78)"><tspan x="0" y="0">Title of the sale</tspan></text>
+  <text class="st17" transform="translate(1400.36 2978.59)"><tspan x="0" y="0">Final category</tspan></text>
+  <text class="st3" transform="translate(1421.41 3007.39)"><tspan x="0" y="0">Price + cur</tspan></text>
+  <path class="st34" d="M1583.22,2813.53l14.43,14.41-14.43,14.43-2.52-2.54,11.89-11.89-11.89-11.89,2.52-2.52Z"/>
+  <path class="st34" d="M666.01,2842.36l-14.43-14.41,14.43-14.43,2.52,2.54-11.89,11.89,11.89,11.89-2.52,2.52Z"/>
+  <text class="st26" transform="translate(1168.77 2949.78)"><tspan x="0" y="0">Title of the sale</tspan></text>
+  <text class="st17" transform="translate(1173.02 2978.59)"><tspan x="0" y="0">Final category</tspan></text>
+  <text class="st3" transform="translate(1194.07 3007.39)"><tspan x="0" y="0">Price + cur</tspan></text>
+  <text class="st26" transform="translate(943.66 2949.47)"><tspan x="0" y="0">Title of the sale</tspan></text>
+  <text class="st17" transform="translate(947.9 2978.28)"><tspan x="0" y="0">Final category</tspan></text>
+  <text class="st3" transform="translate(968.95 3007.08)"><tspan x="0" y="0">Price + cur</tspan></text>
+  <text class="st26" transform="translate(722.66 2949.78)"><tspan x="0" y="0">Title of the sale</tspan></text>
+  <text class="st17" transform="translate(726.9 2978.59)"><tspan x="0" y="0">Final category</tspan></text>
+  <text class="st3" transform="translate(747.95 3007.39)"><tspan x="0" y="0">Price + cur</tspan></text>
+  <path class="st34" d="M663.03,2642.03l-7.21-7.2,7.21-7.21,1.26,1.27-5.94,5.94,5.94,5.94-1.26,1.26Z"/>
+  <path class="st34" d="M996.77,2627.62l7.21,7.2-7.21,7.21-1.26-1.27,5.94-5.94-5.94-5.94,1.26-1.26Z"/>
+  <rect class="st38" x="685.89" y="2609.39" width="49.04" height="49.04" rx="7.54" ry="7.54"/>
+  <text class="st22" transform="translate(705.02 2640.48)"><tspan x="0" y="0">1</tspan></text>
+  <text class="st26" transform="translate(755.06 2641.92)"><tspan x="0" y="0">2</tspan></text>
+  <text class="st26" transform="translate(795.47 2641.92)"><tspan x="0" y="0">3</tspan></text>
+  <text class="st26" transform="translate(834.09 2641.92)"><tspan x="0" y="0">4</tspan></text>
+  <text class="st26" transform="translate(874.5 2641.92)"><tspan x="0" y="0">5</tspan></text>
+  <text class="st26" transform="translate(911.22 2642.15)"><tspan x="0" y="0">···</tspan></text>
+  <text class="st26" transform="translate(941.99 2642.15)"><tspan x="0" y="0">100</tspan></text>
+  <path class="st38" d="M865.42,2308.58c10.34,0,18.73-8.39,18.73-18.73v-196.58c0-10.34-8.39-18.73-18.73-18.73h-196.58c-10.34,0-18.73,8.39-18.73,18.73v196.58c0,10.34,8.39,18.73,18.73,18.73"/>
+  <line class="st1" x1="630.57" y1="2329.18" x2="1618.26" y2="2329.18"/>
+  <text class="st18" transform="translate(1388.78 2080.41) scale(.99 1)"><tspan x="0" y="0">Name of seller</tspan></text>
+  <polygon class="st44" points="1398.44 2085.16 1400.5 2091.51 1407.18 2091.51 1401.78 2095.44 1403.84 2101.79 1398.44 2097.87 1393.03 2101.79 1395.1 2095.44 1389.69 2091.51 1396.37 2091.51 1398.44 2085.16"/>
+  <polygon class="st44" points="1419.71 2085.16 1421.77 2091.51 1428.45 2091.51 1423.05 2095.44 1425.11 2101.79 1419.71 2097.87 1414.3 2101.79 1416.37 2095.44 1410.96 2091.51 1417.64 2091.51 1419.71 2085.16"/>
+  <polygon class="st44" points="1440.97 2085.16 1443.04 2091.51 1449.72 2091.51 1444.31 2095.44 1446.38 2101.79 1440.97 2097.86 1435.57 2101.79 1437.63 2095.44 1432.23 2091.51 1438.91 2091.51 1440.97 2085.16"/>
+  <polygon class="st44" points="1462.24 2085.16 1464.3 2091.52 1470.99 2091.52 1465.58 2095.44 1467.65 2101.8 1462.24 2097.87 1456.84 2101.8 1458.9 2095.44 1453.49 2091.52 1460.18 2091.52 1462.24 2085.16"/>
+  <polygon class="st44" points="1483.51 2085.16 1485.57 2091.51 1492.25 2091.51 1486.85 2095.44 1488.91 2101.79 1483.51 2097.86 1478.1 2101.79 1480.17 2095.44 1474.76 2091.51 1481.44 2091.51 1483.51 2085.16"/>
+  <polygon class="st43" points="1483.51 2097.86 1488.91 2101.79 1486.85 2095.44 1492.25 2091.51 1485.57 2091.51 1483.51 2085.16 1483.51 2097.86"/>
+  <text class="st30" transform="translate(1501.14 2097.73)"><tspan x="0" y="0">4.5 · 45 reviews</tspan></text>
+  <rect class="st39" x="1390.19" y="2113.14" width="101.57" height="19.96" rx="3.44" ry="3.44"/>
+  <text class="st18" transform="translate(1417.53 2126.71) scale(.99 1)"><tspan x="0" y="0">Some tag</tspan></text>
+  <rect class="st42" x="1390.19" y="2144.45" width="209.32" height="30.74" rx="8.33" ry="8.33"/>
+  <text class="st18" transform="translate(1446.18 2163.37) scale(.99 1)"><tspan x="0" y="0">Show phone number</tspan></text>
+  <rect class="st42" x="1390.19" y="2186.54" width="209.32" height="30.74" rx="8.33" ry="8.33"/>
+  <text class="st18" transform="translate(1485.68 2205.47) scale(.99 1)"><tspan x="0" y="0">Write</tspan></text>
+  <rect class="st41" x="1501.05" y="2113.14" width="101.57" height="19.96" rx="3.44" ry="3.44"/>
+  <text class="st18" transform="translate(1528.39 2126.71) scale(.99 1)"><tspan x="0" y="0">Some tag</tspan></text>
+  <text class="st26" transform="translate(903.88 2094.92)"><tspan x="0" y="0">Title of the sale advertisement</tspan></text>
+  <text class="st3" transform="translate(903.88 2119.33)"><tspan x="0" y="0">Selling price + currency ($/¥/€)</tspan></text>
+  <path class="st38" d="M1081.19,2143.74l-8.3-9.64c-.55-.64-1.29-.99-2.06-.99h-158.92c-2.62,0-3.93,3.74-2.06,5.9l4.08,4.73c1.16,1.35,1.16,3.56,0,4.91l-4.08,4.73c-1.87,2.17-.56,5.9,2.06,5.9h158.92c.77,0,1.51-.36,2.06-.99l8.3-9.64c1.16-1.35,1.16-3.56,0-4.91Z"/>
+  <path class="st43" d="M1250.41,2143.44l-8.05-9.35c-.55-.64-1.29-.99-2.06-.99h-158.92c-2.62,0-3.93,3.74-2.06,5.9l3.89,4.52c1.26,1.47,1.26,3.86,0,5.33l-3.89,4.52c-1.87,2.17-.56,5.9,2.06,5.9h158.92c.77,0,1.51-.36,2.06-.99l8.05-9.35c1.3-1.51,1.3-3.98,0-5.49Z"/>
+  <text class="st22" transform="translate(923.6 2152.54)"><tspan x="0" y="0">Some options</tspan></text>
+  <text class="st22" transform="translate(1091.18 2152.54)"><tspan x="0" y="0">Some options</tspan></text>
+  <text class="st24" transform="translate(903.88 2181.87)"><tspan x="0" y="0">Any specifications</tspan></text>
+  <text class="st24" transform="translate(922.03 2202.92)"><tspan x="0" y="0">Any adress</tspan></text>
+  <path d="M910.75,2205.63l-.48-.41c-1.5-1.27-6.39-5.67-6.39-9.07,0-3.79,3.08-6.87,6.87-6.87s6.87,3.08,6.87,6.87c0,3.39-4.89,7.8-6.39,9.07l-.48.41ZM910.75,2189.97c-3.41,0-6.19,2.78-6.19,6.19,0,3.18,5.12,7.68,6.15,8.55l.04.03.04-.03c1.03-.87,6.15-5.36,6.15-8.55,0-3.41-2.78-6.19-6.19-6.19Z"/>
+  <path d="M910.75,2198.82c-1.5,0-2.72-1.22-2.72-2.72s1.22-2.72,2.72-2.72,2.72,1.22,2.72,2.72-1.22,2.72-2.72,2.72ZM910.75,2194.06c-1.13,0-2.04.92-2.04,2.04s.92,2.04,2.04,2.04,2.04-.92,2.04-2.04-.92-2.04-2.04-2.04Z"/>
+  <text class="st33" transform="translate(903.88 2223.07)"><tspan x="0" y="0">Some text Nevienu nedrīkst turēt verdzībā vai dzimtbūtniecībā; </tspan><tspan x="0" y="16.8">visa veida verdzība un vergu tirdzniecība ir jāaizliedz.</tspan><tspan x="0" y="33.6">Nevienu nedrīkst pakļaut spīdzināšanai vai cietsirdīgi, necilvēcīgi </tspan><tspan x="0" y="50.4">ar viņu apieties vai sodīt, pazemojot viņa cilvēcisko cieņu</tspan></text>
+  <text class="st23" transform="translate(904.76 2291.54)"><tspan x="0" y="0">When the ad was posted</tspan></text>
+  <path class="st35" d="M1080.39,2278.36h0c.54,0,1.06.21,1.44.6h0l6.68,6.89h-4.72v8.85h-6.81v-8.85h-4.73l6.69-6.88c.39-.39.91-.61,1.45-.61h0Z"/>
+  <path class="st38" d="M1354.36,1513.22c-2.5,0-4.78,1.85-5.75,4.35-.97-2.5-3.25-4.35-5.75-4.35-3.45,0-6.25,2.8-6.25,6.25,0,6.76,9.75,14.07,11.71,15.47l.29.21.29-.21c1.96-1.4,11.71-8.71,11.71-15.47,0-3.45-2.8-6.25-6.25-6.25ZM1348.61,1533.91c-5.14-3.74-11-9.67-11-14.44,0-2.89,2.36-5.25,5.25-5.25s5.25,2.86,5.25,6h1c0-3.14,2.5-6,5.25-6,2.9,0,5.25,2.36,5.25,5.25,0,4.77-5.86,10.71-11,14.44Z"/>
+  <path class="st38" d="M1354.11,1789.78c-2.5,0-4.78,1.85-5.75,4.35-.97-2.5-3.25-4.35-5.75-4.35-3.45,0-6.25,2.8-6.25,6.25,0,6.76,9.75,14.07,11.71,15.47l.29.21.29-.21c1.96-1.4,11.71-8.71,11.71-15.47,0-3.45-2.8-6.25-6.25-6.25ZM1348.36,1810.47c-5.14-3.74-11-9.67-11-14.44,0-2.89,2.36-5.25,5.25-5.25s5.25,2.86,5.25,6h1c0-3.14,2.5-6,5.25-6,2.9,0,5.25,2.36,5.25,5.25,0,4.77-5.86,10.71-11,14.44Z"/>
+  <path class="st38" d="M1354.36,2074.41c-2.5,0-4.78,1.85-5.75,4.35-.97-2.5-3.25-4.35-5.75-4.35-3.45,0-6.25,2.8-6.25,6.25,0,6.76,9.75,14.07,11.71,15.47l.29.21.29-.21c1.96-1.4,11.71-8.71,11.71-15.47,0-3.45-2.8-6.25-6.25-6.25ZM1348.61,2095.11c-5.14-3.74-11-9.67-11-14.44,0-2.89,2.36-5.25,5.25-5.25s5.25,2.86,5.25,6h1c0-3.14,2.5-6,5.25-6,2.9,0,5.25,2.36,5.25,5.25,0,4.77-5.86,10.71-11,14.44Z"/>
+  <path class="st38" d="M1354.36,1235.9c-2.5,0-4.78,1.85-5.75,4.35-.97-2.5-3.25-4.35-5.75-4.35-3.45,0-6.25,2.8-6.25,6.25,0,6.76,9.75,14.07,11.71,15.47l.29.21.29-.21c1.96-1.4,11.71-8.71,11.71-15.47,0-3.45-2.8-6.25-6.25-6.25ZM1348.61,1256.59c-5.14-3.74-11-9.67-11-14.44,0-2.89,2.36-5.25,5.25-5.25s5.25,2.86,5.25,6h1c0-3.14,2.5-6,5.25-6,2.9,0,5.25,2.36,5.25,5.25,0,4.77-5.86,10.71-11,14.44Z"/>
+  <g>
+    <g>
+      <path d="M371.19,3113.75c1.41-1.77,2.37-4.15,2.12-6.57-2.07.1-4.6,1.36-6.07,3.14-1.31,1.52-2.48,3.99-2.17,6.32,2.32.2,4.65-1.16,6.12-2.89h0Z"/>
+      <path d="M373.28,3117.1c-3.38-.2-6.25,1.92-7.86,1.92s-4.08-1.81-6.76-1.77c-3.48.05-6.7,2.02-8.47,5.14-3.63,6.26-.96,15.53,2.57,20.63,1.71,2.52,3.78,5.29,6.5,5.19,2.57-.1,3.58-1.66,6.71-1.66s4.03,1.66,6.75,1.61c2.83-.05,4.59-2.52,6.3-5.04,1.97-2.88,2.77-5.65,2.82-5.8-.05-.05-5.44-2.12-5.49-8.32-.05-5.19,4.23-7.66,4.44-7.82-2.41-3.58-6.19-3.98-7.5-4.08h0Z"/>
+    </g>
+    <g>
+      <path d="M402.7,3110.06c7.34,0,12.45,5.06,12.45,12.43s-5.22,12.48-12.64,12.48h-8.13v12.93h-5.87v-37.84h14.19ZM394.38,3130.04h6.74c5.11,0,8.02-2.75,8.02-7.52s-2.91-7.5-7.99-7.5h-6.76v15.02h0Z"/>
+      <path d="M416.68,3140.06c0-4.82,3.7-7.79,10.25-8.15l7.55-.45v-2.12c0-3.07-2.07-4.9-5.53-4.9-3.28,0-5.32,1.57-5.82,4.04h-5.35c.32-4.98,4.56-8.65,11.38-8.65s10.96,3.54,10.96,9.07v19.01h-5.43v-4.54h-.13c-1.6,3.07-5.08,5.01-8.71,5.01-5.4,0-9.18-3.36-9.18-8.31ZM434.48,3137.57v-2.17l-6.79.42c-3.38.24-5.29,1.73-5.29,4.09s1.99,3.99,5.03,3.99c3.96,0,7.05-2.73,7.05-6.33Z"/>
+      <path d="M445.25,3158.04v-4.59c.42.11,1.36.11,1.83.11,2.62,0,4.04-1.1,4.9-3.93,0-.05.5-1.68.5-1.7l-9.96-27.61h6.14l6.97,22.45h.11l6.97-22.45h5.98l-10.33,29.02c-2.36,6.69-5.08,8.84-10.8,8.84-.48,0-1.89-.05-2.31-.13Z"/>
+    </g>
+  </g>
+  <path d="M551.52,3124.8l-34.69-19.41c-1.46-.95-3.32-1.02-4.86-.2-1.56.83-2.53,2.45-2.53,4.22v39.14c0,1.77.97,3.39,2.53,4.22,1.53.82,3.39.75,4.86-.2l34.69-19.41c1.53-.86,2.45-2.42,2.45-4.18s-.92-3.32-2.45-4.18ZM539.85,3121.94l-4.79,4.79-16.96-16.96,21.75,12.17ZM512.63,3149.09v-40.21l20.18,20.11-20.18,20.11ZM518.11,3148.2l16.96-16.96,4.79,4.79-21.75,12.17h0ZM549.96,3130.38l-7.21,4.03-5.43-5.43,5.43-5.43,7.21,4.03c.74.41.82,1.11.82,1.39s-.08.98-.82,1.39h0Z"/>
+  <text class="st6" transform="translate(359.33 3085.7) scale(.99 1)"><tspan x="0" y="0">Download the app</tspan></text>
+  <rect x="594.72" y="3103.16" width="56.16" height="56.16" rx="15.88" ry="15.88"/>
+  <path class="st36" d="M608.72,3118.36c-.55.03-.51.83-.51.83,2.93,5.73,8.33,8.55,14.57,8.55,6.22-.02,11.67-2.85,14.6-8.58,0,0,.12-1.09-1.01-.72-2.79,4.87-7.96,7.91-13.57,7.97-5.62-.03-10.8-3.06-13.59-7.94-.14-.07-.31-.11-.47-.11h-.02ZM628.58,3136.55l-1.67,4.99-1.62-4.99h-1.59l2.56,7.25h1.25l1.67-4.77,1.67,4.77h1.25l2.56-7.25h-1.56l-1.62,4.99-1.67-4.99s-1.22,0-1.22,0ZM619.71,3136.55l-3.24,7.24h1.53l.62-1.4.05-.09h3.35l.67,1.51h1.56l-3.21-7.21-.03-.05h-1.29ZM643.18,3136.55v7.24h1.47v-7.24h-1.47ZM600.96,3136.55v7.25h1.5v-2.95h3.37v2.95h1.48v-7.25h-1.48v2.92h-3.37v-2.92h-1.5ZM614.22,3136.55v4.15c0,1.19-.59,1.81-1.67,1.81s-1.68-.64-1.68-1.86v-4.1h-1.5v4.15c0,2.04,1.15,3.21,3.15,3.21s3.2-1.19,3.2-3.28v-4.09h-1.5ZM635.85,3136.55v7.25h5.55v-1.33h-4.09v-1.79h2.71v-1.33h-2.71v-1.48h3.95v-1.33h-5.41ZM620.34,3138.37l1.08,2.43.06.16h-2.25l.06-.16,1.05-2.43Z"/>
+  <text class="st6" transform="translate(1308.12 3085.7) scale(.99 1)"><tspan x="0" y="0">Our social media</tspan></text>
+  <path class="st36" d="M1534.74,3113.17c-.55.03-.51.83-.51.83,2.93,5.73,8.33,8.55,14.57,8.55,6.22-.02,11.67-2.85,14.6-8.58,0,0,.12-1.09-1.01-.72-2.79,4.87-7.96,7.91-13.57,7.97-5.62-.03-10.8-3.06-13.59-7.94-.14-.07-.31-.11-.47-.11h-.02ZM1554.6,3131.36l-1.67,4.99-1.62-4.99h-1.59l2.56,7.25h1.25l1.67-4.77,1.67,4.77h1.25l2.56-7.25h-1.56l-1.62,4.99-1.67-4.99s-1.22,0-1.22,0ZM1545.74,3131.36l-3.24,7.24h1.53l.62-1.4.05-.09h3.35l.67,1.51h1.56l-3.21-7.21-.03-.05h-1.29ZM1569.2,3131.36v7.24h1.47v-7.24h-1.47ZM1526.99,3131.36v7.25h1.5v-2.95h3.37v2.95h1.48v-7.25h-1.48v2.92h-3.37v-2.92h-1.5ZM1540.25,3131.36v4.15c0,1.19-.59,1.81-1.67,1.81s-1.68-.64-1.68-1.86v-4.1h-1.5v4.15c0,2.04,1.15,3.21,3.15,3.21s3.2-1.19,3.2-3.28v-4.09h-1.5ZM1561.87,3131.36v7.25h5.55v-1.33h-4.09v-1.79h2.71v-1.33h-2.71v-1.48h3.95v-1.33h-5.41ZM1546.36,3133.18l1.08,2.43.06.16h-2.25l.06-.16,1.05-2.43Z"/>
+  <path d="M1346.55,3115.28c-.89-3.36-3.52-6.01-6.87-6.91-6.05-1.63-30.34-1.63-30.34-1.63,0,0-24.28,0-30.34,1.63-3.34.9-5.97,3.55-6.86,6.91-1.62,6.1-1.62,18.81-1.62,18.81,0,0,0,12.72,1.62,18.81.89,3.36,3.52,6.01,6.87,6.91,6.05,1.63,30.34,1.63,30.34,1.63,0,0,24.28,0,30.34-1.63,3.34-.9,5.97-3.55,6.87-6.91,1.62-6.1,1.62-18.81,1.62-18.81,0,0,0-12.72-1.62-18.81ZM1301.41,3145.64v-23.1l20.29,11.55-20.29,11.55Z"/>
+  <g>
+    <path d="M1431.83,3111.27c7.98,0,8.93.03,12.08.17,3.26.15,6.61.89,8.99,3.27,2.4,2.4,3.12,5.72,3.27,8.99.14,3.15.17,4.1.17,12.08s-.03,8.93-.17,12.08c-.15,3.24-.91,6.63-3.27,8.99-2.4,2.4-5.72,3.12-8.99,3.27-3.15.14-4.1.17-12.08.17s-8.93-.03-12.08-.17c-3.22-.15-6.65-.92-8.99-3.27-2.38-2.38-3.12-5.74-3.27-8.99-.14-3.15-.17-4.1-.17-12.08s.03-8.93.17-12.08c.15-3.23.91-6.63,3.27-8.99,2.39-2.39,5.73-3.12,8.99-3.27,3.15-.14,4.1-.17,12.08-.17M1431.83,3105.89c-8.12,0-9.14.03-12.32.18-4.62.21-9.21,1.5-12.55,4.84-3.35,3.35-4.62,7.93-4.84,12.55-.14,3.19-.18,4.21-.18,12.32s.03,9.14.18,12.32c.21,4.61,1.5,9.21,4.84,12.55,3.35,3.35,7.93,4.62,12.55,4.84,3.19.14,4.21.18,12.32.18s9.14-.03,12.32-.18c4.62-.21,9.21-1.5,12.55-4.84,3.35-3.35,4.62-7.93,4.84-12.55.14-3.19.18-4.21.18-12.32s-.03-9.14-.18-12.32c-.21-4.62-1.5-9.21-4.84-12.55-3.34-3.34-7.94-4.63-12.55-4.84-3.19-.14-4.21-.18-12.32-.18Z"/>
+    <path d="M1431.83,3120.43c-8.48,0-15.35,6.87-15.35,15.35s6.87,15.35,15.35,15.35,15.35-6.87,15.35-15.35-6.87-15.35-15.35-15.35ZM1431.83,3145.74c-5.5,0-9.96-4.46-9.96-9.96s4.46-9.96,9.96-9.96,9.96,4.46,9.96,9.96-4.46,9.96-9.96,9.96Z"/>
+    <circle cx="1447.79" cy="3119.82" r="3.59"/>
+  </g>
+  <g id="Artboard">
+    <path class="st40" d="M1545.26,3100.84c-17.57,0-31.81,14.24-31.81,31.81s14.24,31.81,31.81,31.81,31.81-14.24,31.81-31.81-14.24-31.81-31.81-31.81ZM1560,3122.47c-.48,5.03-2.55,17.23-3.6,22.87-.45,2.39-1.33,3.18-2.17,3.26-1.85.17-3.25-1.22-5.04-2.39-2.8-1.83-4.38-2.98-7.1-4.77-3.14-2.07-1.11-3.21.68-5.07.47-.49,8.61-7.89,8.77-8.56.02-.08.04-.4-.15-.56s-.46-.11-.66-.06c-.28.06-4.75,3.02-13.42,8.87-1.27.87-2.42,1.3-3.45,1.27-1.13-.02-3.32-.64-4.94-1.17-1.99-.65-3.58-.99-3.44-2.09.07-.57.86-1.16,2.36-1.76,9.27-4.04,15.46-6.7,18.55-7.99,8.83-3.67,10.67-4.31,11.87-4.33,1.5-.02,1.86,1.22,1.74,2.49Z"/>
+  </g>
+  <text class="st33" transform="translate(342.76 3192.98)"><tspan x="0" y="0">Some text Nevienu nedrīkst turēt verdzībā vai dzimtbūtniecībā; visa veida verdzība un vergu tirdzniecība ir jāaizliedz. Nevienu nedrīkst pakļaut spīdzināšanai vai cietsirdīgi, necilvēcīgi ar viņu apieties vai sodīt, </tspan><tspan x="0" y="16.8">pazemojot viņa cilvēcisko cieņu</tspan></text>
+  <path class="st38" d="M865.42,2583.78c10.34,0,18.73-8.39,18.73-18.73v-196.58c0-10.34-8.39-18.73-18.73-18.73h-196.58c-10.34,0-18.73,8.39-18.73,18.73v196.58c0,10.34,8.39,18.73,18.73,18.73"/>
+  <path class="st1" d="M1618.26,2604.38"/>
+  <path class="st1" d="M630.57,2604.38"/>
+  <text class="st18" transform="translate(1388.78 2355.61) scale(.99 1)"><tspan x="0" y="0">Name of seller</tspan></text>
+  <polygon class="st44" points="1398.44 2360.36 1400.5 2366.71 1407.18 2366.71 1401.78 2370.64 1403.84 2376.99 1398.44 2373.06 1393.03 2376.99 1395.1 2370.64 1389.69 2366.71 1396.37 2366.71 1398.44 2360.36"/>
+  <polygon class="st44" points="1419.71 2360.36 1421.77 2366.71 1428.45 2366.71 1423.05 2370.64 1425.11 2376.99 1419.71 2373.06 1414.3 2376.99 1416.37 2370.64 1410.96 2366.71 1417.64 2366.71 1419.71 2360.36"/>
+  <polygon class="st44" points="1440.97 2360.35 1443.04 2366.71 1449.72 2366.71 1444.31 2370.63 1446.38 2376.99 1440.97 2373.06 1435.57 2376.99 1437.63 2370.63 1432.23 2366.71 1438.91 2366.71 1440.97 2360.35"/>
+  <polygon class="st44" points="1462.24 2360.36 1464.3 2366.71 1470.99 2366.71 1465.58 2370.64 1467.65 2376.99 1462.24 2373.07 1456.84 2376.99 1458.9 2370.64 1453.49 2366.71 1460.18 2366.71 1462.24 2360.36"/>
+  <polygon class="st44" points="1483.51 2360.35 1485.57 2366.71 1492.25 2366.71 1486.85 2370.63 1488.91 2376.99 1483.51 2373.06 1478.1 2376.99 1480.17 2370.63 1474.76 2366.71 1481.44 2366.71 1483.51 2360.35"/>
+  <polygon class="st43" points="1483.51 2373.06 1488.91 2376.99 1486.85 2370.63 1492.25 2366.71 1485.57 2366.71 1483.51 2360.35 1483.51 2373.06"/>
+  <text class="st30" transform="translate(1501.14 2372.93)"><tspan x="0" y="0">4.5 · 45 reviews</tspan></text>
+  <rect class="st39" x="1390.19" y="2388.34" width="101.57" height="19.96" rx="3.44" ry="3.44"/>
+  <text class="st18" transform="translate(1417.53 2401.91) scale(.99 1)"><tspan x="0" y="0">Some tag</tspan></text>
+  <rect class="st42" x="1390.19" y="2419.64" width="209.32" height="30.74" rx="8.33" ry="8.33"/>
+  <text class="st18" transform="translate(1446.18 2438.57) scale(.99 1)"><tspan x="0" y="0">Show phone number</tspan></text>
+  <rect class="st42" x="1390.19" y="2461.73" width="209.32" height="30.74" rx="8.33" ry="8.33"/>
+  <text class="st18" transform="translate(1485.68 2480.66) scale(.99 1)"><tspan x="0" y="0">Write</tspan></text>
+  <rect class="st41" x="1501.05" y="2388.34" width="101.57" height="19.96" rx="3.44" ry="3.44"/>
+  <text class="st18" transform="translate(1528.39 2401.91) scale(.99 1)"><tspan x="0" y="0">Some tag</tspan></text>
+  <text class="st26" transform="translate(903.88 2370.11)"><tspan x="0" y="0">Title of the sale advertisement</tspan></text>
+  <text class="st3" transform="translate(903.88 2394.53)"><tspan x="0" y="0">Selling price + currency ($/¥/€)</tspan></text>
+  <path class="st38" d="M1081.19,2418.93l-8.3-9.64c-.55-.64-1.29-.99-2.06-.99h-158.92c-2.62,0-3.93,3.74-2.06,5.9l4.08,4.73c1.16,1.35,1.16,3.56,0,4.91l-4.08,4.73c-1.87,2.17-.56,5.9,2.06,5.9h158.92c.77,0,1.51-.36,2.06-.99l8.3-9.64c1.16-1.35,1.16-3.56,0-4.91Z"/>
+  <path class="st43" d="M1250.41,2418.64l-8.05-9.35c-.55-.64-1.29-.99-2.06-.99h-158.92c-2.62,0-3.93,3.74-2.06,5.9l3.89,4.52c1.26,1.47,1.26,3.86,0,5.33l-3.89,4.52c-1.87,2.17-.56,5.9,2.06,5.9h158.92c.77,0,1.51-.36,2.06-.99l8.05-9.35c1.3-1.51,1.3-3.98,0-5.49Z"/>
+  <text class="st22" transform="translate(923.6 2427.73)"><tspan x="0" y="0">Some options</tspan></text>
+  <text class="st22" transform="translate(1091.18 2427.73)"><tspan x="0" y="0">Some options</tspan></text>
+  <text class="st24" transform="translate(903.88 2457.07)"><tspan x="0" y="0">Any specifications</tspan></text>
+  <text class="st24" transform="translate(922.03 2478.12)"><tspan x="0" y="0">Any adress</tspan></text>
+  <path d="M910.75,2480.83l-.48-.41c-1.5-1.27-6.39-5.67-6.39-9.07,0-3.79,3.08-6.87,6.87-6.87s6.87,3.08,6.87,6.87c0,3.39-4.89,7.8-6.39,9.07l-.48.41ZM910.75,2465.17c-3.41,0-6.19,2.78-6.19,6.19,0,3.18,5.12,7.68,6.15,8.55l.04.03.04-.03c1.03-.87,6.15-5.36,6.15-8.55,0-3.41-2.78-6.19-6.19-6.19Z"/>
+  <path d="M910.75,2474.02c-1.5,0-2.72-1.22-2.72-2.72s1.22-2.72,2.72-2.72,2.72,1.22,2.72,2.72-1.22,2.72-2.72,2.72ZM910.75,2469.25c-1.13,0-2.04.92-2.04,2.04s.92,2.04,2.04,2.04,2.04-.92,2.04-2.04-.92-2.04-2.04-2.04Z"/>
+  <text class="st33" transform="translate(903.88 2498.27)"><tspan x="0" y="0">Some text Nevienu nedrīkst turēt verdzībā vai dzimtbūtniecībā; </tspan><tspan x="0" y="16.8">visa veida verdzība un vergu tirdzniecība ir jāaizliedz.</tspan><tspan x="0" y="33.6">Nevienu nedrīkst pakļaut spīdzināšanai vai cietsirdīgi, necilvēcīgi </tspan><tspan x="0" y="50.4">ar viņu apieties vai sodīt, pazemojot viņa cilvēcisko cieņu</tspan></text>
+  <text class="st23" transform="translate(904.76 2566.73)"><tspan x="0" y="0">When the ad was posted</tspan></text>
+  <path class="st35" d="M1080.39,2553.56h0c.54,0,1.06.21,1.44.6h0l6.68,6.89h-4.72v8.85h-6.81v-8.85h-4.73l6.69-6.88c.39-.39.91-.61,1.45-.61h0Z"/>
+  <path class="st38" d="M1360.61,2355.86c0-3.45-2.8-6.25-6.25-6.25-2.5,0-4.78,1.85-5.75,4.35-.97-2.5-3.25-4.35-5.75-4.35-3.45,0-6.25,2.8-6.25,6.25,0,6.76,9.75,14.07,11.71,15.47l.29.21.29-.21c1.96-1.4,11.71-8.71,11.71-15.47"/>
+  <path class="st38" d="M1359.61,2355.86c0,4.77-5.86,10.71-11,14.44-5.14-3.74-11-9.67-11-14.44,0-2.89,2.36-5.25,5.25-5.25s5.25,2.86,5.25,6h1c0-3.14,2.5-6,5.25-6,2.9,0,5.25,2.36,5.25,5.25"/>
+</svg>

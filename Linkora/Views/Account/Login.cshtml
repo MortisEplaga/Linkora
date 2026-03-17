@@ -1,0 +1,54 @@
+﻿@{
+    ViewData["Title"] = "Sign in";
+}
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-tabs">
+            <a class="auth-tab auth-tab-active" asp-controller="Account" asp-action="Login">Sign in</a>
+            <a class="auth-tab" asp-controller="Account" asp-action="Register">Register</a>
+        </div>
+        @if (ViewBag.Error != null)
+        {
+            <div class="auth-error">@ViewBag.Error</div>
+        }
+        <div class="auth-socials">
+            <button class="auth-social" title="Google">G</button>
+            <button class="auth-social" title="Apple">🍎</button>
+            <button class="auth-social" title="VK">VK</button>
+        </div>
+        <div class="auth-divider"><span>or</span></div>
+
+        <form method="post" asp-controller="Account" asp-action="Login">
+            <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+
+            <div class="auth-field">
+                <input type="text" class="auth-input"
+                       name="username" id="username"
+                       placeholder="Username or email" />
+            </div>
+            <div class="auth-field auth-field-password">
+                <input type="password" class="auth-input"
+                       name="password" id="password"
+                       placeholder="Password" />
+                <button type="button" class="auth-eye"
+                        onclick="togglePass('password', this)">
+                    👁
+                </button>
+            </div>
+            <a class="auth-forgot" href="#">Forgot password?</a>
+            <button type="submit" class="auth-submit">Sign in</button>
+        </form>
+
+        <div class="auth-footer">
+            No account? <a asp-controller="Account" asp-action="Register">Register</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function togglePass(id, btn) {
+        const input = document.getElementById(id);
+        input.type = input.type === 'password' ? 'text' : 'password';
+        btn.style.opacity = input.type === 'text' ? '0.4' : '1';
+    }
+</script>

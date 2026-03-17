@@ -1,0 +1,113 @@
+﻿@section Styles {
+    <link rel="stylesheet" href="~/css/favourite.css" />
+}
+@{
+    var favs = (List<Linkora.Models.Product>)ViewBag.Favs;
+    var cart = (List<Linkora.Models.Product>)ViewBag.Cart;
+    var tab = (string)ViewBag.Tab;
+    ViewData["Title"] = "Favourites & Cart";
+    var products = tab == "cart" ? cart : favs;
+}
+
+<div class="fav-page">
+    <div class="fav-tabs">
+        <a class="fav-tab @(tab != "cart" ? "fav-tab-active" : "")" href="?tab=favs">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+            Favourites <span class="fav-tab-count">@favs.Count</span>
+        </a>
+        <a class="fav-tab @(tab == "cart" ? "fav-tab-active" : "")" href="?tab=cart">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>
+            Cart <span class="fav-tab-count">@cart.Count</span>
+        </a>
+    </div>
+
+    @if (products.Count == 0)
+    {
+        <div class="fav-empty">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5">
+                @if (tab == "cart")
+                {
+                    <text><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></text>
+                }
+                else
+                {
+                    <text><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></text>
+                }
+            </svg>
+            <p>Nothing here yet</p>
+        </div>
+    }
+    else
+    {
+        <div class="listing-list">
+            @foreach (var p in products)
+            {
+                <a class="product-card" asp-controller="Product" asp-action="Details" asp-route-id="@p.Id">
+                    <div class="product-card-img">
+                        <img src="@(p.AvatarImagePath ?? "/img/no-photo.svg")" alt="@p.Name"
+                             onerror="this.src='/img/no-photo.svg'" />
+                        <div class="product-card-actions">
+                            <button class="product-card-action-btn @(favs.Any(f => f.Id == p.Id) ? "product-card-action-active" : "")"
+                                    title="Favourites"
+                                    onclick="event.preventDefault(); toggleFav(this, @p.Id, true)">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+                            </button>
+                            <button class="product-card-action-btn @(cart.Any(c => c.Id == p.Id) ? "product-card-action-active" : "")"
+                                    title="Cart"
+                                    onclick="event.preventDefault(); toggleFav(this, @p.Id, false)">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="product-card-body">
+                        <div class="product-card-price">@(p.Price.HasValue? p.Price.Value.ToString("N2") + " €" : "Price on request")</div>
+                        <div class="product-card-name">@p.Name</div>
+                        <div class="product-card-address">@p.Address</div>
+                        <div class="product-card-date">@(p.CreatedTime.HasValue? p.CreatedTime.Value.ToString("dd MMM, HH:mm") : "")</div>
+                    </div>
+                    <div class="product-card-seller">
+                        <div class="seller-avatar">
+                            @if (p.Seller?.AvatarPath != null)
+                            {
+                                <img src="@p.Seller?.AvatarPath" style="width:40px;height:40px;border-radius:50%;object-fit:cover"
+                                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+                                <svg style="display:none;width:40px;height:40px" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                            }
+                            else
+                            {
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                            }
+                        </div>
+                        <div class="seller-name">@(p.Seller?.UserName ?? "Unknown")</div>
+                        @if (p.Seller?.IsCompany == true)
+                        {
+                            <div class="seller-badge">Company</div>
+                        }
+                        <div class="seller-btn">Show contact</div>
+                    </div>
+                </a>
+            }
+        </div>
+        @if (tab == "cart" && products.Count > 0)
+        {
+            var total = cart.Sum(p => p.Price ?? 0);
+            var itemsWithPrice = cart.Count(p => p.Price.HasValue);
+            <div class="cart-summary">
+                <div class="cart-summary-row">
+                    <span>Items in cart</span>
+                    <span>@cart.Count</span>
+                </div>
+                @if (itemsWithPrice < cart.Count)
+                {
+                    <div class="cart-summary-note">
+                        @(cart.Count - itemsWithPrice) item(s) without price not included
+                    </div>
+                }
+                <div class="cart-summary-total">
+                    <span>Total</span>
+                    <span>@total.ToString("N2") €</span>
+                </div>
+            </div>
+        }
+    }
+</div>

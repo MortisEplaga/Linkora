@@ -1,0 +1,113 @@
+﻿@{
+    ViewData["Title"] = "Register";
+}
+
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-tabs">
+            <a class="auth-tab" asp-controller="Account" asp-action="Login">Sign in</a>
+            <a class="auth-tab auth-tab-active" asp-controller="Account" asp-action="Register">Register</a>
+        </div>
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="auth-error">@ViewBag.Error</div>
+        }
+
+        <div class="auth-socials">
+            <button class="auth-social" title="Google">G</button>
+            <button class="auth-social" title="Apple">🍎</button>
+            <button class="auth-social" title="VK">VK</button>
+        </div>
+        <div class="auth-divider"><span>or</span></div>
+
+        <div class="auth-type-row">
+            <label class="auth-type-option">
+                <input type="radio" name="accType" value="private" checked onchange="setType(this)" />
+                <span class="auth-type-circle"></span>
+                Private
+            </label>
+            <label class="auth-type-option">
+                <input type="radio" name="accType" value="business" onchange="setType(this)" />
+                <span class="auth-type-circle"></span>
+                Business
+            </label>
+        </div>
+        <div class="auth-type-hint">You won't be able to change this later.</div>
+
+        <div class="auth-field">
+            <input type="text" class="auth-input" id="username" placeholder="Username" />
+        </div>
+        <div class="auth-field">
+            <input type="email" class="auth-input" id="email" placeholder="Email" />
+        </div>
+        <div class="auth-field auth-field-password">
+            <input type="password" class="auth-input" id="password" placeholder="Password"
+                   oninput="checkStrength(this)" />
+            <button type="button" class="auth-eye" onclick="togglePass('password',this)">👁</button>
+        </div>
+        <ul class="auth-rules" id="passRules">
+            <li id="rule-len">At least 8 characters</li>
+            <li id="rule-upper">Uppercase letter</li>
+            <li id="rule-lower">Lowercase letter</li>
+            <li id="rule-digit">Digit</li>
+        </ul>
+        <div class="auth-field auth-field-password">
+            <input type="password" class="auth-input" id="confirm" placeholder="Confirm password" />
+            <button type="button" class="auth-eye" onclick="togglePass('confirm',this)">👁</button>
+        </div>
+
+        <label class="auth-check-row">
+            <input type="checkbox" id="chkNewsletter" />
+            <span>I agree to receive newsletters and promotions</span>
+        </label>
+        <label class="auth-check-row">
+            <input type="checkbox" id="chkTerms" />
+            <span>I accept the <a href="#">Terms of Service</a></span>
+        </label>
+
+        <button class="auth-submit" id="submitBtn" onclick="submitRegister()">Register</button>
+    </div>
+</div>
+
+<form id="registerForm" method="post" asp-controller="Account" asp-action="Register" style="display:none">
+    <input type="hidden" name="username" id="fUsername" />
+    <input type="hidden" name="email" id="fEmail" />
+    <input type="hidden" name="password" id="fPassword" />
+    <input type="hidden" name="confirm" id="fConfirm" />
+</form>
+
+<script>
+    function submitRegister() {
+        if (!document.getElementById('chkTerms').checked) {
+            alert('Please accept the Terms of Service');
+            return;
+        }
+        document.getElementById('fUsername').value = document.getElementById('username').value;
+        document.getElementById('fEmail').value    = document.getElementById('email').value;
+        document.getElementById('fPassword').value = document.getElementById('password').value;
+        document.getElementById('fConfirm').value  = document.getElementById('confirm').value;
+        document.getElementById('registerForm').submit();
+    }
+
+    function togglePass(id, btn) {
+        const input = document.getElementById(id);
+        input.type = input.type === 'password' ? 'text' : 'password';
+        btn.style.opacity = input.type === 'text' ? '0.4' : '1';
+    }
+
+    function checkStrength(input) {
+        const v = input.value;
+        setRule('rule-len',   v.length >= 8);
+        setRule('rule-upper', /[A-Z]/.test(v));
+        setRule('rule-lower', /[a-z]/.test(v));
+        setRule('rule-digit', /[0-9]/.test(v));
+    }
+
+    function setRule(id, ok) {
+        const el = document.getElementById(id);
+        el.classList.toggle('auth-rule-ok', ok);
+    }
+
+    function setType(input) { /* можно расширить */ }
+</script>

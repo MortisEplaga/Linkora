@@ -1,0 +1,258 @@
+﻿.create-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 24px 0 48px;
+}
+
+.create-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 32px;
+}
+
+.create-section {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+}
+
+.create-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 20px;
+}
+
+.create-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+    .create-field:last-child {
+        margin-bottom: 0;
+    }
+
+.create-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.create-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.create-input {
+    padding: 10px 14px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1a1a1a;
+    background: #fafafa;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+    .create-input:focus {
+        border-color: #aaa;
+        background: #fff;
+    }
+
+.create-textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* Селектор категории */
+.create-cat-selector {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fafafa;
+    cursor: pointer;
+    font-size: 14px;
+    color: #666;
+    transition: border-color 0.15s;
+}
+
+    .create-cat-selector:hover {
+        border-color: #aaa;
+    }
+
+.create-cat-arrow {
+    font-size: 18px;
+    color: #aaa;
+}
+
+/* Параметры в 2 колонки */
+.create-params {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+}
+.create-params-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+.create-param-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 24px;
+}
+.param-show-more {
+    font-size: 13px;
+    color: var(--color-primary, #00b894);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0;
+    text-align: left;
+    font-weight: 600;
+}
+.param-hidden {
+    display: none;
+}
+/* Кнопка публикации */
+.create-submit {
+    width: 100%;
+    padding: 14px;
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+    .create-submit:hover {
+        background: #333;
+    }
+/* Адрес autocomplete */
+.create-field {
+    position: relative;
+}
+
+.create-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    z-index: 100;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.create-drop-item {
+    padding: 10px 14px;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+}
+
+    .create-drop-item:hover {
+        background: #f5f5f5;
+    }
+
+/* Фото */
+.create-photos-area {
+    border: 2px dashed #e0e0e0;
+    border-radius: 10px;
+    padding: 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s;
+}
+
+    .create-photos-area:hover {
+        border-color: #aaa;
+    }
+
+.create-photos-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #999;
+}
+
+.create-photos-icon {
+    font-size: 32px;
+}
+
+.create-photos-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.create-photo-thumb {
+    position: relative;
+    width: 90px;
+    height: 90px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+    .create-photo-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .create-photo-thumb button {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(0,0,0,0.5);
+        color: #fff;
+        font-size: 11px;
+        cursor: pointer;
+        line-height: 1;
+    }
+
+/* Логин */
+.create-login-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 16px;
+}
+
+    .create-login-hint a {
+        color: #1a1a1a;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+        .create-login-hint a:hover {
+            text-decoration: underline;
+        }

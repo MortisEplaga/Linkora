@@ -1,0 +1,291 @@
+﻿@using Linkora.Models
+@{
+    var p = (Product)ViewBag.Product;
+    ViewData["Title"] = "Edit ad";
+}
+
+<div class="create-page">
+    <h1 class="create-title">Edit ad</h1>
+    <div class="create-body">
+        <div class="create-form">
+            <div class="create-section">
+                <h2 class="create-section-title">Basic information</h2>
+                <div class="create-field">
+                    <label class="create-label">Title</label>
+                    <input type="text" class="create-input" id="adTitle" value="@p.Name" placeholder="What are you selling?" />
+                </div>
+                <div class="create-field">
+                    <label class="create-label">Description</label>
+                    <textarea class="create-input create-textarea" id="adDescription" placeholder="Describe the item">@p.Description</textarea>
+                </div>
+
+                <!-- Цена появляется здесь если категория её предусматривает -->
+                <div class="create-field" id="priceFieldWrap" style="display:none">
+                    <label class="create-label">Price</label>
+                    <input type="number" class="create-input" id="adPrice" min="0" placeholder="0.00" />
+                </div>
+
+                <div class="create-row" id="qtyRow">
+                    <div class="create-field" id="qtyFieldWrap" style="grid-column: 1 / -1">
+                        <label class="create-label">Quantity</label>
+                        <input type="number" class="create-input" id="adQty" min="1" value="@(p.Qty ?? 1)" />
+                    </div>
+                </div>
+
+                <div class="create-field">
+                    <label class="create-label">Address</label>
+                    <input type="text" class="create-input" id="adAddress" value="@p.Address" placeholder="Address" />
+                </div>
+            </div>
+
+            <div class="create-section">
+                <h2 class="create-section-title">Category</h2>
+                <div class="create-cat-selector" id="catSelector" onclick="openCreateCatMenu()">
+                    <span id="catSelectorText">@(p.CategoryId.HasValue ? "Change category" : "Select category")</span>
+                    <span class="create-cat-arrow">›</span>
+                </div>
+                <input type="hidden" id="selectedCategoryId" value="@p.CategoryId" />
+            </div>
+
+            <div class="create-section" id="paramsSection" style="display:none">
+                <h2 class="create-section-title">Parameters</h2>
+                <div class="create-params" id="createParams"></div>
+            </div>
+
+            <div class="create-section">
+                <h2 class="create-section-title">Photos</h2>
+                <div class="create-photos-area" id="photosArea" onclick="document.getElementById('photoInput').click()">
+                    <div class="create-photos-placeholder">
+                        <span class="create-photos-icon">📷</span>
+                        <span>Click to upload photos</span>
+                    </div>
+                    <input type="file" id="photoInput" multiple accept="image/*"
+                           style="display:none" onchange="previewPhotos(this)" />
+                </div>
+                <div class="create-photos-preview" id="photosPreview"></div>
+            </div>
+
+            <button class="create-submit" onclick="submitEdit(@p.Id)">Save</button>
+        </div>
+    </div>
+</div>
+
+<div class="catmenu-overlay" id="createCatOverlay" onclick="closeCreateCatMenu()"></div>
+<div class="catmenu" id="createCatMenu">
+    <div class="catmenu-columns" id="createCatColumns"></div>
+</div>
+
+<script>
+    let createAllCategories = [];
+
+    window.addEventListener('DOMContentLoaded', async () => {
+        const catId = document.getElementById('selectedCategoryId').value;
+        const productId = @p.Id;
+        if (catId) {
+            const valRes = await fetch(`/Product/ParamValues?productId=${productId}`);
+            const values = await valRes.json();
+            await loadParams(catId, values);
+        }
+    });
+
+    async function openCreateCatMenu() {
+        if (!createAllCategories.length) {
+            const res = await fetch('/Category/All');
+            createAllCategories = await res.json();
+        }
+        renderCreateCol(0, 3711);
+        document.getElementById('createCatMenu').classList.add('catmenu-open');
+        document.getElementById('createCatOverlay').classList.add('catmenu-overlay-open');
+    }
+
+    function closeCreateCatMenu() {
+        document.getElementById('createCatMenu').classList.remove('catmenu-open');
+        document.getElementById('createCatOverlay').classList.remove('catmenu-overlay-open');
+    }
+
+    function renderCreateCol(colIndex, parentId) {
+        const container = document.getElementById('createCatColumns');
+        while (container.children.length > colIndex)
+            container.removeChild(container.lastChild);
+        const items = createAllCategories.filter(c => c.parentId === parentId);
+        if (!items.length) return;
+        const col = document.createElement('div');
+        col.className = 'catmenu-col';
+        items.forEach(item => {
+            const hasChildren = createAllCategories.some(c => c.parentId === item.id);
+            const el = document.createElement('div');
+            el.className = 'catmenu-item';
+            el.innerHTML = `<span class="catmenu-link">${item.name}</span>${hasChildren ? '<span class="catmenu-arrow">›</span>' : ''}`;
+            if (hasChildren) {
+                el.addEventListener('mouseenter', () => {
+                    col.querySelectorAll('.catmenu-item').forEach(i => i.classList.remove('catmenu-item-active'));
+                    el.classList.add('catmenu-item-active');
+                    renderCreateCol(colIndex + 1, item.id);
+                });
+            }
+            el.addEventListener('click', async () => {
+                document.getElementById('selectedCategoryId').value = item.id;
+                document.getElementById('catSelectorText').textContent = item.name;
+                closeCreateCatMenu();
+                await loadParams(item.id, {});
+            });
+            col.appendChild(el);
+        });
+        container.appendChild(col);
+    }
+
+    async function loadParams(categoryId, existingValues = {}) {
+        const res = await fetch(`/Product/Parameters?categoryId=${categoryId}`);
+        const params = await res.json();
+        const container = document.getElementById('createParams');
+        const section   = document.getElementById('paramsSection');
+        container.innerHTML = '';
+
+        // Поле цены
+        const priceParam = params.find(p => p.name === 'Price');
+        const priceWrap  = document.getElementById('priceFieldWrap');
+        const priceInput = document.getElementById('adPrice');
+        const qtyWrap    = document.getElementById('qtyFieldWrap');
+
+        if (priceParam) {
+            priceInput.value = existingValues[priceParam.id] ?? '';
+            priceInput.dataset.paramId = priceParam.id;
+            priceWrap.style.display = '';
+            qtyWrap.style.gridColumn = '';  // qty занимает левую половину
+        } else {
+            priceWrap.style.display = 'none';
+            priceInput.value = '';
+            delete priceInput.dataset.paramId;
+            qtyWrap.style.gridColumn = '1 / -1'; // qty на всю ширину
+        }
+
+        // Остальные параметры (без Price)
+        const otherParams = params.filter(p => p.name !== 'Price');
+        if (!otherParams.length) { section.style.display = 'none'; return; }
+        section.style.display = 'block';
+
+        function estimateHeight(p) {
+            const base = 38;
+            if (p.type === 3) return base + 32;
+            if (p.type === 2) return base + 44;
+            if (p.type === 5) return base + 52;
+            if (p.type === 4) return base + Math.min(p.options.length, 5) * 32 + (p.options.length > 5 ? 32 : 0);
+            return base + 40;
+        }
+
+        const col1 = [], col2 = [];
+        let h1 = 0, h2 = 0;
+        otherParams.forEach(p => {
+            const h = estimateHeight(p);
+            if (h1 <= h2) { col1.push(p); h1 += h; }
+            else          { col2.push(p); h2 += h; }
+        });
+
+        function buildCol(items, totalOtherHeight) {
+            const div = document.createElement('div');
+            div.className = 'create-params-col';
+            div.style.gap = '0';
+            const myHeight = items.reduce((s, p) => s + estimateHeight(p), 0);
+            const blocks = items.map(p => buildBlock(p, existingValues));
+            blocks.forEach(b => div.appendChild(b));
+            if (items.length > 1 && myHeight < totalOtherHeight) {
+                const extraPerBlock = (totalOtherHeight - myHeight) / items.length;
+                blocks.forEach(b => { b.style.marginBottom = `${24 + extraPerBlock}px`; });
+            }
+            return div;
+        }
+
+        container.appendChild(buildCol(col1, h2));
+        container.appendChild(buildCol(col2, h1));
+    }
+
+    function buildBlock(p, existingValues = {}) {
+        const val = existingValues[p.id] ?? '';
+        const block = document.createElement('div');
+        block.className = 'create-param-block';
+        block.innerHTML = `<div class="param-title">${p.name}</div>`;
+
+        if (p.type === 3) {
+            block.innerHTML += `
+                <div class="param-check-row">
+                    <span>Да</span>
+                    <input type="checkbox" class="param-check-input" data-param="${p.id}"
+                           ${val === 'true' ? 'checked' : ''} />
+                </div>`;
+        } else if (p.type === 2) {
+            const pills = p.options.map(opt =>
+                `<label class="param-pill ${val === opt ? 'param-pill-active' : ''}"
+                        onclick="pillClick(this)">${opt}</label>`
+            ).join('');
+            block.innerHTML += `<div class="param-pills" data-param="${p.id}">${pills}</div>`;
+        } else if (p.type === 4) {
+            const selected = val ? val.split(',') : [];
+            const LIMIT = 5;
+            const checksHtml = p.options.map((opt, i) =>
+                `<label class="param-option" ${i >= LIMIT ? 'style="display:none"' : ''}>
+                    <input type="checkbox" data-param="${p.id}"
+                           ${selected.includes(opt) ? 'checked' : ''} /> ${opt}
+                </label>`
+            ).join('');
+            block.innerHTML += `<div class="param-options" data-param="${p.id}">${checksHtml}</div>`;
+            if (p.options.length > LIMIT) {
+                const btn = document.createElement('button');
+                btn.className = 'param-show-more';
+                btn.textContent = `Ещё ${p.options.length - LIMIT}`;
+                btn.onclick = () => {
+                    block.querySelectorAll('.param-option[style="display:none"]')
+                         .forEach(el => el.style.display = '');
+                    btn.style.display = 'none';
+                };
+                block.appendChild(btn);
+            }
+        } else if (p.type === 5) {
+            block.innerHTML += `
+                <input type="number" class="param-range-input"
+                       placeholder="${p.min}–${p.max}" min="${p.min}" max="${p.max}" step="${p.step}"
+                       data-param="${p.id}" value="${val}" />`;
+        }
+        return block;
+    }
+
+    function pillClick(pill) {
+        const pills = pill.closest('.param-pills');
+        pills.querySelectorAll('.param-pill').forEach(p => p.classList.remove('param-pill-active'));
+        pill.classList.add('param-pill-active');
+    }
+
+    function previewPhotos(input) {
+        const preview = document.getElementById('photosPreview');
+        Array.from(input.files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const wrap = document.createElement('div');
+                wrap.className = 'create-photo-thumb';
+                wrap.innerHTML = `<img src="${e.target.result}" /><button type="button" onclick="this.parentElement.remove()">✕</button>`;
+                preview.appendChild(wrap);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async function submitEdit(id) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/Product/Edit?id=${id}`;
+        const fields = {
+            title:       document.getElementById('adTitle').value,
+            description: document.getElementById('adDescription').value,
+            qty:         document.getElementById('adQty').value,
+            price:       document.getElementById('adPrice').value,
+            address:     document.getElementById('adAddress').value,
+            categoryId:  document.getElementById('selectedCategoryId').value,
+        };
+        Object.entries(fields).forEach(([k, v]) => {
+            const input = document.createElement('input');
+            input.type = 'hidden'; input.name = k; input.value = v;
+            form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
+    }
+</script>

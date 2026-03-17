@@ -1,0 +1,82 @@
+﻿@using Linkora.Models
+@{
+    var products = (List<Product>)ViewBag.Products;
+    var tab = (string)ViewBag.Tab;
+    ViewData["Title"] = "My ads";
+
+    var tabs = new[] {
+        ("active",      "Active"),
+        ("pending",     "Awaiting payment"),
+        ("moderation",  "Under moderation"),
+        ("rejected",    "Rejected"),
+        ("inactive",    "Inactive"),
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/myads.css" />
+}
+
+<div class="myads-page">
+    <h1 class="myads-title">My ads</h1>
+
+    <div class="myads-tabs">
+        @foreach (var (key, label) in tabs)
+        {
+            <a class="myads-tab @(tab == key ? "myads-tab-active" : "")" href="?tab=@key">@label</a>
+        }
+    </div>
+
+    @if (!products.Any())
+    {
+        <div class="myads-empty">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+            </svg>
+            <p>You have no @(tab == "active" ? "active" : "") ads yet.</p>
+            <a class="myads-create-btn" asp-controller="Product" asp-action="Create">
+                + Post an ad
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="myads-list">
+            @foreach (var p in products)
+            {
+                <div class="myads-card">
+                    <a asp-controller="Product" asp-action="Details" asp-route-id="@p.Id" class="myads-card-img">
+                        <img src="@(p.AvatarImagePath ?? "/img/no-photo.svg")"
+                             onerror="this.src='/img/no-photo.svg'" alt="@p.Name" />
+                    </a>
+                    <div class="myads-card-body">
+                        <a class="myads-card-name" asp-controller="Product" asp-action="Details" asp-route-id="@p.Id">@p.Name</a>
+                        <div class="myads-card-price">@(p.Price.HasValue? p.Price.Value.ToString("N2") + " €" : "Price on request")</div>
+                        <div class="myads-card-meta">@p.Address · @(p.CreatedTime?.ToString("dd MMM, HH:mm"))</div>
+                    </div>
+                    <div class="myads-card-actions">
+                        <a class="myads-action-btn" asp-controller="Product" asp-action="Edit" asp-route-id="@p.Id">Edit</a>
+                        <button class="myads-action-btn myads-action-danger"
+                                onclick="deleteAd(@p.Id)">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<script>
+    async function deleteAd(id) {
+        if (!confirm('Delete this ad?')) return;
+        await fetch(`/Product/Delete?id=${id}`, {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': document.getElementById('afToken')?.value ?? '' }
+        });
+        location.reload();
+    }
+</script>

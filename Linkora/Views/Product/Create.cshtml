@@ -1,0 +1,407 @@
+﻿@{
+    ViewData["Title"] = "Post an ad";
+}
+
+<div class="create-page">
+    <h1 class="create-title">Post an ad</h1>
+
+    <div class="create-body">
+        <div class="create-form">
+
+            <div class="create-section">
+                <h2 class="create-section-title">Basic information</h2>
+
+                <div class="create-field">
+                    <label class="create-label">Title</label>
+                    <input type="text" class="create-input" id="adTitle" placeholder="What are you selling?" />
+                </div>
+
+                <div class="create-field">
+                    <label class="create-label">Description</label>
+                    <textarea class="create-input create-textarea" id="adDescription"
+                              placeholder="Describe the item in detail"></textarea>
+                </div>
+
+                <!-- Цена появляется здесь если категория её предусматривает -->
+                <div class="create-field" id="priceFieldWrap" style="display:none">
+                    <label class="create-label">Price</label>
+                    <input type="number" class="create-input" id="adPrice" min="0" placeholder="0.00" />
+                </div>
+
+                <div class="create-row" id="qtyRow">
+                    <div class="create-field" id="qtyFieldWrap" style="grid-column: 1 / -1">
+                        <label class="create-label">Quantity</label>
+                        <input type="number" class="create-input" id="adQty" min="1" value="1" />
+                    </div>
+                </div>
+
+                <div class="create-field">
+                    <label class="create-label">City</label>
+                    <input type="text" class="create-input create-autocomplete" id="adCity"
+                           placeholder="Start typing..." autocomplete="off"
+                           oninput="addressSearch(this,'city')"
+                           onfocus="addressSearch(this,'city')" />
+                    <input type="hidden" id="adCityId" />
+                    <div class="create-dropdown" id="adCityDrop"></div>
+                </div>
+                <div class="create-field" id="streetField" style="display:none">
+                    <label class="create-label">Street</label>
+                    <input type="text" class="create-input create-autocomplete" id="adStreet"
+                           placeholder="Start typing..." autocomplete="off"
+                           oninput="addressSearch(this,'street')"
+                           onfocus="addressSearch(this,'street')" />
+                    <input type="hidden" id="adStreetId" />
+                    <div class="create-dropdown" id="adStreetDrop"></div>
+                </div>
+                <div class="create-field" id="houseField" style="display:none">
+                    <label class="create-label">House</label>
+                    <input type="text" class="create-input create-autocomplete" id="adHouse"
+                           placeholder="Start typing..." autocomplete="off"
+                           oninput="addressSearch(this,'house')"
+                           onfocus="addressSearch(this,'house')" />
+                    <input type="hidden" id="adHouseId" />
+                    <div class="create-dropdown" id="adHouseDrop"></div>
+                </div>
+            </div>
+
+            <div class="create-section">
+                <h2 class="create-section-title">Category</h2>
+                <div class="create-cat-selector" id="catSelector" onclick="openCreateCatMenu()">
+                    <span id="catSelectorText">Select category</span>
+                    <span class="create-cat-arrow">›</span>
+                </div>
+                <input type="hidden" id="selectedCategoryId" />
+            </div>
+
+            <div class="create-section" id="paramsSection" style="display:none">
+                <h2 class="create-section-title">Parameters</h2>
+                <div class="create-params" id="createParams"></div>
+            </div>
+
+            <div class="create-section">
+                <h2 class="create-section-title">Photos</h2>
+                <div class="create-photos-area" id="photosArea" onclick="document.getElementById('photoInput').click()">
+                    <div class="create-photos-placeholder">
+                        <span class="create-photos-icon">📷</span>
+                        <span>Click to upload photos</span>
+                    </div>
+                    <input type="file" id="photoInput" multiple accept="image/*"
+                           style="display:none" onchange="previewPhotos(this)" />
+                </div>
+                <div class="create-photos-preview" id="photosPreview"></div>
+            </div>
+
+            @if (!User.Identity!.IsAuthenticated)
+            {
+                <div class="create-login-hint">
+                    <span>Want to manage your ads?</span>
+                    <a href="#" onclick="openAuthModal('login')">Sign in</a>
+                    <span>or</span>
+                    <a href="#" onclick="openAuthModal('register')">Create account</a>
+                </div>
+            }
+            <button class="create-submit" onclick="submitAd()">Publish</button>
+        </div>
+    </div>
+</div>
+
+<div class="catmenu-overlay" id="createCatOverlay" onclick="closeCreateCatMenu()"></div>
+<div class="catmenu" id="createCatMenu">
+    <div class="catmenu-columns" id="createCatColumns">
+        <div class="catmenu-col" id="createCatCol0"></div>
+    </div>
+</div>
+
+<script>
+    let createAllCategories = [];
+    let createSelectedCatId = null;
+
+    async function openCreateCatMenu() {
+        if (!createAllCategories.length) {
+            const res = await fetch('/Category/All');
+            createAllCategories = await res.json();
+        }
+        renderCreateCol(0, 3711);
+        document.getElementById('createCatMenu').classList.add('catmenu-open');
+        document.getElementById('createCatOverlay').classList.add('catmenu-overlay-open');
+    }
+
+    function closeCreateCatMenu() {
+        document.getElementById('createCatMenu').classList.remove('catmenu-open');
+        document.getElementById('createCatOverlay').classList.remove('catmenu-overlay-open');
+    }
+
+    function renderCreateCol(colIndex, parentId) {
+        const container = document.getElementById('createCatColumns');
+        while (container.children.length > colIndex)
+            container.removeChild(container.lastChild);
+
+        const items = createAllCategories.filter(c => c.parentId === parentId);
+        if (!items.length) return;
+
+        const col = document.createElement('div');
+        col.className = 'catmenu-col';
+
+        items.forEach(item => {
+            const hasChildren = createAllCategories.some(c => c.parentId === item.id);
+            const el = document.createElement('div');
+            el.className = 'catmenu-item';
+            el.innerHTML = `
+                <span class="catmenu-link">${item.name}</span>
+                ${hasChildren ? '<span class="catmenu-arrow">›</span>' : ''}
+            `;
+            if (hasChildren) {
+                el.addEventListener('mouseenter', () => {
+                    col.querySelectorAll('.catmenu-item').forEach(i => i.classList.remove('catmenu-item-active'));
+                    el.classList.add('catmenu-item-active');
+                    renderCreateCol(colIndex + 1, item.id);
+                });
+            }
+            el.addEventListener('click', () => selectCategory(item.id, item.name));
+            col.appendChild(el);
+        });
+
+        container.appendChild(col);
+    }
+
+    async function selectCategory(id, name) {
+        createSelectedCatId = id;
+        document.getElementById('selectedCategoryId').value = id;
+        document.getElementById('catSelectorText').textContent = name;
+        closeCreateCatMenu();
+        await loadParams(id, {});
+    }
+
+    async function loadParams(categoryId, existingValues = {}) {
+        const res = await fetch(`/Product/Parameters?categoryId=${categoryId}`);
+        const params = await res.json();
+        const container = document.getElementById('createParams');
+        const section   = document.getElementById('paramsSection');
+        container.innerHTML = '';
+
+        // Поле цены
+        const priceParam = params.find(p => p.name === 'Price');
+        const priceWrap  = document.getElementById('priceFieldWrap');
+        const priceInput = document.getElementById('adPrice');
+        const qtyWrap    = document.getElementById('qtyFieldWrap');
+
+        if (priceParam) {
+            priceInput.value = existingValues[priceParam.id] ?? '';
+            priceInput.dataset.paramId = priceParam.id;
+            priceWrap.style.display = '';
+            qtyWrap.style.gridColumn = ''; // qty занимает левую половину
+        } else {
+            priceWrap.style.display = 'none';
+            priceInput.value = '';
+            delete priceInput.dataset.paramId;
+            qtyWrap.style.gridColumn = '1 / -1'; // qty на всю ширину
+        }
+
+        // Остальные параметры (без Price)
+        const otherParams = params.filter(p => p.name !== 'Price');
+        if (!otherParams.length) { section.style.display = 'none'; return; }
+        section.style.display = 'block';
+
+        function estimateHeight(p) {
+            const base = 38;
+            if (p.type === 3) return base + 32;
+            if (p.type === 2) return base + 44;
+            if (p.type === 5) return base + 52;
+            if (p.type === 4) return base + Math.min(p.options.length, 5) * 32 + (p.options.length > 5 ? 32 : 0);
+            return base + 40;
+        }
+
+        const col1 = [], col2 = [];
+        let h1 = 0, h2 = 0;
+        otherParams.forEach(p => {
+            const h = estimateHeight(p);
+            if (h1 <= h2) { col1.push(p); h1 += h; }
+            else          { col2.push(p); h2 += h; }
+        });
+
+        function buildCol(items, totalOtherHeight) {
+            const div = document.createElement('div');
+            div.className = 'create-params-col';
+            div.style.gap = '0';
+            const myHeight = items.reduce((s, p) => s + estimateHeight(p), 0);
+            const blocks = items.map(p => buildBlock(p, existingValues));
+            blocks.forEach(b => div.appendChild(b));
+            if (items.length > 1 && myHeight < totalOtherHeight) {
+                const extraPerBlock = (totalOtherHeight - myHeight) / items.length;
+                blocks.forEach(b => { b.style.marginBottom = `${24 + extraPerBlock}px`; });
+            }
+            return div;
+        }
+
+        container.appendChild(buildCol(col1, h2));
+        container.appendChild(buildCol(col2, h1));
+    }
+
+    function buildBlock(p, existingValues = {}) {
+        const val = existingValues[p.id] ?? '';
+        const block = document.createElement('div');
+        block.className = 'create-param-block';
+        block.innerHTML = `<div class="param-title">${p.name}</div>`;
+
+        if (p.type === 3) {
+            block.innerHTML += `
+                <div class="param-check-row">
+                    <span>Да</span>
+                    <input type="checkbox" class="param-check-input" data-param="${p.id}"
+                           ${val === 'true' ? 'checked' : ''} />
+                </div>`;
+        } else if (p.type === 2) {
+            const pills = p.options.map(opt =>
+                `<label class="param-pill ${val === opt ? 'param-pill-active' : ''}"
+                        onclick="pillClick(this)">${opt}</label>`
+            ).join('');
+            block.innerHTML += `<div class="param-pills" data-param="${p.id}">${pills}</div>`;
+        } else if (p.type === 4) {
+            const selected = val ? val.split(',') : [];
+            const LIMIT = 5;
+            const checksHtml = p.options.map((opt, i) =>
+                `<label class="param-option" ${i >= LIMIT ? 'style="display:none"' : ''}>
+                    <input type="checkbox" data-param="${p.id}"
+                           ${selected.includes(opt) ? 'checked' : ''} /> ${opt}
+                </label>`
+            ).join('');
+            block.innerHTML += `<div class="param-options" data-param="${p.id}">${checksHtml}</div>`;
+            if (p.options.length > LIMIT) {
+                const btn = document.createElement('button');
+                btn.className = 'param-show-more';
+                btn.textContent = `Ещё ${p.options.length - LIMIT}`;
+                btn.onclick = () => {
+                    block.querySelectorAll('.param-option[style="display:none"]')
+                         .forEach(el => el.style.display = '');
+                    btn.style.display = 'none';
+                };
+                block.appendChild(btn);
+            }
+        } else if (p.type === 5) {
+            block.innerHTML += `
+                <input type="number" class="param-range-input"
+                       placeholder="${p.min}–${p.max}" min="${p.min}" max="${p.max}" step="${p.step}"
+                       data-param="${p.id}" value="${val}" />`;
+        }
+        return block;
+    }
+
+    function pillClick(pill) {
+        const pills = pill.closest('.param-pills');
+        pills.querySelectorAll('.param-pill').forEach(p => p.classList.remove('param-pill-active'));
+        pill.classList.add('param-pill-active');
+    }
+
+    function submitAd() {
+        alert('TODO: submit');
+    }
+
+    // ── Адрес ──
+    let citiesCache = null;
+
+    async function addressSearch(input, type) {
+        const val = input.value.toLowerCase();
+
+        if (type === 'city') {
+            if (!citiesCache) {
+                const res = await fetch('/Product/Cities');
+                citiesCache = await res.json();
+            }
+            const filtered = citiesCache.filter(c => c.name.toLowerCase().includes(val));
+            filtered.sort((a, b) => {
+                const an = a.name.toLowerCase().startsWith(val) ? 0 : 1;
+                const bn = b.name.toLowerCase().startsWith(val) ? 0 : 1;
+                return an - bn || a.name.localeCompare(b.name);
+            });
+            showDrop('adCityDrop', filtered, (item) => {
+                document.getElementById('adCity').value   = item.name;
+                document.getElementById('adCityId').value = item.id;
+                hideDrop('adCityDrop');
+                document.getElementById('adStreet').value   = '';
+                document.getElementById('adStreetId').value = '';
+                document.getElementById('adHouse').value    = '';
+                document.getElementById('adHouseId').value  = '';
+                document.getElementById('streetField').style.display = 'block';
+                document.getElementById('houseField').style.display  = 'none';
+            });
+        } else if (type === 'street') {
+            const cityId = document.getElementById('adCityId').value;
+            if (!cityId) return;
+            const res = await fetch(`/Product/Streets?cityId=${cityId}`);
+            const streets = await res.json();
+            const filteredS = streets.filter(s => s.name.toLowerCase().includes(val));
+            filteredS.sort((a, b) => {
+                const an = a.name.toLowerCase().startsWith(val) ? 0 : 1;
+                const bn = b.name.toLowerCase().startsWith(val) ? 0 : 1;
+                return an - bn || a.name.localeCompare(b.name);
+            });
+            showDrop('adStreetDrop', filteredS, (item) => {
+                document.getElementById('adStreet').value   = item.name;
+                document.getElementById('adStreetId').value = item.id;
+                hideDrop('adStreetDrop');
+                document.getElementById('adHouse').value    = '';
+                document.getElementById('adHouseId').value  = '';
+                document.getElementById('houseField').style.display = 'block';
+            });
+        } else if (type === 'house') {
+            const streetId = document.getElementById('adStreetId').value;
+            if (!streetId) return;
+            const res = await fetch(`/Product/Houses?streetId=${streetId}`);
+            const houses = await res.json();
+            const filteredH = houses.filter(h => h.name.toLowerCase().includes(val));
+            filteredH.sort((a, b) => {
+                const an = a.name.toLowerCase().startsWith(val) ? 0 : 1;
+                const bn = b.name.toLowerCase().startsWith(val) ? 0 : 1;
+                return an - bn || a.name.localeCompare(b.name);
+            });
+            showDrop('adHouseDrop', filteredH, (item) => {
+                document.getElementById('adHouse').value   = item.name;
+                document.getElementById('adHouseId').value = item.id;
+                hideDrop('adHouseDrop');
+            });
+        }
+    }
+
+    function showDrop(dropId, items, onSelect) {
+        const drop = document.getElementById(dropId);
+        drop.innerHTML = '';
+        if (!items.length) { drop.style.display = 'none'; return; }
+        items.slice(0, 10).forEach(item => {
+            const el = document.createElement('div');
+            el.className = 'create-drop-item';
+            el.textContent = item.name;
+            el.onclick = () => onSelect(item);
+            drop.appendChild(el);
+        });
+        drop.style.display = 'block';
+    }
+
+    function hideDrop(dropId) {
+        document.getElementById(dropId).style.display = 'none';
+    }
+
+    document.addEventListener('click', e => {
+        ['adCityDrop','adStreetDrop','adHouseDrop'].forEach(id => {
+            const drop = document.getElementById(id);
+            if (drop && !drop.contains(e.target)) drop.style.display = 'none';
+        });
+    });
+
+    // ── Фото ──
+    function previewPhotos(input) {
+        const preview = document.getElementById('photosPreview');
+        Array.from(input.files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const wrap = document.createElement('div');
+                wrap.className = 'create-photo-thumb';
+                wrap.innerHTML = `
+                    <img src="${e.target.result}" />
+                    <button type="button" onclick="this.parentElement.remove()">✕</button>
+                `;
+                preview.appendChild(wrap);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+</script>

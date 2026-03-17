@@ -1,0 +1,402 @@
+@using Linkora.Models
+
+@{
+    var category = (Category)ViewBag.Category;
+    var breadcrumb = (List<Category>)ViewBag.Breadcrumb;
+    var children = (List<Category>)ViewBag.Children;
+    var products = (List<Linkora.Models.Product>)ViewBag.Products;
+    var sort = (string)ViewBag.Sort;
+    ViewData["Title"] = category.Name;
+}
+
+@await Html.PartialAsync("_Breadcrumb", breadcrumb.Skip(1).ToList())
+
+@{
+    var parent = breadcrumb.Count > 1 ? breadcrumb[breadcrumb.Count - 2] : null;
+}
+
+<div class="category-header">
+    <h1 class="category-title">
+        @category.Name
+        <span class="category-count">@products.Count</span>
+    </h1>
+</div>
+
+<div class="category-body">
+    <div class="category-left">
+        <nav class="category-sidebar">
+            @if (parent != null)
+            {
+                <a class="sidebar-parent"
+                   asp-controller="Category" asp-action="Index" asp-route-id="@parent.Id">
+                    &lt; @parent.Name
+                </a>
+            }
+            <span class="sidebar-current">@category.Name</span>
+            @foreach (var child in children)
+            {
+                <a class="sidebar-child"
+                   asp-controller="Category" asp-action="Index" asp-route-id="@child.Id">
+                    @child.Name
+                </a>
+            }
+        
+        </nav>
+
+        @{
+            var parameters = (List<Linkora.Models.Parameter>)ViewBag.Parameters;
+            var activeFilters = (Dictionary<int, List<string>>)ViewBag.Filters;
+            var activeRangeFrom = (Dictionary<int, decimal>)ViewBag.RangeFrom;
+            var activeRangeTo = (Dictionary<int, decimal>)ViewBag.RangeTo;
+        }
+        @if (parameters.Count > 0)
+        {
+            <form method="get" id="filterForm" class="param-sidebar">
+                <input type="hidden" name="id" value="@category.Id" />
+                <input type="hidden" name="city" value="@(ViewBag.City ?? "")" />
+
+                @foreach (var vm in parameters)
+                {
+                    <div class="param-block">
+                        @if (vm.Param.Type == 3)
+                        {
+                            <div class="param-check-row">
+                                <span class="param-title">@vm.Param.Name</span>
+                                <input type="checkbox" class="param-check-input"
+                                       name="p_@vm.Param.Id" value="true"
+                                       @(activeFilters.ContainsKey(vm.Param.Id) ? "checked" : "")/>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="param-title">@vm.Param.Name</div>
+                        }
+
+                        @if (vm.Param.Type == 2)
+                        {
+                            <div class="param-pills">
+                                @for (int i = 0; i < vm.Options.Count; i++)
+                                {
+                                    var isActive = activeFilters.TryGetValue(vm.Param.Id, out var selVals)
+                                    && selVals.Contains(vm.Options[i]);
+                                    <label class="param-pill @(isActive ? "param-pill-active" : "") @(i >= 5 ? "param-option-hidden" : "")"
+                                           style="@(i >= 5 ? "display:none" : "")"
+                                           onclick="selectPill(this, '@vm.Param.Id')">
+                                        @vm.Options[i]
+                                    </label>
+                                }
+                            </div>
+                            <input type="hidden" name="p_@vm.Param.Id" id="pill_@vm.Param.Id"
+                                   value="@(activeFilters.TryGetValue(vm.Param.Id, out var pv) ? pv.FirstOrDefault() : "")" />
+                            @if (vm.Options.Count > 5)
+                            {
+                                <button type="button" class="param-show-more" onclick="toggleOptions(this)">
+                                    More @(vm.Options.Count - 5)
+                                </button>
+                            }
+                        }
+
+                        @if (vm.Param.Type == 4)
+                        {
+                            <div class="param-options">
+                                @for (int i = 0; i < vm.Options.Count; i++)
+                                {
+                                    var isChecked = activeFilters.TryGetValue(vm.Param.Id, out var cv)
+                                    && cv.Contains(vm.Options[i]);
+                                    <label class="param-option @(i >= 5 ? "param-option-hidden" : "")"
+                                           style="@(i >= 5 ? "display:none" : "")">
+                                        <input type="checkbox" name="p_@vm.Param.Id"
+                                               value="@vm.Options[i]"
+                                               @(isChecked ? "checked" : "")/>
+                                        @vm.Options[i]
+                                    </label>
+                                }
+                            </div>
+                            @if (vm.Options.Count > 5)
+                            {
+                                <button type="button" class="param-show-more" onclick="toggleOptions(this)">
+                                    More @(vm.Options.Count - 5)
+                                </button>
+                            }
+                        }
+
+                        @if (vm.Param.Type == 5)
+                        {
+                            var fFrom = activeRangeFrom.TryGetValue(vm.Param.Id, out var rf) ? rf.ToString(System.Globalization.CultureInfo.InvariantCulture) : "";
+                            var fTo = activeRangeTo.TryGetValue(vm.Param.Id, out var rt) ? rt.ToString(System.Globalization.CultureInfo.InvariantCulture) : "";
+                            <div class="param-range" data-min="@vm.Min" data-max="@vm.Max" data-step="@vm.Step">
+                                <input type="number" class="param-range-input param-range-from"
+                                       name="p_@(vm.Param.Id)_from"
+                                       placeholder="от @((double)(vm.Min ?? 0))"
+                                       min="@vm.Min" max="@vm.Max" step="@vm.Step"
+                                       value="@fFrom"
+                                       onblur="rangeSync(this,'from')" />
+                                <input type="number" class="param-range-input param-range-to"
+                                       name="p_@(vm.Param.Id)_to"
+                                       placeholder="до @((double)(vm.Max ?? 0))"
+                                       min="@vm.Min" max="@vm.Max" step="@vm.Step"
+                                       value="@fTo"
+                                       onblur="rangeSync(this,'to')" />
+                            </div>
+                        }
+                    </div>
+                }
+
+                <div class="filter-actions">
+                    <button type="submit" class="param-apply-btn">Apply filters</button>
+                    <button type="button" class="param-reset-btn" onclick="resetFilters(@category.Id)">Reset</button>
+                </div>
+            </form>
+        }
+    </div>
+    <div class="category-content">
+
+        <!-- Тулбар -->
+        <div class="listing-toolbar">
+            <div class="listing-view-btns">
+                <button class="listing-view-btn" id="btnGrid" onclick="setView('grid')" title="Grid">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></svg>
+                </button>
+                <button class="listing-view-btn" id="btnList" onclick="setView('list')" title="List">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
+                </button>
+            </div>
+            <button type="button" class="listing-region-btn" onclick="openRegionModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                </svg>
+                <span id="regionBtnLabel">@(ViewBag.City != null ? (string)ViewBag.City : "All regions")</span>
+            </button>
+            <div class="listing-sort-wrap">
+                <button class="listing-sort-btn" onclick="toggleSort(event)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6" /><line x1="7" y1="12" x2="21" y2="12" /><line x1="11" y1="18" x2="21" y2="18" /></svg>
+                    <span id="sortLabel">@(sort == "cheap" ? "Cheapest first" : sort == "expensive" ? "Most expensive" : "Newest first")</span>
+                    ▾
+                </button>
+                @{
+                    var hasPriceSort = (bool)ViewBag.HasPriceSort;
+                }
+                <div class="listing-sort-drop" id="sortDrop">
+                    <a class="listing-sort-item@(sort == "new" ? " active" : "")"
+                       onclick="clientSort('new', this)">Newest first</a>
+                    @if (hasPriceSort)
+                    {
+                        <a class="listing-sort-item@(sort == "cheap" ? " active" : "")"
+                           onclick="clientSort('cheap', this)">Cheapest first</a>
+                        <a class="listing-sort-item@(sort == "expensive" ? " active" : "")"
+                           onclick="clientSort('expensive', this)">Most expensive</a>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Список -->
+        <div class="listing-grid" id="listingContainer">
+            @foreach (var p in products)
+            {
+                <a class="product-card" asp-controller="Product" asp-action="Details" asp-route-id="@p.Id">
+                    <div class="product-card-img">
+                        <img src="@(p.AvatarImagePath ?? "/img/no-photo.svg")" alt="@p.Name"
+                             onerror="this.src='/img/no-photo.svg'" />
+                        <div class="product-card-actions">
+                            <button class="product-card-action-btn" title="Favourites"
+                                    onclick="event.preventDefault(); toggleFav(this, @p.Id, true)">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+                            </button>
+                            <button class="product-card-action-btn" title="Cart"
+                                    onclick="event.preventDefault(); toggleFav(this, @p.Id, false)">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="product-card-body">
+                        <div class="product-card-price">@(p.Price.HasValue? p.Price.Value.ToString("N2") + " €" : "Price on request")</div>
+                        <div class="product-card-name">@p.Name</div>
+                        <div class="product-card-address">@p.Address</div>
+                        <div class="product-card-date">@(p.CreatedTime.HasValue? p.CreatedTime.Value.ToString("dd MMM, HH:mm") : "")</div>
+                        <div class="product-card-desc">@p.Description</div>
+                    </div>
+                    <div class="product-card-seller">
+                        <div class="seller-avatar" style="cursor:pointer" onclick="event.preventDefault(); openSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarPath', '@p.Seller?.PhoneNumber', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0))">
+                            @if (p.Seller?.AvatarPath != null)
+                            {
+                                <img src="@p.Seller?.AvatarPath" style="width:40px;height:40px;border-radius:50%;object-fit:cover"
+                                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
+                                <svg style="display:none;width:40px;height:40px" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                                }
+                            else
+                            {
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                            }
+                        </div>
+                        <div class="seller-name">@(p.Seller?.UserName ?? "Unknown")</div>
+                        @if (p.Seller?.IsCompany == true)
+                        {
+                            <div class="seller-badge">Company</div>
+                        }
+                        <div class="seller-btn" onclick="event.preventDefault(); openSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarPath', '@p.Seller?.PhoneNumber', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0))">
+                            Show contact
+                        </div>
+                    </div>
+                </a>
+            }
+        </div>
+    </div>
+    <script>
+        async function toggleFav(btn, productId, can) {
+            const res = await fetch('/Favourite/Toggle', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
+                },
+                body: JSON.stringify({ productId, can })
+            });
+
+            if (res.status === 401) {
+                openAuthModal('login');
+                return;
+            }
+
+            const data = await res.json();
+            btn.classList.toggle('product-card-action-active', data.active);
+        }
+    </script>
+    <script>
+        function setView(v) {
+            localStorage.setItem('listingView', v);
+            const c = document.getElementById('listingContainer');
+            c.className = v === 'grid' ? 'listing-grid' : 'listing-list';
+            document.getElementById('btnGrid').classList.toggle('active', v === 'grid');
+            document.getElementById('btnList').classList.toggle('active', v === 'list');
+        }
+
+        function toggleSort(e) {
+            e.stopPropagation();
+            document.getElementById('sortDrop').classList.toggle('open');
+        }
+
+        function setSortLabel(label) {
+            document.getElementById('sortLabel').textContent = label;
+        }
+
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.listing-sort-wrap'))
+                document.getElementById('sortDrop').classList.remove('open');
+        });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            setView(localStorage.getItem('listingView') || 'grid');
+
+            // Восстановить выбранный регион
+            const url = new URL(window.location.href);
+            const city = url.searchParams.get('city');
+            if (city) {
+                selectedRegion = { name: city };
+        document.querySelector('.regions-btn').innerHTML =
+            '<img src="/img/marker_for_adv.svg" alt="" class="regions-icon" />' + city;
+            }
+
+            // Подсветить избранное
+            const res = await fetch('/Favourite/UserItems');
+            if (!res.ok) return;
+            const { favs, cart } = await res.json();
+            document.querySelectorAll('.product-card-action-btn').forEach(btn => {
+                const isFav  = btn.getAttribute('onclick')?.includes('true');
+                const prodId = parseInt(btn.getAttribute('onclick')?.match(/\d+/)?.[0]);
+                if (isFav  && favs.includes(prodId)) btn.classList.add('product-card-action-active');
+                if (!isFav && cart.includes(prodId)) btn.classList.add('product-card-action-active');
+            });
+            document.getElementById('filterForm')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const inputs = this.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                if (input.type === 'checkbox' && !input.checked) {
+                    input.disabled = true;
+                } else if (input.value.trim() === '') {
+                    input.disabled = true;
+                }
+            });
+            this.submit();
+        });
+
+        });
+    </script>
+</div>
+
+<script>
+    function rangeSync(input, side) {
+        const wrap = input.closest('.param-range');
+        const min  = parseFloat(wrap.dataset.min);
+        const max  = parseFloat(wrap.dataset.max);
+        const step = parseFloat(wrap.dataset.step) || 1;
+        const from = wrap.querySelector('.param-range-from');
+        const to   = wrap.querySelector('.param-range-to');
+
+        let val = parseFloat(input.value);
+        if (!isNaN(val)) {
+            val = Math.round((val - min) / step) * step + min;
+            val = Math.min(Math.max(val, min), max);
+            input.value = val;
+        }
+
+        if (side === 'from' && to.value !== '' && val > parseFloat(to.value))
+            from.value = to.value;
+        if (side === 'to' && from.value !== '' && val < parseFloat(from.value))
+            to.value = from.value;
+    }
+
+    function pillClick(pill) {
+        const pills = pill.closest('.param-pills');
+        pills.querySelectorAll('.param-pill').forEach(p => p.classList.remove('param-pill-active'));
+        pill.classList.add('param-pill-active');
+    }
+
+    function toggleOptions(btn) {
+        const block = btn.parentElement;
+        const hidden = block.querySelectorAll('.param-option-hidden');
+        const isHidden = hidden[0]?.style.display === 'none';
+        hidden.forEach(el => el.style.display = isHidden ? '' : 'none');
+        btn.textContent = isHidden ? 'Hide' : 'More ' + hidden.length;
+    }
+        function selectPill(pill, paramId) {
+            const pills = pill.closest('.param-pills');
+            const wasActive = pill.classList.contains('param-pill-active');
+            pills.querySelectorAll('.param-pill').forEach(p => p.classList.remove('param-pill-active'));
+            const input = document.getElementById('pill_' + paramId);
+            if (!wasActive) {
+                pill.classList.add('param-pill-active');
+                input.value = pill.textContent.trim();
+            } else {
+                input.value = '';
+            }
+        }
+        function resetFilters(categoryId) {
+            window.location.href = '/Category/Index/' + categoryId;
+        }
+            function clientSort(type, el) {
+        // Обновить подпись и активный класс
+        document.querySelectorAll('.listing-sort-item').forEach(i => i.classList.remove('active'));
+        el.classList.add('active');
+        const labels = { new: 'Newest first', cheap: 'Cheapest first', expensive: 'Most expensive' };
+        document.getElementById('sortLabel').textContent = labels[type];
+        document.getElementById('sortDrop').classList.remove('open');
+
+        const container = document.getElementById('listingContainer');
+        const cards = Array.from(container.children);
+
+        cards.sort((a, b) => {
+            if (type === 'new') {
+                const da = a.querySelector('.product-card-date')?.textContent.trim() || '';
+                const db = b.querySelector('.product-card-date')?.textContent.trim() || '';
+                return db.localeCompare(da);
+            }
+            const pa = parseFloat(a.querySelector('.product-card-price')?.textContent.replace(/[^0-9.]/g, '')) || 0;
+            const pb = parseFloat(b.querySelector('.product-card-price')?.textContent.replace(/[^0-9.]/g, '')) || 0;
+            return type === 'cheap' ? pa - pb : pb - pa;
+        });
+
+        cards.forEach(c => container.appendChild(c));
+    }
+</script>

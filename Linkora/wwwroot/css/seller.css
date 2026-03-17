@@ -1,0 +1,331 @@
+﻿/* ── Шапка продавца ── */
+.seller-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 24px 0 28px;
+    border-bottom: 1px solid #f0f0f0;
+    margin-bottom: 28px;
+}
+
+.seller-header-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .seller-header-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+.seller-header-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.seller-header-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a1a;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.seller-header-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    font-size: 14px;
+    color: #333;
+}
+
+    .seller-header-rating:hover .seller-rating-count {
+        text-decoration: underline;
+    }
+
+.seller-stars {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.seller-rating-val {
+    font-weight: 700;
+    font-size: 15px;
+    color: #1a1a1a;
+}
+
+.seller-rating-count {
+    color: #888;
+    font-size: 13px;
+}
+
+.seller-header-meta {
+    font-size: 13px;
+    color: #aaa;
+}
+
+.seller-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.seller-share-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid #e0e0e0;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #666;
+    transition: border-color 0.15s;
+}
+
+    .seller-share-btn:hover {
+        border-color: #aaa;
+        color: #1a1a1a;
+    }
+
+.seller-subscribe-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: 1px solid #1a1a1a;
+    background: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+    .seller-subscribe-btn:hover {
+        background: #f5f5f5;
+    }
+
+/* ── Сайдбар: активный элемент ── */
+.sidebar-item-active {
+    color: #00b0a3 !important;
+    font-weight: 700;
+}
+
+.sidebar-cat-count {
+    font-size: 12px;
+    color: #aaa;
+    margin-left: 4px;
+}
+
+/* ── Модалка отзывов ── */
+.reviews-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 1000;
+}
+
+    .reviews-overlay.open {
+        display: block;
+    }
+
+.reviews-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 540px;
+    max-width: calc(100vw - 32px);
+    max-height: 80vh;
+    background: #fff;
+    border-radius: 16px;
+    z-index: 1001;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+    .reviews-modal.open {
+        display: flex;
+    }
+
+.reviews-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    flex-shrink: 0;
+}
+
+.reviews-modal-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.reviews-modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: #f5f5f5;
+    cursor: pointer;
+    font-size: 14px;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+}
+
+    .reviews-modal-close:hover {
+        background: #eee;
+    }
+
+.reviews-summary {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 24px;
+    border-bottom: 1px solid #f0f0f0;
+    flex-shrink: 0;
+}
+
+.reviews-avg {
+    font-size: 52px;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1;
+}
+
+.reviews-stars-big {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 4px;
+}
+
+.reviews-total {
+    font-size: 13px;
+    color: #aaa;
+}
+
+.reviews-bars {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.reviews-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.reviews-bar-track {
+    flex: 1;
+    height: 6px;
+    background: #f0f0f0;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.reviews-bar-fill {
+    height: 100%;
+    background: #f5a623;
+    border-radius: 3px;
+    transition: width 0.3s;
+}
+
+.reviews-bar-count {
+    font-size: 12px;
+    color: #aaa;
+    min-width: 20px;
+    text-align: right;
+}
+
+.reviews-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 24px 24px;
+}
+
+.review-item {
+    padding: 16px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+    .review-item:last-child {
+        border-bottom: none;
+    }
+
+.review-author {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.review-author-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.review-author-placeholder {
+    background: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.review-author-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.review-date {
+    font-size: 12px;
+    color: #aaa;
+}
+
+.review-stars {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 6px;
+}
+
+.review-comment {
+    font-size: 14px;
+    color: #333;
+    line-height: 1.5;
+}
+
+.reviews-empty {
+    text-align: center;
+    color: #aaa;
+    font-size: 14px;
+    padding: 32px 0;
+}

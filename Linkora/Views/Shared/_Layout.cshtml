@@ -1,0 +1,409 @@
+﻿@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Linkora</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Linkora.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/header.css" />
+    <link rel="stylesheet" href="~/css/category.css" />
+    <link rel="stylesheet" href="~/css/catmenu.css" />
+    <link rel="stylesheet" href="~/css/create.css" />
+    <link rel="stylesheet" href="~/css/auth.css" />
+    <link rel="stylesheet" href="~/css/seller.css" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+
+    <input type="hidden" id="afToken" value="@Antiforgery.GetAndStoreTokens(Context).RequestToken" />
+
+    @await Html.PartialAsync("CategoryMenu")
+
+    <!-- Auth Modal -->
+    <div class="modal-overlay" id="authOverlay" onclick="closeAuthModal()"></div>
+    <div class="modal" id="authModal">
+        <button class="modal-close" onclick="closeAuthModal()">✕</button>
+        <div class="auth-tabs">
+            <button class="auth-tab auth-tab-active" onclick="switchTab('login')">Sign in</button>
+            <button class="auth-tab" onclick="switchTab('register')">Register</button>
+        </div>
+
+        <div id="authError" class="auth-error" style="display:none"></div>
+
+        <!-- Login -->
+        <div id="tabLogin">
+            <div class="auth-socials">
+                <button class="auth-social">G</button>
+                <button class="auth-social">🍎</button>
+                <button class="auth-social">VK</button>
+            </div>
+            <div class="auth-divider"><span>or</span></div>
+            <div class="auth-field">
+                <input type="text" class="auth-input" id="loginUsername" placeholder="Username or email" />
+            </div>
+            <div class="auth-field auth-field-password">
+                <input type="password" class="auth-input" id="loginPassword" placeholder="Password" />
+                <button type="button" class="auth-eye" onclick="togglePass('loginPassword',this)">👁</button>
+            </div>
+            <a class="auth-forgot" href="#">Forgot password?</a>
+            <button class="auth-submit" onclick="submitLogin()">Sign in</button>
+        </div>
+
+        <!-- Register -->
+        <div id="tabRegister" style="display:none">
+            <div class="auth-socials">
+                <button class="auth-social">G</button>
+                <button class="auth-social">🍎</button>
+                <button class="auth-social">VK</button>
+            </div>
+            <div class="auth-divider"><span>or</span></div>
+            <div class="auth-type-row">
+                <label class="auth-type-option">
+                    <input type="radio" name="accType" value="private" checked />
+                    <span class="auth-type-circle"></span> Private
+                </label>
+                <label class="auth-type-option">
+                    <input type="radio" name="accType" value="business" />
+                    <span class="auth-type-circle"></span> Business
+                </label>
+            </div>
+            <div class="auth-type-hint">You won't be able to change this later.</div>
+            <div class="auth-field">
+                <input type="text" class="auth-input" id="regUsername" placeholder="Username" />
+            </div>
+            <div class="auth-field">
+                <input type="email" class="auth-input" id="regEmail" placeholder="Email" />
+            </div>
+            <div class="auth-field auth-field-password">
+                <input type="password" class="auth-input" id="regPassword" placeholder="Password"
+                       oninput="checkStrength(this)" />
+                <button type="button" class="auth-eye" onclick="togglePass('regPassword',this)">👁</button>
+            </div>
+            <ul class="auth-rules">
+                <li id="rule-len">At least 8 characters</li>
+                <li id="rule-upper">Uppercase letter</li>
+                <li id="rule-lower">Lowercase letter</li>
+                <li id="rule-digit">Digit</li>
+            </ul>
+            <div class="auth-field auth-field-password">
+                <input type="password" class="auth-input" id="regConfirm" placeholder="Confirm password" />
+                <button type="button" class="auth-eye" onclick="togglePass('regConfirm',this)">👁</button>
+            </div>
+            <label class="auth-check-row">
+                <input type="checkbox" id="chkTerms" />
+                <span>I accept the <a href="#">Terms of Service</a></span>
+            </label>
+            <button class="auth-submit" onclick="submitRegister()">Register</button>
+        </div>
+    </div>
+    <!-- Hidden forms -->
+    <form id="loginForm" method="post" action="/Account/Login" style="display:none">
+        <input type="hidden" name="username" id="fLoginUsername" />
+        <input type="hidden" name="password" id="fLoginPassword" />
+        <input type="hidden" name="returnUrl" id="fLoginReturn" />
+    </form>
+    <form id="registerForm" method="post" action="/Account/Register" style="display:none">
+        <input type="hidden" name="username" id="fRegUsername" />
+        <input type="hidden" name="email" id="fRegEmail" />
+        <input type="hidden" name="password" id="fRegPassword" />
+        <input type="hidden" name="confirm" id="fRegConfirm" />
+    </form>
+
+    <!-- Region Modal -->
+    <div class="modal-overlay" id="regionOverlay" onclick="closeRegionModal()"></div>
+    <div class="modal" id="regionModal">
+        <button class="modal-close" onclick="closeRegionModal()">✕</button>
+        <h2 class="auth-title">Select region</h2>
+        <div class="region-search-wrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+            <input type="text" class="region-search" id="regionSearch"
+                   placeholder="Enter city" oninput="filterRegions(this.value)" />
+        </div>
+        <div class="region-pills" id="regionPills"></div>
+    </div>
+    <!-- Модалка продавца -->
+    <div class="modal-overlay" id="sellerOverlay" onclick="closeSellerModal()"></div>
+    <div class="modal" id="sellerModal">
+        <button class="modal-close" onclick="closeSellerModal()">✕</button>
+        <div class="seller-modal-body">
+            <div class="seller-modal-avatar" id="smAvatar"></div>
+            <div class="seller-modal-name" id="smName"></div>
+            <div id="smBadge"></div>
+            <div class="seller-modal-row" id="smPhoneRow">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.1a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.45h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.1a16 16 0 0 0 6 6l1.27-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 17.92z" />
+                </svg>
+                <span id="smPhone"></span>
+            </div>
+            <div class="seller-modal-row" id="smEmailRow">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
+                </svg>
+                <span id="smEmail"></span>
+            </div>
+            <div class="seller-modal-row" id="smDateRow">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                <span id="smDate"></span>
+            </div>
+            <a class="seller-modal-link" id="smLink">Other listings →</a>
+        </div>
+    </div>
+    @await Html.PartialAsync("Header")
+
+    <div style="max-width:1280px; margin:0 auto; padding:0 24px;">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div style="max-width:1280px; margin:0 auto; padding:0 24px;">
+            &copy; 2026 - Linkora - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </div>
+    </footer>
+
+    <script src="~/js/catmenu.js"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        // ── Auth ──
+        function openAuthModal(tab) {
+            switchTab(tab || 'login');
+            document.getElementById('authOverlay').classList.add('modal-open');
+            document.getElementById('authModal').classList.add('modal-open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeAuthModal() {
+            document.getElementById('authOverlay').classList.remove('modal-open');
+            document.getElementById('authModal').classList.remove('modal-open');
+            document.body.style.overflow = '';
+        }
+        function switchTab(tab) {
+            document.getElementById('tabLogin').style.display    = tab === 'login'    ? 'block' : 'none';
+            document.getElementById('tabRegister').style.display = tab === 'register' ? 'block' : 'none';
+            document.querySelectorAll('.auth-tab').forEach((t, i) => {
+                t.classList.toggle('auth-tab-active', (tab === 'login' && i === 0) || (tab === 'register' && i === 1));
+            });
+        }
+        function submitLogin() {
+            document.getElementById('fLoginUsername').value = document.getElementById('loginUsername').value;
+            document.getElementById('fLoginPassword').value = document.getElementById('loginPassword').value;
+            document.getElementById('fLoginReturn').value   = window.location.pathname;
+            document.getElementById('loginForm').submit();
+        }
+        function submitRegister() {
+            if (!document.getElementById('chkTerms').checked) {
+                alert('Please accept the Terms of Service'); return;
+            }
+            document.getElementById('fRegUsername').value = document.getElementById('regUsername').value;
+            document.getElementById('fRegEmail').value    = document.getElementById('regEmail').value;
+            document.getElementById('fRegPassword').value = document.getElementById('regPassword').value;
+            document.getElementById('fRegConfirm').value  = document.getElementById('regConfirm').value;
+            document.getElementById('registerForm').submit();
+        }
+        function togglePass(id, btn) {
+            const input = document.getElementById(id);
+            input.type = input.type === 'password' ? 'text' : 'password';
+            btn.style.opacity = input.type === 'text' ? '0.4' : '1';
+        }
+        function checkStrength(input) {
+            const v = input.value;
+            const set = (id, ok) => {
+                const el = document.getElementById(id);
+                if (el) el.classList.toggle('auth-rule-ok', ok);
+            };
+            set('rule-len',   v.length >= 8);
+            set('rule-upper', /[A-Z]/.test(v));
+            set('rule-lower', /[a-z]/.test(v));
+            set('rule-digit', /[0-9]/.test(v));
+        }
+
+        // ── User menu ──
+        function toggleUserMenu() {
+            document.getElementById('userDropdown').classList.toggle('open');
+        }
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.user-menu-wrap')) {
+                const d = document.getElementById('userDropdown');
+                if (d) d.classList.remove('open');
+            }
+        });
+
+        // ── Region ──
+        let regionCities = [];
+        let selectedRegion = null;
+        async function openRegionModal() {
+            if (!regionCities.length) {
+                const res = await fetch('/Product/Cities');
+                regionCities = await res.json();
+            }
+            renderRegions(regionCities);
+            document.getElementById('regionOverlay').classList.add('modal-open');
+            document.getElementById('regionModal').classList.add('modal-open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeRegionModal() {
+            document.getElementById('regionOverlay').classList.remove('modal-open');
+            document.getElementById('regionModal').classList.remove('modal-open');
+            document.body.style.overflow = '';
+        }
+        function renderRegions(cities) {
+            const container = document.getElementById('regionPills');
+            container.innerHTML = '';
+            const all = document.createElement('button');
+            all.className = 'region-pill' + (!selectedRegion ? ' region-pill-active' : '');
+            all.textContent = 'All regions';
+            all.onclick = () => selectRegion(null, 'All regions');
+            container.appendChild(all);
+            cities.forEach(city => {
+                const btn = document.createElement('button');
+                btn.className = 'region-pill' + (selectedRegion?.id === city.id ? ' region-pill-active' : '');
+                btn.textContent = city.name;
+                btn.onclick = () => selectRegion(city, city.name);
+                container.appendChild(btn);
+            });
+        }
+        function filterRegions(val) {
+            const filtered = val
+                ? regionCities.filter(c => c.name.toLowerCase().includes(val.toLowerCase()))
+                : regionCities;
+            renderRegions(filtered);
+        }
+        function selectRegion(city, label) {
+            selectedRegion = city;
+                    const regionsBtn = document.querySelector('.regions-btn');
+        if (regionsBtn) {
+            regionsBtn.innerHTML = `
+                <img src="/img/marker_for_adv.svg" alt="" class="regions-icon" />
+                ${label}
+            `;
+        }
+
+        const regionBtnLabel = document.getElementById('regionBtnLabel');
+        if (regionBtnLabel) regionBtnLabel.textContent = label;
+            closeRegionModal();
+
+            const path = window.location.pathname;
+            if (path.startsWith('/Category/Index') || path.startsWith('/Category')) {
+                const url = new URL(window.location.href);
+                if (city) url.searchParams.set('city', city.name);
+                else url.searchParams.delete('city');
+                window.location.href = url.toString();
+            }
+        }
+
+        // ── Favourites / Cart ──
+        async function toggleFav(btn, productId, can) {
+                    const res = await fetch(`/Favourite/Toggle?productId=${productId}&can=${can}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
+            },
+            body: '{}'
+        });
+            if (res.status === 401) {
+                openAuthModal('login');
+                return;
+            }
+            const data = await res.json();
+            btn.classList.toggle('product-card-action-active', data.active);
+
+            if (window.location.pathname.startsWith('/Favourite')) {
+                location.reload();
+            }
+        }
+        function openSellerModal(name, avatar, phone, isCompany, email, date, sellerId) {
+            // Аватар
+            const avatarEl = document.getElementById('smAvatar');
+            avatarEl.innerHTML = avatar
+                ? `<img src="${avatar}" onerror="this.src='/img/no-photo.svg'" />`
+                : `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+
+            document.getElementById('smName').textContent = name || 'Unknown';
+
+            const badge = document.getElementById('smBadge');
+            badge.innerHTML = isCompany ? '<span class="seller-badge">Company</span>' : '';
+
+            const phoneRow = document.getElementById('smPhoneRow');
+            const phoneEl  = document.getElementById('smPhone');
+            if (phone) { phoneEl.textContent = phone; phoneRow.style.display = 'flex'; }
+            else        { phoneRow.style.display = 'none'; }
+
+            const emailRow = document.getElementById('smEmailRow');
+            const emailEl  = document.getElementById('smEmail');
+            if (email) { emailEl.textContent = email; emailRow.style.display = 'flex'; }
+            else        { emailRow.style.display = 'none'; }
+
+            const dateRow = document.getElementById('smDateRow');
+            const dateEl  = document.getElementById('smDate');
+            if (date) { dateEl.textContent = 'Member since ' + date; dateRow.style.display = 'flex'; }
+            else       { dateRow.style.display = 'none'; }
+
+            const link = document.getElementById('smLink');
+            if (sellerId) { link.href = '/Seller/Index/' + sellerId; link.style.display = ''; }
+            else           { link.style.display = 'none'; }
+
+            document.getElementById('sellerOverlay').classList.add('open');
+            document.getElementById('sellerModal').classList.add('open');
+        }
+
+        function closeSellerModal() {
+            document.getElementById('sellerOverlay').classList.remove('open');
+            document.getElementById('sellerModal').classList.remove('open');
+        }
+                // Счётчик непрочитанных сообщений
+        @if (User.Identity!.IsAuthenticated)
+        {
+                    <text>
+                    (async () => {
+                        try {
+                            const res = await fetch('/Messages/UnreadCount');
+                            if (!res.ok) return;
+                            const { count } = await res.json();
+                            const badge = document.getElementById('msgNavBadge');
+                            if (badge && count > 0) {
+                                badge.textContent = count;
+                                badge.style.display = 'inline-flex';
+                            }
+                        } catch {}
+                    })();
+                    </text>
+        }
+                @if (User.Identity!.IsAuthenticated)
+        {
+                <text>
+                (async () => {
+                    try {
+                        const res = await fetch('/Favourite/UserItems');
+                        if (!res.ok) return;
+                        const { favs, cart } = await res.json();
+
+                        const favBadge = document.getElementById('favsNavBadge');
+                        if (favBadge && favs.length > 0) {
+                            favBadge.textContent = favs.length;
+                            favBadge.style.display = 'inline-flex';
+                        }
+
+                        const cartBadge = document.getElementById('cartNavBadge');
+                        if (cartBadge && cart.length > 0) {
+                            cartBadge.textContent = cart.length;
+                            cartBadge.style.display = 'inline-flex';
+                        }
+                    } catch {}
+                })();
+                </text>
+        }
+        </script>
+
+</body>
+</html>
