@@ -41,7 +41,7 @@
                         onclick="toggleFav(this, @p.Id, false)" title="Cart">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>
                 </button>
-                <button class="details-img-btn" title="Report" onclick="">
+                <button class="details-img-btn" title="Report" onclick="openReportModal(@p.Id)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
                 </button>
             </div>
@@ -248,6 +248,25 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="reportOverlay" onclick="closeReportModal()"></div>
+<div class="modal" id="reportModal">
+    <button class="modal-close" onclick="closeReportModal()">✕</button>
+    <h2 class="auth-title">Report listing</h2>
+    <div class="auth-field">
+        <label class="auth-label" for="reportReason">Reason</label>
+        <select class="auth-input" id="reportReason">
+            <option value="">Select a reason</option>
+        </select>
+    </div>
+    <div class="auth-field">
+        <label class="auth-label" for="reportComment">Comment (optional)</label>
+        <textarea class="auth-input" id="reportComment" rows="3" placeholder="Additional details..."></textarea>
+    </div>
+    <div class="auth-actions" style="display:flex; gap:12px;">
+        <button class="auth-submit" onclick="submitReport()">Send report</button>
+        <button class="auth-submit auth-submit-secondary" onclick="closeReportModal()">Cancel</button>
+    </div>
+</div>
 <script>
     function openMessageModal() {
         document.getElementById('msgOverlay').classList.add('open');
@@ -307,5 +326,67 @@
         document.body.appendChild(tip);
         setTimeout(() => { tip.style.opacity = '0'; }, 600);
         setTimeout(() => tip.remove(), 600);
+    }
+        let reportReasons = [];
+
+    async function openReportModal(productId) {
+        if (!reportReasons.length) {
+            const res = await fetch('/api/Report/reasons');
+            if (!res.ok) return;
+            reportReasons = await res.json();
+        }
+        const select = document.getElementById('reportReason');
+        select.innerHTML = '<option value="">Select a reason</option>';
+        reportReasons.forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r.id;
+            opt.textContent = r.text;
+            select.appendChild(opt);
+        });
+        document.getElementById('reportModal').dataset.productId = productId;
+        document.getElementById('reportOverlay').classList.add('modal-open');
+        document.getElementById('reportModal').classList.add('modal-open');
+    }
+
+    function closeReportModal() {
+        document.getElementById('reportOverlay').classList.remove('modal-open');
+        document.getElementById('reportModal').classList.remove('modal-open');
+    }
+
+    async function submitReport() {
+        const reasonId = document.getElementById('reportReason').value;
+        if (!reasonId) {
+            alert('Please select a reason');
+            return;
+        }
+        const comment = document.getElementById('reportComment').value;
+        const productId = document.getElementById('reportModal').dataset.productId;
+
+        const res = await fetch('/api/Report/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
+            },
+            body: JSON.stringify({
+                productId: parseInt(productId),
+                reportReasonId: parseInt(reasonId),
+                comment: comment || null
+            })
+        });
+
+        if (res.status === 401) {
+            closeReportModal();
+            openAuthModal('login');
+            return;
+        }
+
+        if (res.ok) {
+            alert('Report submitted. Thank you.');
+            closeReportModal();
+        } else {
+            const err = await res.text();
+            alert('Error: ' + err);
+        }
     }
     </script>

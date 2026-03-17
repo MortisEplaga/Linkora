@@ -10,6 +10,8 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddSignalR();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+builder.Services.AddScoped<IReportRepository, ReportRepository>();
+
 
 builder.Services.AddAuthentication("Cookies")
     .AddCookie("Cookies", options =>

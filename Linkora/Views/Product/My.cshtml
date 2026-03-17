@@ -2,14 +2,16 @@
 @{
     var products = (List<Product>)ViewBag.Products;
     var tab = (string)ViewBag.Tab;
-    ViewData["Title"] = "My ads";
+    var counts = ViewBag.StatusCounts as Dictionary<string, int>;
+
+   ViewData["Title"] = "My ads";
 
     var tabs = new[] {
-        ("active",      "Active"),
-        ("pending",     "Awaiting payment"),
-        ("moderation",  "Under moderation"),
-        ("rejected",    "Rejected"),
-        ("inactive",    "Inactive"),
+        ("Active",      "Active"),
+        ("Moderation",  "Under moderation"),
+        ("Rejected",    "Rejected"),
+        ("Archived",    "Archived"),
+        ("Succeeded",   "Succeeded"),
     };
 }
 
@@ -23,7 +25,13 @@
     <div class="myads-tabs">
         @foreach (var (key, label) in tabs)
         {
-            <a class="myads-tab @(tab == key ? "myads-tab-active" : "")" href="?tab=@key">@label</a>
+            <a class="myads-tab @(tab == key ? "myads-tab-active" : "")" href="?tab=@key">
+                @label
+                @if (counts.TryGetValue(key, out var count) && count > 0)
+                {
+                    <span class="myads-tab-count">@count</span>
+                }
+            </a>
         }
     </div>
 
@@ -58,6 +66,16 @@
                         <div class="myads-card-meta">@p.Address · @(p.CreatedTime?.ToString("dd MMM, HH:mm"))</div>
                     </div>
                     <div class="myads-card-actions">
+                        @if (p.Status == ProductStatus.Active)
+                        {
+                            <button class="myads-action-btn myads-action-complete"
+                                    title="Complete deal"
+                                    onclick="openPartnerModal(@p.Id)">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                            </button>
+                        }
                         <a class="myads-action-btn" asp-controller="Product" asp-action="Edit" asp-route-id="@p.Id">Edit</a>
                         <button class="myads-action-btn myads-action-danger"
                                 onclick="deleteAd(@p.Id)">
@@ -69,8 +87,90 @@
         </div>
     }
 </div>
-
+<div class="modal-overlay" id="partnerOverlay" onclick="closePartnerModal()"></div>
+<div class="modal" id="partnerModal">
+    <button class="modal-close" onclick="closePartnerModal()">✕</button>
+    <h2 class="auth-title">Select user</h2>
+    <div class="partner-list" id="partnerList"></div>
+    <div class="auth-actions" style="margin-top:16px;">
+        <button class="auth-submit" onclick="closePartnerModal()">Cancel</button>
+    </div>
+</div>
 <script>
+        let currentProductId = null;
+
+    function openPartnerModal(productId) {
+        currentProductId = productId;
+        fetch(`/Product/GetConversationPartners?productId=${productId}`)
+            .then(res => res.json())
+            .then(partners => {
+                const list = document.getElementById('partnerList');
+                list.innerHTML = '';
+                if (partners.length === 0) {
+                    list.innerHTML = '<div class="partner-item">No partners found</div>';
+                    return;
+                }
+                partners.forEach(p => {
+                    const item = document.createElement('div');
+                    item.className = 'partner-item';
+                    item.onclick = () => selectPartner(p.id);
+                    item.innerHTML = `
+                        <img class="partner-item-avatar" src="${p.avatarImagePath || '/img/no-photo.svg'}" onerror="this.src='/img/no-photo.svg'">
+                        <span class="partner-item-name">${p.userName}</span>
+                        ${p.isCompany ? '<span class="partner-item-badge">Company</span>' : ''}
+                    `;
+                    list.appendChild(item);
+                });
+            });
+        document.getElementById('partnerOverlay').classList.add('modal-open');
+        document.getElementById('partnerModal').classList.add('modal-open');
+    }
+
+    function closePartnerModal() {
+        document.getElementById('partnerOverlay').classList.remove('modal-open');
+        document.getElementById('partnerModal').classList.remove('modal-open');
+    }
+
+    async function selectPartner(otherUserId) {
+        closePartnerModal();
+        try {
+            const res = await fetch(`/Product/CompleteDeal?id=${currentProductId}&otherUserId=${otherUserId}`, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
+                }
+            });
+            if (res.ok) {
+                location.reload();
+            } else {
+                const err = await res.text();
+                console.error('Ошибка:', err);
+                alert('Error: ' + err);
+            }
+        } catch (e) {
+            console.error('Ошибка сети:', e);
+        }
+    }
+    async function completeDeal(id, btn) {
+        try {
+            const res = await fetch(`/Product/CompleteDeal?id=${id}`, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
+                }
+            });
+            if (res.ok) {
+                location.reload();
+            } else {
+                const err = await res.text();
+                // По желанию можно показать ненавязчивое уведомление вместо alert
+                console.error('Ошибка:', err);
+            }
+        } catch (e) {
+            console.error('Ошибка сети:', e);
+        }
+    }
+
     async function deleteAd(id) {
         if (!confirm('Delete this ad?')) return;
         await fetch(`/Product/Delete?id=${id}`, {

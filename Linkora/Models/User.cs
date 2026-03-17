@@ -29,5 +29,7 @@ namespace Linkora.Models
         [StringLength(500)]
         public string AvatarImagePath { get; set; }
         public string? PasswordHash { get; set; }
+        public bool IsCompany { get; set; }
+
     }
 }

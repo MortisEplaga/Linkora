@@ -11,11 +11,14 @@ namespace Linkora.Controllers
     public class ProductController(ICategoryRepository categoryRepository,
         IAddressRepository addressRepository,
         IProductRepository productRepository,
-        IConfiguration configuration) : Controller
+        IConfiguration configuration,
+        IMessageRepository messageRepository) : Controller
     {
         private readonly ICategoryRepository _categoryRepository = categoryRepository;
         private readonly IAddressRepository _addressRepository = addressRepository;
         private readonly IProductRepository _productRepository = productRepository;
+        private readonly IMessageRepository _messageRepository = messageRepository;
+
         private readonly IConfiguration _configuration = configuration;
 
         [HttpGet]
@@ -85,10 +88,13 @@ namespace Linkora.Controllers
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var products = await _productRepository.GetByUserAsync(userId, tab);
+            var counts = await _productRepository.GetCountsByStatusAsync(userId); // должен быть этот вызов
             ViewBag.Products = products;
             ViewBag.Tab = tab;
+            ViewBag.StatusCounts = counts; // передаём словарь
             return View();
         }
+
         [Authorize]
         public async Task<IActionResult> Edit(int id)
         {
@@ -106,6 +112,12 @@ namespace Linkora.Controllers
             int? qty, decimal? price, string address, int? categoryId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var existing = await _productRepository.GetByIdAsync(id);
+            if (existing == null) return NotFound();
+            if (existing.UserId != userId) return Forbid();
+
+            bool wasArchived = existing.Status == ProductStatus.Archived;
+
             await _productRepository.UpdateAsync(new Product
             {
                 Id = id,
@@ -117,6 +129,10 @@ namespace Linkora.Controllers
                 Address = address,
                 CategoryId = categoryId,
             });
+            if (wasArchived)
+            {
+                await _productRepository.ReactivateProductAsync(id, userId);
+            }
             return RedirectToAction("My");
         }
 
@@ -138,6 +154,36 @@ namespace Linkora.Controllers
         {
             var values = await _productRepository.GetParamValuesAsync(productId);
             return Json(values);
+        }
+        // Controllers/ProductController.cs
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> CompleteDeal(int id, int otherUserId)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var product = await _productRepository.GetByIdAsync(id);
+            if (product == null) return NotFound();
+            if (product.UserId != userId) return Forbid();
+            if (product.Status != ProductStatus.Active)
+                return BadRequest("Только активные объявления можно завершить");
+
+            var success = await _productRepository.CompleteDealAsync(id, userId);
+            if (!success) return BadRequest("Не удалось завершить сделку");
+
+            // Создаём системный чат
+            var convId = await _messageRepository.CreateSystemConversationAsync(id, userId, otherUserId);
+            // Отправляем системное сообщение
+            await _messageRepository.SendSystemMessageAsync(convId, $"Сделка по товару \"{product.Name}\" завершена. Пожалуйста, оцените продавца.");
+
+            return Ok();
+        }
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> GetConversationPartners(int productId)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var partners = await _messageRepository.GetConversationPartnersAsync(productId, userId);
+            return Ok(partners.Select(p => new { p.Id, p.UserName, p.AvatarImagePath, p.IsCompany }));
         }
     }
 }

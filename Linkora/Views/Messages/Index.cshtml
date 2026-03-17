@@ -86,7 +86,22 @@
                     </a>
                 </div>
             </div>
-
+            @if (activeConv != null && activeConv.CanReview && activeConv.ReviewTargetId.HasValue)
+            {
+                <div class="review-prompt" id="reviewPrompt">
+                    <div class="review-prompt-text">How would you rate this user?</div>
+                    <div class="review-stars" id="reviewStars">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <svg class="star" data-rating="@i" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f5a623" stroke-width="2" onclick="rateUser(@i)">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                            </svg>
+                        }
+                    </div>
+                    <textarea class="review-comment" id="reviewComment" placeholder="Optional comment" rows="2"></textarea>
+                    <button class="review-submit" onclick="submitReview(@activeConv.Id, @activeConv.ReviewTargetId, @activeConv.ProductIdForReview)">Submit review</button>
+                </div>
+            }
             <!-- Карточка объявления -->
             @if (activeConv.ProductId.HasValue)
             {
@@ -149,8 +164,44 @@
 </div>
 
 @section Scripts {
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
     <script>
+                async function rateUser(rating) {
+            document.querySelectorAll('.star').forEach((s, idx) => {
+                if (idx < rating) s.setAttribute('fill', '#f5a623');
+                else s.setAttribute('fill', 'none');
+            });
+            window.selectedRating = rating;
+        }
+
+        async function submitReview(convId, targetUserId, productId) {
+            const rating = window.selectedRating;
+            if (!rating) {
+                alert('Please select a rating');
+                return;
+            }
+            const comment = document.getElementById('reviewComment').value;
+            const res = await fetch('/Reviews/Create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
+                },
+                body: JSON.stringify({
+                    targetUserId,
+                    productId,
+                    rating,
+                    comment
+                })
+            });
+            if (res.ok) {
+                document.getElementById('reviewPrompt').style.display = 'none';
+                // Можно показать сообщение "Спасибо за отзыв"
+            } else {
+                alert('Error submitting review');
+            }
+        }
         const myId = @myId;
         const activeConvId = @(activeId.HasValue? activeId.Value.ToString() : "null");
 

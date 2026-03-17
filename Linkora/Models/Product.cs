@@ -3,6 +3,15 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Linkora.Models
 {
+    public enum ProductStatus
+    {
+        Active,      // Активное
+        Moderation,  // На модерации (после жалобы)
+        Rejected,    // Отклонено модератором
+        Archived,    // В архиве (скрыто пользователем или автоматически)
+        Succeeded    // Успешно завершено
+    }
+
     [Table("Products")]
     public class Product
     {
@@ -33,6 +42,7 @@ namespace Linkora.Models
         [StringLength(500)]
         public string AvatarImagePath { get; set; }
         [NotMapped] public SellerViewModel? Seller { get; set; }
-        public string? Status { get; set; }
+        public ProductStatus Status { get; set; } = ProductStatus.Active;
+        public DateTime? ArchivedAt { get; set; }
     }
 }

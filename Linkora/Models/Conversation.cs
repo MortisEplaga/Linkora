@@ -23,6 +23,9 @@ namespace Linkora.Models
         [NotMapped] public string? LastMessage { get; set; }
         [NotMapped] public DateTime? LastMessageAt { get; set; }
         [NotMapped] public int UnreadCount { get; set; }
+        public bool CanReview { get; set; }
+        public int? ReviewTargetId { get; set; }
+        public int? ProductIdForReview { get; set; }
     }
 
     [Table("Messages")]

@@ -1,4 +1,12 @@
-﻿.details-params {
+﻿.auth-submit-secondary {
+    background: #f0f0f0;
+    color: #333;
+}
+
+    .auth-submit-secondary:hover {
+        background: #e0e0e0;
+    }
+    .details-params {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0 32px;
