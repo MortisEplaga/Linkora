@@ -16,17 +16,27 @@
 
         <!-- Фото -->
         @{
-            var photos = new List<string>();
-            if (p.AvatarImagePath != null) photos.Add(p.AvatarImagePath);
-            if (!photos.Any()) photos.Add("/img/no-photo.svg");
+            var mediaList = p.Media.Count > 0
+            ? p.Media
+            : (p.AvatarImagePath != null
+            ? new List<ProductMedia> { new() { FilePath = p.AvatarImagePath, MediaType = "image" } }
+            : new List<ProductMedia> { new() { FilePath = "/img/no-photo.svg", MediaType = "image" } });
         }
         <div class="details-gallery">
-            <img class="details-main-img"
-                 src="@photos[0]"
-                 alt="@p.Name"
-                 onerror="this.src='/img/no-photo.svg'"
-                 onclick="openLightbox(0)"
-                 style="cursor:zoom-in" />
+            @if (mediaList[0].MediaType == "video")
+            {
+                <video class="details-main-img" src="@mediaList[0].FilePath"
+                       controls muted playsinline style="cursor:default;background:#000"></video>
+            }
+            else
+            {
+                <img class="details-main-img"
+                     src="@mediaList[0].FilePath"
+                     alt="@p.Name"
+                     onerror="this.src='/img/no-photo.svg'"
+                     onclick="openLightbox(0)"
+                     style="cursor:zoom-in" />
+            }
             <div class="details-img-actions">
                 <button class="details-img-btn" onclick="shareProduct(event)" title="Share">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" /></svg>
@@ -101,29 +111,47 @@
         <div class="lb" id="lb">
             <button class="lb-close-btn" onclick="closeLightbox()">✕</button>
             <div class="lb-topbar">
-                <span class="lb-counter" id="lbCounter">1 / @photos.Count</span>
+                <span class="lb-counter" id="lbCounter">1 / @mediaList.Count</span>
                 <span class="lb-title">@p.Price?.ToString("N2") €&nbsp;&nbsp;@p.Name</span>
             </div>
             <div class="lb-body">
                 <div class="lb-thumbs">
-                    @for (int i = 0; i < photos.Count; i++)
+                    @for (int i = 0; i < mediaList.Count; i++)
                     {
-                        <img class="lb-thumb @(i == 0 ? "lb-thumb-active" : "")"
-                             src="@photos[i]"
-                             onclick="lbGoto(@i)"
-                             onerror="this.src='/img/no-photo.svg'" />
+                        if (mediaList[i].MediaType == "video")
+                        {
+                            <div class="lb-thumb @(i == 0 ? "lb-thumb-active" : "")"
+                                 onclick="lbGoto(@i)"
+                                 style="position:relative;background:#000;cursor:pointer">
+                                <video src="@mediaList[i].FilePath"
+                                       style="width:100%;height:100%;object-fit:cover" muted></video>
+                                <div style="position:absolute;inset:0;display:flex;align-items:center;
+                                    justify-content:center;color:#fff;font-size:18px;pointer-events:none">
+                                    ▶
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <img class="lb-thumb @(i == 0 ? "lb-thumb-active" : "")"
+                                 src="@mediaList[i].FilePath"
+                                 onclick="lbGoto(@i)"
+                                 onerror="this.src='/img/no-photo.svg'" />
+                        }
                     }
                 </div>
                 <div class="lb-main">
                     <button class="lb-arrow lb-prev" onclick="lbMove(-1)">‹</button>
-                    <img class="lb-img" id="lbImg" src="@photos[0]" onerror="this.src='/img/no-photo.svg'" />
+                    <img class="lb-img" id="lbImg" src="@mediaList[0].FilePath" onerror="this.src='/img/no-photo.svg'" />
                     <button class="lb-arrow lb-next" onclick="lbMove(1)">›</button>
                 </div>
             </div>
         </div>
 
         <script>
-            const lbPhotos = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(photos));
+            const lbMedia = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+                                mediaList.Select(m => new { path = m.FilePath, type = m.MediaType })
+                        ));
             let lbIndex = 0;
 
             function openLightbox(i) {
@@ -133,14 +161,37 @@
             }
 
             function closeLightbox() {
+                // Останавливаем видео при закрытии
+                document.getElementById('lbVideo')?.pause();
                 document.getElementById('lbOverlay').classList.remove('open');
                 document.getElementById('lb').classList.remove('open');
             }
 
             function lbGoto(i) {
-                lbIndex = (i + lbPhotos.length) % lbPhotos.length;
-                document.getElementById('lbImg').src = lbPhotos[lbIndex];
-                document.getElementById('lbCounter').textContent = (lbIndex + 1) + ' / ' + lbPhotos.length;
+                lbIndex = (i + lbMedia.length) % lbMedia.length;
+                const item   = lbMedia[lbIndex];
+                const lbMain = document.querySelector('.lb-main');
+
+                // Убираем предыдущий элемент
+                document.getElementById('lbImg')?.remove();
+                document.getElementById('lbVideo')?.remove();
+
+                if (item.type === 'video') {
+                    const v = document.createElement('video');
+                    v.id = 'lbVideo'; v.className = 'lb-img';
+                    v.src = item.path; v.controls = true;
+                    v.autoplay = true; v.muted = false;
+                    lbMain.insertBefore(v, document.querySelector('.lb-next'));
+                } else {
+                    const img = document.createElement('img');
+                    img.id = 'lbImg'; img.className = 'lb-img';
+                    img.src = item.path;
+                    img.onerror = () => img.src = '/img/no-photo.svg';
+                    lbMain.insertBefore(img, document.querySelector('.lb-next'));
+                }
+
+                document.getElementById('lbCounter').textContent =
+                    (lbIndex + 1) + ' / ' + lbMedia.length;
                 document.querySelectorAll('.lb-thumb').forEach((t, idx) =>
                     t.classList.toggle('lb-thumb-active', idx === lbIndex));
             }
@@ -152,8 +203,7 @@
                 if (e.key === 'ArrowLeft')  lbMove(-1);
                 if (e.key === 'ArrowRight') lbMove(1);
                 if (e.key === 'Escape')     closeLightbox();
-            });
-        </script>
+            });        </script>
     </div>
 
     <!-- Описание -->

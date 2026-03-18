@@ -53,14 +53,21 @@
             </div>
 
             <div class="create-section">
-                <h2 class="create-section-title">Photos</h2>
-                <div class="create-photos-area" id="photosArea" onclick="document.getElementById('photoInput').click()">
+                <h2 class="create-section-title">Photos & Video</h2>
+                <div class="create-photos-area" id="photosArea"
+                     onclick="document.getElementById('photoInput').click()">
                     <div class="create-photos-placeholder">
                         <span class="create-photos-icon">📷</span>
-                        <span>Click to upload photos</span>
+                        <span>Click to upload photos or video</span>
+                        <span class="create-photos-hint">Images & video · Max 50 MB total</span>
                     </div>
-                    <input type="file" id="photoInput" multiple accept="image/*"
+                    <input type="file" id="photoInput" multiple
+                           accept="image/*,video/mp4,video/webm,video/quicktime"
                            style="display:none" onchange="previewPhotos(this)" />
+                </div>
+                <div class="create-size-bar" id="sizeBar" style="display:none">
+                    <div class="create-size-fill" id="sizeFill"></div>
+                    <span class="create-size-label" id="sizeLabel"></span>
                 </div>
                 <div class="create-photos-preview" id="photosPreview"></div>
             </div>
@@ -269,23 +276,125 @@
     }
 
     async function submitEdit(id) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `/Product/Edit?id=${id}`;
-        const fields = {
-            title:       document.getElementById('adTitle').value,
-            description: document.getElementById('adDescription').value,
-            qty:         document.getElementById('adQty').value,
-            price:       document.getElementById('adPrice').value,
-            address:     document.getElementById('adAddress').value,
-            categoryId:  document.getElementById('selectedCategoryId').value,
-        };
-        Object.entries(fields).forEach(([k, v]) => {
-            const input = document.createElement('input');
-            input.type = 'hidden'; input.name = k; input.value = v;
-            form.appendChild(input);
-        });
-        document.body.appendChild(form);
-        form.submit();
+        const btn = document.querySelector('.create-submit');
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+
+        try {
+            const totalBytes = selectedFiles.reduce((s, f) => s + f.size, 0);
+            if (totalBytes > MAX_BYTES) {
+                alert('Total media size exceeds 50 MB. Please remove some files.');
+                return;
+            }
+
+            const fd = new FormData();
+            fd.append('title',       document.getElementById('adTitle').value);
+            fd.append('description', document.getElementById('adDescription').value);
+            fd.append('qty',         document.getElementById('adQty').value || '1');
+            fd.append('address',     document.getElementById('adAddress').value);
+            fd.append('categoryId',  document.getElementById('selectedCategoryId').value);
+
+            // Параметры
+            const params = {};
+            const priceInput = document.getElementById('adPrice');
+            if (priceInput.dataset.paramId && priceInput.value)
+                params[priceInput.dataset.paramId] = priceInput.value;
+
+            document.querySelectorAll('input[data-param], textarea[data-param]').forEach(el => {
+                if (el.type !== 'checkbox' && el.value)
+                    params[el.dataset.param] = el.value;
+            });
+            document.querySelectorAll('.param-pills[data-param]').forEach(el => {
+                const active = el.querySelector('.param-pill-active');
+                if (active) params[el.dataset.param] = active.textContent.trim();
+            });
+            document.querySelectorAll('.param-options[data-param]').forEach(el => {
+                const vals = [...el.querySelectorAll('input[type=checkbox]:checked')]
+                    .map(cb => cb.parentElement.textContent.trim());
+                if (vals.length) params[el.dataset.param] = vals.join(',');
+            });
+            document.querySelectorAll('.param-range-input[data-param]').forEach(el => {
+                if (el.value) params[el.dataset.param] = el.value;
+            });
+
+            fd.append('paramsJson', JSON.stringify(params));
+
+            for (const file of selectedFiles) fd.append('photos', file);
+
+            const res = await fetch(`/Product/Edit?id=${id}`, { method: 'POST', body: fd });
+            if (res.ok) {
+                window.location.href = '/Product/My';
+            } else {
+                alert('Error: ' + await res.text());
+            }
+        } catch (e) {
+            alert('Network error: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Save';
+        }
     }
-</script>
+    const MAX_BYTES = 52_428_800; // 50 MB
+
+    // Храним файлы отдельно от <input>, чтобы поддерживать удаление
+    let selectedFiles = [];
+
+    function previewPhotos(input) {
+        Array.from(input.files).forEach(file => {
+            if (!selectedFiles.find(f => f.name === file.name && f.size === file.size))
+                selectedFiles.push(file);
+        });
+        input.value = '';   // сбросить input чтобы можно было добавить те же файлы снова
+        renderPreviews();
+    }
+
+    function renderPreviews() {
+        const preview = document.getElementById('photosPreview');
+        preview.innerHTML = '';
+        let total = 0;
+
+        selectedFiles.forEach((file, idx) => {
+            total += file.size;
+            const wrap = document.createElement('div');
+            wrap.className = 'create-photo-thumb';
+            const isVideo = file.type.startsWith('video/');
+
+            if (isVideo) {
+                const url = URL.createObjectURL(file);
+                wrap.innerHTML = `
+                    <video src="${url}" class="thumb-video" muted playsinline
+                           onmouseenter="this.play()" onmouseleave="this.pause();this.currentTime=0"></video>
+                    <div class="thumb-video-badge">▶</div>
+                    <button type="button" onclick="removeFile(${idx})">✕</button>`;
+            } else {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    wrap.innerHTML = `
+                        <img src="${e.target.result}" />
+                        <button type="button" onclick="removeFile(${idx})">✕</button>`;
+                };
+                reader.readAsDataURL(file);
+            }
+            preview.appendChild(wrap);
+        });
+
+        updateSizeBar(total);
+    }
+
+    function removeFile(idx) {
+        selectedFiles.splice(idx, 1);
+        renderPreviews();
+    }
+
+    function updateSizeBar(totalBytes) {
+        const bar   = document.getElementById('sizeBar');
+        const fill  = document.getElementById('sizeFill');
+        const label = document.getElementById('sizeLabel');
+        if (selectedFiles.length === 0) { bar.style.display = 'none'; return; }
+        bar.style.display = 'block';
+        const pct = Math.min(totalBytes / MAX_BYTES * 100, 100);
+        fill.style.width = pct + '%';
+        fill.style.background = pct > 90 ? '#e53e3e' : pct > 70 ? '#f6a623' : '#00b0a3';
+        label.textContent = (totalBytes / 1_048_576).toFixed(1) + ' / 50 MB';
+    }
+    </script>

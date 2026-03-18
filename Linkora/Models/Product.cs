@@ -44,5 +44,6 @@ namespace Linkora.Models
         [NotMapped] public SellerViewModel? Seller { get; set; }
         public ProductStatus Status { get; set; } = ProductStatus.Active;
         public DateTime? ArchivedAt { get; set; }
+        [NotMapped] public List<ProductMedia> Media { get; set; } = new();
     }
 }

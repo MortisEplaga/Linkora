@@ -87,7 +87,11 @@ namespace Linkora.Controllers
             var catFilter = categoryId.HasValue ? "AND p.CategoryId = @CatId" : "";
 
             await using var prodCmd = new SqlCommand($@"
-                SELECT p.Id, p.Name, p.Address, p.CreatedTime, p.AvatarImagePath,
+                SELECT p.Id, p.Name, p.Address, p.CreatedTime, COALESCE(
+           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
+            WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+           p.AvatarImagePath
+       ) AS AvatarImagePath,
                        (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
                         FROM MapperProductCategory m
                         JOIN Category c2 ON c2.Id = m.CategoryId AND c2.Name = 'Price'

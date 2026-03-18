@@ -171,7 +171,11 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(@"
                 SELECT c.Id, c.ProductId, c.BuyerId, c.SellerId, c.IsSystem, c.CreatedAt,
-                       p.Name, p.AvatarImagePath,
+                       p.Name, COALESCE(
+           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
+            WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+           p.AvatarImagePath
+       ) AS AvatarImagePath,
                        CASE WHEN c.BuyerId = @UserId THEN su.UserName ELSE bu.UserName END,
                        CASE WHEN c.BuyerId = @UserId THEN su.AvatarImagePath ELSE bu.AvatarImagePath END,
                        CASE WHEN c.BuyerId = @UserId THEN c.SellerId ELSE c.BuyerId END,
@@ -214,7 +218,11 @@ namespace Linkora.Repositories
 
             await using var cmd = new SqlCommand(@"
         SELECT c.Id, c.ProductId, c.BuyerId, c.SellerId, c.IsSystem, c.CreatedAt,
-               p.Name, p.AvatarImagePath, p.Status,
+               p.Name, COALESCE(
+           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
+            WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+           p.AvatarImagePath
+       ) AS AvatarImagePath, p.Status,
                CASE WHEN c.BuyerId = @UserId THEN su.UserName ELSE bu.UserName END,
                CASE WHEN c.BuyerId = @UserId THEN su.AvatarImagePath ELSE bu.AvatarImagePath END,
                CASE WHEN c.BuyerId = @UserId THEN c.SellerId ELSE c.BuyerId END

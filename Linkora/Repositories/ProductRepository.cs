@@ -106,7 +106,11 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
             await using var cmd = new SqlCommand($@"
                 SELECT p.Id, p.Name, p.Description, p.Address,
-                       p.CreatedTime, p.AvatarImagePath,
+                       p.CreatedTime, COALESCE(
+           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
+            WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+           p.AvatarImagePath
+       ) AS AvatarImagePath,
                        u.UserName, u.AvatarImagePath, u.IsCompany,
                        u.PhoneNumber, u.Email, u.CreatedAt, u.Id
                        {priceSelect}
@@ -150,8 +154,12 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(@"
         SELECT p.Id, p.Name, p.Description, p.Address,
-               p.CreatedTime, p.AvatarImagePath, p.CategoryId,
-               p.Status,  -- <-- добавить поле Status
+               p.CreatedTime, COALESCE(
+           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
+            WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+           p.AvatarImagePath
+       ) AS AvatarImagePath, p.CategoryId,
+               p.Status,
                u.UserName, u.AvatarImagePath, u.IsCompany, u.PhoneNumber, u.Id,
                p.UserId, u.Email, u.CreatedAt
         FROM Products p
@@ -201,6 +209,8 @@ namespace Linkora.Repositories
                 ? null
                 : Convert.ToDecimal(priceVal);
 
+            product.Media = await GetMediaAsync(id);
+
             return product;
         }
 
@@ -211,7 +221,11 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
             await using var cmd = new SqlCommand($@"
                 SELECT TOP {count}
-                       p.Id, p.Name, p.Address, p.CreatedTime, p.AvatarImagePath,
+                       p.Id, p.Name, p.Address, p.CreatedTime, COALESCE(
+           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
+            WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+           p.AvatarImagePath
+       ) AS AvatarImagePath,
                        (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
                         FROM MapperProductCategory m
                         JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price'
@@ -241,7 +255,11 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(@"
-                SELECT p.Id, p.Name, p.Address, p.CreatedTime, p.AvatarImagePath, p.Status,
+                SELECT p.Id, p.Name, p.Address, p.CreatedTime, COALESCE(
+           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
+            WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+           p.AvatarImagePath
+       ) AS AvatarImagePath, p.Status,
                        (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
                         FROM MapperProductCategory m
                         JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price'
@@ -268,28 +286,47 @@ namespace Linkora.Repositories
                 }); return result;
         }
 
-        public async Task UpdateAsync(Product product)
+        public async Task UpdateAsync(Product product, Dictionary<int, string> paramValues)
         {
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
+
             await using var cmd = new SqlCommand(@"
-                UPDATE Products SET
-                    Name        = @Name,
-                    Description = @Description,
-                    Qty         = @Qty,
-                    Address     = @Address,
-                    CategoryId  = @CategoryId
-                WHERE Id = @Id AND UserId = @UserId", conn);
+        UPDATE Products SET
+            Name        = @Name,
+            Description = @Description,
+            Qty         = @Qty,
+            Address     = @Address,
+            CategoryId  = @CategoryId
+        WHERE Id = @Id AND UserId = @UserId", conn);
+
             cmd.Parameters.AddWithValue("@Name", product.Name);
             cmd.Parameters.AddWithValue("@Description", (object?)product.Description ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@Qty", (object?)product.Qty ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@Address", (object?)product.Address ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@CategoryId", (object?)product.CategoryId ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@Id", product.Id);
-            cmd.Parameters.AddWithValue("@UserId", product.UserId);
+            cmd.Parameters.AddWithValue("@UserId", product.UserId!);
             await cmd.ExecuteNonQueryAsync();
-        }
-        // ProductRepository.cs
+
+            // Удаляем старые параметры и вставляем новые
+            await using var del = new SqlCommand(
+                "DELETE FROM MapperProductCategory WHERE ProductId = @Id", conn);
+            del.Parameters.AddWithValue("@Id", product.Id);
+            await del.ExecuteNonQueryAsync();
+
+            foreach (var (paramId, value) in paramValues)
+            {
+                if (string.IsNullOrWhiteSpace(value)) continue;
+                await using var ins = new SqlCommand(@"
+            INSERT INTO MapperProductCategory (ProductId, CategoryId, Value)
+            VALUES (@ProductId, @CategoryId, @Value)", conn);
+                ins.Parameters.AddWithValue("@ProductId", product.Id);
+                ins.Parameters.AddWithValue("@CategoryId", paramId);
+                ins.Parameters.AddWithValue("@Value", value);
+                await ins.ExecuteNonQueryAsync();
+            }
+        }        // ProductRepository.cs
         public async Task<Dictionary<string, int>> GetCountsByStatusAsync(int userId)
         {
             var result = new Dictionary<string, int>();
@@ -439,6 +476,103 @@ namespace Linkora.Repositories
 
             var rowsAffected = await command.ExecuteNonQueryAsync();
             return rowsAffected > 0;
+        }
+        public async Task<int> CreateAsync(Product product, Dictionary<int, string> paramValues)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            await using var cmd = new SqlCommand(@"
+        INSERT INTO Products (Name, Description, Qty, Address, CategoryId, UserId, AvatarImagePath, CreatedTime, Status)
+        OUTPUT INSERTED.Id
+        VALUES (@Name, @Description, @Qty, @Address, @CategoryId, @UserId, @AvatarImagePath, GETDATE(), 'Moderation')", conn);
+
+            cmd.Parameters.AddWithValue("@Name", product.Name);
+            cmd.Parameters.AddWithValue("@Description", (object?)product.Description ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@Qty", (object?)product.Qty ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@Address", (object?)product.Address ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@CategoryId", (object?)product.CategoryId ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@UserId", product.UserId!);
+            cmd.Parameters.AddWithValue("@AvatarImagePath", (object?)product.AvatarImagePath ?? DBNull.Value);
+
+            var newId = (int)(await cmd.ExecuteScalarAsync())!;
+
+            foreach (var (paramId, value) in paramValues)
+            {
+                if (string.IsNullOrWhiteSpace(value)) continue;
+                await using var p = new SqlCommand(@"
+            INSERT INTO MapperProductCategory (ProductId, CategoryId, Value)
+            VALUES (@ProductId, @CategoryId, @Value)", conn);
+                p.Parameters.AddWithValue("@ProductId", newId);
+                p.Parameters.AddWithValue("@CategoryId", paramId);
+                p.Parameters.AddWithValue("@Value", value);
+                await p.ExecuteNonQueryAsync();
+            }
+
+            return newId;
+        }
+        public async Task<List<ProductMedia>> GetMediaAsync(int productId)
+        {
+            var result = new List<ProductMedia>();
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(
+                "SELECT Id, FilePath, MediaType, SortOrder FROM ProductMedia WHERE ProductId = @Id ORDER BY SortOrder", conn);
+            cmd.Parameters.AddWithValue("@Id", productId);
+            await using var r = await cmd.ExecuteReaderAsync();
+            while (await r.ReadAsync())
+                result.Add(new ProductMedia
+                {
+                    Id = r.GetInt32(0),
+                    ProductId = productId,
+                    FilePath = r.GetString(1),
+                    MediaType = r.GetString(2),
+                    SortOrder = r.GetInt32(3),
+                });
+            return result;
+        }
+
+        public async Task SaveMediaAsync(int productId, List<ProductMedia> media)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            for (int i = 0; i < media.Count; i++)
+            {
+                await using var ins = new SqlCommand(@"
+            INSERT INTO ProductMedia (ProductId, FilePath, MediaType, SortOrder)
+            VALUES (@ProductId, @FilePath, @MediaType, @SortOrder)", conn);
+                ins.Parameters.AddWithValue("@ProductId", productId);
+                ins.Parameters.AddWithValue("@FilePath", media[i].FilePath);
+                ins.Parameters.AddWithValue("@MediaType", media[i].MediaType);
+                ins.Parameters.AddWithValue("@SortOrder", i);
+                await ins.ExecuteNonQueryAsync();
+            }
+        }
+
+        public async Task DeleteMediaAsync(int productId)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            // Получаем пути для удаления файлов с диска
+            await using var sel = new SqlCommand(
+                "SELECT FilePath FROM ProductMedia WHERE ProductId = @Id", conn);
+            sel.Parameters.AddWithValue("@Id", productId);
+            await using var r = await sel.ExecuteReaderAsync();
+            var paths = new List<string>();
+            while (await r.ReadAsync()) paths.Add(r.GetString(0));
+            await r.CloseAsync();
+
+            foreach (var path in paths)
+            {
+                var full = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", path.TrimStart('/'));
+                if (File.Exists(full)) File.Delete(full);
+            }
+
+            await using var del = new SqlCommand(
+                "DELETE FROM ProductMedia WHERE ProductId = @Id", conn);
+            del.Parameters.AddWithValue("@Id", productId);
+            await del.ExecuteNonQueryAsync();
         }
     }
 }

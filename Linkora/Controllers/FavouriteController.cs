@@ -94,7 +94,11 @@ namespace Linkora.Controllers
             JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price'
             WHERE m.ProductId = p.Id) as Price,
            p.Address, p.CreatedTime,
-           p.AvatarImagePath, u.UserName, u.AvatarImagePath, u.IsCompany
+           COALESCE(
+           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
+            WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+           p.AvatarImagePath
+       ) AS AvatarImagePath, u.UserName, u.AvatarImagePath, u.IsCompany
     FROM Favourites f
     JOIN Products p ON p.Id = f.ProductId
     LEFT JOIN Users u ON u.Id = p.UserId

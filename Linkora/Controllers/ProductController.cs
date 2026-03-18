@@ -20,6 +20,17 @@ namespace Linkora.Controllers
         private readonly IMessageRepository _messageRepository = messageRepository;
 
         private readonly IConfiguration _configuration = configuration;
+        private static Dictionary<int, string> ParseParamsJson(string? json)
+        {
+            var result = new Dictionary<int, string>();
+            if (string.IsNullOrEmpty(json)) return result;
+            var raw = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+            if (raw == null) return result;
+            foreach (var (k, v) in raw)
+                if (int.TryParse(k, out var pid) && !string.IsNullOrWhiteSpace(v))
+                    result[pid] = v;
+            return result;
+        }
 
         [HttpGet]
         public async Task<IActionResult> Cities()
@@ -108,15 +119,34 @@ namespace Linkora.Controllers
 
         [Authorize]
         [HttpPost]
-        public async Task<IActionResult> Edit(int id, string title, string description,
-            int? qty, decimal? price, string address, int? categoryId)
+        [Authorize, HttpPost]
+        public async Task<IActionResult> Edit(int id, string title, string? description,
+    int? qty, string? address, int? categoryId,
+    string? paramsJson, List<IFormFile>? photos, bool replaceMedia = false)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var existing = await _productRepository.GetByIdAsync(id);
             if (existing == null) return NotFound();
             if (existing.UserId != userId) return Forbid();
 
+            var totalBytes = photos?.Sum(f => f.Length) ?? 0;
+            if (totalBytes > 52_428_800)
+                return BadRequest("Total media size exceeds 50 MB");
+
+            var paramValues = ParseParamsJson(paramsJson);
             bool wasArchived = existing.Status == ProductStatus.Archived;
+
+            // Если загружены новые файлы — удаляем старые и сохраняем новые
+            if (photos?.Count > 0)
+            {
+                await _productRepository.DeleteMediaAsync(id);
+                var media = await SaveUploadedFiles(photos);
+                await _productRepository.SaveMediaAsync(id, media);
+            }
+
+            // Всегда берём первый элемент из ProductMedia как аватар
+            var currentMedia = await _productRepository.GetMediaAsync(id);
+            string? newAvatar = currentMedia.FirstOrDefault()?.FilePath ?? existing.AvatarImagePath;
 
             await _productRepository.UpdateAsync(new Product
             {
@@ -125,17 +155,16 @@ namespace Linkora.Controllers
                 Name = title,
                 Description = description,
                 Qty = qty,
-                Price = price,
                 Address = address,
                 CategoryId = categoryId,
-            });
-            if (wasArchived)
-            {
-                await _productRepository.ReactivateProductAsync(id, userId);
-            }
-            return RedirectToAction("My");
-        }
+                AvatarImagePath = newAvatar,
+            }, paramValues);
 
+            if (wasArchived)
+                await _productRepository.ReactivateProductAsync(id, userId);
+
+            return Ok();
+        }
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> Delete(int id)
@@ -179,6 +208,68 @@ namespace Linkora.Controllers
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var partners = await _messageRepository.GetConversationPartnersAsync(productId, userId);
             return Ok(partners.Select(p => new { p.Id, p.UserName, p.AvatarImagePath, p.IsCompany }));
+        }
+        [Authorize]
+        [HttpPost]
+        [Authorize, HttpPost]
+        public async Task<IActionResult> Create(
+    string title, string? description, int? qty,
+    string? address, int? categoryId,
+    List<IFormFile>? photos, string? paramsJson)
+        {
+            if (string.IsNullOrWhiteSpace(title)) return BadRequest("Title is required");
+
+            // Проверяем суммарный размер
+            var totalBytes = photos?.Sum(f => f.Length) ?? 0;
+            if (totalBytes > 52_428_800)
+                return BadRequest("Total media size exceeds 50 MB");
+
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            var media = photos?.Count > 0 ? await SaveUploadedFiles(photos) : new();
+
+            var paramValues = ParseParamsJson(paramsJson);
+
+            var newId = await _productRepository.CreateAsync(new Product
+            {
+                UserId = userId,
+                Name = title,
+                Description = description,
+                Qty = qty,
+                Address = address,
+                CategoryId = categoryId,
+                AvatarImagePath = media.FirstOrDefault()?.FilePath,
+            }, paramValues);
+
+            // Синхронизируем аватар с первым элементом ProductMedia
+            if (media.Count > 0)
+            {
+                var firstMedia = media[0];
+                await _productRepository.SaveMediaAsync(newId, media);
+            }
+            return Ok(new { id = newId });
+        }
+        private async Task<List<ProductMedia>> SaveUploadedFiles(List<IFormFile> files)
+        {
+            var result = new List<ProductMedia>();
+            var folder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "img", "products");
+            Directory.CreateDirectory(folder);
+
+            foreach (var file in files)
+            {
+                if (file.Length == 0) continue;
+                var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+                var isVideo = new[] { ".mp4", ".webm", ".mov", ".avi" }.Contains(ext);
+                var name = $"{Guid.NewGuid()}{ext}";
+                await using var stream = System.IO.File.Create(Path.Combine(folder, name));
+                await file.CopyToAsync(stream);
+                result.Add(new ProductMedia
+                {
+                    FilePath = $"/img/products/{name}",
+                    MediaType = isVideo ? "video" : "image",
+                });
+            }
+            return result;
         }
     }
 }
