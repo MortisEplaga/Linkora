@@ -214,7 +214,7 @@ namespace Linkora.Repositories
 
             await using var cmd = new SqlCommand(@"
         SELECT c.Id, c.ProductId, c.BuyerId, c.SellerId, c.IsSystem, c.CreatedAt,
-               p.Name, p.AvatarImagePath,
+               p.Name, p.AvatarImagePath, p.Status,
                CASE WHEN c.BuyerId = @UserId THEN su.UserName ELSE bu.UserName END,
                CASE WHEN c.BuyerId = @UserId THEN su.AvatarImagePath ELSE bu.AvatarImagePath END,
                CASE WHEN c.BuyerId = @UserId THEN c.SellerId ELSE c.BuyerId END
@@ -229,6 +229,9 @@ namespace Linkora.Repositories
             await using var r = await cmd.ExecuteReaderAsync();
             if (!await r.ReadAsync()) return null;
 
+            // Сохраняем статус до закрытия ридера
+            string? productStatus = r.IsDBNull(8) ? null : r.GetString(8);
+
             var conv = new Conversation
             {
                 Id = r.GetInt32(0),
@@ -239,19 +242,20 @@ namespace Linkora.Repositories
                 CreatedAt = r.GetDateTime(5),
                 ProductName = r.IsDBNull(6) ? null : r.GetString(6),
                 ProductImage = r.IsDBNull(7) ? null : r.GetString(7),
-                OtherUserName = r.IsDBNull(8) ? null : r.GetString(8),
-                OtherUserAvatar = r.IsDBNull(9) ? null : r.GetString(9),
-                OtherUserId = r.IsDBNull(10) ? 0 : r.GetInt32(10),
+                OtherUserName = r.IsDBNull(9) ? null : r.GetString(9),
+                OtherUserAvatar = r.IsDBNull(10) ? null : r.GetString(10),
+                OtherUserId = r.IsDBNull(11) ? 0 : r.GetInt32(11),
             };
 
-            await r.CloseAsync(); // закрываем reader, чтобы выполнить другие запросы
+            await r.CloseAsync();
 
-            // Определяем, можно ли оставить отзыв (только для системных диалогов)
-            if (conv.IsSystem && conv.ProductId.HasValue)
+            // Определяем, можно ли оставить отзыв (только для диалогов с продуктом, у которого статус succeeded)
+            if (conv.ProductId.HasValue && productStatus == "Succeeded")
             {
                 int targetUserId = (userId == conv.BuyerId) ? conv.SellerId : (userId == conv.SellerId ? conv.BuyerId : 0);
                 if (targetUserId != 0)
                 {
+                    // Проверяем, оставлен ли уже отзыв
                     await using var checkCmd = new SqlCommand(@"
                 SELECT COUNT(*) FROM Reviews
                 WHERE AuthorId = @UserId AND TargetUserId = @TargetId AND ProductId = @ProductId", conn);

@@ -170,11 +170,6 @@ namespace Linkora.Controllers
             var success = await _productRepository.CompleteDealAsync(id, userId);
             if (!success) return BadRequest("Не удалось завершить сделку");
 
-            // Создаём системный чат
-            var convId = await _messageRepository.CreateSystemConversationAsync(id, userId, otherUserId);
-            // Отправляем системное сообщение
-            await _messageRepository.SendSystemMessageAsync(convId, $"Сделка по товару \"{product.Name}\" завершена. Пожалуйста, оцените продавца.");
-
             return Ok();
         }
         [Authorize]

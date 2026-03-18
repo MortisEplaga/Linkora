@@ -151,24 +151,15 @@
             console.error('Ошибка сети:', e);
         }
     }
-    async function completeDeal(id, btn) {
+    async function completeDeal(id) {
         try {
             const res = await fetch(`/Product/CompleteDeal?id=${id}`, {
                 method: 'POST',
-                headers: {
-                    'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
-                }
+                headers: { 'RequestVerificationToken': document.getElementById('afToken')?.value ?? '' }
             });
-            if (res.ok) {
-                location.reload();
-            } else {
-                const err = await res.text();
-                // По желанию можно показать ненавязчивое уведомление вместо alert
-                console.error('Ошибка:', err);
-            }
-        } catch (e) {
-            console.error('Ошибка сети:', e);
-        }
+            if (res.ok) location.reload();
+            else console.error('Ошибка:', await res.text());
+        } catch (e) { console.error('Ошибка сети:', e); }
     }
 
     async function deleteAd(id) {
