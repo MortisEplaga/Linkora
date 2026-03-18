@@ -29,7 +29,13 @@
     width: 100%;
     font-family: inherit;
 }
-
+#settingsModal {
+    height: auto !important;
+    min-height: unset !important;
+    max-height: fit-content !important;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
 /* ============================================================
    Навигационная полоса (верхняя тёмная)
    ============================================================ */

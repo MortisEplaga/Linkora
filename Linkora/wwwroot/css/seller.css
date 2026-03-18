@@ -1,4 +1,57 @@
-﻿/* ── Шапка продавца ── */
+﻿.seller-modal-stars {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin: 4px 0 2px;
+    justify-content: center;
+}
+
+.sm-rating-text {
+    font-size: 13px;
+    color: #888;
+    margin-left: 6px;
+}
+.reviews-tabs {
+    display: flex;
+    border-bottom: 1px solid #f0f0f0;
+    flex-shrink: 0;
+}
+
+.reviews-tab {
+    flex: 1;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #888;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: color 0.15s;
+    margin-bottom: -1px;
+}
+
+    .reviews-tab:hover {
+        color: #1a1a1a;
+    }
+
+.reviews-tab-active {
+    color: #00b0a3;
+    border-bottom-color: #00b0a3;
+    font-weight: 700;
+}
+
+.review-author-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+    text-decoration: none;
+}
+
+    .review-author-name:hover {
+        color: #00b0a3;
+    }
+    /* ── Шапка продавца ── */
 .seller-header {
     display: flex;
     align-items: center;

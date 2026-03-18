@@ -1,4 +1,33 @@
-﻿.partner-list {
+﻿.myads-card-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+    flex-shrink: 0;
+    padding-right: 8px;
+    border-right: 1px solid #f0f0f0;
+    margin-right: 4px;
+}
+
+.myads-stat {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: #999;
+    white-space: nowrap;
+}
+
+    .myads-stat svg {
+        flex-shrink: 0;
+        opacity: 0.6;
+    }
+
+    .myads-stat span {
+        min-width: 24px;
+        text-align: right;
+    }
+    .partner-list {
     max-height: 300px;
     overflow-y: auto;
     margin: 16px 0;

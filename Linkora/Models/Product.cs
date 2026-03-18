@@ -45,5 +45,8 @@ namespace Linkora.Models
         public ProductStatus Status { get; set; } = ProductStatus.Active;
         public DateTime? ArchivedAt { get; set; }
         [NotMapped] public List<ProductMedia> Media { get; set; } = new();
+        [NotMapped] public int ViewCount { get; set; }
+        [NotMapped] public int FavCount { get; set; }
+        [NotMapped] public int CartCount { get; set; }
     }
 }

@@ -26,6 +26,7 @@ namespace Linkora.Repositories
         Task<List<ProductMedia>> GetMediaAsync(int productId);
         Task SaveMediaAsync(int productId, List<ProductMedia> media);
         Task DeleteMediaAsync(int productId);
+        Task IncrementViewCountAsync(int productId);
 
     }
 }

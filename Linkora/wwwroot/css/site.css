@@ -1,3 +1,824 @@
+﻿/* ── Settings modal ── */
+.settings-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+    .settings-section:last-child {
+        border-bottom: none;
+    }
+
+.settings-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #1a1a1a;
+}
+
+/* Тоггл */
+.settings-toggle {
+    width: 44px;
+    height: 24px;
+    border-radius: 12px;
+    background: #ddd;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.settings-toggle-on {
+    background: #00b0a3;
+}
+
+.settings-toggle-knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.settings-toggle-on .settings-toggle-knob {
+    transform: translateX(20px);
+}
+
+/* Язык */
+.settings-lang-pills {
+    display: flex;
+    gap: 6px;
+}
+
+.settings-lang-pill {
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    background: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+    .settings-lang-pill:hover {
+        border-color: #aaa;
+    }
+
+.settings-lang-pill-active {
+    background: #1a1a1a;
+    color: #fff;
+    border-color: #1a1a1a;
+}
+
+/* ── Dark theme — полное покрытие ── */
+.dark-theme {
+    --bg-primary: #121212;
+    --bg-secondary: #1e1e1e;
+    --bg-card: #252525;
+    --bg-hover: #2e2e2e;
+    --border: #333;
+    --text-primary: #e8e8e8;
+    --text-secondary: #aaa;
+    --input-bg: #2a2a2a;
+}
+    /* ── Dark theme — категорийное меню ── */
+    .dark-theme .catmenu {
+        background: #1e1e1e;
+        box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+    }
+
+    .dark-theme .catmenu-col {
+        background: #1e1e1e;
+        border-right-color: #333;
+    }
+
+    .dark-theme .catmenu-item:hover,
+    .dark-theme .catmenu-item-active {
+        background: #2e2e2e;
+    }
+
+    .dark-theme .catmenu-link {
+        color: #e8e8e8 !important;
+    }
+
+    .dark-theme .catmenu-arrow {
+        color: #888;
+    }
+    /* ── Dark theme — страница категорий ── */
+
+    /* Хлебные крошки */
+    .dark-theme .breadcrumb-nav,
+    .dark-theme .breadcrumb-item a,
+    .dark-theme .breadcrumb-item.active {
+        color: #aaa !important;
+    }
+
+        .dark-theme .breadcrumb-item a:hover {
+            color: #e0e0e0 !important;
+        }
+
+    .dark-theme .breadcrumb-item + .breadcrumb-item::before {
+        color: #555;
+    }
+
+    /* Заголовок категории */
+    .dark-theme .category-title {
+        color: #e8e8e8 !important;
+    }
+
+    /* Сайдбар — ссылки */
+    .dark-theme .sidebar-parent,
+    .dark-theme .sidebar-child,
+    .dark-theme .sidebar-current {
+        color: #ccc !important;
+    }
+
+        .dark-theme .sidebar-parent:hover,
+        .dark-theme .sidebar-child:hover {
+            color: #00b0a3 !important;
+        }
+
+    /* Фильтры */
+    .dark-theme .param-title,
+    .dark-theme .param-check,
+    .dark-theme .param-check-row,
+    .dark-theme .param-option {
+        color: #ccc !important;
+    }
+
+    .dark-theme .param-pill {
+        background: #2a2a2a;
+        border-color: #444;
+        color: #ccc !important;
+    }
+
+        .dark-theme .param-pill:hover {
+            border-color: #888;
+        }
+
+    .dark-theme .param-pill-active {
+        background: #e8e8e8;
+        color: #1a1a1a !important;
+        border-color: #e8e8e8;
+    }
+
+    .dark-theme .param-range-input {
+        background: #2a2a2a;
+        border-color: #444;
+        color: #e8e8e8 !important;
+    }
+
+    .dark-theme .param-show-more {
+        background: #2a2a2a;
+        border-color: #444;
+        color: #aaa !important;
+    }
+
+    .dark-theme .param-option input[type="checkbox"] {
+        background: #2a2a2a;
+        border-color: #555;
+    }
+
+    .dark-theme .param-reset-btn {
+        border-color: #444;
+        color: #aaa !important;
+    }
+
+    /* Сортировка и тулбар */
+    .dark-theme .listing-sort-btn,
+    .dark-theme .listing-view-btn {
+        background: #2a2a2a;
+        border-color: #444;
+        color: #ccc !important;
+    }
+
+    .dark-theme .listing-sort-drop {
+        background: #1e1e1e;
+        border-color: #444;
+    }
+
+    .dark-theme .listing-sort-item {
+        color: #ccc !important;
+    }
+
+        .dark-theme .listing-sort-item:hover,
+        .dark-theme .listing-sort-item.active {
+            background: #2e2e2e;
+            color: #fff !important;
+        }
+
+    /* Регион */
+    .dark-theme .listing-region-btn {
+        color: #ccc !important;
+    }
+    /* Базовый фон и текст */
+    .dark-theme body,
+    .dark-theme .details-page,
+    .dark-theme .create-page,
+    .dark-theme .myads-page {
+        background: var(--bg-primary);
+        color: var(--text-primary);
+    }
+    /* ── Dark theme — страница деталей ── */
+
+    /* Правая панель info */
+    .dark-theme .details-info {
+        background: transparent !important;
+    }
+
+    /* Блок продавца */
+    .dark-theme .details-seller {
+        background: #2a2a2a !important;
+        border-color: #3a3a3a !important;
+    }
+
+    .dark-theme .details-seller-name {
+        color: #e8e8e8 !important;
+    }
+
+    .dark-theme .details-seller-avatar {
+        background: #3a3a3a !important;
+    }
+
+    /* Кнопка Call / Show contact */
+    .dark-theme .details-btn-secondary {
+        background: #2a2a2a !important;
+        border-color: #444 !important;
+        color: #e0e0e0 !important;
+    }
+
+        .dark-theme .details-btn-secondary:hover {
+            background: #333 !important;
+        }
+
+    /* Галерея */
+    .dark-theme .details-gallery {
+        background: #1a1a1a !important;
+    }
+
+    /* Иконки над фото */
+    .dark-theme .details-img-btn {
+        background: rgba(40, 40, 40, 0.92) !important;
+        color: #ccc !important;
+    }
+
+        .dark-theme .details-img-btn:hover {
+            background: #3a3a3a !important;
+            color: #fff !important;
+        }
+
+    /* Параметры */
+    .dark-theme .details-param-row {
+        border-bottom-color: #333 !important;
+    }
+
+    .dark-theme .details-param-name {
+        color: #888 !important;
+    }
+
+    .dark-theme .details-param-value {
+        color: #e0e0e0 !important;
+    }
+    /* ── Dark theme — пилюли и выбор городов ── */
+
+    /* Param pills (фильтры и форма создания) */
+    .dark-theme .param-pill {
+        background: #2a2a2a !important;
+        border-color: #444 !important;
+        color: #888 !important;
+    }
+
+        .dark-theme .param-pill:hover {
+            border-color: #666 !important;
+            color: #ccc !important;
+        }
+
+    .dark-theme .param-pill-active {
+        background: #e8e8e8 !important;
+        border-color: #e8e8e8 !important;
+        color: #1a1a1a !important;
+    }
+
+    /* Region pills (выбор города) */
+    .dark-theme .region-pill {
+        background: #2a2a2a !important;
+        border-color: #444 !important;
+        color: #888 !important;
+    }
+
+        .dark-theme .region-pill:hover {
+            border-color: #666 !important;
+            color: #ccc !important;
+        }
+
+    .dark-theme .region-pill-active {
+        background: #e8e8e8 !important;
+        border-color: #e8e8e8 !important;
+        color: #1a1a1a !important;
+    }
+
+    /* Язык в настройках */
+    .dark-theme .settings-lang-pill {
+        background: #2a2a2a !important;
+        border-color: #444 !important;
+        color: #888 !important;
+    }
+
+    .dark-theme .settings-lang-pill-active {
+        background: #e8e8e8 !important;
+        border-color: #e8e8e8 !important;
+        color: #1a1a1a !important;
+    }
+
+    /* "Not important" — дефолтный вариант тоже pill */
+    .dark-theme .param-pill:first-child:not(.param-pill-active) {
+        background: #2a2a2a !important;
+        color: #666 !important;
+    }
+    /* ── Dark theme — страница сообщений ── */
+
+    .dark-theme .msg-page {
+        background: #1a1a1a !important;
+        border-color: #333 !important;
+    }
+
+    /* Сайдбар */
+    .dark-theme .msg-sidebar {
+        background: #1e1e1e !important;
+        border-right-color: #333 !important;
+    }
+
+    .dark-theme .msg-sidebar-header {
+        border-bottom-color: #333 !important;
+    }
+
+    .dark-theme .msg-sidebar-title {
+        color: #e8e8e8 !important;
+    }
+
+    .dark-theme .msg-conv-item {
+        border-bottom-color: #2a2a2a !important;
+        color: #e0e0e0 !important;
+    }
+
+        .dark-theme .msg-conv-item:hover {
+            background: #2a2a2a !important;
+        }
+
+        .dark-theme .msg-conv-item.msg-conv-active {
+            background: #1f2e2d !important;
+            border-left-color: #00b0a3 !important;
+        }
+
+    .dark-theme .msg-conv-name {
+        color: #e8e8e8 !important;
+    }
+
+    .dark-theme .msg-conv-time,
+    .dark-theme .msg-conv-last,
+    .dark-theme .msg-conv-product {
+        color: #888 !important;
+    }
+
+    .dark-theme .msg-conv-avatar {
+        background: #2a2a2a !important;
+    }
+
+    .dark-theme .msg-empty-list {
+        color: #666 !important;
+    }
+
+    /* Область чата */
+    .dark-theme .msg-chat {
+        background: #121212 !important;
+    }
+
+    .dark-theme .msg-chat-header {
+        background: #1e1e1e !important;
+        border-bottom-color: #333 !important;
+    }
+
+    .dark-theme .msg-chat-header-avatar {
+        background: #2a2a2a !important;
+    }
+
+    .dark-theme .msg-chat-header-name {
+        color: #e8e8e8 !important;
+    }
+
+    .dark-theme .msg-chat-back {
+        color: #aaa !important;
+    }
+
+    /* Карточка объявления в шапке */
+    .dark-theme .msg-product-card {
+        background: #1a1a1a !important;
+        border-bottom-color: #333 !important;
+    }
+
+    .dark-theme .msg-product-name {
+        color: #ccc !important;
+    }
+
+    /* Сообщения */
+    .dark-theme .msg-messages {
+        background: #121212 !important;
+    }
+
+    .dark-theme .msg-date-divider {
+        color: #555 !important;
+    }
+
+        .dark-theme .msg-date-divider::before,
+        .dark-theme .msg-date-divider::after {
+            background: #2a2a2a !important;
+        }
+
+    /* Пузыри — чужие становятся тёмными, свои остаются тёмными (уже норм) */
+    .dark-theme .msg-bubble-theirs .msg-bubble {
+        background: #2a2a2a !important;
+        color: #e0e0e0 !important;
+    }
+
+    .dark-theme .msg-bubble-theirs .msg-bubble-time {
+        color: #666 !important;
+    }
+
+    /* Поле ввода */
+    .dark-theme .msg-input-wrap {
+        background: #1e1e1e !important;
+        border-top-color: #333 !important;
+    }
+
+    .dark-theme .msg-input {
+        background: #2a2a2a !important;
+        border-color: #444 !important;
+        color: #e0e0e0 !important;
+    }
+
+        .dark-theme .msg-input::placeholder {
+            color: #555 !important;
+        }
+
+        .dark-theme .msg-input:focus {
+            border-color: #666 !important;
+        }
+
+    /* Блок отзыва */
+    .dark-theme .review-prompt {
+        background: #1e1e1e !important;
+        border-color: #333 !important;
+    }
+
+    .dark-theme .review-prompt-text {
+        color: #ccc !important;
+    }
+
+    .dark-theme .review-comment {
+        background: #2a2a2a !important;
+        border-color: #444 !important;
+        color: #e0e0e0 !important;
+    }
+
+    /* Пустой чат */
+    .dark-theme .msg-chat-empty {
+        color: #444 !important;
+    }
+    /* ── Dark theme — страница продавца ── */
+
+    .dark-theme .seller-header {
+        border-bottom-color: #333 !important;
+    }
+
+    .dark-theme .seller-header-name {
+        color: #e8e8e8 !important;
+    }
+
+    .dark-theme .seller-header-meta {
+        color: #888 !important;
+    }
+
+    .dark-theme .seller-header-rating {
+        color: #ccc !important;
+    }
+
+    .dark-theme .seller-rating-val {
+        color: #e8e8e8 !important;
+    }
+
+    .dark-theme .sidebar-current {
+        color: #e8e8e8 !important;
+    }
+
+    .dark-theme .sidebar-child {
+        color: #aaa !important;
+    }
+
+        .dark-theme .sidebar-child:hover {
+            color: #00b0a3 !important;
+        }
+
+    .dark-theme .sidebar-cat-count {
+        color: #666 !important;
+    }
+
+    .dark-theme .seller-subscribe-btn {
+        background: #2a2a2a !important;
+        border-color: #555 !important;
+        color: #e0e0e0 !important;
+    }
+
+    .dark-theme .seller-subscribe
+    /* Описание */
+    .dark-theme .details-description {
+        color: #ccc !important;
+    }
+
+    /* Похожие товары */
+    .dark-theme .product-card {
+        background: #2a2a2a !important;
+        border-color: #3a3a3a !important;
+    }
+
+        .dark-theme .product-card:hover {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+        }
+
+    .dark-theme .product-card-img {
+        background: #1e1e1e !important;
+    }
+
+    .dark-theme .product-card-name {
+        color: #e0e0e0 !important;
+    }
+
+    .dark-theme .product-card-price {
+        color: #fff !important;
+    }
+
+    .dark-theme .product-card-address,
+    .dark-theme .product-card-date {
+        color: #888 !important;
+    }
+
+    /* Seller badge в листинге */
+    .dark-theme .seller-badge {
+        background: #1a3a5c !important;
+        color: #5ba8e0 !important;
+    }
+
+    .dark-theme .seller-btn {
+        background: #2a2a2a !important;
+        border-color: #444 !important;
+        color: #ccc !important;
+    }
+
+    .dark-theme .seller-name {
+        color: #e0e0e0 !important;
+    }
+
+    .dark-theme .seller-avatar {
+        background: #3a3a3a !important;
+    }
+
+    /* Белые блоки → тёмные */
+    .dark-theme .header-search-bar,
+    .dark-theme .modal,
+    .dark-theme .user-dropdown,
+    .dark-theme .myads-card,
+    .dark-theme .product-card,
+    .dark-theme .details-info,
+    .dark-theme .create-section,
+    .dark-theme .details-seller,
+    .dark-theme .reviews-modal,
+    .dark-theme .msg-modal,
+    .dark-theme .reviews-modal,
+    .dark-theme .seller-header,
+    .dark-theme .listing-sidebar {
+        background: var(--bg-card) !important;
+        border-color: var(--border) !important;
+        color: var(--text-primary) !important;
+    }
+
+    /* Категорийное меню (catmenu) */
+    .dark-theme .catmenu {
+        background: var(--bg-secondary);
+        border-color: var(--border);
+    }
+
+    .dark-theme .catmenu-col {
+        background: var(--bg-secondary);
+        border-right-color: var(--border);
+    }
+
+    .dark-theme .catmenu-item {
+        color: var(--text-primary);
+    }
+
+        .dark-theme .catmenu-item:hover,
+        .dark-theme .catmenu-item-active {
+            background: var(--bg-hover);
+            color: #fff;
+        }
+
+    /* Карточки товаров */
+    .dark-theme .product-card {
+        background: var(--bg-card);
+        border-color: var(--border);
+    }
+
+    .dark-theme .product-card-name,
+    .dark-theme .product-card-price {
+        color: var(--text-primary);
+    }
+
+    .dark-theme .product-card-address,
+    .dark-theme .product-card-date,
+    .dark-theme .product-card-desc {
+        color: var(--text-secondary);
+    }
+
+    .dark-theme .product-card:hover {
+        background: var(--bg-hover);
+    }
+
+    /* Инпуты и поля */
+    .dark-theme .create-input,
+    .dark-theme .auth-input,
+    .dark-theme .msg-input,
+    .dark-theme .search-input {
+        background: var(--input-bg);
+        border-color: var(--border);
+        color: var(--text-primary);
+    }
+
+        .dark-theme .create-input::placeholder,
+        .dark-theme .search-input::placeholder {
+            color: #666;
+        }
+
+    /* Дропдауны и выпадающие списки */
+    .dark-theme .create-dropdown,
+    .dark-theme .create-drop-item:hover {
+        background: var(--bg-secondary);
+        border-color: var(--border);
+        color: var(--text-primary);
+    }
+
+    .dark-theme .create-drop-item {
+        color: var(--text-primary);
+    }
+
+    /* Параметры */
+    .dark-theme .param-pill {
+        background: var(--bg-hover);
+        border-color: var(--border);
+        color: var(--text-primary);
+    }
+
+    .dark-theme .details-param-row {
+        border-bottom-color: var(--border);
+    }
+
+    .dark-theme .details-param-name {
+        color: var(--text-secondary);
+    }
+
+    .dark-theme .details-param-value {
+        color: var(--text-primary);
+    }
+
+    /* Табы и разделители */
+    .dark-theme .myads-tabs,
+    .dark-theme .myads-card-stats {
+        border-color: var(--border);
+    }
+
+    .dark-theme .myads-tab {
+        color: var(--text-secondary);
+    }
+
+        .dark-theme .myads-tab:hover {
+            color: var(--text-primary);
+        }
+
+    .dark-theme .myads-card-name,
+    .dark-theme .myads-card-price {
+        color: var(--text-primary);
+    }
+
+    .dark-theme .myads-card-meta,
+    .dark-theme .myads-stat {
+        color: var(--text-secondary);
+    }
+
+    /* Кнопки */
+    .dark-theme .myads-action-btn,
+    .dark-theme .details-btn-secondary,
+    .dark-theme .seller-modal-link {
+        background: var(--bg-hover);
+        border-color: var(--border);
+        color: var(--text-primary);
+    }
+
+    /* Сортировка и листинг */
+    .dark-theme .listing-sort-wrap,
+    .dark-theme .listing-sort-drop,
+    .dark-theme .listing-sort-item {
+        background: var(--bg-secondary);
+        border-color: var(--border);
+        color: var(--text-primary);
+    }
+
+        .dark-theme .listing-sort-item:hover {
+            background: var(--bg-hover);
+        }
+
+    /* Поиск в хедере */
+    .dark-theme .search-pill {
+        background: var(--input-bg);
+        border-color: var(--border);
+    }
+
+    .dark-theme .search-btn {
+        background: var(--accent, #00b0a3);
+    }
+
+    /* Заголовки и общий текст */
+    .dark-theme h1,
+    .dark-theme h2,
+    .dark-theme h3,
+    .dark-theme .create-section-title,
+    .dark-theme .details-title,
+    .dark-theme .details-price,
+    .dark-theme .details-section-title,
+    .dark-theme .myads-title,
+    .dark-theme .create-title,
+    .dark-theme .create-label,
+    .dark-theme .auth-title {
+        color: var(--text-primary);
+    }
+
+    .dark-theme .details-meta,
+    .dark-theme .details-description {
+        color: var(--text-secondary);
+    }
+
+    /* Модалка продавца */
+    .dark-theme #sellerModal,
+    .dark-theme #settingsModal,
+    .dark-theme #regionModal,
+    .dark-theme #authModal {
+        background: var(--bg-card);
+    }
+
+    .dark-theme .seller-modal-name,
+    .dark-theme .seller-modal-row,
+    .dark-theme .settings-label,
+    .dark-theme .user-dropdown-name,
+    .dark-theme .user-dropdown-item {
+        color: var(--text-primary);
+    }
+
+        .dark-theme .user-dropdown-item:hover {
+            background: var(--bg-hover);
+        }
+
+    .dark-theme .settings-section {
+        border-bottom-color: var(--border);
+    }
+
+    /* Отзывы */
+    .dark-theme .review-item {
+        border-bottom-color: var(--border);
+    }
+
+    .dark-theme .review-author-name,
+    .dark-theme .review-comment,
+    .dark-theme .reviews-modal-title,
+    .dark-theme .reviews-avg {
+        color: var(--text-primary);
+    }
+
+    /* Фото-превью в форме */
+    .dark-theme .create-photos-area {
+        border-color: var(--border);
+    }
+
+    .dark-theme .create-photos-placeholder {
+        color: var(--text-secondary);
+    }
 html {
   font-size: 14px;
 }
@@ -42,7 +863,7 @@ body {
         text-decoration: underline;
     }
 
-��� ������ ��� .modal � .modal-overlay � ������� .open. �������� � site.css:
+Нет стилей для .modal и .modal-overlay с классом .open. Добавьте в site.css:
 css.modal-overlay {
     display: none;
     position: fixed;

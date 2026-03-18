@@ -10,7 +10,7 @@ namespace Linkora.Controllers
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class ReportController : ControllerBase
+    public class ReportController : Controller
     {
         private readonly IReportRepository _reportRepository;
         private readonly IProductRepository _productRepository;
@@ -67,6 +67,43 @@ namespace Linkora.Controllers
                 request.Comment);
 
             return Ok(new { success = true, reportId = report.Id });
+        }
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> My(string tab = "about")
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            // "about" — отзывы обо мне, "from" — отзывы от меня
+            var isAbout = tab == "about";
+            var whereField = isAbout ? "r.TargetUserId" : "r.AuthorId";
+            var joinUserId = isAbout ? "r.AuthorId" : "r.TargetUserId";
+
+            await using var cmd = new SqlCommand($@"
+        SELECT r.Rating, r.Comment, r.CreatedAt,
+               u.Id, u.UserName, u.AvatarImagePath
+        FROM Reviews r
+        JOIN Users u ON u.Id = {joinUserId}
+        WHERE {whereField} = @UserId
+        ORDER BY r.CreatedAt DESC", conn);
+            cmd.Parameters.AddWithValue("@UserId", userId);
+
+            await using var r = await cmd.ExecuteReaderAsync();
+            var result = new List<object>();
+            while (await r.ReadAsync())
+                result.Add(new
+                {
+                    rating = r.GetInt32(0),
+                    comment = r.IsDBNull(1) ? "" : r.GetString(1),
+                    createdAt = r.GetDateTime(2).ToString("dd.MM.yyyy"),
+                    userId = r.GetInt32(3),
+                    userName = r.IsDBNull(4) ? "Unknown" : r.GetString(4),
+                    avatarPath = r.IsDBNull(5) ? null : r.GetString(5),
+                });
+
+            return Json(result);
         }
     }
 

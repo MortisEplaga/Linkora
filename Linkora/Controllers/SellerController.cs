@@ -153,5 +153,18 @@ namespace Linkora.Controllers
 
             return View();
         }
+        [HttpGet]
+        public async Task<IActionResult> Rating(int id)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(
+                "SELECT COUNT(*), AVG(CAST(Rating AS float)) FROM Reviews WHERE TargetUserId = @Id", conn);
+            cmd.Parameters.AddWithValue("@Id", id);
+            await using var r = await cmd.ExecuteReaderAsync();
+            if (await r.ReadAsync() && !r.IsDBNull(0) && r.GetInt32(0) > 0)
+                return Json(new { count = r.GetInt32(0), avg = Math.Round(r.GetDouble(1), 1) });
+            return Json(new { count = 0, avg = 0.0 });
+        }
     }
 }

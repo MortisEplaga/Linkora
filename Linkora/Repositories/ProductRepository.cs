@@ -255,19 +255,22 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(@"
-                SELECT p.Id, p.Name, p.Address, p.CreatedTime, COALESCE(
+        SELECT p.Id, p.Name, p.Address, p.CreatedTime, COALESCE(
            (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
             WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
            p.AvatarImagePath
        ) AS AvatarImagePath, p.Status,
-                       (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
-                        FROM MapperProductCategory m
-                        JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price'
-                        WHERE m.ProductId = p.Id) as Price
-                FROM Products p
-                WHERE p.UserId = @UserId
-                  AND (p.Status = @Status)
-                ORDER BY p.CreatedTime DESC", conn);
+               (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
+                FROM MapperProductCategory m
+                JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price'
+                WHERE m.ProductId = p.Id) as Price,
+               ISNULL(p.ViewCount, 0),
+               (SELECT COUNT(*) FROM Favourites WHERE ProductId = p.Id AND Can = 1) as FavCount,
+               (SELECT COUNT(*) FROM Favourites WHERE ProductId = p.Id AND Can = 0) as CartCount
+        FROM Products p
+        WHERE p.UserId = @UserId
+          AND (p.Status = @Status)
+        ORDER BY p.CreatedTime DESC", conn);
             cmd.Parameters.AddWithValue("@UserId", userId);
             cmd.Parameters.AddWithValue("@Status", status);
             await using var r = await cmd.ExecuteReaderAsync();
@@ -279,13 +282,14 @@ namespace Linkora.Repositories
                     Address = r.IsDBNull(2) ? null : r.GetString(2),
                     CreatedTime = r.IsDBNull(3) ? null : r.GetDateTime(3),
                     AvatarImagePath = r.IsDBNull(4) ? null : r.GetString(4),
-                    Status = r.IsDBNull(5)
-                        ? ProductStatus.Active
-                        : Enum.Parse<ProductStatus>(r.GetString(5), true), // <-- добавить
+                    Status = r.IsDBNull(5) ? ProductStatus.Active : Enum.Parse<ProductStatus>(r.GetString(5), true),
                     Price = r.IsDBNull(6) ? null : r.GetDecimal(6),
-                }); return result;
+                    ViewCount = r.GetInt32(7),
+                    FavCount = r.GetInt32(8),
+                    CartCount = r.GetInt32(9),
+                });
+            return result;
         }
-
         public async Task UpdateAsync(Product product, Dictionary<int, string> paramValues)
         {
             await using var conn = new SqlConnection(_connectionString);
@@ -573,6 +577,15 @@ namespace Linkora.Repositories
                 "DELETE FROM ProductMedia WHERE ProductId = @Id", conn);
             del.Parameters.AddWithValue("@Id", productId);
             await del.ExecuteNonQueryAsync();
+        }
+        public async Task IncrementViewCountAsync(int productId)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(
+                "UPDATE Products SET ViewCount = ViewCount + 1 WHERE Id = @Id", conn);
+            cmd.Parameters.AddWithValue("@Id", productId);
+            await cmd.ExecuteNonQueryAsync();
         }
     }
 }

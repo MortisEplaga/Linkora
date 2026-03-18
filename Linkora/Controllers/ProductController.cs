@@ -75,6 +75,11 @@ namespace Linkora.Controllers
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null) return NotFound();
 
+            // Не считаем просмотры самого владельца
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userId == null || product.UserId?.ToString() != userId)
+                await _productRepository.IncrementViewCountAsync(id);
+
             var similar = product.CategoryId.HasValue
                 ? await _productRepository.GetSimilarAsync(product.CategoryId.Value, id)
                 : new List<Product>();
