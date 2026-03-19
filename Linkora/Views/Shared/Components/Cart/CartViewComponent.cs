@@ -1,8 +1,4 @@
-﻿using Linkora.Models;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace Linkora.Views.Shared.Components.Cart
 {

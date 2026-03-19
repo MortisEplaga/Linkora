@@ -1,5 +1,4 @@
-﻿using Linkora.Repositories;
-using Microsoft.Data.SqlClient;
+﻿using Microsoft.Data.SqlClient;
 
 namespace Linkora.Services
 {

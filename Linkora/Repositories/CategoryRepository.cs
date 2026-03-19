@@ -17,10 +17,10 @@ namespace Linkora.Repositories
         {
             return new Category
             {
-                Id       = reader.GetInt32(reader.GetOrdinal("Id")),
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
                 ParentId = reader.IsDBNull(reader.GetOrdinal("ParentId")) ? null : reader.GetInt32(reader.GetOrdinal("ParentId")),
-                Name     = reader.GetString(reader.GetOrdinal("Name")),
-                Type     = reader.IsDBNull(reader.GetOrdinal("Type")) ? null : reader.GetInt32(reader.GetOrdinal("Type")),
+                Name = reader.GetString(reader.GetOrdinal("Name")),
+                Type = reader.IsDBNull(reader.GetOrdinal("Type")) ? null : reader.GetInt32(reader.GetOrdinal("Type")),
             };
         }
 

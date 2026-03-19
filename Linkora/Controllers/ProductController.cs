@@ -3,7 +3,6 @@ using Linkora.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 
 namespace Linkora.Controllers

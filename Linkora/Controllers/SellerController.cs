@@ -2,7 +2,6 @@
 using Linkora.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
-using System.Security.Claims;
 
 namespace Linkora.Controllers
 {

@@ -1,9 +1,5 @@
 ﻿using Linkora.Models;
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Linkora.Repositories
 {

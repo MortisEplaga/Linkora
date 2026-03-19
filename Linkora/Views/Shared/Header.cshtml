@@ -52,7 +52,8 @@
                                     </svg>
                                 }
                                 @User.Identity.Name
-                            </button>                            <div class="user-dropdown" id="userDropdown">
+                            </button>                            
+                            <div class="user-dropdown" id="userDropdown">
                                 <div class="user-dropdown-name">@User.Identity.Name</div>
                                 <div class="user-dropdown-divider"></div>
                                 <a class="user-dropdown-item" asp-controller="Product" asp-action="My">
@@ -110,50 +111,20 @@
                             Sign in
                         </button>
                     }
-                    @*
-                    После переноса Identity — раскомментировать:
-
-                    @if (User.Identity.IsAuthenticated)
-                    {
-                        <div class="user-menu">
-                            @await Component.InvokeAsync("Avatar")
-                            <button class="user-menu-toggle dropdown-toggle" type="button"
-                                    data-bs-toggle="dropdown" aria-expanded="false">
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" asp-controller="Account" asp-action="Index">Account (@User.Identity.Name)</a></li>
-                                <li><a class="dropdown-item" asp-controller="Authorization" asp-action="Logout">Logout</a></li>
-                            </ul>
-                        </div>
-                    }
-                    else
-                    {
-                        <a asp-controller="Authorization" asp-action="Login" class="login-btn">Login / Register</a>
-                    }
-                    *@
-
                 </div>
-
             </div>
         </nav>
     </div>
 
-    @* ── Средняя полоса: логотип + поиск ── *@
     <div class="header-search-bar">
         <div class="header-search-inner">
-
-            @* Логотип *@
             <a asp-controller="Home" asp-action="Index" class="site-logo">
                 <img src="/img/Logo.svg" alt="Linkora24" width="175" />
             </a>
-
-            @* Кнопка «Все категории» *@
             <button type="button" class="categories-btn" onclick="openCatMenu()">
                 <img src="/img/search_for.svg" alt="" class="categories-icon" />
                 All categories
             </button>
-
-            @* Поиск *@
             <form asp-controller="Product" asp-action="Search" class="search-form">
                 <div class="search-pill">
                     <input type="text" class="search-input"
@@ -163,22 +134,17 @@
                     <button type="submit" class="search-btn">Search</button>
                 </div>
             </form>
-
             <a asp-controller="Product" asp-action="Create" class="header-post-btn">
                 + Post an ad
             </a>
-
         </div>
     </div>
     @if (User.Identity!.IsAuthenticated)
     {
-        <!-- Модалка настроек -->
         <div class="modal-overlay" id="settingsOverlay" onclick="closeSettingsModal()"></div>
         <div class="modal" id="settingsModal" style="max-width:360px; width:360px; height:auto; min-height:unset; padding-bottom:24px">
             <button class="modal-close" onclick="closeSettingsModal()">✕</button>
             <h2 class="auth-title" style="margin-bottom:24px">Settings</h2>
-
-            <!-- Тема -->
             <div class="settings-section">
                 <div class="settings-label">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -190,8 +156,6 @@
                     <span class="settings-toggle-knob"></span>
                 </button>
             </div>
-
-            <!-- Язык -->
             <div class="settings-section">
                 <div class="settings-label">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -207,15 +171,12 @@
                 </div>
             </div>
         </div>
-        <!-- Модалка отзывов -->
         <div class="reviews-overlay" id="myReviewsOverlay" onclick="closeMyReviewsModal()"></div>
         <div class="reviews-modal" id="myReviewsModal">
             <div class="reviews-modal-header">
                 <span class="reviews-modal-title">Reviews</span>
                 <button class="reviews-modal-close" onclick="closeMyReviewsModal()">✕</button>
             </div>
-
-            <!-- Табы -->
             <div class="reviews-tabs">
                 <button class="reviews-tab reviews-tab-active" id="tabAboutMe" onclick="switchReviewTab('about')">
                     About me

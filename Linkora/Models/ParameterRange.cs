@@ -10,7 +10,7 @@ namespace Linkora.Models
         public Category Param { get; set; } = null!;
         public List<string> Options { get; set; } = [];
 
-       [Column(TypeName = "decimal(18,2)")]
+        [Column(TypeName = "decimal(18,2)")]
         public decimal? Min { get; set; }
 
         [Column(TypeName = "decimal(18,2)")]
