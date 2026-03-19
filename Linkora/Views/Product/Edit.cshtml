@@ -5,61 +5,84 @@
 }
 
 <div class="create-page">
-    <h1 class="create-title">Edit ad</h1>
+    <h1 class="create-title" data-i18n="edit_ad_title">Edit ad</h1>
     <div class="create-body">
         <div class="create-form">
             <div class="create-section">
-                <h2 class="create-section-title">Basic information</h2>
+                <h2 class="create-section-title" data-i18n="basic_info">Basic information</h2>
                 <div class="create-field">
-                    <label class="create-label">Title</label>
-                    <input type="text" class="create-input" id="adTitle" value="@p.Name" placeholder="What are you selling?" />
+                    <label class="create-label" data-i18n="title_label">Title</label>
+                    <input type="text" class="create-input" id="adTitle" value="@p.Name" placeholder="What are you selling?" data-i18n-placeholder="title_ph" />
                 </div>
                 <div class="create-field">
-                    <label class="create-label">Description</label>
-                    <textarea class="create-input create-textarea" id="adDescription" placeholder="Describe the item">@p.Description</textarea>
+                    <label class="create-label" data-i18n="desc_label">Description</label>
+                    <textarea class="create-input create-textarea" id="adDescription" placeholder="Describe the item" data-i18n-placeholder="desc_ph">@p.Description</textarea>
                 </div>
 
                 <!-- Цена появляется здесь если категория её предусматривает -->
                 <div class="create-field" id="priceFieldWrap" style="display:none">
-                    <label class="create-label">Price</label>
+                    <label class="create-label" data-i18n="price_label">Price</label>
                     <input type="number" class="create-input" id="adPrice" min="0" placeholder="0.00" />
                 </div>
 
                 <div class="create-row" id="qtyRow">
                     <div class="create-field" id="qtyFieldWrap" style="grid-column: 1 / -1">
-                        <label class="create-label">Quantity</label>
+                        <label class="create-label" data-i18n="qty_label">Quantity</label>
                         <input type="number" class="create-input" id="adQty" min="1" value="@(p.Qty ?? 1)" />
                     </div>
                 </div>
 
                 <div class="create-field">
-                    <label class="create-label">Address</label>
-                    <input type="text" class="create-input" id="adAddress" value="@p.Address" placeholder="Address" />
+                    <label class="create-label" data-i18n="city_label">City</label>
+                    <input type="text" class="create-input create-autocomplete" id="adCity"
+                           placeholder="Start typing..." autocomplete="off"
+                           oninput="addressSearch(this,'city')"
+                           onfocus="addressSearch(this,'city')" data-i18n-placeholder="city_ph" />
+                    <input type="hidden" id="adCityId" />
+                    <div class="create-dropdown" id="adCityDrop"></div>
+                </div>
+                <div class="create-field" id="streetField" style="display:none">
+                    <label class="create-label" data-i18n="street_label">Street</label>
+                    <input type="text" class="create-input create-autocomplete" id="adStreet"
+                           placeholder="Start typing..." autocomplete="off"
+                           oninput="addressSearch(this,'street')"
+                           onfocus="addressSearch(this,'street')" data-i18n-placeholder="city_ph" />
+                    <input type="hidden" id="adStreetId" />
+                    <div class="create-dropdown" id="adStreetDrop"></div>
+                </div>
+                <div class="create-field" id="houseField" style="display:none">
+                    <label class="create-label" data-i18n="house_label">House</label>
+                    <input type="text" class="create-input create-autocomplete" id="adHouse"
+                           placeholder="Start typing..." autocomplete="off"
+                           oninput="addressSearch(this,'house')"
+                           onfocus="addressSearch(this,'house')" data-i18n-placeholder="city_ph" />
+                    <input type="hidden" id="adHouseId" />
+                    <div class="create-dropdown" id="adHouseDrop"></div>
                 </div>
             </div>
 
             <div class="create-section">
-                <h2 class="create-section-title">Category</h2>
+                <h2 class="create-section-title" data-i18n="category_section">Category</h2>
                 <div class="create-cat-selector" id="catSelector" onclick="openCreateCatMenu()">
-                    <span id="catSelectorText">@(p.CategoryId.HasValue ? "Change category" : "Select category")</span>
+                    <span id="catSelectorText" data-i18n="select_category">@(p.CategoryId.HasValue ? "Change category" : "Select category")</span>
                     <span class="create-cat-arrow">›</span>
                 </div>
                 <input type="hidden" id="selectedCategoryId" value="@p.CategoryId" />
             </div>
 
             <div class="create-section" id="paramsSection" style="display:none">
-                <h2 class="create-section-title">Parameters</h2>
+                <h2 class="create-section-title" data-i18n="params_section">Parameters</h2>
                 <div class="create-params" id="createParams"></div>
             </div>
 
             <div class="create-section">
-                <h2 class="create-section-title">Photos & Video</h2>
+                <h2 class="create-section-title" data-i18n="photos_section">Photos & Video</h2>
                 <div class="create-photos-area" id="photosArea"
                      onclick="document.getElementById('photoInput').click()">
                     <div class="create-photos-placeholder">
                         <span class="create-photos-icon">📷</span>
                         <span>Click to upload photos or video</span>
-                        <span class="create-photos-hint">Images & video · Max 50 MB total</span>
+                        <span class="create-photos-hint" data-i18n="photos_hint">Images & video · Max 50 MB total</span>
                     </div>
                     <input type="file" id="photoInput" multiple
                            accept="image/*,video/mp4,video/webm,video/quicktime"
@@ -72,7 +95,7 @@
                 <div class="create-photos-preview" id="photosPreview"></div>
             </div>
 
-            <button class="create-submit" onclick="submitEdit(@p.Id)">Save</button>
+            <button class="create-submit" onclick="submitEdit(@p.Id)" data-i18n="save_btn">Save</button>
         </div>
     </div>
 </div>
@@ -278,7 +301,7 @@
     async function submitEdit(id) {
         const btn = document.querySelector('.create-submit');
         btn.disabled = true;
-        btn.textContent = 'Saving...';
+        btn.textContent = t('saving');
 
         try {
             const totalBytes = selectedFiles.reduce((s, f) => s + f.size, 0);
@@ -331,7 +354,7 @@
             alert('Network error: ' + e.message);
         } finally {
             btn.disabled = false;
-            btn.textContent = 'Save';
+            btn.textContent = t('save_btn');
         }
     }
     const MAX_BYTES = 52_428_800; // 50 MB

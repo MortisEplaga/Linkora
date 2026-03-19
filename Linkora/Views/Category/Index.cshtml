@@ -143,8 +143,8 @@
                 }
 
                 <div class="filter-actions">
-                    <button type="submit" class="param-apply-btn">Apply filters</button>
-                    <button type="button" class="param-reset-btn" onclick="resetFilters(@category.Id)">Reset</button>
+                    <button type="submit" class="param-apply-btn" data-i18n="apply_filters">Apply filters</button>
+                    <button type="button" class="param-reset-btn" data-i18n="reset_filters" onclick="resetFilters(@category.Id)">Reset</button>
                 </div>
             </form>
         }
@@ -171,7 +171,7 @@
             <div class="listing-sort-wrap">
                 <button class="listing-sort-btn" onclick="toggleSort(event)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6" /><line x1="7" y1="12" x2="21" y2="12" /><line x1="11" y1="18" x2="21" y2="18" /></svg>
-                    <span id="sortLabel">@(sort == "cheap" ? "Cheapest first" : sort == "expensive" ? "Most expensive" : "Newest first")</span>
+                    <span id="sortLabel" data-sort="@sort">@(sort == "cheap" ? "Cheapest first" : sort == "expensive" ? "Most expensive" : "Newest first")</span>
                     ▾
                 </button>
                 @{
@@ -179,13 +179,13 @@
                 }
                 <div class="listing-sort-drop" id="sortDrop">
                     <a class="listing-sort-item@(sort == "new" ? " active" : "")"
-                       onclick="clientSort('new', this)">Newest first</a>
+                       onclick="clientSort('new', this)" data-i18n="sort_newest">Newest first</a>
                     @if (hasPriceSort)
                     {
                         <a class="listing-sort-item@(sort == "cheap" ? " active" : "")"
-                           onclick="clientSort('cheap', this)">Cheapest first</a>
+                           onclick="clientSort('cheap', this)" data-i18n="sort_cheapest">Cheapest first</a>
                         <a class="listing-sort-item@(sort == "expensive" ? " active" : "")"
-                           onclick="clientSort('expensive', this)">Most expensive</a>
+                           onclick="clientSort('expensive', this)" data-i18n="sort_expensive">Most expensive</a>
                     }
                 </div>
             </div>
@@ -278,7 +278,11 @@
         }
 
         function setSortLabel(label) {
-            document.getElementById('sortLabel').textContent = label;
+        const sortLabel = document.getElementById('sortLabel');
+            if (sortLabel) {
+                const sortMap = { new: t('sort_newest'), cheap: t('sort_cheapest'), expensive: t('sort_expensive') };
+                sortLabel.textContent = sortMap[sortLabel.dataset.sort || 'new'] || t('sort_newest');
+            }
         }
 
         document.addEventListener('click', e => {
@@ -358,7 +362,7 @@
         const hidden = block.querySelectorAll('.param-option-hidden');
         const isHidden = hidden[0]?.style.display === 'none';
         hidden.forEach(el => el.style.display = isHidden ? '' : 'none');
-        btn.textContent = isHidden ? 'Hide' : 'More ' + hidden.length;
+        btn.textContent = isHidden ? t('hide_btn') : t('more_btn') + ' ' + hidden.length;
     }
         function selectPill(pill, paramId) {
             const pills = pill.closest('.param-pills');
@@ -379,7 +383,7 @@
         // Обновить подпись и активный класс
         document.querySelectorAll('.listing-sort-item').forEach(i => i.classList.remove('active'));
         el.classList.add('active');
-        const labels = { new: 'Newest first', cheap: 'Cheapest first', expensive: 'Most expensive' };
+        const labels = { new: t('sort_newest'), cheap: t('sort_cheapest'), expensive: t('sort_expensive') };
         document.getElementById('sortLabel').textContent = labels[type];
         document.getElementById('sortDrop').classList.remove('open');
 

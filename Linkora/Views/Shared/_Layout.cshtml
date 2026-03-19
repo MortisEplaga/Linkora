@@ -15,6 +15,8 @@
     <link rel="stylesheet" href="~/css/auth.css" />
     <link rel="stylesheet" href="~/css/seller.css" />
     @await RenderSectionAsync("Styles", required: false)
+    <!-- i18n must load before body renders to avoid flash -->
+    <script src="~/js/i18n.js"></script>
 </head>
 <body>
 
@@ -27,8 +29,8 @@
     <div class="modal" id="authModal">
         <button class="modal-close" onclick="closeAuthModal()">✕</button>
         <div class="auth-tabs">
-            <button class="auth-tab auth-tab-active" onclick="switchTab('login')">Sign in</button>
-            <button class="auth-tab" onclick="switchTab('register')">Register</button>
+            <button class="auth-tab auth-tab-active" onclick="switchTab('login')" data-i18n="auth_sign_in">Sign in</button>
+            <button class="auth-tab" onclick="switchTab('register')" data-i18n="auth_register">Register</button>
         </div>
 
         <div id="authError" class="auth-error" style="display:none"></div>
@@ -40,16 +42,20 @@
                 <button class="auth-social">🍎</button>
                 <button class="auth-social">VK</button>
             </div>
-            <div class="auth-divider"><span>or</span></div>
+            <div class="auth-divider"><span data-i18n="auth_or">or</span></div>
             <div class="auth-field">
-                <input type="text" class="auth-input" id="loginUsername" placeholder="Username or email" />
+                <input type="text" class="auth-input" id="loginUsername"
+                       placeholder="Username or email"
+                       data-i18n-placeholder="auth_username_ph" />
             </div>
             <div class="auth-field auth-field-password">
-                <input type="password" class="auth-input" id="loginPassword" placeholder="Password" />
+                <input type="password" class="auth-input" id="loginPassword"
+                       placeholder="Password"
+                       data-i18n-placeholder="auth_password_ph" />
                 <button type="button" class="auth-eye" onclick="togglePass('loginPassword',this)">👁</button>
             </div>
-            <a class="auth-forgot" href="#">Forgot password?</a>
-            <button class="auth-submit" onclick="submitLogin()">Sign in</button>
+            <a class="auth-forgot" href="#" data-i18n="auth_forgot">Forgot password?</a>
+            <button class="auth-submit" onclick="submitLogin()" data-i18n="auth_submit_login">Sign in</button>
         </div>
 
         <!-- Register -->
@@ -59,18 +65,20 @@
                 <button class="auth-social">🍎</button>
                 <button class="auth-social">VK</button>
             </div>
-            <div class="auth-divider"><span>or</span></div>
+            <div class="auth-divider"><span data-i18n="auth_or">or</span></div>
             <div class="auth-type-row">
                 <label class="auth-type-option">
                     <input type="radio" name="accType" value="private" checked />
-                    <span class="auth-type-circle"></span> Private
+                    <span class="auth-type-circle"></span>
+                    <span data-i18n="auth_private">Private</span>
                 </label>
                 <label class="auth-type-option">
                     <input type="radio" name="accType" value="business" />
-                    <span class="auth-type-circle"></span> Business
+                    <span class="auth-type-circle"></span>
+                    <span data-i18n="auth_business">Business</span>
                 </label>
             </div>
-            <div class="auth-type-hint">You won't be able to change this later.</div>
+            <div class="auth-type-hint" data-i18n="auth_type_hint">You won't be able to change this later.</div>
             <div class="auth-field">
                 <input type="text" class="auth-input" id="regUsername" placeholder="Username" />
             </div>
@@ -78,25 +86,29 @@
                 <input type="email" class="auth-input" id="regEmail" placeholder="Email" />
             </div>
             <div class="auth-field auth-field-password">
-                <input type="password" class="auth-input" id="regPassword" placeholder="Password"
+                <input type="password" class="auth-input" id="regPassword"
+                       placeholder="Password"
+                       data-i18n-placeholder="auth_password_ph"
                        oninput="checkStrength(this)" />
                 <button type="button" class="auth-eye" onclick="togglePass('regPassword',this)">👁</button>
             </div>
             <ul class="auth-rules">
-                <li id="rule-len">At least 8 characters</li>
-                <li id="rule-upper">Uppercase letter</li>
-                <li id="rule-lower">Lowercase letter</li>
-                <li id="rule-digit">Digit</li>
+                <li id="rule-len" data-i18n="auth_rule_len">At least 8 characters</li>
+                <li id="rule-upper" data-i18n="auth_rule_upper">Uppercase letter</li>
+                <li id="rule-lower" data-i18n="auth_rule_lower">Lowercase letter</li>
+                <li id="rule-digit" data-i18n="auth_rule_digit">Digit</li>
             </ul>
             <div class="auth-field auth-field-password">
-                <input type="password" class="auth-input" id="regConfirm" placeholder="Confirm password" />
+                <input type="password" class="auth-input" id="regConfirm"
+                       placeholder="Confirm password"
+                       data-i18n-placeholder="auth_confirm_ph" />
                 <button type="button" class="auth-eye" onclick="togglePass('regConfirm',this)">👁</button>
             </div>
             <label class="auth-check-row">
                 <input type="checkbox" id="chkTerms" />
-                <span>I accept the <a href="#">Terms of Service</a></span>
+                <span data-i18n="auth_terms">I accept the <a href="#">Terms of Service</a></span>
             </label>
-            <button class="auth-submit" onclick="submitRegister()">Register</button>
+            <button class="auth-submit" onclick="submitRegister()" data-i18n="auth_submit_register">Register</button>
         </div>
     </div>
     <!-- Hidden forms -->
@@ -116,15 +128,18 @@
     <div class="modal-overlay" id="regionOverlay" onclick="closeRegionModal()"></div>
     <div class="modal" id="regionModal">
         <button class="modal-close" onclick="closeRegionModal()">✕</button>
-        <h2 class="auth-title">Select region</h2>
+        <h2 class="auth-title" data-i18n="region_title">Select region</h2>
         <div class="region-search-wrap">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
             <input type="text" class="region-search" id="regionSearch"
-                   placeholder="Enter city" oninput="filterRegions(this.value)" />
+                   placeholder="Enter city"
+                   data-i18n-placeholder="region_search_ph"
+                   oninput="filterRegions(this.value)" />
         </div>
         <div class="region-pills" id="regionPills"></div>
     </div>
-    <!-- Модалка продавца -->
+
+    <!-- Seller Modal -->
     <div class="modal-overlay" id="sellerOverlay" onclick="closeSellerModal()"></div>
     <div class="modal" id="sellerModal">
         <button class="modal-close" onclick="closeSellerModal()">✕</button>
@@ -155,9 +170,10 @@
                 </svg>
                 <span id="smDate"></span>
             </div>
-            <a class="seller-modal-link" id="smLink">Other listings →</a>
+            <a class="seller-modal-link" id="smLink" data-i18n="seller_other_listings">Other listings →</a>
         </div>
     </div>
+
     @await Html.PartialAsync("Header")
 
     <div style="max-width:1280px; margin:0 auto; padding:0 24px;">
@@ -168,7 +184,7 @@
 
     <footer class="border-top footer text-muted">
         <div style="max-width:1280px; margin:0 auto; padding:0 24px;">
-            &copy; 2026 - Linkora - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            &copy; 2026 - Linkora - <a asp-area="" asp-controller="Home" asp-action="Privacy" data-i18n="privacy">Privacy</a>
         </div>
     </footer>
 
@@ -176,12 +192,16 @@
     @await RenderSectionAsync("Scripts", required: false)
 
     <script>
+        // ── Apply translations immediately ──
+        applyTranslations();
+
         // ── Auth ──
         function openAuthModal(tab) {
             switchTab(tab || 'login');
             document.getElementById('authOverlay').classList.add('modal-open');
             document.getElementById('authModal').classList.add('modal-open');
             document.body.style.overflow = 'hidden';
+            applyTranslations();
         }
         function closeAuthModal() {
             document.getElementById('authOverlay').classList.remove('modal-open');
@@ -203,7 +223,7 @@
         }
         function submitRegister() {
             if (!document.getElementById('chkTerms').checked) {
-                alert('Please accept the Terms of Service'); return;
+                alert(t('auth_terms')); return;
             }
             document.getElementById('fRegUsername').value = document.getElementById('regUsername').value;
             document.getElementById('fRegEmail').value    = document.getElementById('regEmail').value;
@@ -251,6 +271,7 @@
             document.getElementById('regionOverlay').classList.add('modal-open');
             document.getElementById('regionModal').classList.add('modal-open');
             document.body.style.overflow = 'hidden';
+            applyTranslations();
         }
         function closeRegionModal() {
             document.getElementById('regionOverlay').classList.remove('modal-open');
@@ -262,8 +283,8 @@
             container.innerHTML = '';
             const all = document.createElement('button');
             all.className = 'region-pill' + (!selectedRegion ? ' region-pill-active' : '');
-            all.textContent = 'All regions';
-            all.onclick = () => selectRegion(null, 'All regions');
+            all.textContent = t('all_regions');
+            all.onclick = () => selectRegion(null, t('all_regions'));
             container.appendChild(all);
             cities.forEach(city => {
                 const btn = document.createElement('button');
@@ -281,18 +302,16 @@
         }
         function selectRegion(city, label) {
             selectedRegion = city;
-                    const regionsBtn = document.querySelector('.regions-btn');
-        if (regionsBtn) {
-            regionsBtn.innerHTML = `
-                <img src="/img/marker_for_adv.svg" alt="" class="regions-icon" />
-                ${label}
-            `;
-        }
-
-        const regionBtnLabel = document.getElementById('regionBtnLabel');
-        if (regionBtnLabel) regionBtnLabel.textContent = label;
+            const regionsBtn = document.querySelector('.regions-btn');
+            if (regionsBtn) {
+                regionsBtn.innerHTML = `
+                    <img src="/img/marker_for_adv.svg" alt="" class="regions-icon" />
+                    ${label}
+                `;
+            }
+            const regionBtnLabel = document.getElementById('regionBtnLabel');
+            if (regionBtnLabel) regionBtnLabel.textContent = label;
             closeRegionModal();
-
             const path = window.location.pathname;
             if (path.startsWith('/Category/Index') || path.startsWith('/Category')) {
                 const url = new URL(window.location.href);
@@ -304,36 +323,35 @@
 
         // ── Favourites / Cart ──
         async function toggleFav(btn, productId, can) {
-                    const res = await fetch(`/Favourite/Toggle?productId=${productId}&can=${can}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
-            },
-            body: '{}'
-        });
+            const res = await fetch(`/Favourite/Toggle?productId=${productId}&can=${can}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
+                },
+                body: '{}'
+            });
             if (res.status === 401) {
                 openAuthModal('login');
                 return;
             }
             const data = await res.json();
             btn.classList.toggle('product-card-action-active', data.active);
-
             if (window.location.pathname.startsWith('/Favourite')) {
                 location.reload();
             }
         }
+
+        // ── Seller modal ──
         function openSellerModal(name, avatar, phone, isCompany, email, date, sellerId) {
-            // Аватар
             const avatarEl = document.getElementById('smAvatar');
             avatarEl.innerHTML = avatar
                 ? `<img src="${avatar}" onerror="this.src='/img/no-photo.svg'" />`
                 : `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
 
-            document.getElementById('smName').textContent = name || 'Unknown';
-
+            document.getElementById('smName').textContent = name || t('unknown_seller');
             const badge = document.getElementById('smBadge');
-            badge.innerHTML = isCompany ? '<span class="seller-badge">Company</span>' : '';
+            badge.innerHTML = isCompany ? `<span class="seller-badge">${t('company_badge')}</span>` : '';
 
             const phoneRow = document.getElementById('smPhoneRow');
             const phoneEl  = document.getElementById('smPhone');
@@ -347,76 +365,65 @@
 
             const dateRow = document.getElementById('smDateRow');
             const dateEl  = document.getElementById('smDate');
-            if (date) { dateEl.textContent = 'Member since ' + date; dateRow.style.display = 'flex'; }
+            if (date) { dateEl.textContent = t('seller_member_since') + ' ' + date; dateRow.style.display = 'flex'; }
             else       { dateRow.style.display = 'none'; }
 
-        const link = document.getElementById('smLink');
-        if (sellerId) { link.href = '/Seller/Index/' + sellerId; link.style.display = ''; }
-        else           { link.style.display = 'none'; }
+            const link = document.getElementById('smLink');
+            link.textContent = t('seller_other_listings');
+            if (sellerId) { link.href = '/Seller/Index/' + sellerId; link.style.display = ''; }
+            else          { link.style.display = 'none'; }
 
-        // Рейтинг
-        const ratingEl = document.getElementById('smRating');
-        ratingEl.style.display = 'none';
-        ratingEl.innerHTML = '';
-        if (sellerId) {
-            fetch(`/Seller/Rating?id=${sellerId}`)
-                .then(r => r.json())
-                .then(data => {
-                    if (!data.count) return;
-                    const avg = data.avg;
-                    ratingEl.innerHTML = [1,2,3,4,5].map(i => {
-                        const fill   = i <= Math.floor(avg) ? '#f5a623' : 'none';
-                        const partial = i === Math.ceil(avg) && avg % 1 > 0;
-                        if (partial) {
-                            const pct = Math.round((avg % 1) * 100);
-                            return `<svg width="18" height="18" viewBox="0 0 24 24">
-                                <defs>
-                                    <linearGradient id="sg${i}">
-                                        <stop offset="${pct}%" stop-color="#f5a623"/>
-                                        <stop offset="${pct}%" stop-color="none"/>
-                                    </linearGradient>
-                                </defs>
-                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
-                                    fill="url(#sg${i})" stroke="#f5a623" stroke-width="2"/>
-                            </svg>`;
-                        }
-                        return `<svg width="18" height="18" viewBox="0 0 24 24">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
-                                fill="${fill}" stroke="#f5a623" stroke-width="2"/>
-                        </svg>`;
-                    }).join('') + `<span class="sm-rating-text">${avg.toFixed(1)} · ${data.count}</span>`;
-                    ratingEl.style.display = 'flex';
-                })
-                .catch(() => {});
+            const ratingEl = document.getElementById('smRating');
+            ratingEl.style.display = 'none';
+            ratingEl.innerHTML = '';
+            if (sellerId) {
+                fetch(`/Seller/Rating?id=${sellerId}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data.count) return;
+                        const avg = data.avg;
+                        ratingEl.innerHTML = [1,2,3,4,5].map(i => {
+                            const fill = i <= Math.floor(avg) ? '#f5a623' : 'none';
+                            const partial = i === Math.ceil(avg) && avg % 1 > 0;
+                            if (partial) {
+                                const pct = Math.round((avg % 1) * 100);
+                                return `<svg width="18" height="18" viewBox="0 0 24 24"><defs><linearGradient id="sg${i}"><stop offset="${pct}%" stop-color="#f5a623"/><stop offset="${pct}%" stop-color="none"/></linearGradient></defs><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="url(#sg${i})" stroke="#f5a623" stroke-width="2"/></svg>`;
+                            }
+                            return `<svg width="18" height="18" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="${fill}" stroke="#f5a623" stroke-width="2"/></svg>`;
+                        }).join('') + `<span class="sm-rating-text">${avg.toFixed(1)} · ${data.count}</span>`;
+                        ratingEl.style.display = 'flex';
+                    })
+                    .catch(() => {});
+            }
+
+            document.getElementById('sellerOverlay').classList.add('open');
+            document.getElementById('sellerModal').classList.add('open');
         }
-
-        document.getElementById('sellerOverlay').classList.add('open');
-        document.getElementById('sellerModal').classList.add('open');
-    }
 
         function closeSellerModal() {
             document.getElementById('sellerOverlay').classList.remove('open');
             document.getElementById('sellerModal').classList.remove('open');
         }
-                // Счётчик непрочитанных сообщений
+
+        // ── Unread badge ──
         @if (User.Identity!.IsAuthenticated)
         {
-                    <text>
-                    (async () => {
-                        try {
-                            const res = await fetch('/Messages/UnreadCount');
-                            if (!res.ok) return;
-                            const { count } = await res.json();
-                            const badge = document.getElementById('msgNavBadge');
-                            if (badge && count > 0) {
-                                badge.textContent = count;
-                                badge.style.display = 'inline-flex';
-                            }
-                        } catch {}
-                    })();
-                    </text>
+                <text>
+                (async () => {
+                    try {
+                        const res = await fetch('/Messages/UnreadCount');
+                        if (!res.ok) return;
+                        const { count } = await res.json();
+                        const badge = document.getElementById('msgNavBadge');
+                        if (badge && count > 0) {
+                            badge.textContent = count;
+                            badge.style.display = 'inline-flex';
+                        }
+                    } catch {}
+                })();
+                </text>
         }
-                @if (User.Identity!.IsAuthenticated)
+        @if (User.Identity!.IsAuthenticated)
         {
                 <text>
                 (async () => {
@@ -424,13 +431,11 @@
                         const res = await fetch('/Favourite/UserItems');
                         if (!res.ok) return;
                         const { favs, cart } = await res.json();
-
                         const favBadge = document.getElementById('favsNavBadge');
                         if (favBadge && favs.length > 0) {
                             favBadge.textContent = favs.length;
                             favBadge.style.display = 'inline-flex';
                         }
-
                         const cartBadge = document.getElementById('cartNavBadge');
                         if (cartBadge && cart.length > 0) {
                             cartBadge.textContent = cart.length;
@@ -440,7 +445,7 @@
                 })();
                 </text>
         }
-        </script>
+    </script>
 
 </body>
 </html>

@@ -16,7 +16,7 @@
     <!-- Список диалогов -->
     <div class="msg-sidebar @(activeId.HasValue ? "msg-sidebar-hidden-mobile" : "")">
         <div class="msg-sidebar-header">
-            <h2 class="msg-sidebar-title">Messages</h2>
+            <h2 class="msg-sidebar-title" data-i18n="messages_title">Messages</h2>
         </div>
         <div class="msg-conv-list">
             @foreach (var c in conversations)
@@ -55,7 +55,7 @@
             }
             @if (!conversations.Any())
             {
-                <div class="msg-empty-list">No conversations yet</div>
+                <div class="msg-empty-list" data-i18n="no_conversations">No conversations yet</div>
             }
         </div>
     </div>
@@ -89,7 +89,7 @@
             @if (activeConv != null && activeConv.CanReview && activeConv.ReviewTargetId.HasValue)
             {
                 <div class="review-prompt" id="reviewPrompt">
-                    <div class="review-prompt-text">How would you rate this user?</div>
+                    <div class="review-prompt-text" data-i18n="how_rate">How would you rate this user?</div>
                     <div class="review-stars" id="reviewStars">
                         @for (int i = 1; i <= 5; i++)
                         {
@@ -98,7 +98,7 @@
                             </svg>
                         }
                     </div>
-                    <textarea class="review-comment" id="reviewComment" placeholder="Optional comment" rows="2"></textarea>
+                    <textarea class="review-comment" id="reviewComment" placeholder="Optional comment" rows="2" data-i18n-placeholder="optional_comment"></textarea>
                     <button class="review-submit" onclick="submitReview(@activeConv.Id, @activeConv.ReviewTargetId, @activeConv.ProductIdForReview)">Submit review</button>
                 </div>
             }
@@ -142,7 +142,7 @@
             <div class="msg-input-wrap">
                 <textarea class="msg-input" id="msgInput" placeholder="Write a message..."
                       onkeydown="msgKeyDown(event)" rows="1"
-                      oninput="autoResize(this)"></textarea>
+                      oninput="autoResize(this)" data-i18n-placeholder="write_message_ph"></textarea>
                 <button class="msg-send-btn" onclick="sendMessage()">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="22" y1="2" x2="11" y2="13" />
@@ -157,7 +157,7 @@
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
-                <p>Select a conversation</p>
+                <p data-i18n="select_conversation">Select a conversation</p>
             </div>
         }
     </div>

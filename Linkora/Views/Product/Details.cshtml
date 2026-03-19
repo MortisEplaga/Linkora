@@ -61,6 +61,8 @@
         <!-- Инфо -->
         <div class="details-info">
             <div class="details-price">
+                data-price-available="@(p.Price.HasValue ? "true" : "false")"
+                data-price-value="@(p.Price.HasValue? p.Price.Value.ToString("N2") + " €" : "")">
                 @(p.Price.HasValue? p.Price.Value.ToString("N2") + " €" : "Price on request")
             </div>
             <h1 class="details-title">@p.Name</h1>
@@ -73,11 +75,11 @@
             <div class="details-actions">
                 <button class="details-btn details-btn-primary" onclick="openMessageModal()">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-                    Write
+                    <span data-i18n="write_btn">Write</span>
                 </button>
                 <button class="details-btn details-btn-secondary" onclick="togglePhone(this)" data-phone="@p.Seller?.PhoneNumber">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.1a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.45h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.1a16 16 0 0 0 6 6l1.27-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 17.92z" /></svg>
-                    Call
+                    <span data-i18n="call_btn">Call</span>
                 </button>
             </div>
 
@@ -102,7 +104,7 @@
                 </div>
                 <button class="details-btn details-btn-secondary"
                         onclick="openSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarPath', '@p.Seller?.PhoneNumber', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0))">
-                    Show contact
+                    <span data-i18n="seller_show_contact">Show contact</span>
                 </button>
             </div>
         </div>
@@ -210,7 +212,7 @@
     @if (p.Description != null)
     {
         <div class="details-section">
-            <h2 class="details-section-title">Description</h2>
+            <h2 class="details-section-title" data-i18n="description">Description</h2>
             <p class="details-description">@p.Description</p>
         </div>
     }
@@ -222,7 +224,7 @@
     @if (visibleParams.Count > 0)
     {
         <div class="details-section">
-            <h2 class="details-section-title">Parameters</h2>
+            <h2 class="details-section-title" data-i18n="parameters">Parameters</h2>
             <div class="details-params">
                 @foreach (var vm in visibleParams)
                 {
@@ -248,7 +250,7 @@
     @if (similar.Count > 0)
     {
         <div class="details-section">
-            <h2 class="details-section-title">Similar listings</h2>
+            <h2 class="details-section-title" data-i18n="similar_listings">Similar listings</h2>
             <div class="listing-grid">
                 @foreach (var s in similar)
                 {
@@ -291,30 +293,30 @@
         </div>
         <button class="msg-modal-close" onclick="closeMessageModal()">✕</button>
     </div>
-    <textarea class="msg-modal-textarea" placeholder="Your message..."></textarea>
+    <textarea class="msg-modal-textarea" placeholder="Your message..." data-i18n-placeholder="msg_ph"></textarea>
     <div class="msg-modal-footer">
-        <button class="details-btn details-btn-secondary" onclick="closeMessageModal()">Cancel</button>
-        <button class="details-btn details-btn-primary" onclick="sendMessageToSeller()">Send</button>
+        <button class="details-btn details-btn-secondary" onclick="closeMessageModal()" data-i18n="cancel_btn">Cancel</button>
+        <button class="details-btn details-btn-primary" onclick="sendMessageToSeller()" data-i18n="send_btn">Send</button>
     </div>
 </div>
 
 <div class="modal-overlay" id="reportOverlay" onclick="closeReportModal()"></div>
 <div class="modal" id="reportModal">
     <button class="modal-close" onclick="closeReportModal()">✕</button>
-    <h2 class="auth-title">Report listing</h2>
+    <h2 class="auth-title" data-i18n="report_title">Report listing</h2>
     <div class="auth-field">
-        <label class="auth-label" for="reportReason">Reason</label>
+        <label class="auth-label" data-i18n="report_reason_label">Reason</label>
         <select class="auth-input" id="reportReason">
-            <option value="">Select a reason</option>
+            <option value="" data-i18n="report_reason_ph">Select a reason</option>
         </select>
     </div>
     <div class="auth-field">
-        <label class="auth-label" for="reportComment">Comment (optional)</label>
-        <textarea class="auth-input" id="reportComment" rows="3" placeholder="Additional details..."></textarea>
+        <label class="auth-label" data-i18n="report_comment_label">Comment (optional)</label>
+        <textarea class="auth-input" id="reportComment" rows="3" placeholder="Additional details..." data-i18n-placeholder="report_comment_ph"></textarea>
     </div>
     <div class="auth-actions" style="display:flex; gap:12px;">
-        <button class="auth-submit" onclick="submitReport()">Send report</button>
-        <button class="auth-submit auth-submit-secondary" onclick="closeReportModal()">Cancel</button>
+        <button class="auth-submit" onclick="submitReport()" data-i18n="send_report_btn">Send report</button>
+        <button class="auth-submit auth-submit-secondary" onclick="closeReportModal()" data-i18n="cancel_btn">Cancel</button>
     </div>
 </div>
 <script>
@@ -366,7 +368,7 @@
     function shareProduct(e) {
         navigator.clipboard.writeText(window.location.href).catch(() => {});
         const tip = document.createElement('div');
-        tip.textContent = 'Link copied!';
+        tip.textContent = t('link_copied');
         tip.style.cssText = `
             position:fixed; left:${e.clientX + 12}px; top:${e.clientY - 8}px;
             background:#1a1a1a; color:#fff; font-size:13px;

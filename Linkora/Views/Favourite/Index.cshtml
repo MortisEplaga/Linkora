@@ -13,11 +13,13 @@
     <div class="fav-tabs">
         <a class="fav-tab @(tab != "cart" ? "fav-tab-active" : "")" href="?tab=favs">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
-            Favourites <span class="fav-tab-count">@favs.Count</span>
+            <span data-i18n="favourites_tab">Favourites</span>
+            <span class="fav-tab-count">@favs.Count</span>
         </a>
         <a class="fav-tab @(tab == "cart" ? "fav-tab-active" : "")" href="?tab=cart">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>
-            Cart <span class="fav-tab-count">@cart.Count</span>
+            <span data-i18n="cart_tab">Cart</span>
+            <span class="fav-tab-count">@cart.Count</span>
         </a>
     </div>
 
@@ -34,7 +36,7 @@
                     <text><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></text>
                 }
             </svg>
-            <p>Nothing here yet</p>
+            <p data-i18n="nothing_here">Nothing here yet</p>
         </div>
     }
     else
@@ -94,7 +96,7 @@
             var itemsWithPrice = cart.Count(p => p.Price.HasValue);
             <div class="cart-summary">
                 <div class="cart-summary-row">
-                    <span>Items in cart</span>
+                    <span data-i18n="items_in_cart">Items in cart</span>
                     <span>@cart.Count</span>
                 </div>
                 @if (itemsWithPrice < cart.Count)
@@ -104,7 +106,7 @@
                     </div>
                 }
                 <div class="cart-summary-total">
-                    <span>Total</span>
+                    <span data-i18n="total_label">Total</span>
                     <span>@total.ToString("N2") €</span>
                 </div>
             </div>

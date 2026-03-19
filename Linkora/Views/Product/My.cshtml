@@ -44,7 +44,7 @@
                 <line x1="16" y1="13" x2="8" y2="13" />
                 <line x1="16" y1="17" x2="8" y2="17" />
             </svg>
-            <p>You have no @(tab == "active" ? "active" : "") ads yet.</p>
+            <p data-i18n="no_ads_yet">You have no @(tab == "active" ? "active" : "") ads yet.</p>
             <a class="myads-create-btn" asp-controller="Product" asp-action="Create">
                 + Post an ad
             </a>
@@ -99,9 +99,8 @@
                                 </svg>
                             </button>
                         }
-                        <a class="myads-action-btn" asp-controller="Product" asp-action="Edit" asp-route-id="@p.Id">Edit</a>
-                        <button class="myads-action-btn myads-action-danger"
-                                onclick="deleteAd(@p.Id)">
+                        <a class="myads-action-btn" asp-controller="Product" asp-action="Edit" asp-route-id="@p.Id" data-i18n="edit_btn">Edit</a>
+                        <button class="myads-action-btn myads-action-danger" onclick="deleteAd(@p.Id)" data-i18n="delete_btn">
                             Delete
                         </button>
                     </div>
@@ -113,7 +112,7 @@
 <div class="modal-overlay" id="partnerOverlay" onclick="closePartnerModal()"></div>
 <div class="modal" id="partnerModal">
     <button class="modal-close" onclick="closePartnerModal()">✕</button>
-    <h2 class="auth-title">Select user</h2>
+    <h2 class="auth-title" data-i18n="select_user">Select user</h2>
     <div class="partner-list" id="partnerList"></div>
     <div class="auth-actions" style="margin-top:16px;">
         <button class="auth-submit" onclick="closePartnerModal()">Cancel</button>
@@ -130,7 +129,7 @@
                 const list = document.getElementById('partnerList');
                 list.innerHTML = '';
                 if (partners.length === 0) {
-                    list.innerHTML = '<div class="partner-item">No partners found</div>';
+                    list.innerHTML = `<div class="partner-item">${t('no_partners')}</div>`;
                     return;
                 }
                 partners.forEach(p => {
@@ -186,7 +185,7 @@
     }
 
     async function deleteAd(id) {
-        if (!confirm('Delete this ad?')) return;
+        if (!confirm(t('confirm_delete'))) return;
         await fetch(`/Product/Delete?id=${id}`, {
             method: 'POST',
             headers: { 'RequestVerificationToken': document.getElementById('afToken')?.value ?? '' }
