@@ -276,7 +276,7 @@
             if (p.options.length > LIMIT) {
                 const btn = document.createElement('button');
                 btn.className = 'param-show-more';
-                btn.textContent = `Ещё ${p.options.length - LIMIT}`;
+                btn.textContent = `${t('more_btn')} ${p.options.length - LIMIT}`;
                 btn.onclick = () => {
                     block.querySelectorAll('.param-option[style="display:none"]')
                          .forEach(el => el.style.display = '');

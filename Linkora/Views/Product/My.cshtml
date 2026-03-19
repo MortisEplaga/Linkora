@@ -20,13 +20,13 @@
 }
 
 <div class="myads-page">
-    <h1 class="myads-title">My ads</h1>
+    <h1 class="myads-title" data-i18n="my_ads_title">My ads</h1>
 
     <div class="myads-tabs">
         @foreach (var (key, label) in tabs)
         {
             <a class="myads-tab @(tab == key ? "myads-tab-active" : "")" href="?tab=@key">
-                @label
+                <span data-i18n="tab_@(key.ToLower())">@label</span>
                 @if (counts.TryGetValue(key, out var count) && count > 0)
                 {
                     <span class="myads-tab-count">@count</span>
@@ -45,7 +45,7 @@
                 <line x1="16" y1="17" x2="8" y2="17" />
             </svg>
             <p data-i18n="no_ads_yet">You have no @(tab == "active" ? "active" : "") ads yet.</p>
-            <a class="myads-create-btn" asp-controller="Product" asp-action="Create">
+            <a class="myads-create-btn" asp-controller="Product" asp-action="Create" data-i18n="post_ad_btn">
                 + Post an ad
             </a>
         </div>

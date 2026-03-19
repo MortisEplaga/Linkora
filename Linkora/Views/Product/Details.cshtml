@@ -103,7 +103,7 @@
                     }
                 </div>
                 <button class="details-btn details-btn-secondary"
-                        onclick="openSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarPath', '@p.Seller?.PhoneNumber', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0))">
+                        onclick="openSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarPath', '@p.Seller?.PhoneNumber', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0))" data-i18n="seller_show_contact">
                     <span data-i18n="seller_show_contact">Show contact</span>
                 </button>
             </div>

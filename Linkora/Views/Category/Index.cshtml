@@ -235,7 +235,7 @@
                         {
                             <div class="seller-badge">Company</div>
                         }
-                        <div class="seller-btn" onclick="event.preventDefault(); openSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarPath', '@p.Seller?.PhoneNumber', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0))">
+                        <div class="seller-btn" onclick="event.preventDefault(); openSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarPath', '@p.Seller?.PhoneNumber', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0))" data-i18n="seller_show_contact">
                             Show contact
                         </div>
                     </div>
