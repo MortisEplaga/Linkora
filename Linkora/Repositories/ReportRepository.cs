@@ -1,4 +1,5 @@
 ﻿using Linkora.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
 
 namespace Linkora.Repositories
@@ -6,25 +7,36 @@ namespace Linkora.Repositories
     public class ReportRepository : IReportRepository
     {
         private readonly string _connectionString;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public ReportRepository(IConfiguration configuration)
+
+        public ReportRepository(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection");
+            _httpContextAccessor = httpContextAccessor;
+
         }
+        private string GetLang() => _httpContextAccessor.HttpContext?.Request.Cookies["lang"] ?? "en";
+
         public async Task<List<ReportReason>> GetActiveReportReasonsAsync()
         {
             var result = new List<ReportReason>();
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(
-                "SELECT Id, ReasonText, IsActive FROM ReportReasons WHERE IsActive = 1 ORDER BY ReasonText", conn);
+                "SELECT Id, ReasonText, IsActive, ReasonTextLV FROM ReportReasons WHERE IsActive = 1 ORDER BY ReasonText", conn);
             await using var reader = await cmd.ExecuteReaderAsync();
+            var lang = GetLang();
             while (await reader.ReadAsync())
             {
+                var reasonText = reader.GetString(1);
+                if (lang == "lv" && !reader.IsDBNull(3))
+                    reasonText = reader.GetString(3);
+
                 result.Add(new ReportReason
                 {
                     Id = reader.GetInt32(0),
-                    ReasonText = reader.GetString(1),
+                    ReasonText = reasonText,
                     IsActive = reader.GetBoolean(2)
                 });
             }

@@ -381,6 +381,9 @@
         }
             function clientSort(type, el) {
         // Обновить подпись и активный класс
+            document.querySelectorAll('.param-show-more[data-count]').forEach(btn => {
+        btn.textContent = t('more_btn') + ' ' + btn.dataset.count;
+    });
         document.querySelectorAll('.listing-sort-item').forEach(i => i.classList.remove('active'));
         el.classList.add('active');
         const labels = { new: t('sort_newest'), cheap: t('sort_cheapest'), expensive: t('sort_expensive') };

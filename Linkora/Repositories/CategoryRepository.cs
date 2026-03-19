@@ -1,4 +1,5 @@
 using Linkora.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
 
 namespace Linkora.Repositories
@@ -6,20 +7,36 @@ namespace Linkora.Repositories
     public class CategoryRepository : ICategoryRepository
     {
         private readonly string _connectionString;
-
-        public CategoryRepository(IConfiguration configuration)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public CategoryRepository(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection")!;
+            _httpContextAccessor = httpContextAccessor;
         }
+        private string GetLang() =>
+    _httpContextAccessor.HttpContext?.Request.Cookies["lang"] ?? "en";
 
         // ── Вспомогательный метод: читает одну строку → Category ──
-        private static Category MapRow(SqlDataReader reader)
+        private Category MapRow(SqlDataReader reader)
         {
+            var lang = GetLang();
+            var nameEn = reader.GetString(reader.GetOrdinal("Name"));
+            string name;
+            if (lang == "lv")
+            {
+                var ord = reader.GetOrdinal("NameLV");
+                name = !reader.IsDBNull(ord) ? reader.GetString(ord) : nameEn;
+            }
+            else
+            {
+                name = nameEn;
+            }
+
             return new Category
             {
                 Id = reader.GetInt32(reader.GetOrdinal("Id")),
                 ParentId = reader.IsDBNull(reader.GetOrdinal("ParentId")) ? null : reader.GetInt32(reader.GetOrdinal("ParentId")),
-                Name = reader.GetString(reader.GetOrdinal("Name")),
+                Name = name,
                 Type = reader.IsDBNull(reader.GetOrdinal("Type")) ? null : reader.GetInt32(reader.GetOrdinal("Type")),
             };
         }
@@ -32,7 +49,7 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
-            await using var cmd = new SqlCommand("SELECT Id, ParentId, Name, Type FROM Category", conn);
+            await using var cmd = new SqlCommand("SELECT Id, ParentId, Name, Type, NameLV FROM Category", conn);
             await using var reader = await cmd.ExecuteReaderAsync();
 
             while (await reader.ReadAsync())
@@ -48,7 +65,7 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
 
             await using var cmd = new SqlCommand(
-                "SELECT Id, ParentId, Name, Type FROM Category WHERE Id = @Id and Type = 1", conn);
+                "SELECT Id, ParentId, Name, Type, NameLV FROM Category WHERE Id = @Id and Type = 1", conn);
             cmd.Parameters.AddWithValue("@Id", id);
 
             await using var reader = await cmd.ExecuteReaderAsync();
@@ -65,7 +82,7 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
 
             await using var cmd = new SqlCommand(
-                "SELECT Id, ParentId, Name, Type FROM Category WHERE ParentId = @ParentId and Type = 1", conn);
+                "SELECT Id, ParentId, Name, Type, NameLV FROM Category WHERE ParentId = @ParentId and Type = 1", conn);
             cmd.Parameters.AddWithValue("@ParentId", parentId);
 
             await using var reader = await cmd.ExecuteReaderAsync();
@@ -89,7 +106,7 @@ namespace Linkora.Repositories
             while (currentId != null)
             {
                 await using var cmd = new SqlCommand(
-                    "SELECT Id, ParentId, Name, Type FROM Category WHERE Id = @Id and Type = 1", conn);
+                    "SELECT Id, ParentId, Name, Type, NameLV FROM Category WHERE Id = @Id and Type = 1", conn);
                 cmd.Parameters.AddWithValue("@Id", currentId.Value);
 
                 await using var reader = await cmd.ExecuteReaderAsync();
@@ -111,12 +128,12 @@ namespace Linkora.Repositories
             var result = new List<Parameter>();
             var ids = string.Join(",", categoryIds);
             if (string.IsNullOrEmpty(ids)) return result;
-
+            var lang = GetLang();
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
             await using var cmdP = new SqlCommand(
-                $"SELECT Id, ParentId, Name, Type FROM Category WHERE ParentId IN ({ids}) AND Type IN (2,3,4,5)", conn);
+                $"SELECT Id, ParentId, Name, Type, NameLV FROM Category WHERE ParentId IN ({ids}) AND Type IN (2,3,4,5)", conn);
 
             var parameters = new List<Category>();
             await using (var r = await cmdP.ExecuteReaderAsync())
@@ -131,11 +148,16 @@ namespace Linkora.Repositories
                 if (p.Type == 2 || p.Type == 4) // selection / multi → SelectOptions
                 {
                     await using var cmdO = new SqlCommand(
-                        "SELECT Value FROM SelectOptions WHERE CategoryId = @Id", conn);
+                        "SELECT Value, ValueLV FROM SelectOptions WHERE CategoryId = @Id", conn);
                     cmdO.Parameters.AddWithValue("@Id", p.Id);
                     await using var ro = await cmdO.ExecuteReaderAsync();
                     while (await ro.ReadAsync())
-                        vm.Options.Add(ro.GetString(0));
+                    {
+                        if (lang == "lv" && !ro.IsDBNull(1))
+                            vm.Options.Add(ro.GetString(1));
+                        else
+                            vm.Options.Add(ro.GetString(0));
+                    }
                 }
                 else if (p.Type == 5) // range → ParameterRange
                 {
@@ -160,13 +182,13 @@ namespace Linkora.Repositories
         public async Task<List<Parameter>> GetParametersAsync(int categoryId)
         {
             var result = new List<Parameter>();
-
+            var lang = GetLang();
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
 
             await using var cmdP = new SqlCommand(
-            "SELECT Id, ParentId, Name, Type FROM Category WHERE ParentId = @ParentId AND Type IN (2,3,4,5)", conn);
+            "SELECT Id, ParentId, Name, Type, NameLV FROM Category WHERE ParentId = @ParentId AND Type IN (2,3,4,5)", conn);
             cmdP.Parameters.AddWithValue("@ParentId", categoryId);
             var parameters = new List<Category>();
             await using (var r = await cmdP.ExecuteReaderAsync())
@@ -181,11 +203,16 @@ namespace Linkora.Repositories
                 if (p.Type == 2 || p.Type == 4) // selection / multi → SelectOptions
                 {
                     await using var cmdO = new SqlCommand(
-                        "SELECT Value FROM SelectOptions WHERE CategoryId = @Id", conn);
+                        "SELECT Value, ValueLV FROM SelectOptions WHERE CategoryId = @Id", conn);
                     cmdO.Parameters.AddWithValue("@Id", p.Id);
                     await using var ro = await cmdO.ExecuteReaderAsync();
                     while (await ro.ReadAsync())
-                        vm.Options.Add(ro.GetString(0));
+                    {
+                        if (lang == "lv" && !ro.IsDBNull(1))
+                            vm.Options.Add(ro.GetString(1));
+                        else
+                            vm.Options.Add(ro.GetString(0));
+                    }
                 }
                 else if (p.Type == 5) // range → ParameterRange
                 {

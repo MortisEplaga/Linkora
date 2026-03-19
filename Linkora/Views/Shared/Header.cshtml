@@ -224,6 +224,8 @@
             }
             function setLang(lang) {
                 localStorage.setItem('lang', lang);
+                document.cookie = `lang=${lang};path=/;max-age=31536000`;
+                applyTranslations();
                 document.getElementById('langEN').classList.toggle('settings-lang-pill-active', lang === 'en');
                 document.getElementById('langLV').classList.toggle('settings-lang-pill-active', lang === 'lv');
                 // Re-apply all translations on the page

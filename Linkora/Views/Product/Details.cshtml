@@ -60,11 +60,14 @@
 
         <!-- Инфо -->
         <div class="details-info">
-            <div class="details-price">
-                data-price-available="@(p.Price.HasValue ? "true" : "false")"
-                data-price-value="@(p.Price.HasValue? p.Price.Value.ToString("N2") + " €" : "")">
-                @(p.Price.HasValue? p.Price.Value.ToString("N2") + " €" : "Price on request")
-            </div>
+            @if (p.Price.HasValue)
+            {
+                <div class="details-price">@p.Price.Value.ToString("N2") €</div>
+            }
+            else
+            {
+                <div class="details-price" data-i18n="price_on_request">Price on request</div>
+            }
             <h1 class="details-title">@p.Name</h1>
             <div class="details-meta">
                 <span>@p.Address</span>

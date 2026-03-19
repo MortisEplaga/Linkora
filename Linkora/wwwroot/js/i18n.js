@@ -4,6 +4,14 @@
 //         add data-i18n-placeholder="key" to inputs
 //         add data-i18n-title="key" to elements needing title attr
 // ============================================================
+(function () {
+    const cookieLang = document.cookie.split(';')
+        .find(c => c.trim().startsWith('lang='))
+        ?.split('=')[1];
+    if (cookieLang) localStorage.setItem('lang', cookieLang);
+    if (localStorage.getItem('theme') === 'dark')
+        document.documentElement.classList.add('dark-theme');
+})();
 
 const TRANSLATIONS = {
   en: {
