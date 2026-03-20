@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Http.Features;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddHttpContextAccessor();
 
@@ -17,7 +16,7 @@ builder.Services.AddScoped<IReportRepository, ReportRepository>();
 
 builder.Services.Configure<FormOptions>(o =>
 {
-    o.MultipartBodyLengthLimit = 52_428_800; // 50 MB
+    o.MultipartBodyLengthLimit = 52_428_800;
 });
 builder.WebHost.ConfigureKestrel(o =>
 {
@@ -35,14 +34,27 @@ builder.Services.AddAuthentication("Cookies")
             context.Response.Redirect(context.RedirectUri);
             return Task.CompletedTask;
         };
+    })
+    .AddGoogle("Google", options =>
+    {
+        options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
+        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
+
+        // Must match the redirect URI registered in Google Cloud Console
+        options.CallbackPath = "/Account/GoogleCallback";
+
+        options.Scope.Add("email");
+        options.Scope.Add("profile");
+
+        // SignInScheme tells Google middleware to use our Cookies scheme after validation
+        options.SignInScheme = "Cookies";
     });
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 

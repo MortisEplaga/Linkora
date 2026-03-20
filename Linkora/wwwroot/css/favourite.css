@@ -97,3 +97,35 @@
     gap: 12px;
     font-size: 16px;
 }
+.compare-go-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 13px;
+    background: #fff;
+    border: 2px solid #1a1a1a;
+    border-radius: 10px;
+    color: #1a1a1a;
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+}
+
+    .compare-go-btn:hover {
+        background: #1a1a1a;
+        color: #fff;
+    }
+
+.dark-theme .compare-go-btn {
+    border-color: #e0e0e0 !important;
+    color: #e0e0e0 !important;
+    background: transparent !important;
+}
+
+    .dark-theme .compare-go-btn:hover {
+        background: #e0e0e0 !important;
+        color: #1a1a1a !important;
+    }

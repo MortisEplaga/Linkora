@@ -184,7 +184,16 @@ const TRANSLATIONS = {
     'help':                  'Help',
     'catalogs':              'Catalogs',
     'login_register':        'Login and registration',
-    'place_an_ad':           'Place an ad',
+    'place_an_ad': 'Place an ad',
+
+    'compare_title': 'Compare listings',
+    'compare_all_params': 'All parameters',
+    'compare_show_diff': 'Show differences',
+    'compare_empty': 'Your cart is empty — nothing to compare.',
+    'compare_group_main': 'Listings',
+    'go_to_cart': 'Go to cart',
+    'compare_btn': 'Compare',
+    'go_to_compare': 'Go to comparison',
   },
 
   lv: {
@@ -357,7 +366,16 @@ const TRANSLATIONS = {
     'help':                  'Palīdzība',
     'catalogs':              'Katalogi',
     'login_register':        'Ieeja un reģistrācija',
-    'place_an_ad':           'Publicēt sludinājumu',
+    'place_an_ad': 'Publicēt sludinājumu',
+
+    'compare_title': 'Sludinājumu salīdzinājums',
+    'compare_all_params': 'Visi parametri',
+    'compare_show_diff': 'Rādīt atšķirības',
+    'compare_empty': 'Grozs ir tukšs — nav ko salīdzināt.',
+    'compare_group_main': 'Sludinājumi',
+    'go_to_cart': 'Uz grozu',
+    'compare_btn': 'Salīdzināt',
+    'go_to_compare': 'Uz salīdzinājumu',
   }
 };
 

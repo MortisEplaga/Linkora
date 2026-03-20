@@ -1,4 +1,15 @@
-﻿.auth-page {
+﻿.auth-social-google {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+    .auth-social-google:hover {
+        border-color: #aaa;
+    }
+ 
+    .auth-page {
     display: flex;
     justify-content: center;
     padding: 48px 16px;

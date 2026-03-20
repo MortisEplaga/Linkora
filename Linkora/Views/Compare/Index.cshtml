@@ -1,0 +1,219 @@
+﻿@using Linkora.Models
+@{
+    var products = (List<CompareProduct>)ViewBag.Products;
+    var allParams = (List<string>)ViewBag.AllParams;
+    var paramMatrix = (Dictionary<string, Dictionary<int, string>>)ViewBag.ParamMatrix;
+    ViewData["Title"] = "Compare listings";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/compare.css" />
+}
+
+<div class="compare-page">
+
+    <div class="compare-header">
+        <h1 class="compare-title" data-i18n="compare_title">Compare listings</h1>
+        @if (products.Count > 0)
+        {
+            <div class="compare-toggle-group">
+                <button class="compare-toggle-btn active" id="btnAllParams"
+                        onclick="setMode('all')" data-i18n="compare_all_params">
+                    <span class="toggle-dot"></span>
+                    All parameters
+                </button>
+                <button class="compare-toggle-btn" id="btnDiff"
+                        onclick="setMode('diff')" data-i18n="compare_show_diff">
+                    <span class="toggle-dot"></span>
+                    Show differences
+                </button>
+            </div>
+        }
+    </div>
+
+    @if (products.Count == 0)
+    {
+        <div class="compare-empty">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5">
+                <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+            </svg>
+            <p data-i18n="compare_empty">Your cart is empty — nothing to compare.</p>
+            <a class="compare-back-btn" href="/Favourite/Index?tab=cart" data-i18n="go_to_cart">Go to cart</a>
+        </div>
+    }
+    else
+    {
+            var gridStyle = $"grid-template-columns: 200px {string.Join(" ", Enumerable.Repeat("220px", products.Count))}";
+
+            var staticRows = new List<(string Label, string Key, Func<CompareProduct, string?> Get)>
+            {
+                ("Seller",  "seller",  p2 => p2.SellerName),
+                ("Address", "address", p2 => p2.Address),
+                ("Posted",  "date",    p2 => p2.CreatedTime?.ToString("dd MMM yyyy")),
+            };
+
+        <div class="compare-group-label">
+            <span data-i18n="compare_group_main">Listings</span>
+            <span class="compare-group-count">(@products.Count)</span>
+        </div>
+
+        <div class="compare-scroll" id="compareScroll">
+            <div class="compare-table" id="compareTable" style="@gridStyle">
+
+                <!-- ── Row 1: corner cell + product cards ── -->
+                <div class="compare-corner-cell">
+                    <a href="/Favourite/Index?tab=cart"
+                       style="font-size:12px;color:#00b0a3;text-decoration:none;font-weight:600;display:flex;align-items:center;gap:4px">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"/>
+                        </svg>
+                        <span data-i18n="cart_tab">Cart</span>
+                    </a>
+                </div>
+
+                @foreach (var p in products)
+                {
+                    <div class="compare-product-card">
+                        <button class="compare-remove-btn" title="Remove from comparison"
+                                onclick="removeFromCompare(@p.Id)">✕</button>
+                        <a href="/Product/Details/@p.Id" class="compare-product-img-wrap">
+                            <img src="@(p.AvatarImagePath ?? "/img/no-photo.svg")"
+                                 alt="@p.Name"
+                                 onerror="this.src='/img/no-photo.svg'" />
+                            @if (p.MediaCount > 1)
+                            {
+                                <div class="compare-img-counter">1 / @p.MediaCount</div>
+                            }
+                        </a>
+                        <div class="compare-product-price">
+                            @(p.Price.HasValue ? p.Price.Value.ToString("N2") + " €" : "—")
+                        </div>
+                        <a href="/Product/Details/@p.Id" class="compare-product-name">@p.Name</a>
+                        @if (p.CategoryName != null)
+                        {
+                            <div class="compare-product-cat">@p.CategoryName</div>
+                        }
+                    </div>
+                }
+
+                <!-- ── Static rows ── -->
+                @foreach (var row in staticRows)
+                {
+                    var values = products.Select(p => row.Get(p) ?? "").ToList();
+                    var allSame = values.Distinct().Count() <= 1;
+
+                    <div class="compare-cell-label" data-static="@row.Key">@row.Label</div>
+                    @foreach (var p in products)
+                    {
+                        var val = row.Get(p);
+                        <div class="compare-cell @(!allSame ? "diff" : "")" data-static="@row.Key">
+                            @if (string.IsNullOrEmpty(val))
+                            {
+                                <span class="compare-val-empty">—</span>
+                            }
+                            else
+                            {
+                                @val
+                            }
+                        </div>
+                    }
+                }
+
+                <!-- ── Dynamic param rows ── -->
+                @foreach (var paramName in allParams)
+                {
+                    var values = products.Select(p =>
+                        paramMatrix.TryGetValue(paramName, out var d) && d.TryGetValue(p.Id, out var v) ? v : ""
+                    ).ToList();
+                    var allSame = values.Distinct().Count() <= 1;
+
+                    <div class="compare-cell-label" data-param="@paramName">@paramName</div>
+                    @foreach (var p in products)
+                    {
+                        var hasVal = paramMatrix.TryGetValue(paramName, out var dict)
+                                     && dict.TryGetValue(p.Id, out var val2)
+                                     && !string.IsNullOrEmpty(val2);
+                        var val = hasVal ? paramMatrix[paramName][p.Id] : "";
+
+                        <div class="compare-cell @(!allSame ? "diff" : "")" data-param="@paramName">
+                            @if (!hasVal)
+                            {
+                                <span class="compare-val-empty">—</span>
+                            }
+                            else if (val == "true")
+                            {
+                                <span style="color:#00b0a3;font-weight:600">✓ Yes</span>
+                            }
+                            else if (val == "false")
+                            {
+                                <span class="compare-val-empty">✗ No</span>
+                            }
+                            else
+                            {
+                                @val
+                            }
+                        </div>
+                    }
+                }
+
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+    let mode = 'all';
+
+    function setMode(m) {
+        mode = m;
+        document.getElementById('btnAllParams').classList.toggle('active', m === 'all');
+        document.getElementById('btnDiff').classList.toggle('active', m === 'diff');
+        applyMode();
+    }
+
+    function applyMode() {
+        const table = document.getElementById('compareTable');
+        if (!table) return;
+
+        const staticKeys = [...new Set(
+            [...table.querySelectorAll('[data-static]')].map(el => el.dataset.static)
+        )];
+        const paramKeys = [...new Set(
+            [...table.querySelectorAll('[data-param]')].map(el => el.dataset.param)
+        )];
+
+        staticKeys.forEach(key => {
+            const all = [...table.querySelectorAll(`[data-static="${key}"]`)];
+            const vals = all.filter(c => !c.classList.contains('compare-cell-label'))
+                            .map(c => c.textContent.trim());
+            const hide = mode === 'diff' && new Set(vals).size <= 1;
+            all.forEach(c => c.style.display = hide ? 'none' : '');
+        });
+
+        paramKeys.forEach(pname => {
+            const esc = CSS.escape(pname);
+            const all = [...table.querySelectorAll(`[data-param="${esc}"]`)];
+            const vals = all.filter(c => !c.classList.contains('compare-cell-label'))
+                            .map(c => c.textContent.trim());
+            const hide = mode === 'diff' && new Set(vals).size <= 1;
+            all.forEach(c => c.style.display = hide ? 'none' : '');
+        });
+    }
+
+    async function removeFromCompare(productId) {
+        await fetch('/Favourite/Toggle?productId=' + productId + '&can=false', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
+            },
+            body: '{}'
+        });
+        location.reload();
+    }
+
+    document.addEventListener('DOMContentLoaded', applyTranslations);
+</script>
+}
