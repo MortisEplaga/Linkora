@@ -196,15 +196,241 @@
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div style="max-width:1280px; margin:0 auto; padding:0 24px;">
-            &copy; 2026 - Linkora - <a asp-area="" asp-controller="Home" asp-action="Privacy" data-i18n="privacy">Privacy</a>
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-links">
+                <a href="#" onclick="openFaqModal(); return false;" class="footer-link">FAQ</a>
+                <span class="footer-sep">·</span>
+                <a href="#" onclick="openTermsModal(); return false;" class="footer-link">Terms of use</a>
+                <span class="footer-sep">·</span>
+                <a asp-area="" asp-controller="Home" asp-action="Privacy" class="footer-link" data-i18n="privacy">Privacy</a>
+            </div>
+            <div class="footer-copy">© 2026 Linkora</div>
         </div>
     </footer>
 
+    <div class="modal-overlay" id="faqOverlay" onclick="closeFaqModal()"></div>
+    <div class="modal info-modal" id="faqModal">
+        <button class="modal-close" onclick="closeFaqModal()">✕</button>
+        <h2 class="info-modal-title">FAQ</h2>
+
+        <div class="info-modal-lang-tabs">
+            <button class="info-lang-btn active" onclick="switchInfoLang('ru', this)">RU</button>
+            <button class="info-lang-btn" onclick="switchInfoLang('lv', this)">LV</button>
+        </div>
+
+        <div class="info-modal-body">
+
+            <div class="info-lang-content" data-lang="ru">
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Как зарегистрироваться? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Нажав на раздел меню, найдите возможность «Зарегистрироваться», после чего откроется бланк, заполнив который вы станете зарегистрированным пользователем. При размещении поста вам потребуется активировать контактную информацию.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Можно ли пользоваться порталом, будучи незарегистрированным пользователем? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Незарегистрированный пользователь может просматривать размещенные посты и добавлять их в разделы «Любимое» и «Корзина»; они будут сохранены после регистрации или подключения к своему профилю.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Как активировать номер телефона и адрес электронной почты? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Зайдя в раздел «Мой профиль», вы найдете подраздел «Мои данные», где можно активировать или изменить контактную информацию.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Как изменить пароль? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Зайдя в раздел «Мой профиль», вы найдете подраздел «Изменение пароля», где можно изменить действующий пароль.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Как сохранить посты, которые я искал (-а)? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Интересующие вас посты можно сохранить, нажав на иконку «Добавить в Любимое». Позднее вы найдете их в разделе «Любимое».</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Как отслеживать появление новых интересующих меня постов? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Список постов можно фильтровать по желаемым параметрам, а также отметить, чтобы мы сообщали вам о появлении новинок по данному фильтру.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Через какое время мой пост будет утвержден? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Пост размещается на портале незамедлительно. Пост должен соответствовать правилам портала, в противном случае он будет заблокирован.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Как долго будет активен размещенный пост? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Срок публикации каждого размещенного поста составляет 1 месяц с момента публикации. После окончания срока вы можете повторно разместить данный пост.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Как редактировать содержание поста? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Все содержание поста можно редактировать перед публикацией. После публикации цену разрешается редактировать не более трёх раз, а изображения и видео — без ограничений.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Как редактировать цену, указанную в опубликованном посте? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Открыв соответствующий пост, вы найдете кнопку «Редактировать», после нажатия которой сможете исправить цену.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Что делать, если пост заблокирован? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">В случае блокировки поста его владелец получит по электронной почте сообщение с указанием причины блокировки. Вы можете отредактировать данный пост и отправить его на повторное рассмотрение.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Можно ли изменить или добавить в пост изображения и видео? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Проверьте размеры и формат фотографий и видео. Если они не соответствуют требованиям и разместить их не удается, просим обратиться к администрации.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Как удалить пост? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Открыв меню возле соответствующего поста, вы найдете возможность «Удалить».</div>
+                </div>
+            </div>
+
+            <div class="info-lang-content" data-lang="lv" style="display:none">
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Kā reģistrēties? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Nospiežot uz izvēlnes sadaļas, atrodiet iespēju "Reģistrēties", pēc tam atvērsies forma, kuru aizpildot jūs kļūsiet par reģistrētu lietotāju. Publicējot sludinājumu, jums būs jāaktivizē kontaktinformācija.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Vai portālu var izmantot nereģistrēts lietotājs? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Nereģistrēts lietotājs var apskatīt publicētos sludinājumus un pievienot tos sadaļām "Izlase" un "Grozs"; tie tiks saglabāti pēc reģistrācijas vai pieslēgšanās savam profilam.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Kā aktivizēt tālruņa numuru un e-pasta adresi? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Atverot sadaļu "Mans profils", jūs atradīsiet apakšsadaļu "Mani dati", kur var aktivizēt vai mainīt kontaktinformāciju.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Kā nomainīt paroli? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Atverot sadaļu "Mans profils", jūs atradīsiet apakšsadaļu "Paroles maiņa", kur var mainīt esošo paroli.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Kā saglabāt sludinājumus, kurus es meklēju? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Jūs interesējošos sludinājumus var saglabāt, nospiežot ikonu "Pievienot izlasei". Vēlāk jūs tos atradīsiet sadaļā "Izlase".</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Kā sekot līdzi jaunu sludinājumu parādīšanās? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Sludinājumu sarakstu var filtrēt pēc vēlamajiem parametriem, kā arī atzīmēt, lai mēs jūs informētu par jaunumiem atbilstoši šim filtram.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Cik ātri mans sludinājums tiks apstiprināts? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Sludinājums tiek publicēts nekavējoties. Tam jāatbilst portāla noteikumiem, pretējā gadījumā tas tiks bloķēts.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Cik ilgi publicētais sludinājums būs aktīvs? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Katra sludinājuma publicēšanas termiņš ir 1 mēnesis no publicēšanas brīža. Pēc termiņa beigām jūs varat to publicēt atkārtoti.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Kā rediģēt sludinājuma saturu? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Visu sludinājuma saturu var rediģēt pirms publicēšanas; pēc tam cenu drīkst rediģēt ne vairāk kā trīs reizes, bet attēlus un video – bez ierobežojumiem.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Kā rediģēt publicētajā sludinājumā norādīto cenu? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Atverot attiecīgo sludinājumu, jūs atradīsiet pogu "Rediģēt", pēc kuras nospiešanas varēsiet veikt labojumus.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Ko darīt, ja sludinājums ir bloķēts? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Bloķēšanas gadījumā sludinājuma īpašnieks saņems e-pasta ziņojumu ar bloķēšanas iemeslu. Jūs varat rediģēt sludinājumu un nosūtīt to atkārtotai pārskatīšanai.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Vai var mainīt vai pievienot sludinājumam attēlus un video? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Pārbaudiet attēlu un video izmērus un formātu; ja tie neatbilst prasībām un tos nevar augšupielādēt, lūdzam sazināties ar administrāciju.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Kā dzēst sludinājumu? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Atverot izvēlni pie attiecīgā sludinājuma, jūs atradīsiet iespēju "Dzēst".</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="termsOverlay" onclick="closeTermsModal()"></div>
+    <div class="modal info-modal" id="termsModal">
+        <button class="modal-close" onclick="closeTermsModal()">✕</button>
+        <h2 class="info-modal-title">Terms of use</h2>
+
+        <div class="info-modal-lang-tabs">
+            <button class="info-lang-btn active" onclick="switchInfoLang('ru', this, 'terms')">RU</button>
+        </div>
+
+        <div class="info-modal-body">
+            <div class="info-lang-content" data-lang="ru">
+
+                <p class="terms-intro">Самозанятое лицо, далее в тексте – Linkora, предоставляет услуги сервиса постов, далее в тексте – УСЛУГА, согласно изложенным ниже Условиям предоставления УСЛУГИ, которые впоследствии могут быть дополнены или изменены в любое время.</p>
+
+                <div class="terms-section">
+                    <div class="terms-title">Термины</div>
+                    <p><b>ПОЛЬЗОВАТЕЛЬ</b> – частное или юридическое лицо, размещающее посты в соответствии с Условиями предоставления УСЛУГИ.</p>
+                    <p><b>ПОСТ</b> – коммерческое предложение, связанное с продажей товара или услуги и оформленное в соответствии с Условиями предоставления УСЛУГИ.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">1. Принятие условий</div>
+                    <p>ПОЛЬЗОВАТЕЛЬ понимает и соглашается с тем, что УСЛУГА предоставляется на условиях «как есть» и что Linkora не несет ответственности за содержание ПОСТОВ, а также за возможные убытки или неудобства, связанные с использованием УСЛУГИ.</p>
+                    <p>ПОЛЬЗОВАТЕЛЬ несет полную ответственность, если содержание ПОСТОВ нарушает Условия предоставления УСЛУГИ, законодательство ЛР, авторские права, права на хозяйственные и товарные знаки.</p>
+                    <p>Размещая ПОСТ, ПОЛЬЗОВАТЕЛЬ соглашается с Условиями предоставления УСЛУГ.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">2. Обязательства ПОЛЬЗОВАТЕЛЯ при регистрации</div>
+                    <p>ПОЛЬЗОВАТЕЛЬ соглашается предоставить достоверную, точную, действительную и полную информацию о себе, которая запрашивается при заполнении бланка регистрации УСЛУГИ.</p>
+                    <p>ПОЛЬЗОВАТЕЛЬ обязан хранить конфиденциальность пароля и учетной записи, а также в полной мере отвечает за все действия, предпринятые с паролем или учетной записью ПОЛЬЗОВАТЕЛЯ.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">3. Правила размещения ПОСТОВ</div>
+                    <p>ПОЛЬЗОВАТЕЛЬ вправе разместить больше одного бесплатного ПОСТА единовременно: частное лицо — до 20 постов, предприятие — до 50 постов.</p>
+                    <p>ПОСТ необходимо размещать только в отведенной для него категории. В одном ПОСТЕ разрешается публиковать только один объект.</p>
+                    <p>ПОЛЬЗОВАТЕЛЬ обязуется не публиковать ПОСТЫ, содержание которых нарушает законодательство ЛР, противоречит этическим нормам, содержит ложную или вводящую в заблуждение информацию, контактные данные в тексте, маркетинговые фразы типа «Акция», «Распродажа», а также ПОСТЫ на языках, отличных от латышского, русского или английского.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">4. Доставка</div>
+                    <p>Пользователи Портала могут воспользоваться услугой доставки, предоставляемой курьерскими службами. Стоимость доставки зависит от условий выбранной курьерской службы и может изменяться.</p>
+                    <p>Неиспользованную услугу доставки можно аннулировать, обратившись в администрацию Портала. Если услуга уже используется, ее отмена невозможна.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">5. Политика конфиденциальности</div>
+                    <p>Настоящая Политика конфиденциальности регулирует использование Linkora идентифицирующей личность информации, которую Linkora получает во время действий ПОЛЬЗОВАТЕЛЯ на странице и использования предлагаемой УСЛУГИ.</p>
+                    <p>Linkora автоматически получает и регистрирует на своих серверах информацию из браузера ПОЛЬЗОВАТЕЛЯ, в том числе IP-адрес, cookie-файлы и запрашиваемые страницы.</p>
+                    <p>ПОЛЬЗОВАТЕЛЬ дает согласие на передачу персональной информации согласно распоряжению суда или запросам государственных учреждений в порядке, предусмотренном законодательством ЛР.</p>
+                    <p>Linkora предоставляет ПОЛЬЗОВАТЕЛЮ возможность в любое время редактировать персональную информацию, связанную с УСЛУГОЙ Linkora.</p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <script src="~/js/catmenu.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
+    <script>
+        function openFaqModal() {
+            document.getElementById('faqOverlay').classList.add('modal-open');
+            document.getElementById('faqModal').classList.add('modal-open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeFaqModal() {
+            document.getElementById('faqOverlay').classList.remove('modal-open');
+            document.getElementById('faqModal').classList.remove('modal-open');
+            document.body.style.overflow = '';
+        }
+        function openTermsModal() {
+            document.getElementById('termsOverlay').classList.add('modal-open');
+            document.getElementById('termsModal').classList.add('modal-open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeTermsModal() {
+            document.getElementById('termsOverlay').classList.remove('modal-open');
+            document.getElementById('termsModal').classList.remove('modal-open');
+            document.body.style.overflow = '';
+        }
 
+        function toggleFaq(el) {
+            el.classList.toggle('open');
+            const answer = el.nextElementSibling;
+            answer.classList.toggle('open');
+        }
+
+        function switchInfoLang(lang, btn, modal) {
+            const parent = btn.closest('.info-modal');
+            parent.querySelectorAll('.info-lang-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            parent.querySelectorAll('.info-lang-content').forEach(el => {
+                el.style.display = el.dataset.lang === lang ? '' : 'none';
+            });
+        }
+    </script>
     <script>
         // ── Apply translations immediately ──
         applyTranslations();

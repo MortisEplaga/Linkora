@@ -1,4 +1,242 @@
-﻿/* ── Settings modal ── */
+﻿.site-footer {
+    border-top: 1px solid #e5e5e5;
+    background: #fff;
+    margin-top: 40px;
+}
+
+.footer-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.footer-links {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.footer-link {
+    font-size: 13px;
+    color: #666;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+    .footer-link:hover {
+        color: #1a1a1a;
+    }
+
+.footer-sep {
+    color: #ccc;
+    font-size: 12px;
+}
+
+.footer-copy {
+    font-size: 13px;
+    color: #aaa;
+}
+
+/* ── Info modal (FAQ / Terms) ── */
+.info-modal {
+    width: min(67vw, 860px); 
+    max-width: calc(100vw - 32px);
+    max-height: 85vh;
+    display: none;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden; 
+    border-radius: 16px; 
+}
+    .info-modal.modal-open {
+        display: flex;
+    }
+
+.info-modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a1a;
+    padding: 24px 24px 0;
+    margin: 0;
+}
+
+.info-modal-lang-tabs {
+    display: flex;
+    gap: 0;
+    padding: 12px 24px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.info-lang-btn {
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #aaa;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+    .info-lang-btn.active {
+        color: #00b0a3;
+        border-bottom-color: #00b0a3;
+    }
+
+.info-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 24px 24px;
+    scrollbar-gutter: stable; 
+    border-radius: 0 0 16px 16px;
+}
+    .info-modal-body::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .info-modal-body::-webkit-scrollbar-track {
+        background: transparent;
+        margin: 8px 0; /* отступ сверху/снизу чтобы не упирался в края */
+    }
+
+    .info-modal-body::-webkit-scrollbar-thumb {
+        background: #d0d0d0;
+        border-radius: 3px;
+    }
+
+        .info-modal-body::-webkit-scrollbar-thumb:hover {
+            background: #aaa;
+        }
+
+/* ── FAQ accordion ── */
+.faq-item {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.faq-q {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.15s;
+}
+
+    .faq-q:hover {
+        color: #00b0a3;
+    }
+
+.faq-arrow {
+    font-size: 18px;
+    color: #aaa;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+    display: inline-block;
+}
+
+.faq-q.open .faq-arrow {
+    transform: rotate(90deg);
+    color: #00b0a3;
+}
+
+.faq-a {
+    display: none;
+    font-size: 14px;
+    color: #555;
+    line-height: 1.6;
+    padding: 0 0 14px;
+}
+
+    .faq-a.open {
+        display: block;
+    }
+
+/* ── Terms ── */
+.terms-intro {
+    font-size: 14px;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+
+.terms-section {
+    margin-bottom: 16px;
+}
+
+.terms-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+}
+
+.terms-section p {
+    font-size: 14px;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 6px;
+}
+
+/* ── Dark theme ── */
+.dark-theme .site-footer {
+    background: #1e1e1e !important;
+    border-top-color: #333 !important;
+}
+
+.dark-theme .footer-link {
+    color: #888 !important;
+}
+
+    .dark-theme .footer-link:hover {
+        color: #e0e0e0 !important;
+    }
+
+.dark-theme .footer-copy {
+    color: #555 !important;
+}
+
+.dark-theme .info-modal-title,
+.dark-theme .faq-q,
+.dark-theme .terms-title {
+    color: #e8e8e8 !important;
+}
+
+.dark-theme .faq-item,
+.dark-theme .info-modal-lang-tabs {
+    border-color: #333 !important;
+}
+
+.dark-theme .faq-a,
+.dark-theme .terms-section p,
+.dark-theme .terms-intro {
+    color: #aaa !important;
+}
+
+.dark-theme .info-modal-body::-webkit-scrollbar-thumb {
+    background: #444;
+}
+
+    .dark-theme .info-modal-body::-webkit-scrollbar-thumb:hover {
+        background: #666;
+    }
+
+.dark-theme .info-modal-body {
+    scrollbar-color: #444 transparent;
+}
+
+/* ── Settings modal ── */
 .settings-section {
     display: flex;
     align-items: center;
@@ -947,3 +1185,58 @@ css.modal-overlay {
     font-weight: 700;
     color: #1a1a1a;
 }
+
+#faqModal,
+#termsModal {
+    width: min(67vw, 860px) !important;
+    max-width: calc(100vw - 32px) !important;
+    max-height: 85vh !important;
+    padding: 0 !important;
+    overflow: hidden !important; /* ключевое: обрезает скроллбар по border-radius */
+    border-radius: 16px !important;
+    display: none;
+    flex-direction: column;
+}
+
+    #faqModal.modal-open,
+    #termsModal.modal-open {
+        display: flex !important;
+    }
+
+    #faqModal .info-modal-body,
+    #termsModal .info-modal-body {
+        flex: 1;
+        overflow-y: scroll; /* всегда показывает полосу — внутри скруглённого блока */
+        padding: 16px 8px 24px 24px; /* правый паддинг меньше — скроллбар занимает место */
+        border-radius: 0 0 16px 16px;
+    }
+
+        /* Webkit-скроллбар */
+        #faqModal .info-modal-body::-webkit-scrollbar,
+        #termsModal .info-modal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #faqModal .info-modal-body::-webkit-scrollbar-track,
+        #termsModal .info-modal-body::-webkit-scrollbar-track {
+            background: transparent;
+            margin-bottom: 12px;
+        }
+
+        #faqModal .info-modal-body::-webkit-scrollbar-thumb,
+        #termsModal .info-modal-body::-webkit-scrollbar-thumb {
+            background: #d0d0d0;
+            border-radius: 3px;
+        }
+
+            #faqModal .info-modal-body::-webkit-scrollbar-thumb:hover,
+            #termsModal .info-modal-body::-webkit-scrollbar-thumb:hover {
+                background: #aaa;
+            }
+
+/* Тёмная тема */
+.dark-theme #faqModal .info-modal-body::-webkit-scrollbar-thumb,
+.dark-theme #termsModal .info-modal-body::-webkit-scrollbar-thumb {
+    background: #555;
+}
+ 
