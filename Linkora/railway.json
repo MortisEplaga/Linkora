@@ -1,0 +1,10 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "startCommand": "dotnet Linkora/bin/Release/net8.0/Linkora.dll",
+    "restartPolicyType": "ON_FAILURE"
+  }
+}
