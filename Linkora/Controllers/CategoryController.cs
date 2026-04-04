@@ -15,7 +15,7 @@ namespace Linkora.Controllers
             _productRepository = productRepository;
         }
 
-        public async Task<IActionResult> Index(int id, string sort = "new", string? city = null)
+        public async Task<IActionResult> Index(int id, string sort = "new", string? q = null, string? city = null)
         {
             var category = await _categoryRepository.GetByIdAsync(id);
             if (category == null) return NotFound();
@@ -55,7 +55,7 @@ namespace Linkora.Controllers
             int? priceParamId = parameters.FirstOrDefault(p => p.Param.Name == "Price")?.Param.Id;
 
             var products = await _productRepository.GetByCategoryAsync(
-                    descendantIds, sort, filters, rangeFrom, rangeTo, priceParamId, city);
+                descendantIds, sort, filters, rangeFrom, rangeTo, priceParamId, city, q);
             ViewBag.City = city;
             ViewBag.Category = category;
             ViewBag.Breadcrumb = breadcrumb;
@@ -63,6 +63,7 @@ namespace Linkora.Controllers
             ViewBag.Parameters = parameters;
             ViewBag.Products = products;
             ViewBag.Sort = sort;
+            ViewBag.Search = q;
             ViewBag.HasPriceSort = priceParamId.HasValue;
             // Передаём активные фильтры во view для предзаполнения
             ViewBag.Filters = filters;

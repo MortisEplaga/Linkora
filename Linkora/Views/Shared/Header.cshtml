@@ -119,7 +119,7 @@
                 <span data-i18n="all_categories">All categories</span>
             </button>
 
-            <form asp-controller="Product" asp-action="Search" class="search-form">
+            <form class="search-form" onsubmit="handleGlobalSearch(event)">
                 <div class="search-pill">
                     <input type="text" class="search-input"
                            name="search"
@@ -298,6 +298,23 @@
                     ).join('');
                 } catch {
                     list.innerHTML = `<div class="reviews-empty">${t('failed_load')}</div>`;
+                }
+            }
+                        function handleGlobalSearch(e) {
+                e.preventDefault();
+                const input = e.target.querySelector('.search-input');
+                const q = input?.value.trim();
+                if (!q) return;
+
+                // Если уже на странице категории — добавляем q к текущему URL
+                const match = window.location.pathname.match(/\/Category\/Index\/(\d+)/i);
+                if (match) {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('q', q);
+                    window.location.href = url.toString();
+                } else {
+                    // Иначе — идём на корневую категорию с поиском
+                    window.location.href = '/Category/Index/3711?q=' + encodeURIComponent(q);
                 }
             }
         </script>

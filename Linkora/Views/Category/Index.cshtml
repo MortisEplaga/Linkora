@@ -20,6 +20,20 @@
         @category.Name
         <span class="category-count">@products.Count</span>
     </h1>
+    @if (ViewBag.Search != null)
+{
+        var removeUrl = Url.Action("Index", "Category", new {
+            id = category.Id,
+            sort = sort,
+            city = (string?)ViewBag.City
+        });
+    <div style="margin-bottom: 12px;">
+        <span class="search-chip">
+            @ViewBag.Search
+            <a class="search-chip-remove" href="@removeUrl">✕</a>
+        </span>
+    </div>
+}
 </div>
 
 <div class="category-body">
@@ -54,6 +68,7 @@
             <form method="get" id="filterForm" class="param-sidebar">
                 <input type="hidden" name="id" value="@category.Id" />
                 <input type="hidden" name="city" value="@(ViewBag.City ?? "")" />
+                <input type="hidden" name="q" value="@(ViewBag.Search ?? "")" />
 
                 @foreach (var vm in parameters)
                 {

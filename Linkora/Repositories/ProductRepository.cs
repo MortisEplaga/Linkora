@@ -19,7 +19,8 @@ namespace Linkora.Repositories
             Dictionary<int, decimal>? rangeFrom = null,
             Dictionary<int, decimal>? rangeTo = null,
             int? priceParamId = null,
-            string? city = null)
+            string? city = null,
+            string? search = null)
         {
             var ids = string.Join(",", categoryIds);
             if (string.IsNullOrEmpty(ids)) return new List<Product>();
@@ -96,6 +97,11 @@ namespace Linkora.Repositories
             {
                 whereClauses.Add("p.Address = @City");
                 sqlParams.Add(new SqlParameter("@City", city));
+            }
+            if (!string.IsNullOrEmpty(search))
+            {
+                whereClauses.Add("p.Name LIKE '%' + @SearchTerm + '%'");
+                sqlParams.Add(new SqlParameter("@SearchTerm", search));
             }
             var extraWhere = whereClauses.Count > 0
                 ? "AND " + string.Join(" AND ", whereClauses)

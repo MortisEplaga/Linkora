@@ -17,7 +17,8 @@ namespace Linkora.Repositories
                                                 Dictionary<int, decimal>? rangeFrom = null,
                                                 Dictionary<int, decimal>? rangeTo = null,
                                                 int? priceParamId = null,
-                                                string? city = null);
+                                                string? city = null,
+                                                string? search = null);
         Task<bool> CompleteDealAsync(int productId, int userId);
         Task<bool> ReactivateProductAsync(int productId, int userId);
         Task<IEnumerable<Product>> GetUserProductsByStatusAsync(int userId, string status);

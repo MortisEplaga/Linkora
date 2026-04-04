@@ -13,6 +13,7 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddSignalR();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IReportRepository, ReportRepository>();
+builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
 
 builder.Services.Configure<FormOptions>(o =>
 {

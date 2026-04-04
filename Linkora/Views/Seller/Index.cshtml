@@ -10,11 +10,6 @@
     ViewData["Title"] = seller.UserName;
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/Category.css" />
-}
-
-<!-- Шапка продавца -->
 <div class="seller-header">
     <div class="seller-header-avatar">
         @if (seller.AvatarPath != null)
@@ -68,12 +63,19 @@
                 <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
             </svg>
         </button>
-        <button class="seller-subscribe-btn" data-i18n="subscribe_btn">Subscribe</button>
+
+        <button class="seller-subscribe-btn"
+                id="subscribeBtn"
+                onclick="toggleSubscription(@seller.Id)"
+                data-seller-id="@seller.Id">
+            <span class="sub-icon">♡</span>
+            <span class="sub-label" data-i18n="subscribe_btn">Subscribe</span>
+            <span class="sub-count" id="subCount"></span>
+        </button>
     </div>
 </div>
 
 <div class="category-body">
-    <!-- Сайдбар -->
     <div class="category-left">
         <nav class="category-sidebar">
             <a class="sidebar-current @(activeCatId == null ? "sidebar-item-active" : "")"
@@ -91,7 +93,6 @@
         </nav>
     </div>
 
-    <!-- Контент -->
     <div class="category-content">
         <div class="listing-toolbar">
             <div class="listing-view-btns">
@@ -118,7 +119,8 @@
                         <line x1="7" y1="12" x2="21" y2="12" />
                         <line x1="11" y1="18" x2="21" y2="18" />
                     </svg>
-                    <span id="sortLabel" data-sort="@sort">@(sort == "cheap" ? "Cheapest first" : sort == "expensive" ? "Most expensive" : "Newest first")</span>                    ▾
+                    <span id="sortLabel" data-sort="@sort">@(sort == "cheap" ? "Cheapest first" : sort == "expensive" ? "Most expensive" : "Newest first")</span>
+                    ▾
                 </button>
                 <div class="listing-sort-drop" id="sortDrop">
                     <a class="listing-sort-item @(sort == "new" ? "active" : "")"
@@ -249,8 +251,8 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const v = localStorage.getItem('listingView') || 'grid';
-        setView(v);
+        setView(localStorage.getItem('listingView') || 'grid');
+        loadSubscriptionState(@seller.Id);
     });
 
     function setView(v) {
@@ -279,5 +281,70 @@
     function closeReviews() {
         document.getElementById('reviewsOverlay').classList.remove('open');
         document.getElementById('reviewsModal').classList.remove('open');
+    }
+
+
+    function applySubscriptionState(subscribed, count) {
+        const btn      = document.getElementById('subscribeBtn');
+        const iconEl   = btn.querySelector('.sub-icon');
+        const labelEl  = btn.querySelector('.sub-label');
+        const countEl  = document.getElementById('subCount');
+
+        btn.classList.toggle('subscribed', subscribed);
+        iconEl.textContent  = subscribed ? '♥' : '♡';
+        labelEl.textContent = subscribed ? 'Subscribed' : 'Subscribe';
+
+        if (count > 0) {
+            countEl.textContent = count;
+            countEl.style.display = '';
+        } else {
+            countEl.style.display = 'none';
+        }
+    }
+
+    async function loadSubscriptionState(sellerId) {
+        try {
+            const res  = await fetch(`/Subscription/State/${sellerId}`);
+            const data = await res.json();
+            applySubscriptionState(data.subscribed, data.count);
+        } catch {}
+    }
+
+    async function toggleSubscription(sellerId) {
+        const isAuth = @(User.Identity!.IsAuthenticated ? "true" : "false");
+        if (!isAuth) {
+            openAuthModal('login');
+            return;
+        }
+
+        const btn = document.getElementById('subscribeBtn');
+        btn.disabled = true;
+
+        try {
+            const res = await fetch(`/Subscription/Toggle/${sellerId}`, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken':
+                        document.getElementById('afToken')?.value ?? ''
+                }
+            });
+
+            if (!res.ok) {
+                console.error('Subscription toggle failed', res.status);
+                return;
+            }
+
+            const data = await res.json();
+            applySubscriptionState(data.subscribed, data.count);
+
+            const icon = btn.querySelector('.sub-icon');
+            icon.style.transform = 'scale(1.4)';
+            setTimeout(() => icon.style.transform = '', 200);
+
+        } catch (e) {
+            console.error('Subscription error:', e);
+        } finally {
+            btn.disabled = false;
+        }
     }
 </script>

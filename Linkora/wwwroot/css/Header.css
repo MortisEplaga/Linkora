@@ -446,3 +446,27 @@
     color: #fff;
     border-color: #1a1a1a;
 }
+.search-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #1a1a1a;
+    color: #fff;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 12px;
+}
+
+.search-chip-remove {
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    font-size: 15px;
+    line-height: 1;
+    margin-left: 2px;
+}
+
+    .search-chip-remove:hover {
+        color: #fff;
+    }
