@@ -170,7 +170,8 @@
     flex-shrink: 0;
     text-decoration: none;
     margin-right: 4px;
-    margin-top: 25px;
+    /*margin-top: 25px;
+*/
 }
 
     .site-logo img {
@@ -329,6 +330,13 @@
         gap: 8px;
     }
 
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+        text-decoration: none;
+        margin-right: 4px;
+        /* margin-top: 25px; удалено */
+    }
     .site-logo img {
         width: 120px;
     }

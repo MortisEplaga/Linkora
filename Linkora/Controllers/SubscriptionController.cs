@@ -1,6 +1,7 @@
 ﻿using Linkora.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 
 namespace Linkora.Controllers
@@ -8,11 +9,15 @@ namespace Linkora.Controllers
     [Route("[controller]")]
     public class SubscriptionController : Controller
     {
+        private readonly string _connectionString;
         private readonly ISubscriptionRepository _subscriptionRepository;
+        private readonly INotificationRepository _notificationRepository;
 
-        public SubscriptionController(ISubscriptionRepository subscriptionRepository)
+        public SubscriptionController(IConfiguration configuration, ISubscriptionRepository subscriptionRepository, INotificationRepository notificationRepository)
         {
+            _connectionString = configuration.GetConnectionString("DefaultConnection")!;
             _subscriptionRepository = subscriptionRepository;
+            _notificationRepository = notificationRepository;
         }
 
         [HttpPost("Toggle/{sellerId:int}")]
