@@ -1,0 +1,77 @@
+﻿@using Linkora.Models
+@model List<SellerViewModel>
+@{
+    ViewData["Title"] = "My subscriptions";
+}
+
+<div class="myads-page">
+    <h1 class="myads-title">My subscriptions</h1>
+
+    @if (!Model.Any())
+    {
+        <div class="myads-empty">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+            <p>You are not subscribed to anyone yet</p>
+        </div>
+    }
+    else
+    {
+        <div class="subs-grid">
+            @foreach (var seller in Model)
+            {
+                <div class="subs-card" id="seller-@seller.Id">
+                    <a href="/Seller/Index/@seller.Id" class="subs-card-link">
+                        <div class="subs-avatar">
+                            @if (seller.AvatarPath != null)
+                            {
+                                <img src="@seller.AvatarPath" onerror="this.src='/img/no-photo.svg'" />
+                            }
+                            else
+                            {
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                    <circle cx="12" cy="7" r="4" />
+                                </svg>
+                            }
+                        </div>
+                        <div class="subs-info">
+                            <div class="subs-name">@(seller.UserName ?? "Unknown")</div>
+                            @if (seller.IsCompany)
+                            {
+                                <span class="seller-badge">Company</span>
+                            }
+                            @if (seller.CreatedAt.HasValue)
+                            {
+                                <div class="subs-since">Since @seller.CreatedAt.Value.ToString("MMMM yyyy")</div>
+                            }
+                        </div>
+                    </a>
+                    <button class="myads-action-btn myads-action-danger subs-unfollow-btn"
+                            onclick="unfollow(@seller.Id, this)">
+                        Unsubscribe
+                    </button>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<script>
+    async function unfollow(FollowingId, btn) {
+        btn.disabled = true;
+        const res = await fetch(`/Subscription/Toggle/${FollowingId}`, {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': document.getElementById('afToken')?.value ?? '' }
+        });
+        if (res.ok) {
+            const card = document.getElementById(`FollowingId-${FollowingId}`);
+            card.style.transition = 'opacity 0.3s';
+            card.style.opacity = '0';
+            setTimeout(() => card.remove(), 300);
+        } else {
+            btn.disabled = false;
+        }
+    }
+</script>

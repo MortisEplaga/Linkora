@@ -1,9 +1,12 @@
-﻿namespace Linkora.Repositories
+﻿using Linkora.Models;
+
+namespace Linkora.Repositories
 {
     public interface ISubscriptionRepository
     {
-        Task<bool> IsSubscribedAsync(int followerId, int sellerId);
-        Task<bool> ToggleAsync(int followerId, int sellerId);
-        Task<int> GetSubscriberCountAsync(int sellerId);
+        Task<bool> IsSubscribedAsync(int followerId, int FollowingId);
+        Task<bool> ToggleAsync(int followerId, int FollowingId);
+        Task<int> GetSubscriberCountAsync(int FollowingId);
+        Task<List<SellerViewModel>> GetFollowingAsync(int followerId);
     }
 }

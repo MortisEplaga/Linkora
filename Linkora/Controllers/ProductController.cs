@@ -11,13 +11,14 @@ namespace Linkora.Controllers
         IAddressRepository addressRepository,
         IProductRepository productRepository,
         IConfiguration configuration,
-        IMessageRepository messageRepository) : Controller
+        IMessageRepository messageRepository,
+        INotificationRepository notificationRepository) : Controller
     {
         private readonly ICategoryRepository _categoryRepository = categoryRepository;
         private readonly IAddressRepository _addressRepository = addressRepository;
         private readonly IProductRepository _productRepository = productRepository;
         private readonly IMessageRepository _messageRepository = messageRepository;
-
+        private readonly INotificationRepository _notificationRepository = notificationRepository;
         private readonly IConfiguration _configuration = configuration;
         private static Dictionary<int, string> ParseParamsJson(string? json)
         {
@@ -251,6 +252,10 @@ namespace Linkora.Controllers
                 var firstMedia = media[0];
                 await _productRepository.SaveMediaAsync(newId, media);
             }
+
+            var userName = User.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
+            await _notificationRepository.NotifySubscribersAsync(userId, newId, title, userName);
+
             return Ok(new { id = newId });
         }
         private async Task<List<ProductMedia>> SaveUploadedFiles(List<IFormFile> files)

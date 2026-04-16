@@ -1,7 +1,6 @@
 ﻿using Linkora.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using System.Security.Claims;
 
 namespace Linkora.Controllers
@@ -9,43 +8,48 @@ namespace Linkora.Controllers
     [Route("[controller]")]
     public class SubscriptionController : Controller
     {
-        private readonly string _connectionString;
         private readonly ISubscriptionRepository _subscriptionRepository;
-        private readonly INotificationRepository _notificationRepository;
 
-        public SubscriptionController(IConfiguration configuration, ISubscriptionRepository subscriptionRepository, INotificationRepository notificationRepository)
+        public SubscriptionController(ISubscriptionRepository subscriptionRepository)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection")!;
             _subscriptionRepository = subscriptionRepository;
-            _notificationRepository = notificationRepository;
         }
 
-        [HttpPost("Toggle/{sellerId:int}")]
+        [HttpGet("Index")]
+        [Authorize]
+        public async Task<IActionResult> Index()
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var following = await _subscriptionRepository.GetFollowingAsync(userId);
+            return View(following);
+        }
+
+        [HttpPost("Toggle/{followingId:int}")]
         [Authorize]
         [IgnoreAntiforgeryToken]
-        public async Task<IActionResult> Toggle(int sellerId)
+        public async Task<IActionResult> Toggle(int followingId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
-            if (userId == sellerId)
+            if (userId == followingId)
                 return BadRequest(new { error = "Cannot subscribe to yourself" });
 
-            var subscribed = await _subscriptionRepository.ToggleAsync(userId, sellerId);
-            var count = await _subscriptionRepository.GetSubscriberCountAsync(sellerId);
+            var subscribed = await _subscriptionRepository.ToggleAsync(userId, followingId);
+            var count = await _subscriptionRepository.GetSubscriberCountAsync(followingId);
 
             return Json(new { subscribed, count });
         }
 
-        [HttpGet("State/{sellerId:int}")]
-        public async Task<IActionResult> State(int sellerId)
+        [HttpGet("State/{followingId:int}")]
+        public async Task<IActionResult> State(int followingId)
         {
             var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             bool subscribed = false;
 
             if (userIdStr != null && int.TryParse(userIdStr, out var userId))
-                subscribed = await _subscriptionRepository.IsSubscribedAsync(userId, sellerId);
+                subscribed = await _subscriptionRepository.IsSubscribedAsync(userId, followingId);
 
-            var count = await _subscriptionRepository.GetSubscriberCountAsync(sellerId);
+            var count = await _subscriptionRepository.GetSubscriberCountAsync(followingId);
 
             return Json(new { subscribed, count });
         }

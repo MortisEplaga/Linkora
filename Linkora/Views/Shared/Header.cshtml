@@ -41,9 +41,29 @@
                                     </svg>
                                 }
                                 @User.Identity.Name
-                            </button>
+                                </button>
                             <div class="user-dropdown" id="userDropdown">
-                                <div class="user-dropdown-name">@User.Identity.Name</div>
+                                <div class="user-dropdown-header">
+                                    <div class="user-dropdown-name">@User.Identity.Name</div>
+                                    <div class="notif-wrap" id="notifWrap">
+                                        <button class="login-btn notif-bell-btn" onclick="toggleNotifDropdown(event)" title="Notifications">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                                            </svg>
+                                            <span class="notif-badge" id="notifBadge" style="display:none"></span>
+                                        </button>
+                                        <div class="notif-dropdown" id="notifDropdown">
+                                            <div class="notif-header">
+                                                <span>Notifications</span>
+                                                <button class="notif-mark-all" onclick="markAllRead()">Mark all read</button>
+                                            </div>
+                                            <div class="notif-list" id="notifList">
+                                                <div class="notif-empty">Loading...</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="user-dropdown-divider"></div>
                                 <a class="user-dropdown-item" asp-controller="Product" asp-action="My">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></svg>
@@ -60,6 +80,12 @@
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
                                     <span data-i18n="favourites">Favourites</span>
                                     <span class="msg-nav-badge" id="favsNavBadge" style="display:none;margin-left:auto"></span>
+                                </a>
+                                <a class="user-dropdown-item" href="/Subscription/Index">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                                    </svg>
+                                    <span>My subscriptions</span>
                                 </a>
                                 <a class="user-dropdown-item" onclick="openMyReviewsModal()" style="cursor:pointer">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -198,6 +224,67 @@
         </div>
 
         <script>
+                        let notifOpen = false;
+
+            async function toggleNotifDropdown(e) {
+                e.stopPropagation();
+                const drop = document.getElementById('notifDropdown');
+                notifOpen = !notifOpen;
+                drop.classList.toggle('open', notifOpen);
+                if (notifOpen) await loadNotifications();
+            }
+
+            document.addEventListener('click', e => {
+                if (!e.target.closest('#notifWrap')) {
+                    document.getElementById('notifDropdown')?.classList.remove('open');
+                    notifOpen = false;
+                }
+            });
+
+            async function loadNotifications() {
+                const list = document.getElementById('notifList');
+                try {
+                    const res = await fetch('/Notifications/List');
+                    const data = await res.json();
+                    if (!data.length) {
+                        list.innerHTML = '<div class="notif-empty">No notifications</div>';
+                        return;
+                    }
+                    list.innerHTML = data.map(n => `
+                        <a class="notif-item ${n.isRead ? '' : 'unread'}"
+                           href="${n.productId ? '/Product/Details/' + n.productId : '#'}"
+                           onclick="markRead(${n.id})">
+                            <img class="notif-item-avatar"
+                                 src="${n.fromUserAvatar || '/img/no-photo.svg'}"
+                                 onerror="this.src='/img/no-photo.svg'" />
+                            <div class="notif-item-body">
+                                <div class="notif-item-msg">${n.message}</div>
+                                <div class="notif-item-time">${n.createdAt}</div>
+                            </div>
+                        </a>`
+                    ).join('');
+                    updateNotifBadge(data.filter(n => !n.isRead).length);
+                } catch {
+                    list.innerHTML = '<div class="notif-empty">Failed to load</div>';
+                }
+            }
+
+            async function markRead(id) {
+                await fetch(`/Notifications/MarkRead?id=${id}`, { method: 'POST' });
+            }
+
+            async function markAllRead() {
+                await fetch('/Notifications/MarkAllRead', { method: 'POST' });
+                document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
+                updateNotifBadge(0);
+            }
+
+            function updateNotifBadge(count) {
+                const badge = document.getElementById('notifBadge');
+                if (!badge) return;
+                badge.textContent = count;
+                badge.style.display = count > 0 ? 'flex' : 'none';
+            }
             // ── Settings ──
             function openSettingsModal() {
                 document.getElementById('userDropdown')?.classList.remove('open');

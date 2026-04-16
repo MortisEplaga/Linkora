@@ -47,8 +47,6 @@ namespace Linkora.Controllers
         public async Task<IActionResult> Start([FromBody] StartMessageDto dto)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            //if (userId == dto.SellerId)
-            //    return BadRequest(new { error = "Cannot message yourself" });
 
             var convId = await _messageRepository.GetOrCreateConversationAsync(
                 dto.ProductId, userId, dto.SellerId);
@@ -59,7 +57,6 @@ namespace Linkora.Controllers
             return Ok(new { conversationId = convId });
         }
 
-        // Получить счётчик непрочитанных (для polling fallback)
         [HttpGet]
         public async Task<IActionResult> UnreadCount()
         {

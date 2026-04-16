@@ -103,9 +103,8 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
-            // Get all followers of the author
             await using var followersCmd = new SqlCommand(
-                "SELECT FollowerId FROM Subscriptions WHERE FollowingId = @AuthorId", conn);
+                "SELECT FollowerId FROM Subscriptions WHERE FollowingId = @AuthorId", conn); 
             followersCmd.Parameters.AddWithValue("@AuthorId", authorId);
             await using var r = await followersCmd.ExecuteReaderAsync();
             var followerIds = new List<int>();
@@ -119,8 +118,8 @@ namespace Linkora.Repositories
             foreach (var followerId in followerIds)
             {
                 await using var insertCmd = new SqlCommand(@"
-                    INSERT INTO Notifications (UserId, FromUserId, ProductId, Message, IsRead, CreatedAt)
-                    VALUES (@UserId, @FromUserId, @ProductId, @Message, 0, GETDATE())", conn);
+            INSERT INTO Notifications (UserId, FromUserId, ProductId, Message, IsRead, CreatedAt)
+            VALUES (@UserId, @FromUserId, @ProductId, @Message, 0, GETDATE())", conn);
                 insertCmd.Parameters.AddWithValue("@UserId", followerId);
                 insertCmd.Parameters.AddWithValue("@FromUserId", authorId);
                 insertCmd.Parameters.AddWithValue("@ProductId", productId);
