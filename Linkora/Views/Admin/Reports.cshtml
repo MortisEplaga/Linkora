@@ -1,0 +1,219 @@
+@{
+    var reports = (List<AdminReportRow>)ViewBag.Reports;
+    var status = (string)ViewBag.Status;
+    var page = (int)ViewBag.Page;
+    var totalPages = (int)ViewBag.TotalPages;
+    var total = (int)ViewBag.Total;
+    ViewData["Title"] = "Admin — Reports";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin.css" />
+}
+
+<div class="admin-layout">
+    @await Html.PartialAsync("Sidebar", "reports")
+
+    <main class="admin-main">
+        <h1 class="admin-page-title">
+            Reports
+            <span class="admin-page-subtitle">@total results</span>
+        </h1>
+
+        <div class="admin-toolbar">
+            <div class="admin-status-tabs">
+                @foreach (var (s, label) in new[] {
+                    ("Pending","Pending"), ("Reviewed","Reviewed"),
+                    ("Resolved","Resolved"), ("Rejected","Rejected")
+                })
+                {
+                    <a class="admin-status-tab @(status == s ? "active" : "")"
+                       href="/Admin/Reports?status=@s&page=1">@label</a>
+                }
+            </div>
+        </div>
+
+        <div class="admin-card">
+            @if (!reports.Any())
+            {
+                <div class="admin-empty">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    </svg>
+                    <p style="margin-top:12px">No @status.ToLower() reports</p>
+                </div>
+            }
+            else
+            {
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Listing</th>
+                            <th>Reason</th>
+                            <th>Reporter</th>
+                            <th>Comment</th>
+                            <th>Listing status</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in reports)
+                        {
+                            <tr id="rrow-@r.Id">
+                                <td>
+                                    <div class="admin-report-product">
+                                        @if (r.ProductImage != null)
+                                        {
+                                            <img class="admin-report-img" src="@r.ProductImage"
+                                                 onerror="this.src='/img/no-photo.svg'" />
+                                        }
+                                        else
+                                        {
+                                            <div class="admin-report-img" style="display:flex;align-items:center;justify-content:center">
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
+                                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                                </svg>
+                                            </div>
+                                        }
+                                        <div>
+                                            <a class="admin-table-product-name"
+                                               href="/Product/Details/@r.ProductId" target="_blank"
+                                               style="max-width:160px">@r.ProductName</a>
+                                            <div class="admin-table-product-meta">#@r.ProductId</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span style="font-size:12px;font-weight:600;color:#555">@r.ReasonText</span>
+                                </td>
+                                <td style="font-size:13px;color:#555">@r.ReporterName</td>
+                                <td style="max-width:180px">
+                                    @if (!string.IsNullOrEmpty(r.Comment))
+                                    {
+                                        <span style="font-size:12px;color:#666;
+                                                     display:-webkit-box;-webkit-line-clamp:2;
+                                                     -webkit-box-orient:vertical;overflow:hidden">
+                                            @r.Comment
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#ccc;font-size:12px">—</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="admin-badge admin-badge-@r.ProductStatus.ToLower()">
+                                        @r.ProductStatus
+                                    </span>
+                                </td>
+                                <td style="color:#aaa;font-size:12px;white-space:nowrap">
+                                    @r.CreatedAt.ToString("dd MMM, HH:mm")
+                                </td>
+                                <td>
+                                    <div class="admin-actions">
+                                        @if (status == "Pending" || status == "Reviewed")
+                                        {
+                                            <!-- Approve report: keep product blocked -->
+                                            <button class="admin-btn admin-btn-approve"
+                                                    onclick="resolveReport(@r.Id, 'resolve', this)"
+                                                    title="Confirm report — keep listing blocked">
+                                                Confirm
+                                            </button>
+                                            <!-- Reject report: restore product -->
+                                            <button class="admin-btn admin-btn-reject"
+                                                    onclick="resolveReport(@r.Id, 'reject_report', this)"
+                                                    title="Dismiss report — restore listing">
+                                                Dismiss
+                                            </button>
+                                            <!-- Approve listing independently -->
+                                            <button class="admin-btn admin-btn-view"
+                                                    onclick="approveProduct(@r.ProductId, @r.Id, this)"
+                                                    title="Approve listing and close report">
+                                                Approve listing
+                                            </button>
+                                        }
+                                        <a class="admin-btn admin-btn-view"
+                                           href="/Product/Details/@r.ProductId" target="_blank">
+                                            View
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                @if (totalPages > 1)
+                {
+                    <div class="admin-pagination">
+                        @if (page > 1)
+                        {
+                            <a class="admin-page-btn" href="/Admin/Reports?status=@status&page=@(page-1)">‹</a>
+                        }
+                        @for (int i = Math.Max(1, page - 2); i <= Math.Min(totalPages, page + 2); i++)
+                        {
+                            <a class="admin-page-btn @(i == page ? "active" : "")"
+                               href="/Admin/Reports?status=@status&page=@i">@i</a>
+                        }
+                        @if (page < totalPages)
+                        {
+                            <a class="admin-page-btn" href="/Admin/Reports?status=@status&page=@(page+1)">›</a>
+                        }
+                    </div>
+                }
+            }
+        </div>
+
+        <!-- Legend -->
+        <div style="background:#fff;border-radius:10px;border:1px solid #e8e8e8;padding:16px 20px;font-size:13px;color:#888;line-height:1.8">
+            <strong style="color:#333">Actions guide:</strong><br>
+            <b style="color:#388e3c">Confirm</b> — report is valid, listing stays blocked (Moderation).<br>
+            <b style="color:#c62828">Dismiss</b> — report is invalid, listing restored to Active.<br>
+            <b style="color:#555">Approve listing</b> — listing passes moderation, report marked Resolved.
+        </div>
+    </main>
+</div>
+
+<div class="admin-toast" id="toast"></div>
+
+@section Scripts {
+<script>
+    const afToken = document.getElementById('afToken')?.value ?? '';
+
+    async function resolveReport(id, action, btn) {
+        btn.disabled = true;
+        const res = await fetch(`/Admin/ResolveReport?id=${id}&action=${action}`, {
+            method: 'POST', headers: { 'RequestVerificationToken': afToken }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            const row = document.getElementById('rrow-' + id);
+            row.style.opacity = '0.4';
+            showToast('Report ' + data.status.toLowerCase(), 'success');
+            setTimeout(() => row.remove(), 600);
+        } else {
+            showToast('Error', 'error');
+            btn.disabled = false;
+        }
+    }
+
+    async function approveProduct(productId, reportId, btn) {
+        btn.disabled = true;
+        // Approve product
+        await fetch(`/Admin/SetProductStatus?id=${productId}&status=Active`, {
+            method: 'POST', headers: { 'RequestVerificationToken': afToken }
+        });
+        // Resolve report
+        await resolveReport(reportId, 'resolve', btn);
+        showToast('Listing approved, report resolved', 'success');
+    }
+
+    function showToast(msg, type = 'success') {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = `admin-toast ${type} show`;
+        setTimeout(() => t.className = 'admin-toast', 2500);
+    }
+</script>
+}

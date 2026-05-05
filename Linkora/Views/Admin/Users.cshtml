@@ -1,0 +1,259 @@
+@{
+    var users = (List<AdminUserRow>)ViewBag.Users;
+    var page = (int)ViewBag.Page;
+    var totalPages = (int)ViewBag.TotalPages;
+    var total = (int)ViewBag.Total;
+    var search = (string?)ViewBag.Search;
+    var role = (string)ViewBag.Role;
+    ViewData["Title"] = "Admin — Users";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin.css" />
+}
+
+<div class="admin-layout">
+    @await Html.PartialAsync("Sidebar", "users")
+
+    <main class="admin-main">
+        <h1 class="admin-page-title">
+            Users
+            <span class="admin-page-subtitle">@total total</span>
+        </h1>
+
+        <div class="admin-toolbar">
+            <form method="get" action="/Admin/Users" style="display:flex;gap:8px;flex:1;max-width:340px">
+                <input type="hidden" name="role" value="@role" />
+                <div class="admin-search-wrap" style="max-width:100%;flex:1">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input class="admin-search-input" name="search" value="@search"
+                           placeholder="Name or email..." />
+                </div>
+                <button type="submit" class="admin-btn admin-btn-primary">Search</button>
+                @if (search != null)
+                {
+                    <a href="/Admin/Users?role=@role" class="admin-btn admin-btn-view">✕</a>
+                }
+            </form>
+
+            <div class="admin-status-tabs">
+                @foreach (var (r, label) in new[] { ("all","All"), ("user","Users"), ("admin","Admins"), ("banned","Banned") })
+                {
+                    <a class="admin-status-tab @(role == r ? "active" : "")"
+                       href="/Admin/Users?role=@r&page=1@(search != null ? "&search=" + Uri.EscapeDataString(search) : "")">
+                        @label
+                    </a>
+                }
+            </div>
+        </div>
+
+        <div class="admin-card">
+            @if (!users.Any())
+            {
+                <div class="admin-empty">No users found</div>
+            }
+            else
+            {
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Contact</th>
+                            <th>Type</th>
+                            <th>Role</th>
+                            <th>Listings</th>
+                            <th>Joined</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var u in users)
+                        {
+                            <tr id="urow-@u.Id">
+                                <td>
+                                    <div class="admin-user-cell">
+                                        <div class="admin-user-avatar">
+                                            @if (u.AvatarPath != null)
+                                            {
+                                                <img src="@u.AvatarPath" style="width:36px;height:36px;border-radius:50%;object-fit:cover"
+                                                     onerror="this.style.display='none'" />
+                                            }
+                                            else
+                                            {
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
+                                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                                    <circle cx="12" cy="7" r="4"/>
+                                                </svg>
+                                            }
+                                        </div>
+                                        <div>
+                                            <div class="admin-user-name">
+                                                <a href="/Seller/Index/@u.Id" target="_blank"
+                                                   style="color:inherit;text-decoration:none">@u.UserName</a>
+                                            </div>
+                                            <div class="admin-user-email">#@u.Id</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="font-size:12px;color:#555">@(u.Email ?? "—")</div>
+                                    @if (u.Phone != null)
+                                    {
+                                        <div style="font-size:12px;color:#aaa">@u.Phone</div>
+                                    }
+                                </td>
+                                <td>
+                                    @if (u.IsCompany)
+                                    {
+                                        <span class="admin-badge" style="background:#e3f2fd;color:#1565c0">Company</span>
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#aaa;font-size:12px">Private</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="admin-badge admin-badge-@u.Role" id="role-badge-@u.Id">@u.Role</span>
+                                </td>
+                                <td style="font-weight:600;color:#333">@u.ProductCount</td>
+                                <td style="color:#aaa;font-size:12px;white-space:nowrap">
+                                    @(u.CreatedAt?.ToString("dd MMM yyyy") ?? "—")
+                                </td>
+                                <td>
+                                    <div class="admin-actions">
+                                        @if (u.Role != "admin")
+                                        {
+                                            <button class="admin-btn admin-btn-admin"
+                                                    onclick="setRole(@u.Id, 'admin', this)">
+                                                Make admin
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="admin-btn admin-btn-view"
+                                                    onclick="setRole(@u.Id, 'user', this)">
+                                                Revoke admin
+                                            </button>
+                                        }
+                                        @if (u.Role == "banned")
+                                        {
+                                            <button class="admin-btn admin-btn-unban"
+                                                    onclick="setRole(@u.Id, 'user', this)">
+                                                Unban
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="admin-btn admin-btn-ban"
+                                                    onclick="setRole(@u.Id, 'banned', this)">
+                                                Ban
+                                            </button>
+                                        }
+                                        <button class="admin-btn admin-btn-danger"
+                                                onclick="confirmDeleteUser(@u.Id, '@u.UserName.Replace("'","\\'")')">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                @if (totalPages > 1)
+                {
+                    <div class="admin-pagination">
+                        @if (page > 1)
+                        {
+                            <a class="admin-page-btn" href="/Admin/Users?role=@role&page=@(page-1)&search=@search">‹</a>
+                        }
+                        @for (int i = Math.Max(1, page - 2); i <= Math.Min(totalPages, page + 2); i++)
+                        {
+                            <a class="admin-page-btn @(i == page ? "active" : "")"
+                               href="/Admin/Users?role=@role&page=@i&search=@search">@i</a>
+                        }
+                        @if (page < totalPages)
+                        {
+                            <a class="admin-page-btn" href="/Admin/Users?role=@role&page=@(page+1)&search=@search">›</a>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </main>
+</div>
+
+<div class="admin-confirm-overlay" id="confirmOverlay">
+    <div class="admin-confirm-box">
+        <div class="admin-confirm-title" id="confirmTitle">Confirm action</div>
+        <div class="admin-confirm-text" id="confirmText"></div>
+        <div class="admin-confirm-actions">
+            <button class="admin-btn admin-btn-view" onclick="closeConfirm()">Cancel</button>
+            <button class="admin-btn admin-btn-danger" id="confirmOk">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<div class="admin-toast" id="toast"></div>
+
+@section Scripts {
+<script>
+    const afToken = document.getElementById('afToken')?.value ?? '';
+
+    async function setRole(id, role, btn) {
+        btn.disabled = true;
+        const res = await fetch(`/Admin/SetUserRole?id=${id}&role=${role}`, {
+            method: 'POST', headers: { 'RequestVerificationToken': afToken }
+        });
+        if (res.ok) {
+            const badge = document.getElementById('role-badge-' + id);
+            if (badge) {
+                badge.textContent = role;
+                badge.className = `admin-badge admin-badge-${role}`;
+            }
+            showToast(`Role updated to ${role}`, 'success');
+            setTimeout(() => location.reload(), 800);
+        } else {
+            showToast('Error updating role', 'error');
+        }
+        btn.disabled = false;
+    }
+
+    let pendingAction = null;
+    function confirmDeleteUser(id, name) {
+        document.getElementById('confirmTitle').textContent = 'Delete user?';
+        document.getElementById('confirmText').textContent =
+            `This will permanently delete "${name}" and all their data. Cannot be undone.`;
+        document.getElementById('confirmOk').onclick = () => doDeleteUser(id);
+        document.getElementById('confirmOverlay').classList.add('open');
+    }
+    function closeConfirm() {
+        document.getElementById('confirmOverlay').classList.remove('open');
+    }
+    async function doDeleteUser(id) {
+        closeConfirm();
+        const res = await fetch(`/Admin/DeleteUser?id=${id}`, {
+            method: 'POST', headers: { 'RequestVerificationToken': afToken }
+        });
+        if (res.ok) {
+            document.getElementById('urow-' + id)?.remove();
+            showToast('User deleted', 'success');
+        } else {
+            showToast('Error: ' + await res.text(), 'error');
+        }
+    }
+
+    function showToast(msg, type = 'success') {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = `admin-toast ${type} show`;
+        setTimeout(() => t.className = 'admin-toast', 2500);
+    }
+
+    document.getElementById('confirmOverlay').addEventListener('click', e => {
+        if (e.target === e.currentTarget) closeConfirm();
+    });
+</script>
+}

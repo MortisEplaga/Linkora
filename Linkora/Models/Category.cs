@@ -16,6 +16,7 @@ namespace Linkora.Models
         [StringLength(75)]
         public string Name { get; set; }
         public string? NameLV { get; set; }
+        public string? NameEn { get; set; }
 
         public int? Type { get; set; }
     }

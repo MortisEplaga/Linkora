@@ -11,4 +11,8 @@
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.15" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Include="wwwroot\css\admin.css" />
+	</ItemGroup>
+
 </Project>

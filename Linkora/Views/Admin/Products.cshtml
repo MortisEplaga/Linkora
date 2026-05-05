@@ -1,0 +1,251 @@
+@{
+    var products = (List<AdminProductRow>)ViewBag.Products;
+    var status = (string)ViewBag.Status;
+    var page = (int)ViewBag.Page;
+    var totalPages = (int)ViewBag.TotalPages;
+    var total = (int)ViewBag.Total;
+    var search = (string?)ViewBag.Search;
+    ViewData["Title"] = "Admin — Listings";
+
+    string TabUrl(string s) => $"/Admin/Products?status={s}&page=1{(search != null ? "&search=" + Uri.EscapeDataString(search) : "")}";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin.css" />
+}
+
+<div class="admin-layout">
+    @await Html.PartialAsync("Sidebar", "products")
+
+    <main class="admin-main">
+        <h1 class="admin-page-title">
+            Listings
+            <span class="admin-page-subtitle">@total results</span>
+        </h1>
+
+        <div class="admin-toolbar">
+            <!-- Search -->
+            <form method="get" action="/Admin/Products" style="display:flex;gap:8px;flex:1;max-width:340px">
+                <input type="hidden" name="status" value="@status" />
+                <div class="admin-search-wrap" style="max-width:100%;flex:1">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input class="admin-search-input" name="search" value="@search"
+                           placeholder="Search by name..." />
+                </div>
+                <button type="submit" class="admin-btn admin-btn-primary">Search</button>
+                @if (search != null)
+                {
+                    <a href="/Admin/Products?status=@status" class="admin-btn admin-btn-view">✕</a>
+                }
+            </form>
+
+            <!-- Status tabs -->
+            <div class="admin-status-tabs">
+                @foreach (var (s, label) in new[] {
+                    ("Moderation","Moderation"), ("Active","Active"),
+                    ("Rejected","Rejected"), ("Archived","Archived"), ("Succeeded","Succeeded")
+                })
+                {
+                    <a class="admin-status-tab @(status == s ? "active" : "")"
+                       href="@TabUrl(s)">@label</a>
+                }
+            </div>
+        </div>
+
+        <div class="admin-card">
+            @if (!products.Any())
+            {
+                <div class="admin-empty">No listings found</div>
+            }
+            else
+            {
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Listing</th>
+                            <th>Seller</th>
+                            <th>Price</th>
+                            <th>Reports</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in products)
+                        {
+                            <tr id="row-@p.Id">
+                                <td>
+                                    <div class="admin-table-product">
+                                        @if (p.ImagePath != null)
+                                        {
+                                            <img class="admin-table-img" src="@p.ImagePath"
+                                                 onerror="this.src='/img/no-photo.svg'" />
+                                        }
+                                        else
+                                        {
+                                            <div class="admin-table-img" style="display:flex;align-items:center;justify-content:center">
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
+                                                    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+                                                    <polyline points="21 15 16 10 5 21"/>
+                                                </svg>
+                                            </div>
+                                        }
+                                        <div>
+                                            <a class="admin-table-product-name"
+                                               href="/Product/Details/@p.Id" target="_blank">@p.Name</a>
+                                            <div class="admin-table-product-meta">#@p.Id</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="/Seller/Index/@p.UserId" target="_blank"
+                                       style="color:#333;text-decoration:none;font-size:13px">
+                                        @p.UserName
+                                    </a>
+                                </td>
+                                <td style="font-weight:600">
+                                    @(p.Price.HasValue ? p.Price.Value.ToString("N2") + " €" : "—")
+                                </td>
+                                <td>
+                                    @if (p.ReportCount > 0)
+                                    {
+                                        <span style="color:#c62828;font-weight:700">@p.ReportCount</span>
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#ccc">0</span>
+                                    }
+                                </td>
+                                <td style="color:#aaa;font-size:12px;white-space:nowrap">
+                                    @(p.CreatedTime?.ToString("dd MMM yyyy"))
+                                </td>
+                                <td>
+                                    <div class="admin-actions">
+                                        @if (status == "Moderation" || status == "Rejected")
+                                        {
+                                            <button class="admin-btn admin-btn-approve"
+                                                    onclick="setStatus(@p.Id, 'Active', this)">
+                                                Approve
+                                            </button>
+                                        }
+                                        @if (status == "Moderation" || status == "Active")
+                                        {
+                                            <button class="admin-btn admin-btn-reject"
+                                                    onclick="setStatus(@p.Id, 'Rejected', this)">
+                                                Reject
+                                            </button>
+                                        }
+                                        @if (status == "Archived")
+                                        {
+                                            <button class="admin-btn admin-btn-restore"
+                                                    onclick="setStatus(@p.Id, 'Active', this)">
+                                                Restore
+                                            </button>
+                                        }
+                                        <button class="admin-btn admin-btn-danger"
+                                                onclick="confirmDelete(@p.Id, '@p.Name.Replace("'","\\'")')">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <!-- Pagination -->
+                @if (totalPages > 1)
+                {
+                    <div class="admin-pagination">
+                        @if (page > 1)
+                        {
+                            <a class="admin-page-btn" href="/Admin/Products?status=@status&page=@(page-1)&search=@search">‹</a>
+                        }
+                        @for (int i = Math.Max(1, page - 2); i <= Math.Min(totalPages, page + 2); i++)
+                        {
+                            <a class="admin-page-btn @(i == page ? "active" : "")"
+                               href="/Admin/Products?status=@status&page=@i&search=@search">@i</a>
+                        }
+                        @if (page < totalPages)
+                        {
+                            <a class="admin-page-btn" href="/Admin/Products?status=@status&page=@(page+1)&search=@search">›</a>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </main>
+</div>
+
+<!-- Confirm dialog -->
+<div class="admin-confirm-overlay" id="confirmOverlay">
+    <div class="admin-confirm-box">
+        <div class="admin-confirm-title">Delete listing?</div>
+        <div class="admin-confirm-text" id="confirmText"></div>
+        <div class="admin-confirm-actions">
+            <button class="admin-btn admin-btn-view" onclick="closeConfirm()">Cancel</button>
+            <button class="admin-btn admin-btn-danger" id="confirmOk">Delete</button>
+        </div>
+    </div>
+</div>
+
+<div class="admin-toast" id="toast"></div>
+
+@section Scripts {
+<script>
+    const afToken = document.getElementById('afToken')?.value ?? '';
+
+    async function setStatus(id, status, btn) {
+        btn.disabled = true;
+        const res = await fetch(`/Admin/SetProductStatus?id=${id}&status=${status}`, {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': afToken }
+        });
+        if (res.ok) {
+            document.getElementById('row-' + id)?.remove();
+            showToast('Status updated to ' + status, 'success');
+        } else {
+            showToast('Error updating status', 'error');
+            btn.disabled = false;
+        }
+    }
+
+    let deleteId = null;
+    function confirmDelete(id, name) {
+        deleteId = id;
+        document.getElementById('confirmText').textContent =
+            `Are you sure you want to delete "${name}"? This cannot be undone.`;
+        document.getElementById('confirmOverlay').classList.add('open');
+        document.getElementById('confirmOk').onclick = doDelete;
+    }
+    function closeConfirm() {
+        document.getElementById('confirmOverlay').classList.remove('open');
+    }
+    async function doDelete() {
+        closeConfirm();
+        const res = await fetch(`/Product/Delete?id=${deleteId}`, {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': afToken }
+        });
+        if (res.ok) {
+            document.getElementById('row-' + deleteId)?.remove();
+            showToast('Listing deleted', 'success');
+        } else {
+            showToast('Error deleting listing', 'error');
+        }
+    }
+
+    function showToast(msg, type = 'success') {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = `admin-toast ${type} show`;
+        setTimeout(() => t.className = 'admin-toast', 2500);
+    }
+
+    document.getElementById('confirmOverlay').addEventListener('click', e => {
+        if (e.target === e.currentTarget) closeConfirm();
+    });
+</script>
+}

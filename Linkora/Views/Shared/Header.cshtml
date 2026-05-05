@@ -45,22 +45,43 @@
                             <div class="user-dropdown" id="userDropdown">
                                 <div class="user-dropdown-header">
                                     <div class="user-dropdown-name">@User.Identity.Name</div>
+                                    @if (User.IsInRole("admin") || User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value == "admin")
+                                    {
+                                        <a class="user-dropdown-item" href="/Admin/Index">
+                                            <img src="/img/admin.svg" alt="" class="admin-icon" />
+                                        </a>
+                                    }
+                                    <!-- Notification Bell -->
                                     <div class="notif-wrap" id="notifWrap">
-                                        <button class="login-btn notif-bell-btn" onclick="toggleNotifDropdown(event)" title="Notifications">
+                                        <button class="login-btn notif-bell-btn" onclick="toggleNotifModal(event)" title="Notifications">
                                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                                                 <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                                             </svg>
                                             <span class="notif-badge" id="notifBadge" style="display:none"></span>
                                         </button>
-                                        <div class="notif-dropdown" id="notifDropdown">
-                                            <div class="notif-header">
-                                                <span>Notifications</span>
-                                                <button class="notif-mark-all" onclick="markAllRead()">Mark all read</button>
+                                    </div>
+
+                                    <!-- Notification Modal -->
+                                    <div class="notif-overlay" id="notifOverlay" onclick="closeNotifModal()"></div>
+                                    <div class="notif-modal" id="notifModal">
+                                        <div class="notif-modal-header">
+                                            <span class="notif-modal-title">Notifications</span>
+                                            <div style="display:flex;align-items:center;gap:8px">
+                                                <button class="notif-mark-all-btn" onclick="markAllReadModal()" id="markAllBtn">
+                                                    Mark all as read
+                                                </button>
+                                                <button class="notif-modal-close" onclick="closeNotifModal()">✕</button>
                                             </div>
-                                            <div class="notif-list" id="notifList">
-                                                <div class="notif-empty">Loading...</div>
-                                            </div>
+                                        </div>
+                                        <div class="notif-tabs">
+                                            <button class="notif-tab notif-tab-active" id="tabAll" onclick="switchNotifTab('all')">All</button>
+                                            <button class="notif-tab" id="tabUnread" onclick="switchNotifTab('unread')">
+                                                Unread <span class="notif-tab-count" id="tabUnreadCount" style="display:none"></span>
+                                            </button>
+                                        </div>
+                                        <div class="notif-modal-list" id="notifModalList">
+                                            <div class="notif-modal-empty">Loading...</div>
                                         </div>
                                     </div>
                                 </div>
@@ -224,59 +245,158 @@
         </div>
 
         <script>
-                        let notifOpen = false;
+            let notifAllData = [];
+            let notifCurrentTab = 'all';
+            let notifModalOpen = false;
 
-            async function toggleNotifDropdown(e) {
+            function toggleNotifModal(e) {
                 e.stopPropagation();
-                const drop = document.getElementById('notifDropdown');
-                notifOpen = !notifOpen;
-                drop.classList.toggle('open', notifOpen);
-                if (notifOpen) await loadNotifications();
+                if (notifModalOpen) {
+                    closeNotifModal();
+                } else {
+                    openNotifModal();
+                }
             }
 
-            document.addEventListener('click', e => {
-                if (!e.target.closest('#notifWrap')) {
-                    document.getElementById('notifDropdown')?.classList.remove('open');
-                    notifOpen = false;
-                }
-            });
+            async function openNotifModal() {
+                notifModalOpen = true;
+                document.getElementById('notifOverlay').classList.add('open');
+                document.getElementById('notifModal').classList.add('open');
+                await loadAllNotifications();
+            }
 
-            async function loadNotifications() {
-                const list = document.getElementById('notifList');
+            function closeNotifModal() {
+                notifModalOpen = false;
+                document.getElementById('notifOverlay').classList.remove('open');
+                document.getElementById('notifModal').classList.remove('open');
+            }
+
+            async function loadAllNotifications() {
+                const list = document.getElementById('notifModalList');
+                list.innerHTML = '<div class="notif-modal-empty"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Loading...</div>';
                 try {
-                    const res = await fetch('/Notifications/List');
-                    const data = await res.json();
-                    if (!data.length) {
-                        list.innerHTML = '<div class="notif-empty">No notifications</div>';
-                        return;
-                    }
-                    list.innerHTML = data.map(n => `
-                        <a class="notif-item ${n.isRead ? '' : 'unread'}"
-                           href="${n.productId ? '/Product/Details/' + n.productId : '#'}"
-                           onclick="markRead(${n.id})">
-                            <img class="notif-item-avatar"
-                                 src="${n.fromUserAvatar || '/img/no-photo.svg'}"
-                                 onerror="this.src='/img/no-photo.svg'" />
-                            <div class="notif-item-body">
-                                <div class="notif-item-msg">${n.message}</div>
-                                <div class="notif-item-time">${n.createdAt}</div>
-                            </div>
-                        </a>`
-                    ).join('');
-                    updateNotifBadge(data.filter(n => !n.isRead).length);
+                    const res  = await fetch('/Notifications/List');
+                    notifAllData = await res.json();
+                    renderNotifList();
+                    updateNotifBadge(notifAllData.filter(n => !n.isRead).length);
                 } catch {
-                    list.innerHTML = '<div class="notif-empty">Failed to load</div>';
+                    list.innerHTML = '<div class="notif-modal-empty">Failed to load</div>';
                 }
             }
 
-            async function markRead(id) {
-                await fetch(`/Notifications/MarkRead?id=${id}`, { method: 'POST' });
+            function renderNotifList() {
+                const list = document.getElementById('notifModalList');
+                const unreadCount = notifAllData.filter(n => !n.isRead).length;
+
+                // Update tab unread count
+                const tabCount = document.getElementById('tabUnreadCount');
+                if (unreadCount > 0) {
+                    tabCount.textContent = unreadCount;
+                    tabCount.style.display = 'inline-block';
+                } else {
+                    tabCount.style.display = 'none';
+                }
+
+                // Mark all button visibility
+                document.getElementById('markAllBtn').style.display = unreadCount > 0 ? '' : 'none';
+
+                const data = notifCurrentTab === 'unread'
+                    ? notifAllData.filter(n => !n.isRead)
+                    : notifAllData;
+
+                if (!data.length) {
+                    list.innerHTML = `
+                        <div class="notif-modal-empty">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                            </svg>
+                            ${notifCurrentTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}
+                        </div>`;
+                    return;
+                }
+
+                list.innerHTML = data.map(n => `
+                    <div class="notif-item ${n.isRead ? '' : 'unread'}"
+                         id="notif-item-${n.id}"
+                         onclick="handleNotifClick(${n.id}, '${n.productId ? '/Product/Details/' + n.productId : ''}')">
+                        <img class="notif-item-avatar"
+                             src="${n.fromUserAvatar || '/img/no-photo.svg'}"
+                             onerror="this.src='/img/no-photo.svg'" />
+                        <div class="notif-item-body">
+                            <div class="notif-item-msg">${escapeHtml(n.message)}</div>
+                            <div class="notif-item-time">${n.createdAt}</div>
+                            ${n.productId && n.productName ? `
+                                <div class="notif-item-product">
+                                    ${n.productImage ? `<img src="${n.productImage}" onerror="this.src='/img/no-photo.svg'" />` : ''}
+                                    <span>${escapeHtml(n.productName)}</span>
+                                </div>` : ''}
+                        </div>
+                    </div>`
+                ).join('');
             }
 
-            async function markAllRead() {
+            async function handleNotifClick(id, url) {
+                // Find in data
+                const item = notifAllData.find(n => n.id === id);
+                if (!item) return;
+
+                // If unread — mark read, update badge
+                if (!item.isRead) {
+                    item.isRead = true;
+                    await fetch(`/Notifications/MarkRead?id=${id}`, { method: 'POST' });
+
+                    // Update badge immediately
+                    const unreadLeft = notifAllData.filter(n => !n.isRead).length;
+                    updateNotifBadge(unreadLeft);
+
+                    // Update item style without full re-render
+                    const el = document.getElementById('notif-item-' + id);
+                    if (el) {
+                        el.classList.remove('unread');
+
+                        // If on unread tab — fade out and remove
+                        if (notifCurrentTab === 'unread') {
+                            el.style.transition = 'opacity 0.3s, max-height 0.3s';
+                            el.style.opacity = '0';
+                            el.style.overflow = 'hidden';
+                            setTimeout(() => {
+                                el.style.maxHeight = el.offsetHeight + 'px';
+                                el.style.maxHeight = '0';
+                                el.style.padding = '0';
+                                setTimeout(() => {
+                                    renderNotifList();
+                                }, 300);
+                            }, 50);
+                        } else {
+                            // On "all" tab — just update tab count
+                            const tabCount = document.getElementById('tabUnreadCount');
+                            if (unreadLeft > 0) tabCount.textContent = unreadLeft;
+                            else tabCount.style.display = 'none';
+                            document.getElementById('markAllBtn').style.display = unreadLeft > 0 ? '' : 'none';
+                        }
+                    }
+                }
+
+                // Navigate if url
+                if (url) {
+                    closeNotifModal();
+                    window.location.href = url;
+                }
+            }
+
+            function switchNotifTab(tab) {
+                notifCurrentTab = tab;
+                document.getElementById('tabAll').classList.toggle('notif-tab-active', tab === 'all');
+                document.getElementById('tabUnread').classList.toggle('notif-tab-active', tab === 'unread');
+                renderNotifList();
+            }
+
+            async function markAllReadModal() {
                 await fetch('/Notifications/MarkAllRead', { method: 'POST' });
-                document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
+                notifAllData.forEach(n => n.isRead = true);
                 updateNotifBadge(0);
+                renderNotifList();
             }
 
             function updateNotifBadge(count) {
@@ -285,6 +405,26 @@
                 badge.textContent = count;
                 badge.style.display = count > 0 ? 'flex' : 'none';
             }
+
+            function escapeHtml(str) {
+                if (!str) return '';
+                return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            }
+
+            // Close on Escape
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && notifModalOpen) closeNotifModal();
+            });
+
+            // Initial badge load
+            (async () => {
+                try {
+                    const res = await fetch('/Notifications/Count');
+                    if (!res.ok) return;
+                    const { count } = await res.json();
+                    updateNotifBadge(count);
+                } catch {}
+            })();
             // ── Settings ──
             function openSettingsModal() {
                 document.getElementById('userDropdown')?.classList.remove('open');

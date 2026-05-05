@@ -77,7 +77,7 @@ namespace Linkora.Controllers
             var all = await _categoryRepository.GetAllAsync();
             var result = all
                 .Where(c => c.Type == 1 || c.Type == null)
-                .Select(c => new { c.Id, c.ParentId, c.Name });
+                .Select(c => new { c.Id, c.ParentId, c.Name, nameEn = c.NameEn ?? c.Name });
             return Json(result);
         }
     }

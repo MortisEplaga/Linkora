@@ -16,7 +16,6 @@ namespace Linkora.Repositories
         private string GetLang() =>
     _httpContextAccessor.HttpContext?.Request.Cookies["lang"] ?? "en";
 
-        // ── Вспомогательный метод: читает одну строку → Category ──
         private Category MapRow(SqlDataReader reader)
         {
             var lang = GetLang();
@@ -37,6 +36,7 @@ namespace Linkora.Repositories
                 Id = reader.GetInt32(reader.GetOrdinal("Id")),
                 ParentId = reader.IsDBNull(reader.GetOrdinal("ParentId")) ? null : reader.GetInt32(reader.GetOrdinal("ParentId")),
                 Name = name,
+                NameEn = nameEn,
                 Type = reader.IsDBNull(reader.GetOrdinal("Type")) ? null : reader.GetInt32(reader.GetOrdinal("Type")),
             };
         }

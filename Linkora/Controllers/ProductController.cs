@@ -75,7 +75,6 @@ namespace Linkora.Controllers
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null) return NotFound();
 
-            // Не считаем просмотры самого владельца
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (userId == null || product.UserId?.ToString() != userId)
                 await _productRepository.IncrementViewCountAsync(id);
@@ -84,7 +83,6 @@ namespace Linkora.Controllers
                 ? await _productRepository.GetSimilarAsync(product.CategoryId.Value, id)
                 : new List<Product>();
 
-            // Параметры с значениями
             var paramValues = await _productRepository.GetParamValuesAsync(id);
             List<Parameter> paramDefs = new();
             if (paramValues.Count > 0 && product.CategoryId.HasValue)
@@ -104,10 +102,10 @@ namespace Linkora.Controllers
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var products = await _productRepository.GetByUserAsync(userId, tab);
-            var counts = await _productRepository.GetCountsByStatusAsync(userId); // должен быть этот вызов
+            var counts = await _productRepository.GetCountsByStatusAsync(userId); 
             ViewBag.Products = products;
             ViewBag.Tab = tab;
-            ViewBag.StatusCounts = counts; // передаём словарь
+            ViewBag.StatusCounts = counts; 
             return View();
         }
 
@@ -141,7 +139,6 @@ namespace Linkora.Controllers
             var paramValues = ParseParamsJson(paramsJson);
             bool wasArchived = existing.Status == ProductStatus.Archived;
 
-            // Если загружены новые файлы — удаляем старые и сохраняем новые
             if (photos?.Count > 0)
             {
                 await _productRepository.DeleteMediaAsync(id);
@@ -149,7 +146,6 @@ namespace Linkora.Controllers
                 await _productRepository.SaveMediaAsync(id, media);
             }
 
-            // Всегда берём первый элемент из ProductMedia как аватар
             var currentMedia = await _productRepository.GetMediaAsync(id);
             string? newAvatar = currentMedia.FirstOrDefault()?.FilePath ?? existing.AvatarImagePath;
 
@@ -189,7 +185,6 @@ namespace Linkora.Controllers
             var values = await _productRepository.GetParamValuesAsync(productId);
             return Json(values);
         }
-        // Controllers/ProductController.cs
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> CompleteDeal(int id, int otherUserId)
@@ -224,7 +219,6 @@ namespace Linkora.Controllers
         {
             if (string.IsNullOrWhiteSpace(title)) return BadRequest("Title is required");
 
-            // Проверяем суммарный размер
             var totalBytes = photos?.Sum(f => f.Length) ?? 0;
             if (totalBytes > 52_428_800)
                 return BadRequest("Total media size exceeds 50 MB");
@@ -246,7 +240,6 @@ namespace Linkora.Controllers
                 AvatarImagePath = media.FirstOrDefault()?.FilePath,
             }, paramValues);
 
-            // Синхронизируем аватар с первым элементом ProductMedia
             if (media.Count > 0)
             {
                 var firstMedia = media[0];
