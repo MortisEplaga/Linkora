@@ -216,6 +216,7 @@
                 <div class="settings-lang-pills">
                     <button class="settings-lang-pill" id="langEN" onclick="setLang('en')">EN</button>
                     <button class="settings-lang-pill" id="langLV" onclick="setLang('lv')">LV</button>
+                    <button class="settings-lang-pill" id="langRU" onclick="setLang('ru')">RU</button>
                 </div>
             </div>
         </div>
@@ -455,11 +456,12 @@
                 applyTranslations();
                 document.getElementById('langEN').classList.toggle('settings-lang-pill-active', lang === 'en');
                 document.getElementById('langLV').classList.toggle('settings-lang-pill-active', lang === 'lv');
+                document.getElementById('langRU').classList.toggle('settings-lang-pill-active', lang === 'ru');
                 // Re-apply all translations on the page
                 applyTranslations();
                 // Refresh region button label if 'All regions' is shown
                 const regionBtnLabel = document.getElementById('regionBtnLabel');
-                if (regionBtnLabel && (regionBtnLabel.textContent === 'All regions' || regionBtnLabel.textContent === 'Visi reģioni')) {
+                if (regionBtnLabel && (regionBtnLabel.textContent === 'All regions' || regionBtnLabel.textContent === 'Visi reģioni' || regionBtnLabel.textContent === 'Все регионы')) {
                     regionBtnLabel.textContent = t('all_regions');
                 }
             }
