@@ -5,7 +5,7 @@
 }
 
 <div class="myads-page">
-    <h1 class="myads-title">My subscriptions</h1>
+    <h1 class="myads-title" data-i18n="my_subscriptions">My subscriptions</h1>
 
     @if (!Model.Any())
     {
@@ -13,7 +13,7 @@
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
-            <p>You are not subscribed to anyone yet</p>
+            <p data-i18n="no_subscriptions">You are not subscribed to anyone yet</p>
         </div>
     }
     else
@@ -49,7 +49,7 @@
                         </div>
                     </a>
                     <button class="myads-action-btn myads-action-danger subs-unfollow-btn"
-                            onclick="unfollow(@seller.Id, this)">
+                            onclick="unfollow(@seller.Id, this)" data-i18n="unsubscribe_btn">
                         Unsubscribe
                     </button>
                 </div>

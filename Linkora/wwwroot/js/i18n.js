@@ -194,6 +194,17 @@ const TRANSLATIONS = {
         'go_to_cart': 'Go to cart',
         'compare_btn': 'Compare',
         'go_to_compare': 'Go to comparison',
+
+        'notifications': 'Notifications',
+        'notif_mark_all_read': 'Mark all as read',
+        'notif_tab_all': 'All',
+        'notif_tab_unread': 'Unread',
+        'notif_no_unread': 'No unread notifications',
+        'notif_no_notifications': 'No notifications yet',
+        'my_subscriptions': 'My subscriptions',
+        'no_subscriptions': 'You are not subscribed to anyone yet',
+        'unsubscribe_btn': 'Unsubscribe',
+        'subscribed_btn': 'Subscribed',
     },
 
     lv: {
@@ -376,6 +387,17 @@ const TRANSLATIONS = {
         'go_to_cart': 'Uz grozu',
         'compare_btn': 'Salīdzināt',
         'go_to_compare': 'Uz salīdzinājumu',
+
+        'notifications': 'Paziņojumi',
+        'notif_mark_all_read': 'Atzīmēt visus kā lasītus',
+        'notif_tab_all': 'Visi',
+        'notif_tab_unread': 'Nelasīti',
+        'notif_no_unread': 'Nav nelasītu paziņojumu',
+        'notif_no_notifications': 'Paziņojumu vēl nav',
+        'my_subscriptions': 'Manas abonēšanas',
+        'no_subscriptions': 'Jūs vēl neesat abonējis nevienu',
+        'unsubscribe_btn': 'Atrakstīties',
+        'subscribed_btn': 'Abonēts',
     },
 
     ru: {
@@ -558,6 +580,17 @@ const TRANSLATIONS = {
         'go_to_cart': 'В корзину',
         'compare_btn': 'Сравнить',
         'go_to_compare': 'Перейти к сравнению',
+
+        'notifications': 'Уведомления',
+        'notif_mark_all_read': 'Отметить все как прочитанные',
+        'notif_tab_all': 'Все',
+        'notif_tab_unread': 'Непрочитанные',
+        'notif_no_unread': 'Нет непрочитанных уведомлений',
+        'notif_no_notifications': 'Уведомлений пока нет',
+        'my_subscriptions': 'Мои подписки',
+        'no_subscriptions': 'Вы ни на кого не подписаны',
+        'unsubscribe_btn': 'Отписаться',
+        'subscribed_btn': 'Подписан',
     }
 };
 

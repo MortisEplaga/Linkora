@@ -66,9 +66,9 @@
                                     <div class="notif-overlay" id="notifOverlay" onclick="closeNotifModal()"></div>
                                     <div class="notif-modal" id="notifModal">
                                         <div class="notif-modal-header">
-                                            <span class="notif-modal-title">Notifications</span>
+                                            <span class="notif-modal-title" data-i18n="notifications">Notifications</span>
                                             <div style="display:flex;align-items:center;gap:8px">
-                                                <button class="notif-mark-all-btn" onclick="markAllReadModal()" id="markAllBtn">
+                                                <button class="notif-mark-all-btn" onclick="markAllReadModal()" id="markAllBtn" data-i18n="notif_mark_all_read">
                                                     Mark all as read
                                                 </button>
                                                 <button class="notif-modal-close" onclick="closeNotifModal()">✕</button>
@@ -76,7 +76,7 @@
                                         </div>
                                         <div class="notif-tabs">
                                             <button class="notif-tab notif-tab-active" id="tabAll" onclick="switchNotifTab('all')">All</button>
-                                            <button class="notif-tab" id="tabUnread" onclick="switchNotifTab('unread')">
+                                            <button class="notif-tab" id="tabUnread" onclick="switchNotifTab('unread')" data-i18n="notif_no_unread">
                                                 Unread <span class="notif-tab-count" id="tabUnreadCount" style="display:none"></span>
                                             </button>
                                         </div>
@@ -106,7 +106,7 @@
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                                     </svg>
-                                    <span>My subscriptions</span>
+                                    <span data-i18n="my_subscriptions">My subscriptions</span>
                                 </a>
                                 <a class="user-dropdown-item" onclick="openMyReviewsModal()" style="cursor:pointer">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

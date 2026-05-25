@@ -292,7 +292,7 @@
 
         btn.classList.toggle('subscribed', subscribed);
         iconEl.textContent  = subscribed ? '♥' : '♡';
-        labelEl.textContent = subscribed ? 'Subscribed' : 'Subscribe';
+        labelEl.textContent = subscribed ? t('subscribed_btn') : t('subscribe_btn');
 
         if (count > 0) {
             countEl.textContent = count;

@@ -153,7 +153,7 @@ namespace Linkora.Repositories
                 if (p.Type == 2 || p.Type == 4) // selection / multi → SelectOptions
                 {
                     await using var cmdO = new SqlCommand(
-                        "SELECT Value, ValueLV FROM SelectOptions WHERE CategoryId = @Id", conn);
+                        "SELECT Value, ValueLV, ValueRU FROM SelectOptions WHERE CategoryId = @Id", conn);
                     cmdO.Parameters.AddWithValue("@Id", p.Id);
                     await using var ro = await cmdO.ExecuteReaderAsync();
                     while (await ro.ReadAsync())
@@ -208,7 +208,7 @@ namespace Linkora.Repositories
                 if (p.Type == 2 || p.Type == 4) // selection / multi → SelectOptions
                 {
                     await using var cmdO = new SqlCommand(
-                        "SELECT Value, ValueLV FROM SelectOptions WHERE CategoryId = @Id", conn);
+                        "SELECT Value, ValueLV, ValueRU FROM SelectOptions WHERE CategoryId = @Id", conn);
                     cmdO.Parameters.AddWithValue("@Id", p.Id);
                     await using var ro = await cmdO.ExecuteReaderAsync();
                     while (await ro.ReadAsync())
