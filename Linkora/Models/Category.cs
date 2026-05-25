@@ -17,6 +17,7 @@ namespace Linkora.Models
         public string Name { get; set; }
         public string? NameLV { get; set; }
         public string? NameEn { get; set; }
+        public string? NameRu { get; set; }
 
         public int? Type { get; set; }
     }
