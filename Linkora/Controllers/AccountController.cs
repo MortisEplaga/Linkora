@@ -1,5 +1,6 @@
 ﻿using Linkora.Models;
 using Linkora.Repositories;
+using Linkora.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -11,10 +12,12 @@ namespace Linkora.Controllers
     public class AccountController : Controller
     {
         private readonly IUserRepository _userRepository;
+        private readonly IEmailService _emailService;
 
-        public AccountController(IUserRepository userRepository)
+        public AccountController(IUserRepository userRepository, IEmailService emailService)
         {
             _userRepository = userRepository;
+            _emailService = emailService;
         }
 
         // ── Login ──
@@ -28,9 +31,17 @@ namespace Linkora.Controllers
         public async Task<IActionResult> Login(string username, string password, string? returnUrl = null)
         {
             var user = await _userRepository.GetByUsernameAsync(username);
+
             if (user == null || user.PasswordHash != Hash(password))
             {
                 ViewBag.Error = "Invalid username or password";
+                ViewBag.ReturnUrl = returnUrl;
+                return View();
+            }
+
+            if (!user.EmailConfirmed)
+            {
+                ViewBag.Error = "Please confirm your email address before signing in. Check your inbox.";
                 ViewBag.ReturnUrl = returnUrl;
                 return View();
             }
@@ -43,55 +54,130 @@ namespace Linkora.Controllers
         public IActionResult Register() => View();
 
         [HttpPost]
-        public async Task<IActionResult> Register(string username, string email, string password, string confirm)
+        public async Task<IActionResult> Register(
+            string username,
+            string email,
+            string password,
+            string confirm,
+            bool isCompany = false)
         {
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                ViewBag.Error = "Username is required";
+                return View();
+            }
+
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                ViewBag.Error = "Email is required";
+                return View();
+            }
+
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                ViewBag.Error = "Password is required";
+                return View();
+            }
+
             if (password != confirm)
             {
                 ViewBag.Error = "Passwords do not match";
                 return View();
             }
 
-            var existing = await _userRepository.GetByUsernameAsync(username);
-            if (existing != null)
+            if (password.Length < 8 ||
+                !password.Any(char.IsUpper) ||
+                !password.Any(char.IsLower) ||
+                !password.Any(char.IsDigit))
+            {
+                ViewBag.Error = "Password must be at least 8 characters and contain uppercase, lowercase and a digit";
+                return View();
+            }
+
+            if (await _userRepository.GetByUsernameAsync(username) != null)
             {
                 ViewBag.Error = "Username already taken";
                 return View();
             }
 
-            var user = new User { UserName = username, Email = email };
-            var id = await _userRepository.CreateAsync(user, Hash(password));
-            user.Id = id;
-
-            await SignInAsync(user);
-            return RedirectToAction("Index", "Home");
-        }
-
-        // ── Google OAuth: Step 1 — redirect to Google ──
-        // Called when user clicks the Google button
-        public IActionResult GoogleLogin(string? returnUrl = null)
-        {
-            // After Google authenticates, middleware will handle /Account/GoogleCallback
-            // and then redirect here to /Account/GoogleSignedIn
-            var redirectUrl = Url.Action("GoogleSignedIn", "Account", new { returnUrl });
-
-            var properties = new AuthenticationProperties
+            if (await _userRepository.GetByEmailAsync(email) != null)
             {
-                RedirectUri = redirectUrl
+                ViewBag.Error = "Email already registered";
+                return View();
+            }
+
+            var token = Guid.NewGuid().ToString("N");
+
+            var user = new User
+            {
+                UserName = username,
+                Email = email,
+                IsCompany = isCompany,
+                ConfirmationToken = token,
             };
 
-            // Challenge triggers the Google OAuth flow.
-            // The middleware will catch /Account/GoogleCallback automatically.
+            await _userRepository.CreateAsync(user, Hash(password));
+
+            var confirmUrl = Url.Action("ConfirmEmail", "Account", new { token }, Request.Scheme)!;
+
+            try
+            {
+                await _emailService.SendConfirmationEmailAsync(email, username, confirmUrl);
+            }
+            catch
+            {
+                // User is created — show success anyway; they can request a new link later
+            }
+
+            return RedirectToAction(nameof(RegisterConfirmation), new { email });
+        }
+
+        // ── Registration confirmation pending page ──
+        public IActionResult RegisterConfirmation(string email)
+        {
+            ViewBag.Email = email;
+            return View();
+        }
+
+        // ── Email confirmation link ──
+        public async Task<IActionResult> ConfirmEmail(string token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+                return RedirectToAction(nameof(ConfirmEmailResult), new { success = false });
+
+            var user = await _userRepository.GetByConfirmationTokenAsync(token);
+
+            if (user == null)
+                return RedirectToAction(nameof(ConfirmEmailResult), new { success = false });
+
+            await _userRepository.ConfirmEmailAsync(token);
+
+            // Refresh user object and sign in automatically
+            var confirmed = await _userRepository.GetByIdAsync(user.Id);
+            if (confirmed != null)
+                await SignInAsync(confirmed);
+
+            return RedirectToAction(nameof(ConfirmEmailResult), new { success = true });
+        }
+
+        public IActionResult ConfirmEmailResult(bool success)
+        {
+            ViewBag.Success = success;
+            return View();
+        }
+
+        // ── Google OAuth ──
+        public IActionResult GoogleLogin(string? returnUrl = null)
+        {
+            var redirectUrl = Url.Action("GoogleSignedIn", "Account", new { returnUrl });
+            var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
             return Challenge(properties, "Google");
         }
 
-        // ── Google OAuth: Step 2 — after middleware validated the callback ──
-        // At this point HttpContext.User already contains Google claims
         public async Task<IActionResult> GoogleSignedIn(string? returnUrl = null)
         {
-            // Read the Google identity that middleware already validated
             var result = await HttpContext.AuthenticateAsync("Cookies");
 
-            // If somehow not authenticated, fall back to login
             if (!result.Succeeded || result.Principal == null)
                 return RedirectToAction("Login");
 
@@ -104,7 +190,6 @@ namespace Linkora.Controllers
             if (string.IsNullOrEmpty(email))
                 return RedirectToAction("Login");
 
-            // Find or create user in our DB
             var user = await _userRepository.GetByEmailAsync(email);
 
             if (user == null)
@@ -117,6 +202,7 @@ namespace Linkora.Controllers
                     UserName = username,
                     Email = email,
                     AvatarImagePath = avatarUrl,
+                    EmailConfirmed = true, // Google already verified the email
                 };
 
                 var id = await _userRepository.CreateGoogleUserAsync(user);
@@ -128,7 +214,6 @@ namespace Linkora.Controllers
                 user.AvatarImagePath = avatarUrl;
             }
 
-            // Re-issue our own cookie with full user info
             await HttpContext.SignOutAsync("Cookies");
             await SignInAsync(user);
 
@@ -167,7 +252,7 @@ namespace Linkora.Controllers
 
         private static string SanitizeUsername(string raw)
         {
-            var sb = new System.Text.StringBuilder();
+            var sb = new StringBuilder();
             foreach (var ch in raw)
             {
                 if (char.IsLetterOrDigit(ch)) sb.Append(ch);

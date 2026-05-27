@@ -1,0 +1,33 @@
+﻿@{
+    var success = (bool)ViewBag.Success;
+    ViewData["Title"] = success ? "Email confirmed" : "Invalid link";
+}
+
+<div class="auth-page">
+    <div class="auth-card" style="text-align:center">
+        @if (success)
+        {
+            <div style="font-size:48px;margin-bottom:16px">✅</div>
+            <h2 class="auth-title" style="text-align:center">Email confirmed!</h2>
+            <p style="color:#555;font-size:15px;line-height:1.6;margin-bottom:24px">
+                Your account is ready. You are now signed in.
+            </p>
+            <a asp-controller="Home" asp-action="Index" class="auth-submit"
+               style="display:inline-block;text-decoration:none;padding:12px 32px">
+                Go to home page
+            </a>
+        }
+        else
+        {
+            <div style="font-size:48px;margin-bottom:16px">❌</div>
+            <h2 class="auth-title" style="text-align:center">Invalid or expired link</h2>
+            <p style="color:#555;font-size:15px;line-height:1.6;margin-bottom:24px">
+                The confirmation link is invalid or has already been used.
+            </p>
+            <a asp-controller="Account" asp-action="Register"
+               style="color:#00b0a3;font-size:14px;text-decoration:none;font-weight:600">
+                Register again
+            </a>
+        }
+    </div>
+</div>

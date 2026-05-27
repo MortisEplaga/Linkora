@@ -13,5 +13,7 @@ namespace Linkora.Repositories
         Task<int> CreateGoogleUserAsync(User user);
         Task UpdateAvatarAsync(int userId, string avatarPath);
         Task<string> EnsureUniqueUsernameAsync(string baseUsername);
+        Task<User?> GetByConfirmationTokenAsync(string token);
+        Task ConfirmEmailAsync(string token);
     }
 }

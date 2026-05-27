@@ -15,81 +15,100 @@
         }
 
         <div class="auth-socials">
-            <button class="auth-social" title="Google">G</button>
-            <button class="auth-social" title="Apple">🍎</button>
-            <button class="auth-social" title="VK">VK</button>
+            <a class="auth-social auth-social-google"
+               href="/Account/GoogleLogin"
+               title="Sign up with Google">
+                <svg width="18" height="18" viewBox="0 0 48 48">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+                    <path fill="none" d="M0 0h48v48H0z" />
+                </svg>
+            </a>
         </div>
         <div class="auth-divider"><span>or</span></div>
 
-        <div class="auth-type-row">
-            <label class="auth-type-option">
-                <input type="radio" name="accType" value="private" checked onchange="setType(this)" />
-                <span class="auth-type-circle"></span>
-                Private
+        <form method="post" asp-controller="Account" asp-action="Register">
+            <div class="auth-type-row">
+                <label class="auth-type-option">
+                    <input type="radio" name="isCompany" value="false" checked />
+                    <span class="auth-type-circle"></span>
+                    Private
+                </label>
+                <label class="auth-type-option">
+                    <input type="radio" name="isCompany" value="true" />
+                    <span class="auth-type-circle"></span>
+                    Business
+                </label>
+            </div>
+            <div class="auth-type-hint">You won't be able to change this later.</div>
+
+            <div class="auth-field">
+                <input type="text"
+                       class="auth-input"
+                       name="username"
+                       placeholder="Username"
+                       autocomplete="username"
+                       required />
+            </div>
+
+            <div class="auth-field">
+                <input type="email"
+                       class="auth-input"
+                       name="email"
+                       placeholder="Email"
+                       autocomplete="email"
+                       required />
+            </div>
+
+            <div class="auth-field auth-field-password">
+                <input type="password"
+                       class="auth-input"
+                       name="password"
+                       id="regPwd"
+                       placeholder="Password"
+                       autocomplete="new-password"
+                       oninput="checkStrength(this)"
+                       minlength="8"
+                       required />
+                <button type="button" class="auth-eye" onclick="togglePass('regPwd', this)">👁</button>
+            </div>
+
+            <ul class="auth-rules" id="passRules">
+                <li id="rule-len">At least 8 characters</li>
+                <li id="rule-upper">Uppercase letter</li>
+                <li id="rule-lower">Lowercase letter</li>
+                <li id="rule-digit">Digit</li>
+            </ul>
+
+            <div class="auth-field auth-field-password">
+                <input type="password"
+                       class="auth-input"
+                       name="confirm"
+                       id="regConfirm"
+                       placeholder="Confirm password"
+                       autocomplete="new-password"
+                       required />
+                <button type="button" class="auth-eye" onclick="togglePass('regConfirm', this)">👁</button>
+            </div>
+
+            <label class="auth-check-row">
+                <input type="checkbox" id="chkTerms" required />
+                <span>I accept the <a href="#" onclick="openTermsModal(); return false;">Terms of Service</a></span>
             </label>
-            <label class="auth-type-option">
-                <input type="radio" name="accType" value="business" onchange="setType(this)" />
-                <span class="auth-type-circle"></span>
-                Business
-            </label>
-        </div>
-        <div class="auth-type-hint">You won't be able to change this later.</div>
 
-        <div class="auth-field">
-            <input type="text" class="auth-input" id="username" placeholder="Username" />
-        </div>
-        <div class="auth-field">
-            <input type="email" class="auth-input" id="email" placeholder="Email" />
-        </div>
-        <div class="auth-field auth-field-password">
-            <input type="password" class="auth-input" id="password" placeholder="Password"
-                   oninput="checkStrength(this)" />
-            <button type="button" class="auth-eye" onclick="togglePass('password',this)">👁</button>
-        </div>
-        <ul class="auth-rules" id="passRules">
-            <li id="rule-len">At least 8 characters</li>
-            <li id="rule-upper">Uppercase letter</li>
-            <li id="rule-lower">Lowercase letter</li>
-            <li id="rule-digit">Digit</li>
-        </ul>
-        <div class="auth-field auth-field-password">
-            <input type="password" class="auth-input" id="confirm" placeholder="Confirm password" />
-            <button type="button" class="auth-eye" onclick="togglePass('confirm',this)">👁</button>
-        </div>
+            <button type="submit" class="auth-submit">Register</button>
+        </form>
 
-        <label class="auth-check-row">
-            <input type="checkbox" id="chkNewsletter" />
-            <span>I agree to receive newsletters and promotions</span>
-        </label>
-        <label class="auth-check-row">
-            <input type="checkbox" id="chkTerms" />
-            <span>I accept the <a href="#">Terms of Service</a></span>
-        </label>
-
-        <button class="auth-submit" id="submitBtn" onclick="submitRegister()">Register</button>
+        <div class="auth-footer">
+            Already have an account?
+            <a asp-controller="Account" asp-action="Login">Sign in</a>
+        </div>
     </div>
 </div>
 
-<form id="registerForm" method="post" asp-controller="Account" asp-action="Register" style="display:none">
-    <input type="hidden" name="username" id="fUsername" />
-    <input type="hidden" name="email" id="fEmail" />
-    <input type="hidden" name="password" id="fPassword" />
-    <input type="hidden" name="confirm" id="fConfirm" />
-</form>
-
 <script>
-    function submitRegister() {
-        if (!document.getElementById('chkTerms').checked) {
-            alert('Please accept the Terms of Service');
-            return;
-        }
-        document.getElementById('fUsername').value = document.getElementById('username').value;
-        document.getElementById('fEmail').value    = document.getElementById('email').value;
-        document.getElementById('fPassword').value = document.getElementById('password').value;
-        document.getElementById('fConfirm').value  = document.getElementById('confirm').value;
-        document.getElementById('registerForm').submit();
-    }
-
     function togglePass(id, btn) {
         const input = document.getElementById(id);
         input.type = input.type === 'password' ? 'text' : 'password';
@@ -98,16 +117,13 @@
 
     function checkStrength(input) {
         const v = input.value;
-        setRule('rule-len',   v.length >= 8);
-        setRule('rule-upper', /[A-Z]/.test(v));
-        setRule('rule-lower', /[a-z]/.test(v));
-        setRule('rule-digit', /[0-9]/.test(v));
+        toggle('rule-len',   v.length >= 8);
+        toggle('rule-upper', /[A-Z]/.test(v));
+        toggle('rule-lower', /[a-z]/.test(v));
+        toggle('rule-digit', /[0-9]/.test(v));
     }
 
-    function setRule(id, ok) {
-        const el = document.getElementById(id);
-        el.classList.toggle('auth-rule-ok', ok);
+    function toggle(id, ok) {
+        document.getElementById(id)?.classList.toggle('auth-rule-ok', ok);
     }
-
-    function setType(input) { /* можно расширить */ }
 </script>

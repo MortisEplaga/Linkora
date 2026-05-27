@@ -21,6 +21,7 @@ namespace Linkora.Repositories
             Role = r.IsDBNull(r.GetOrdinal("Role")) ? null : r.GetString(r.GetOrdinal("Role")),
             PasswordHash = r.IsDBNull(r.GetOrdinal("PasswordHash")) ? null : r.GetString(r.GetOrdinal("PasswordHash")),
             AvatarImagePath = r.IsDBNull(r.GetOrdinal("AvatarImagePath")) ? null : r.GetString(r.GetOrdinal("AvatarImagePath")),
+            EmailConfirmed = !r.IsDBNull(r.GetOrdinal("EmailConfirmed")) && r.GetBoolean(r.GetOrdinal("EmailConfirmed")),
         };
 
         // ── Existing methods ──
@@ -30,7 +31,7 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(
-                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath FROM Users WHERE UserName = @U", conn);
+                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed FROM Users WHERE UserName = @U", conn);
             cmd.Parameters.AddWithValue("@U", username);
             await using var r = await cmd.ExecuteReaderAsync();
             return await r.ReadAsync() ? MapRow(r) : null;
@@ -41,7 +42,7 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(
-                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath FROM Users WHERE Id = @Id", conn);
+                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed FROM Users WHERE Id = @Id", conn);
             cmd.Parameters.AddWithValue("@Id", id);
             await using var r = await cmd.ExecuteReaderAsync();
             return await r.ReadAsync() ? MapRow(r) : null;
@@ -52,13 +53,14 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(@"
-                INSERT INTO Users (UserName, Email, PhoneNumber, Role, PasswordHash)
-                OUTPUT INSERTED.Id
-                VALUES (@U, @E, @P, 'user', @H)", conn);
+        INSERT INTO Users (UserName, Email, PhoneNumber, Role, PasswordHash, IsCompany)
+        OUTPUT INSERTED.Id
+        VALUES (@U, @E, @P, 'user', @H, @IC)", conn);
             cmd.Parameters.AddWithValue("@U", user.UserName);
             cmd.Parameters.AddWithValue("@E", (object?)user.Email ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@P", (object?)user.PhoneNumber ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@H", passwordHash);
+            cmd.Parameters.AddWithValue("@IC", user.IsCompany);
             return (int)(await cmd.ExecuteScalarAsync())!;
         }
 
@@ -123,6 +125,26 @@ namespace Linkora.Repositories
                 if (count == 0) return candidate;
                 candidate = $"{baseUsername}_{suffix++}";
             }
+        }
+        public async Task<User?> GetByConfirmationTokenAsync(string token)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(
+                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed FROM Users WHERE ConfirmationToken = @T", conn);
+            cmd.Parameters.AddWithValue("@T", token);
+            await using var r = await cmd.ExecuteReaderAsync();
+            return await r.ReadAsync() ? MapRow(r) : null;
+        }
+
+        public async Task ConfirmEmailAsync(string token)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(
+                "UPDATE Users SET EmailConfirmed = 1, ConfirmationToken = NULL WHERE ConfirmationToken = @T", conn);
+            cmd.Parameters.AddWithValue("@T", token);
+            await cmd.ExecuteNonQueryAsync();
         }
     }
 }

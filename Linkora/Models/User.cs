@@ -30,6 +30,10 @@ namespace Linkora.Models
         public string AvatarImagePath { get; set; }
         public string? PasswordHash { get; set; }
         public bool IsCompany { get; set; }
+        public bool EmailConfirmed { get; set; }
+
+        [StringLength(100)]
+        public string? ConfirmationToken { get; set; }
 
     }
 }

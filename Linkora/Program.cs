@@ -1,5 +1,7 @@
 using Linkora.Repositories;
+using Linkora.Services;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +17,9 @@ builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IReportRepository, ReportRepository>();
 builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+
+// Email confirmation
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
 builder.Services.Configure<FormOptions>(o =>
 {
@@ -41,19 +46,20 @@ builder.Services.AddAuthentication("Cookies")
     {
         options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
         options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
-
-        // Must match the redirect URI registered in Google Cloud Console
         options.CallbackPath = "/Account/GoogleCallback";
-
         options.Scope.Add("email");
         options.Scope.Add("profile");
-
-        // SignInScheme tells Google middleware to use our Cookies scheme after validation
         options.SignInScheme = "Cookies";
     });
 
 var app = builder.Build();
 
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor |
+                       ForwardedHeaders.XForwardedProto |
+                       ForwardedHeaders.XForwardedHost
+});
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");

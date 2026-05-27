@@ -10,6 +10,7 @@
 		<PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.3.10" />
 		<PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.15" />
+		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.23" />
 	</ItemGroup>
 
 	<ItemGroup>
