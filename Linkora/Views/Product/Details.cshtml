@@ -80,7 +80,8 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
                     <span data-i18n="write_btn">Write</span>
                 </button>
-                <button class="details-btn details-btn-secondary" onclick="checkAuthAndTogglePhone(this)" data-phone="@p.Seller?.PhoneNumber">
+                <button class="details-btn details-btn-secondary" id="phoneBtn"
+                        onclick="handlePhoneClick(this)" data-phone="@p.Seller?.PhoneNumber">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.1a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.45h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.1a16 16 0 0 0 6 6l1.27-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 17.92z" /></svg>
                     <span data-i18n="call_btn">Call</span>
                 </button>
@@ -301,8 +302,21 @@
         <button class="details-btn details-btn-secondary" onclick="closeMessageModal()" data-i18n="cancel_btn">Cancel</button>
         <button class="details-btn details-btn-primary" onclick="sendMessageToSeller()" data-i18n="send_btn">Send</button>
     </div>
-</div>
 
+</div>
+<div class="modal-overlay" id="captchaOverlay" onclick="closeCaptchaModal()"></div>
+<div class="modal" id="captchaModal" style="max-width:360px">
+    <button class="modal-close" onclick="closeCaptchaModal()">✕</button>
+    <h2 class="auth-title">Verify you're human</h2>
+    <p style="font-size:14px;color:#555;margin-bottom:16px">
+        Complete the verification to see the phone number.
+    </p>
+    <div id="recaptchaWidget"></div>
+    <div id="captchaError" style="display:none;font-size:13px;color:#cc0000;margin:8px 0">
+        Verification failed. Try again.
+    </div>
+    <button class="auth-submit" style="margin-top:16px" onclick="verifyCaptcha()">Confirm</button>
+</div>
 <div class="modal-overlay" id="reportOverlay" onclick="closeReportModal()"></div>
 <div class="modal" id="reportModal">
     <button class="modal-close" onclick="closeReportModal()">✕</button>
@@ -322,6 +336,8 @@
         <button class="auth-submit auth-submit-secondary" onclick="closeReportModal()" data-i18n="cancel_btn">Cancel</button>
     </div>
 </div>
+<script src="https://www.google.com/recaptcha/api.js?render=explicit" async defer></script>
+
 <script>
     function openMessageModal() {
         document.getElementById('msgOverlay').classList.add('open');
@@ -458,16 +474,74 @@
         }
     }
 
-    function checkAuthAndTogglePhone(btn) {
+    let pendingPhone = null;
+    let recaptchaWidgetId = null;
+
+    function handlePhoneClick(btn) {
+        const phone = btn.dataset.phone;
+        console.log('phone:', phone, 'auth:', isUserAuthenticated);
+
         if (isUserAuthenticated) {
-            togglePhone(btn);            
+            togglePhone(btn);
+            return;
+        }
+
+        if (btn.classList.contains('shown')) return;
+
+        pendingPhone = phone || null;
+        openCaptchaModal();
+    }
+
+    function openCaptchaModal() {
+        document.getElementById('captchaError').style.display = 'none';
+        document.getElementById('captchaOverlay').classList.add('modal-open');
+        document.getElementById('captchaModal').classList.add('modal-open');
+
+        if (recaptchaWidgetId === null) {
+            recaptchaWidgetId = grecaptcha.render('recaptchaWidget', {
+            sitekey: '@ViewBag.RecaptchaSiteKey'            });
         } else {
-            if (typeof openAuthModal === 'function') {
-                openAuthModal('login');
-            }
+            grecaptcha.reset(recaptchaWidgetId);
         }
     }
 
+    function closeCaptchaModal() {
+        document.getElementById('captchaOverlay').classList.remove('modal-open');
+        document.getElementById('captchaModal').classList.remove('modal-open');
+    }
+
+    async function verifyCaptcha() {
+        const token = grecaptcha.getResponse(recaptchaWidgetId);
+        if (!token) {
+            document.getElementById('captchaError').style.display = 'block';
+            document.getElementById('captchaError').textContent = 'Please complete the captcha.';
+            return;
+        }
+
+        const res = await fetch('/Product/VerifyRecaptcha', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token })
+        });
+        const data = await res.json();
+
+        if (!data.success) {
+            document.getElementById('captchaError').style.display = 'block';
+            document.getElementById('captchaError').textContent = 'Verification failed. Try again.';
+            grecaptcha.reset(recaptchaWidgetId);
+            return;
+        }
+
+        closeCaptchaModal();
+
+        const btn = document.getElementById('phoneBtn');
+        if (btn && pendingPhone) {
+            btn.textContent = pendingPhone;
+            btn.classList.add('shown');
+        }
+        pendingPhone = null;
+    }
+    
     function checkAuthAndOpenSellerModal(userName, avatarPath, phoneNumber, isCompany, email, createdAt, sellerId) {
         if (isUserAuthenticated) {
             openSellerModal(userName, avatarPath, phoneNumber, isCompany, email, createdAt, sellerId);

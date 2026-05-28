@@ -31,7 +31,22 @@ namespace Linkora.Controllers
                     result[pid] = v;
             return result;
         }
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> VerifyRecaptcha([FromBody] RecaptchaDto dto)
+        {
+            var secret = _configuration["Recaptcha:SecretKey"]!;
+            using var http = new HttpClient();
+            var resp = await http.PostAsync(
+                $"https://www.google.com/recaptcha/api/siteverify?secret={secret}&response={dto.Token}",
+                null);
+            var json = await resp.Content.ReadAsStringAsync();
+            var result = System.Text.Json.JsonDocument.Parse(json);
+            var success = result.RootElement.GetProperty("success").GetBoolean();
+            return Ok(new { success });
+        }
 
+        public class RecaptchaDto { public string Token { get; set; } = ""; }
         [HttpGet]
         public async Task<IActionResult> Cities()
         {
@@ -95,6 +110,7 @@ namespace Linkora.Controllers
             ViewBag.Similar = similar;
             ViewBag.ParamValues = paramValues;
             ViewBag.ParamDefs = paramDefs;
+            ViewBag.RecaptchaSiteKey = _configuration["Recaptcha:SiteKey"];
             return View();
         }
         [Authorize]
