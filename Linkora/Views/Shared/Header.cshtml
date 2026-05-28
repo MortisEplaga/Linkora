@@ -177,10 +177,18 @@
                 </div>
             </form>
 
-            <a asp-controller="Product" asp-action="Create" class="header-post-btn">
-                <span data-i18n="post_ad_btn">+ Post an ad</span>
-            </a>
-
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a asp-controller="Product" asp-action="Create" class="header-post-btn">
+                    <span data-i18n="post_ad_btn">+ Post an ad</span>
+                </a>
+            }
+            else
+            {
+                <button type="button" class="header-post-btn" onclick="openAuthModal('login')">
+                    <span data-i18n="post_ad_btn">+ Post an ad</span>
+                </button>
+            }
         </div>
     </div>
 

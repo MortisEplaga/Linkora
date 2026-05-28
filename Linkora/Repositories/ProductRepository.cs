@@ -124,6 +124,7 @@ namespace Linkora.Repositories
                 LEFT JOIN Users u ON u.Id = p.UserId
                 {priceJoin}
                 WHERE p.CategoryId IN ({ids})
+                AND (p.Status = 'active' OR p.Status IS NULL)
                 {extraWhere}
                 ORDER BY {order}", conn);
 

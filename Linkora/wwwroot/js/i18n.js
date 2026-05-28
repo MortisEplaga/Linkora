@@ -15,6 +15,8 @@
 
 const TRANSLATIONS = {
     en: {
+        'btn_close': 'Close',
+
         // ── Header ──
         'all_categories': 'All categories',
         'search_btn': 'Search',
@@ -208,6 +210,8 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'btn_close': 'Aizvērt',
+
         // ── Header ──
         'all_categories': 'Visas kategorijas',
         'search_btn': 'Meklēt',
@@ -401,6 +405,8 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'btn_close': 'Закрыть',
+
         // ── Header ──
         'all_categories': 'Все категории',
         'search_btn': 'Поиск',

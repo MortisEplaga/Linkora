@@ -1,5 +1,6 @@
-﻿using System.Net;
-using System.Net.Mail;
+﻿using MimeKit;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 
 namespace Linkora.Services
 {
@@ -22,11 +23,11 @@ namespace Linkora.Services
         public async Task SendConfirmationEmailAsync(string toEmail, string username, string confirmUrl)
         {
             var section = _configuration.GetSection("Email");
-            var host = section["SmtpHost"]!;
-            var port = int.Parse(section["SmtpPort"]!);
-            var user = section["SmtpUser"]!;
-            var password = section["SmtpPassword"]!;
-            var fromName = section["FromName"] ?? "Linkora";
+            var host = section["SmtpHost"] ?? throw new InvalidOperationException("SmtpHost is not configured");
+            var port = int.Parse(section["SmtpPort"] ?? throw new InvalidOperationException("SmtpPort is not configured"));
+            var user = section["SmtpUser"] ?? throw new InvalidOperationException("SmtpUser is not configured");
+            var password = section["SmtpPassword"] ?? throw new InvalidOperationException("SmtpPassword is not configured");
+            var fromName = section["FromName"] ?? "noreply";
             var enableSsl = bool.Parse(section["EnableSsl"] ?? "true");
 
             var body = $@"
@@ -64,24 +65,29 @@ namespace Linkora.Services
 </body>
 </html>";
 
-            using var client = new SmtpClient(host, port)
-            {
-                EnableSsl = enableSsl,
-                Credentials = new NetworkCredential(user, password),
-            };
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(fromName, user));
+            message.To.Add(new MailboxAddress(toEmail, toEmail));
+            message.Subject = "Confirm your Linkora account";
 
-            var message = new MailMessage
+            var bodyBuilder = new BodyBuilder
             {
-                From = new MailAddress(user, fromName),
-                Subject = "Confirm your Linkora account",
-                Body = body,
-                IsBodyHtml = true,
+                HtmlBody = body
             };
-            message.To.Add(toEmail);
+            message.Body = bodyBuilder.ToMessageBody();
 
+            using var client = new SmtpClient();
             try
             {
-                await client.SendMailAsync(message);
+                // Для порта 465 используем SSL сразу (SecureSocketOptions.SslOnConnect)
+                // Для портов 587/25 используем STARTTLS (SecureSocketOptions.StartTls) или Auto
+                var options = port == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
+                if (!enableSsl) options = SecureSocketOptions.None;
+
+                await client.ConnectAsync(host, port, options);
+                await client.AuthenticateAsync(user, password);
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
             }
             catch (Exception ex)
             {

@@ -9,13 +9,15 @@ namespace Linkora.Controllers
     {
         private readonly string _connectionString;
         private readonly ICategoryRepository _categoryRepository;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public SellerController(IConfiguration configuration, ICategoryRepository categoryRepository)
+        public SellerController(IConfiguration configuration, ICategoryRepository categoryRepository, IHttpContextAccessor httpContextAccessor)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection")!;
             _categoryRepository = categoryRepository;
+            _httpContextAccessor = httpContextAccessor;
         }
-
+        private string GetLang() => _httpContextAccessor.HttpContext?.Request.Cookies["lang"] ?? "en";
         public async Task<IActionResult> Index(int id, int? categoryId, string sort = "new")
         {
             // Загружаем продавца
@@ -54,19 +56,39 @@ namespace Linkora.Controllers
             }
             await rr.CloseAsync();
 
-            // Категории продавца (только те где есть товары)
             await using var catCmd = new SqlCommand(@"
-                SELECT DISTINCT c.Id, c.Name, COUNT(p.Id) as Cnt
+                SELECT DISTINCT c.Id, c.Name, c.NameLV, c.NameRU, COUNT(p.Id) as Cnt
                 FROM Products p
                 JOIN Category c ON c.Id = p.CategoryId
                 WHERE p.UserId = @UserId
-                GROUP BY c.Id, c.Name
+                  AND (p.Status = 'active' OR p.Status IS NULL)
+                GROUP BY c.Id, c.Name, c.NameLV, c.NameRU
                 ORDER BY Cnt DESC", conn);
             catCmd.Parameters.AddWithValue("@UserId", id);
             await using var cr = await catCmd.ExecuteReaderAsync();
             var categories = new List<CategoryCount>();
             while (await cr.ReadAsync())
-                categories.Add(new CategoryCount { Id = cr.GetInt32(0), Name = cr.GetString(1), Count = cr.GetInt32(2) });
+            {
+                var catId = cr.GetInt32(0);
+                var nameEn = cr.GetString(1);
+                var nameLv = cr.IsDBNull(2) ? null : cr.GetString(2);
+                var nameRu = cr.IsDBNull(3) ? null : cr.GetString(3);
+                var count = cr.GetInt32(4);
+
+                var localizedName = GetLang() switch
+                {
+                    "lv" => nameLv ?? nameEn,
+                    "ru" => nameRu ?? nameEn,
+                    _ => nameEn
+                };
+
+                categories.Add(new CategoryCount
+                {
+                    Id = catId,
+                    Name = localizedName,
+                    Count = count
+                });
+            }
             await cr.CloseAsync();
 
             // Товары продавца

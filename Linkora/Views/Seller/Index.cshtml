@@ -49,8 +49,9 @@
                 <span class="seller-rating-count" data-i18n="ratings_label">Ratings: @reviewCount</span>
             </button>
         }
-        <div class="seller-header-meta" data-i18n="member_since_label">
-            Member since @(seller.CreatedAt?.ToString("MMMM yyyy") ?? "—")
+        <div class="seller-header-meta">
+            <span data-i18n="member_since_label">Member since</span>
+            <span>@(seller.CreatedAt?.ToString("MMMM yyyy") ?? "—")</span>
         </div>
     </div>
     <div class="seller-header-actions">
