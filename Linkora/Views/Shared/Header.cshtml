@@ -20,6 +20,7 @@
                 </div>
 
                 <div class="header-actions">
+
                     @if (User.Identity!.IsAuthenticated)
                     {
                         <div class="user-menu-wrap">
@@ -147,6 +148,13 @@
                             <span data-i18n="sign_in_btn">Sign in</span>
                         </button>
                     }
+                    <span class="divider">|</span>
+                    <div class="lang-switcher">
+                        <button class="lang-pill" id="headerLangEN" onclick="setLang('en')">EN</button>
+                        <button class="lang-pill" id="headerLangLV" onclick="setLang('lv')">LV</button>
+                        <button class="lang-pill" id="headerLangRU" onclick="setLang('ru')">RU</button>
+                    </div>
+
                 </div>
 
             </div>
@@ -194,7 +202,7 @@
 
     @if (User.Identity!.IsAuthenticated)
     {
-        <!-- Settings Modal -->
+        <!-- Settings Modal (language section removed) -->
         <div class="modal-overlay" id="settingsOverlay" onclick="closeSettingsModal()"></div>
         <div class="modal" id="settingsModal" style="max-width:360px;width:360px;height:auto;min-height:unset;padding-bottom:24px">
             <button class="modal-close" onclick="closeSettingsModal()">✕</button>
@@ -210,22 +218,6 @@
                 <button class="settings-toggle" id="themeToggle" onclick="toggleTheme()">
                     <span class="settings-toggle-knob"></span>
                 </button>
-            </div>
-
-            <div class="settings-section">
-                <div class="settings-label">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="2" y1="12" x2="22" y2="12" />
-                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                    </svg>
-                    <span data-i18n="settings_language">Language</span>
-                </div>
-                <div class="settings-lang-pills">
-                    <button class="settings-lang-pill" id="langEN" onclick="setLang('en')">EN</button>
-                    <button class="settings-lang-pill" id="langLV" onclick="setLang('lv')">LV</button>
-                    <button class="settings-lang-pill" id="langRU" onclick="setLang('ru')">RU</button>
-                </div>
             </div>
         </div>
 
@@ -252,308 +244,444 @@
                 <div class="reviews-empty" data-i18n="loading_text">Loading...</div>
             </div>
         </div>
+    }
 
-        <script>
-            let notifAllData = [];
-            let notifCurrentTab = 'all';
-            let notifModalOpen = false;
-
-            function toggleNotifModal(e) {
-                e.stopPropagation();
-                if (notifModalOpen) {
-                    closeNotifModal();
-                } else {
-                    openNotifModal();
+    @* ── JavaScript (global, works for all users) ── *@
+    <script>
+        // ---------- Translation & Theme ----------
+        function applyTranslations() {
+            const lang = localStorage.getItem('lang') || 'en';
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                const translation = translations[lang]?.[key];
+                if (translation) {
+                    if (el.tagName === 'INPUT' && el.getAttribute('data-i18n-placeholder') !== null) {
+                        el.placeholder = translation;
+                    } else {
+                        el.innerText = translation;
+                    }
                 }
+            });
+        }
+
+        function setLang(lang) {
+            localStorage.setItem('lang', lang);
+            document.cookie = `lang=${lang};path=/;max-age=31536000`;
+            applyTranslations();
+
+            // Update active state in header switcher
+            document.querySelectorAll('.lang-pill').forEach(btn => btn.classList.remove('active'));
+            if (lang === 'en') document.getElementById('headerLangEN')?.classList.add('active');
+            if (lang === 'lv') document.getElementById('headerLangLV')?.classList.add('active');
+            if (lang === 'ru') document.getElementById('headerLangRU')?.classList.add('active');
+
+            // Also update region button label if present
+            const regionBtnLabel = document.getElementById('regionBtnLabel');
+            if (regionBtnLabel && (regionBtnLabel.textContent === 'All regions' || regionBtnLabel.textContent === 'Visi reģioni' || regionBtnLabel.textContent === 'Все регионы')) {
+                regionBtnLabel.textContent = t('all_regions');
             }
+            location.reload();
+        }
 
-            async function openNotifModal() {
-                notifModalOpen = true;
-                document.getElementById('notifOverlay').classList.add('open');
-                document.getElementById('notifModal').classList.add('open');
-                await loadAllNotifications();
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark-theme');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            const themeToggleBtn = document.getElementById('themeToggle');
+            if (themeToggleBtn) themeToggleBtn.classList.toggle('settings-toggle-on', isDark);
+        }
+
+        // Apply theme on load
+        (function() {
+            if (localStorage.getItem('theme') === 'dark')
+                document.documentElement.classList.add('dark-theme');
+
+            // Set active language pill in header
+            const currentLang = localStorage.getItem('lang') || 'en';
+            if (currentLang === 'en') document.getElementById('headerLangEN')?.classList.add('active');
+            if (currentLang === 'lv') document.getElementById('headerLangLV')?.classList.add('active');
+            if (currentLang === 'ru') document.getElementById('headerLangRU')?.classList.add('active');
+        })();
+
+        // ---------- Placeholder translation function (if needed) ----------
+        function t(key) {
+            const lang = localStorage.getItem('lang') || 'en';
+            return translations[lang]?.[key] || key;
+        }
+
+        // ---------- Translations dictionary (example – replace with your full dictionary) ----------
+        const translations = {
+            en: {
+                all_regions: "All regions",
+                loading_text: "Loading...",
+                no_reviews_yet: "No reviews yet.",
+                failed_load: "Failed to load.",
+                notifications: "Notifications",
+                notif_no_unread: "Unread",
+                notif_mark_all_read: "Mark all as read",
+                settings_title: "Settings",
+                settings_dark: "Dark mode",
+                my_ads: "My ads",
+                messages: "Messages",
+                favourites: "Favourites",
+                my_subscriptions: "My subscriptions",
+                reviews: "Reviews",
+                cart: "Cart",
+                logout: "Logout",
+                sign_in_btn: "Sign in",
+                for_business: "For business",
+                career: "Career",
+                help: "Help",
+                all_categories: "All categories",
+                search_placeholder: "Search...",
+                search_btn: "Search",
+                post_ad_btn: "+ Post an ad",
+                about_me_tab: "About me",
+                from_me_tab: "From me",
+                reviews_title: "Reviews",
+                settings_language: "Language"  // kept for compatibility but not used in modal
+            },
+            lv: {
+                all_regions: "Visi reģioni",
+                loading_text: "Ielādē...",
+                no_reviews_yet: "Nav atsauksmju.",
+                failed_load: "Neizdevās ielādēt.",
+                notifications: "Paziņojumi",
+                notif_no_unread: "Nelasīti",
+                notif_mark_all_read: "Atzīmēt visus kā lasītus",
+                settings_title: "Iestatījumi",
+                settings_dark: "Tumšais režīms",
+                my_ads: "Mani sludinājumi",
+                messages: "Ziņas",
+                favourites: "Iecienītie",
+                my_subscriptions: "Mani abonementi",
+                reviews: "Atsauksmes",
+                cart: "Grozs",
+                logout: "Iziet",
+                sign_in_btn: "Pierakstīties",
+                for_business: "Uzņēmējiem",
+                career: "Karjera",
+                help: "Palīdzība",
+                all_categories: "Visas kategorijas",
+                search_placeholder: "Meklēt...",
+                search_btn: "Meklēt",
+                post_ad_btn: "+ Pievienot sludinājumu",
+                about_me_tab: "Par mani",
+                from_me_tab: "No manis",
+                reviews_title: "Atsauksmes",
+                settings_language: "Valoda"
+            },
+            ru: {
+                all_regions: "Все регионы",
+                loading_text: "Загрузка...",
+                no_reviews_yet: "Нет отзывов.",
+                failed_load: "Не удалось загрузить.",
+                notifications: "Уведомления",
+                notif_no_unread: "Непрочитанные",
+                notif_mark_all_read: "Отметить все как прочитанные",
+                settings_title: "Настройки",
+                settings_dark: "Тёмная тема",
+                my_ads: "Мои объявления",
+                messages: "Сообщения",
+                favourites: "Избранное",
+                my_subscriptions: "Мои подписки",
+                reviews: "Отзывы",
+                cart: "Корзина",
+                logout: "Выйти",
+                sign_in_btn: "Войти",
+                for_business: "Для бизнеса",
+                career: "Карьера",
+                help: "Помощь",
+                all_categories: "Все категории",
+                search_placeholder: "Поиск...",
+                search_btn: "Найти",
+                post_ad_btn: "+ Подать объявление",
+                about_me_tab: "Обо мне",
+                from_me_tab: "От меня",
+                reviews_title: "Отзывы",
+                settings_language: "Язык"
             }
+        };
 
-            function closeNotifModal() {
-                notifModalOpen = false;
-                document.getElementById('notifOverlay').classList.remove('open');
-                document.getElementById('notifModal').classList.remove('open');
+        // ---------- Notifications (for logged-in users) ----------
+        let notifAllData = [];
+        let notifCurrentTab = 'all';
+        let notifModalOpen = false;
+
+        function toggleNotifModal(e) {
+            if (!document.getElementById('notifOverlay')) return;
+            e.stopPropagation();
+            if (notifModalOpen) {
+                closeNotifModal();
+            } else {
+                openNotifModal();
             }
+        }
 
-            async function loadAllNotifications() {
-                const list = document.getElementById('notifModalList');
-                list.innerHTML = '<div class="notif-modal-empty"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Loading...</div>';
-                try {
-                    const res  = await fetch('/Notifications/List');
-                    notifAllData = await res.json();
-                    renderNotifList();
-                    updateNotifBadge(notifAllData.filter(n => !n.isRead).length);
-                } catch {
-                    list.innerHTML = '<div class="notif-modal-empty">Failed to load</div>';
-                }
+        async function openNotifModal() {
+            if (!document.getElementById('notifOverlay')) return;
+            notifModalOpen = true;
+            document.getElementById('notifOverlay').classList.add('open');
+            document.getElementById('notifModal').classList.add('open');
+            await loadAllNotifications();
+        }
+
+        function closeNotifModal() {
+            if (!document.getElementById('notifOverlay')) return;
+            notifModalOpen = false;
+            document.getElementById('notifOverlay').classList.remove('open');
+            document.getElementById('notifModal').classList.remove('open');
+        }
+
+        async function loadAllNotifications() {
+            const list = document.getElementById('notifModalList');
+            if (!list) return;
+            list.innerHTML = '<div class="notif-modal-empty"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Loading...</div>';
+            try {
+                const res  = await fetch('/Notifications/List');
+                notifAllData = await res.json();
+                renderNotifList();
+                updateNotifBadge(notifAllData.filter(n => !n.isRead).length);
+            } catch {
+                list.innerHTML = '<div class="notif-modal-empty">Failed to load</div>';
             }
+        }
 
-            function renderNotifList() {
-                const list = document.getElementById('notifModalList');
-                const unreadCount = notifAllData.filter(n => !n.isRead).length;
+        function renderNotifList() {
+            const list = document.getElementById('notifModalList');
+            if (!list) return;
+            const unreadCount = notifAllData.filter(n => !n.isRead).length;
 
-                // Update tab unread count
-                const tabCount = document.getElementById('tabUnreadCount');
+            const tabCount = document.getElementById('tabUnreadCount');
+            if (tabCount) {
                 if (unreadCount > 0) {
                     tabCount.textContent = unreadCount;
                     tabCount.style.display = 'inline-block';
                 } else {
                     tabCount.style.display = 'none';
                 }
+            }
+            const markAllBtn = document.getElementById('markAllBtn');
+            if (markAllBtn) markAllBtn.style.display = unreadCount > 0 ? '' : 'none';
 
-                // Mark all button visibility
-                document.getElementById('markAllBtn').style.display = unreadCount > 0 ? '' : 'none';
+            const data = notifCurrentTab === 'unread'
+                ? notifAllData.filter(n => !n.isRead)
+                : notifAllData;
 
-                const data = notifCurrentTab === 'unread'
-                    ? notifAllData.filter(n => !n.isRead)
-                    : notifAllData;
-
-                if (!data.length) {
-                    list.innerHTML = `
-                        <div class="notif-modal-empty">
-                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5">
-                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                            </svg>
-                            ${notifCurrentTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}
-                        </div>`;
-                    return;
-                }
-
-                list.innerHTML = data.map(n => `
-                    <div class="notif-item ${n.isRead ? '' : 'unread'}"
-                         id="notif-item-${n.id}"
-                         onclick="handleNotifClick(${n.id}, '${n.productId ? '/Product/Details/' + n.productId : ''}')">
-                        <img class="notif-item-avatar"
-                             src="${n.fromUserAvatar || '/img/no-photo.svg'}"
-                             onerror="this.src='/img/no-photo.svg'" />
-                        <div class="notif-item-body">
-                            <div class="notif-item-msg">${escapeHtml(n.message)}</div>
-                            <div class="notif-item-time">${n.createdAt}</div>
-                            ${n.productId && n.productName ? `
-                                <div class="notif-item-product">
-                                    ${n.productImage ? `<img src="${n.productImage}" onerror="this.src='/img/no-photo.svg'" />` : ''}
-                                    <span>${escapeHtml(n.productName)}</span>
-                                </div>` : ''}
-                        </div>
-                    </div>`
-                ).join('');
+            if (!data.length) {
+                list.innerHTML = `
+                    <div class="notif-modal-empty">
+                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        </svg>
+                        ${notifCurrentTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}
+                    </div>`;
+                return;
             }
 
-            async function handleNotifClick(id, url) {
-                // Find in data
-                const item = notifAllData.find(n => n.id === id);
-                if (!item) return;
+            list.innerHTML = data.map(n => `
+                <div class="notif-item ${n.isRead ? '' : 'unread'}"
+                     id="notif-item-${n.id}"
+                     onclick="handleNotifClick(${n.id}, '${n.productId ? '/Product/Details/' + n.productId : ''}')">
+                    <img class="notif-item-avatar"
+                         src="${n.fromUserAvatar || '/img/no-photo.svg'}"
+                         onerror="this.src='/img/no-photo.svg'" />
+                    <div class="notif-item-body">
+                        <div class="notif-item-msg">${escapeHtml(n.message)}</div>
+                        <div class="notif-item-time">${n.createdAt}</div>
+                        ${n.productId && n.productName ? `
+                            <div class="notif-item-product">
+                                ${n.productImage ? `<img src="${n.productImage}" onerror="this.src='/img/no-photo.svg'" />` : ''}
+                                <span>${escapeHtml(n.productName)}</span>
+                            </div>` : ''}
+                    </div>
+                </div>`
+            ).join('');
+        }
 
-                // If unread — mark read, update badge
-                if (!item.isRead) {
-                    item.isRead = true;
-                    await fetch(`/Notifications/MarkRead?id=${id}`, { method: 'POST' });
+        async function handleNotifClick(id, url) {
+            const item = notifAllData.find(n => n.id === id);
+            if (!item) return;
 
-                    // Update badge immediately
-                    const unreadLeft = notifAllData.filter(n => !n.isRead).length;
-                    updateNotifBadge(unreadLeft);
+            if (!item.isRead) {
+                item.isRead = true;
+                await fetch(`/Notifications/MarkRead?id=${id}`, { method: 'POST' });
+                const unreadLeft = notifAllData.filter(n => !n.isRead).length;
+                updateNotifBadge(unreadLeft);
 
-                    // Update item style without full re-render
-                    const el = document.getElementById('notif-item-' + id);
-                    if (el) {
-                        el.classList.remove('unread');
-
-                        // If on unread tab — fade out and remove
-                        if (notifCurrentTab === 'unread') {
-                            el.style.transition = 'opacity 0.3s, max-height 0.3s';
-                            el.style.opacity = '0';
-                            el.style.overflow = 'hidden';
-                            setTimeout(() => {
-                                el.style.maxHeight = el.offsetHeight + 'px';
-                                el.style.maxHeight = '0';
-                                el.style.padding = '0';
-                                setTimeout(() => {
-                                    renderNotifList();
-                                }, 300);
-                            }, 50);
-                        } else {
-                            // On "all" tab — just update tab count
-                            const tabCount = document.getElementById('tabUnreadCount');
-                            if (unreadLeft > 0) tabCount.textContent = unreadLeft;
-                            else tabCount.style.display = 'none';
-                            document.getElementById('markAllBtn').style.display = unreadLeft > 0 ? '' : 'none';
-                        }
+                const el = document.getElementById('notif-item-' + id);
+                if (el) {
+                    el.classList.remove('unread');
+                    if (notifCurrentTab === 'unread') {
+                        el.style.transition = 'opacity 0.3s, max-height 0.3s';
+                        el.style.opacity = '0';
+                        el.style.overflow = 'hidden';
+                        setTimeout(() => {
+                            el.style.maxHeight = el.offsetHeight + 'px';
+                            el.style.maxHeight = '0';
+                            el.style.padding = '0';
+                            setTimeout(() => renderNotifList(), 300);
+                        }, 50);
+                    } else {
+                        const tabCount = document.getElementById('tabUnreadCount');
+                        if (unreadLeft > 0) tabCount.textContent = unreadLeft;
+                        else tabCount.style.display = 'none';
+                        const markAllBtn = document.getElementById('markAllBtn');
+                        if (markAllBtn) markAllBtn.style.display = unreadLeft > 0 ? '' : 'none';
                     }
                 }
-
-                // Navigate if url
-                if (url) {
-                    closeNotifModal();
-                    window.location.href = url;
-                }
             }
 
-            function switchNotifTab(tab) {
-                notifCurrentTab = tab;
-                document.getElementById('tabAll').classList.toggle('notif-tab-active', tab === 'all');
-                document.getElementById('tabUnread').classList.toggle('notif-tab-active', tab === 'unread');
-                renderNotifList();
+            if (url) {
+                closeNotifModal();
+                window.location.href = url;
             }
+        }
 
-            async function markAllReadModal() {
-                await fetch('/Notifications/MarkAllRead', { method: 'POST' });
-                notifAllData.forEach(n => n.isRead = true);
-                updateNotifBadge(0);
-                renderNotifList();
-            }
+        function switchNotifTab(tab) {
+            notifCurrentTab = tab;
+            const tabAll = document.getElementById('tabAll');
+            const tabUnread = document.getElementById('tabUnread');
+            if (tabAll) tabAll.classList.toggle('notif-tab-active', tab === 'all');
+            if (tabUnread) tabUnread.classList.toggle('notif-tab-active', tab === 'unread');
+            renderNotifList();
+        }
 
-            function updateNotifBadge(count) {
-                const badge = document.getElementById('notifBadge');
-                if (!badge) return;
-                badge.textContent = count;
-                badge.style.display = count > 0 ? 'flex' : 'none';
-            }
+        async function markAllReadModal() {
+            await fetch('/Notifications/MarkAllRead', { method: 'POST' });
+            notifAllData.forEach(n => n.isRead = true);
+            updateNotifBadge(0);
+            renderNotifList();
+        }
 
-            function escapeHtml(str) {
-                if (!str) return '';
-                return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-            }
+        function updateNotifBadge(count) {
+            const badge = document.getElementById('notifBadge');
+            if (!badge) return;
+            badge.textContent = count;
+            badge.style.display = count > 0 ? 'flex' : 'none';
+        }
 
-            // Close on Escape
-            document.addEventListener('keydown', e => {
-                if (e.key === 'Escape' && notifModalOpen) closeNotifModal();
-            });
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
 
-            // Initial badge load
-            (async () => {
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && notifModalOpen) closeNotifModal();
+        });
+
+        (async () => {
+            if (document.getElementById('notifBadge')) {
                 try {
                     const res = await fetch('/Notifications/Count');
                     if (!res.ok) return;
                     const { count } = await res.json();
                     updateNotifBadge(count);
                 } catch {}
-            })();
-            // ── Settings ──
-            function openSettingsModal() {
-                document.getElementById('userDropdown')?.classList.remove('open');
-                applySettingsUI();
-                document.getElementById('settingsOverlay').classList.add('modal-open');
-                document.getElementById('settingsModal').classList.add('modal-open');
-                applyTranslations();
             }
-            function closeSettingsModal() {
-                document.getElementById('settingsOverlay').classList.remove('modal-open');
-                document.getElementById('settingsModal').classList.remove('modal-open');
-            }
-            function applySettingsUI() {
-                const dark = localStorage.getItem('theme') === 'dark';
-                document.getElementById('themeToggle').classList.toggle('settings-toggle-on', dark);
-                const lang = localStorage.getItem('lang') || 'en';
-                document.getElementById('langEN').classList.toggle('settings-lang-pill-active', lang === 'en');
-                document.getElementById('langLV').classList.toggle('settings-lang-pill-active', lang === 'lv');
-            }
-            function toggleTheme() {
-                const isDark = document.documentElement.classList.toggle('dark-theme');
-                localStorage.setItem('theme', isDark ? 'dark' : 'light');
-                document.getElementById('themeToggle').classList.toggle('settings-toggle-on', isDark);
-            }
-            function setLang(lang) {
-                localStorage.setItem('lang', lang);
-                document.cookie = `lang=${lang};path=/;max-age=31536000`;
-                applyTranslations();
-                document.getElementById('langEN').classList.toggle('settings-lang-pill-active', lang === 'en');
-                document.getElementById('langLV').classList.toggle('settings-lang-pill-active', lang === 'lv');
-                document.getElementById('langRU').classList.toggle('settings-lang-pill-active', lang === 'ru');
-                // Re-apply all translations on the page
-                applyTranslations();
-                // Refresh region button label if 'All regions' is shown
-                const regionBtnLabel = document.getElementById('regionBtnLabel');
-                if (regionBtnLabel && (regionBtnLabel.textContent === 'All regions' || regionBtnLabel.textContent === 'Visi reģioni' || regionBtnLabel.textContent === 'Все регионы')) {
-                    regionBtnLabel.textContent = t('all_regions');
+        })();
+
+        // ---------- Settings modal (logged-in only) ----------
+        function openSettingsModal() {
+            if (!document.getElementById('settingsOverlay')) return;
+            document.getElementById('userDropdown')?.classList.remove('open');
+            applySettingsUI();
+            document.getElementById('settingsOverlay').classList.add('modal-open');
+            document.getElementById('settingsModal').classList.add('modal-open');
+            applyTranslations();
+        }
+        function closeSettingsModal() {
+            if (!document.getElementById('settingsOverlay')) return;
+            document.getElementById('settingsOverlay').classList.remove('modal-open');
+            document.getElementById('settingsModal').classList.remove('modal-open');
+        }
+        function applySettingsUI() {
+            const dark = localStorage.getItem('theme') === 'dark';
+            const themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) themeToggle.classList.toggle('settings-toggle-on', dark);
+        }
+
+        // ---------- Reviews modal (logged-in only) ----------
+        async function openMyReviewsModal() {
+            if (!document.getElementById('myReviewsOverlay')) return;
+            document.getElementById('userDropdown')?.classList.remove('open');
+            document.getElementById('myReviewsOverlay').classList.add('open');
+            document.getElementById('myReviewsModal').classList.add('open');
+            applyTranslations();
+            await loadReviewTab('about');
+        }
+        function closeMyReviewsModal() {
+            if (!document.getElementById('myReviewsOverlay')) return;
+            document.getElementById('myReviewsOverlay').classList.remove('open');
+            document.getElementById('myReviewsModal').classList.remove('open');
+        }
+        async function switchReviewTab(tab) {
+            const tabAbout = document.getElementById('tabAboutMe');
+            const tabFrom = document.getElementById('tabFromMe');
+            if (tabAbout) tabAbout.classList.toggle('reviews-tab-active', tab === 'about');
+            if (tabFrom) tabFrom.classList.toggle('reviews-tab-active', tab === 'from');
+            await loadReviewTab(tab);
+        }
+        async function loadReviewTab(tab) {
+            const list = document.getElementById('myReviewsList');
+            if (!list) return;
+            list.innerHTML = `<div class="reviews-empty">${t('loading_text')}</div>`;
+            try {
+                const res  = await fetch(`/Reviews/My?tab=${tab}`);
+                const data = await res.json();
+                if (!data.length) {
+                    list.innerHTML = `<div class="reviews-empty">${t('no_reviews_yet')}</div>`;
+                    return;
                 }
-            }
-
-            // Apply theme on load
-            (function() {
-                if (localStorage.getItem('theme') === 'dark')
-                    document.documentElement.classList.add('dark-theme');
-            })();
-
-            // ── Reviews ──
-            async function openMyReviewsModal() {
-                document.getElementById('userDropdown')?.classList.remove('open');
-                document.getElementById('myReviewsOverlay').classList.add('open');
-                document.getElementById('myReviewsModal').classList.add('open');
-                applyTranslations();
-                await loadReviewTab('about');
-            }
-            function closeMyReviewsModal() {
-                document.getElementById('myReviewsOverlay').classList.remove('open');
-                document.getElementById('myReviewsModal').classList.remove('open');
-            }
-            async function switchReviewTab(tab) {
-                document.getElementById('tabAboutMe').classList.toggle('reviews-tab-active', tab === 'about');
-                document.getElementById('tabFromMe').classList.toggle('reviews-tab-active', tab === 'from');
-                await loadReviewTab(tab);
-            }
-            async function loadReviewTab(tab) {
-                const list = document.getElementById('myReviewsList');
-                list.innerHTML = `<div class="reviews-empty">${t('loading_text')}</div>`;
-                try {
-                    const res  = await fetch(`/Reviews/My?tab=${tab}`);
-                    const data = await res.json();
-                    if (!data.length) {
-                        list.innerHTML = `<div class="reviews-empty">${t('no_reviews_yet')}</div>`;
-                        return;
-                    }
-                    list.innerHTML = data.map(r => `
-                        <div class="review-item">
-                            <div class="review-author">
-                                <img src="${r.avatarPath || '/img/no-photo.svg'}"
-                                     class="review-author-avatar"
-                                     onerror="this.src='/img/no-photo.svg'" />
-                                <div>
-                                    <a class="review-author-name" href="/Seller/Index/${r.userId}"
-                                       onclick="closeMyReviewsModal()">
-                                        ${r.userName}
-                                    </a>
-                                    <div class="review-date">${r.createdAt}</div>
-                                </div>
+                list.innerHTML = data.map(r => `
+                    <div class="review-item">
+                        <div class="review-author">
+                            <img src="${r.avatarPath || '/img/no-photo.svg'}"
+                                 class="review-author-avatar"
+                                 onerror="this.src='/img/no-photo.svg'" />
+                            <div>
+                                <a class="review-author-name" href="/Seller/Index/${r.userId}"
+                                   onclick="closeMyReviewsModal()">
+                                    ${r.userName}
+                                </a>
+                                <div class="review-date">${r.createdAt}</div>
                             </div>
-                            <div class="review-stars">
-                                ${[1,2,3,4,5].map(i =>
-                                    `<svg width="14" height="14" viewBox="0 0 24 24"
-                                          fill="${i <= r.rating ? '#f5a623' : 'none'}"
-                                          stroke="#f5a623" stroke-width="2">
-                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                                     </svg>`
-                                ).join('')}
-                            </div>
-                            ${r.comment ? `<div class="review-comment">${r.comment}</div>` : ''}
-                        </div>`
-                    ).join('');
-                } catch {
-                    list.innerHTML = `<div class="reviews-empty">${t('failed_load')}</div>`;
-                }
+                        </div>
+                        <div class="review-stars">
+                            ${[1,2,3,4,5].map(i =>
+                                `<svg width="14" height="14" viewBox="0 0 24 24"
+                                      fill="${i <= r.rating ? '#f5a623' : 'none'}"
+                                      stroke="#f5a623" stroke-width="2">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                                 </svg>`
+                            ).join('')}
+                        </div>
+                        ${r.comment ? `<div class="review-comment">${r.comment}</div>` : ''}
+                    </div>`
+                ).join('');
+            } catch {
+                list.innerHTML = `<div class="reviews-empty">${t('failed_load')}</div>`;
             }
-                        function handleGlobalSearch(e) {
-                e.preventDefault();
-                const input = e.target.querySelector('.search-input');
-                const q = input?.value.trim();
-                if (!q) return;
+        }
 
-                // Если уже на странице категории — добавляем q к текущему URL
-                const match = window.location.pathname.match(/\/Category\/Index\/(\d+)/i);
-                if (match) {
-                    const url = new URL(window.location.href);
-                    url.searchParams.set('q', q);
-                    window.location.href = url.toString();
-                } else {
-                    // Иначе — идём на корневую категорию с поиском
-                    window.location.href = '/Category/Index/3711?q=' + encodeURIComponent(q);
-                }
+        // ---------- Search handler ----------
+        function handleGlobalSearch(e) {
+            e.preventDefault();
+            const input = e.target.querySelector('.search-input');
+            const q = input?.value.trim();
+            if (!q) return;
+
+            const match = window.location.pathname.match(/\/Category\/Index\/(\d+)/i);
+            if (match) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('q', q);
+                window.location.href = url.toString();
+            } else {
+                window.location.href = '/Category/Index/3711?q=' + encodeURIComponent(q);
             }
-        </script>
-    }
+        }
+
+        // Apply translations after DOM ready
+        document.addEventListener('DOMContentLoaded', applyTranslations);
+    </script>
 </header>

@@ -70,7 +70,46 @@
     gap: 12px;
     color: #fff;
 }
+.lang-switcher {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-right: 16px;
+}
 
+.lang-pill {
+    background: transparent;
+    border: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #4a5568;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 20px;
+    transition: all 0.2s;
+}
+
+.dark-theme .lang-pill {
+    color: #cbd5e0;
+}
+
+.lang-pill.active {
+    background: #e2e8f0;
+    color: #1a202c;
+}
+
+.dark-theme .lang-pill.active {
+    background: #2d3748;
+    color: #edf2f7;
+}
+
+.lang-pill:hover {
+    background: #e2e8f0;
+}
+
+.dark-theme .lang-pill:hover {
+    background: #2d3748;
+}
 .icon-btn {
     display: flex;
     align-items: center;
@@ -964,6 +1003,7 @@
     .site-logo img {
         width: 120px;
     }
+
 
     .categories-btn,
     .regions-btn {

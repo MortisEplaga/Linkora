@@ -13,20 +13,22 @@ namespace Linkora.Repositories
             _connectionString = configuration.GetConnectionString("DefaultConnection")!;
             _httpContextAccessor = httpContextAccessor;
         }
+
         private string GetLang() =>
-    _httpContextAccessor.HttpContext?.Request.Cookies["lang"] ?? "en";
+            _httpContextAccessor.HttpContext?.Request.Cookies["lang"] ?? "en";
 
         private Category MapRow(SqlDataReader reader)
         {
             var lang = GetLang();
             var nameEn = reader.GetString(reader.GetOrdinal("Name"));
             string name;
+
             if (lang == "lv")
             {
                 var ord = reader.GetOrdinal("NameLV");
                 name = !reader.IsDBNull(ord) ? reader.GetString(ord) : nameEn;
             }
-            if (lang == "ru")
+            else if (lang == "ru")
             {
                 var ord = reader.GetOrdinal("NameRU");
                 name = !reader.IsDBNull(ord) ? reader.GetString(ord) : nameEn;
@@ -98,7 +100,7 @@ namespace Linkora.Repositories
             return result;
         }
 
-        // ── Хлебные крошки: идём вверх по ParentId до корня ──
+        // ── Хлебные крошки ──
         public async Task<List<Category>> GetBreadcrumbAsync(int categoryId)
         {
             var breadcrumb = new List<Category>();
@@ -119,20 +121,20 @@ namespace Linkora.Repositories
                 if (!await reader.ReadAsync()) break;
 
                 var category = MapRow(reader);
-                breadcrumb.Insert(0, category); // вставляем в начало — чтобы порядок был от корня
+                breadcrumb.Insert(0, category);
                 currentId = category.ParentId;
             }
 
             return breadcrumb;
         }
-        // ── Параметры категории (Type 2–5) + их данные ──
+
+        // ── Параметры категории (Type 2–5) + их данные (перегрузка для коллекции ID) ──
         public async Task<List<Parameter>> GetParametersAsync(IEnumerable<int> categoryIds)
         {
-
-            // 1. Получаем параметры
             var result = new List<Parameter>();
             var ids = string.Join(",", categoryIds);
             if (string.IsNullOrEmpty(ids)) return result;
+
             var lang = GetLang();
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
@@ -145,12 +147,11 @@ namespace Linkora.Repositories
                 while (await r.ReadAsync())
                     parameters.Add(MapRow(r));
 
-            // 2. Для каждого параметра — подгружаем варианты или диапазон
             foreach (var p in parameters)
             {
                 var vm = new Parameter { Param = p };
 
-                if (p.Type == 2 || p.Type == 4) // selection / multi → SelectOptions
+                if (p.Type == 2 || p.Type == 4) // selection / multi
                 {
                     await using var cmdO = new SqlCommand(
                         "SELECT Value, ValueLV, ValueRU FROM SelectOptions WHERE CategoryId = @Id", conn);
@@ -158,13 +159,17 @@ namespace Linkora.Repositories
                     await using var ro = await cmdO.ExecuteReaderAsync();
                     while (await ro.ReadAsync())
                     {
+                        string option;
                         if (lang == "lv" && !ro.IsDBNull(1))
-                            vm.Options.Add(ro.GetString(1));
+                            option = ro.GetString(1);
+                        else if (lang == "ru" && !ro.IsDBNull(2))
+                            option = ro.GetString(2);
                         else
-                            vm.Options.Add(ro.GetString(0));
+                            option = ro.GetString(0);
+                        vm.Options.Add(option);
                     }
                 }
-                else if (p.Type == 5) // range → ParameterRange
+                else if (p.Type == 5) // range
                 {
                     await using var cmdR = new SqlCommand(
                         "SELECT MinValue, MaxValue, Step FROM ParameterRange WHERE ParamId = @Id", conn);
@@ -184,6 +189,7 @@ namespace Linkora.Repositories
             return result;
         }
 
+        // ── Параметры категории (один categoryId) ──
         public async Task<List<Parameter>> GetParametersAsync(int categoryId)
         {
             var result = new List<Parameter>();
@@ -191,21 +197,20 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
-
             await using var cmdP = new SqlCommand(
-            "SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId = @ParentId AND Type IN (2,3,4,5)", conn);
+                "SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId = @ParentId AND Type IN (2,3,4,5)", conn);
             cmdP.Parameters.AddWithValue("@ParentId", categoryId);
+
             var parameters = new List<Category>();
             await using (var r = await cmdP.ExecuteReaderAsync())
                 while (await r.ReadAsync())
                     parameters.Add(MapRow(r));
 
-            // 2. Для каждого параметра — подгружаем варианты или диапазон
             foreach (var p in parameters)
             {
                 var vm = new Parameter { Param = p };
 
-                if (p.Type == 2 || p.Type == 4) // selection / multi → SelectOptions
+                if (p.Type == 2 || p.Type == 4)
                 {
                     await using var cmdO = new SqlCommand(
                         "SELECT Value, ValueLV, ValueRU FROM SelectOptions WHERE CategoryId = @Id", conn);
@@ -213,13 +218,17 @@ namespace Linkora.Repositories
                     await using var ro = await cmdO.ExecuteReaderAsync();
                     while (await ro.ReadAsync())
                     {
+                        string option;
                         if (lang == "lv" && !ro.IsDBNull(1))
-                            vm.Options.Add(ro.GetString(1));
+                            option = ro.GetString(1);
+                        else if (lang == "ru" && !ro.IsDBNull(2))
+                            option = ro.GetString(2);
                         else
-                            vm.Options.Add(ro.GetString(0));
+                            option = ro.GetString(0);
+                        vm.Options.Add(option);
                     }
                 }
-                else if (p.Type == 5) // range → ParameterRange
+                else if (p.Type == 5)
                 {
                     await using var cmdR = new SqlCommand(
                         "SELECT MinValue, MaxValue, Step FROM ParameterRange WHERE ParamId = @Id", conn);
@@ -238,19 +247,20 @@ namespace Linkora.Repositories
 
             return result;
         }
+
         public async Task<List<int>> GetDescendantIdsAsync(int categoryId)
         {
             var ids = new List<int>();
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(@"
-        WITH cte AS (
-            SELECT Id FROM Category WHERE Id = @Id
-            UNION ALL
-            SELECT c.Id FROM Category c
-            INNER JOIN cte ON c.ParentId = cte.Id
-        )
-        SELECT Id FROM cte", conn);
+                WITH cte AS (
+                    SELECT Id FROM Category WHERE Id = @Id
+                    UNION ALL
+                    SELECT c.Id FROM Category c
+                    INNER JOIN cte ON c.ParentId = cte.Id
+                )
+                SELECT Id FROM cte", conn);
             cmd.Parameters.AddWithValue("@Id", categoryId);
             await using var r = await cmd.ExecuteReaderAsync();
             while (await r.ReadAsync())
