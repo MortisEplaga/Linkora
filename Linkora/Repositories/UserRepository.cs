@@ -53,17 +53,17 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(@"
-        INSERT INTO Users (UserName, Email, PhoneNumber, Role, PasswordHash, IsCompany)
+        INSERT INTO Users (UserName, Email, PhoneNumber, Role, PasswordHash, IsCompany, ConfirmationToken, EmailConfirmed)
         OUTPUT INSERTED.Id
-        VALUES (@U, @E, @P, 'user', @H, @IC)", conn);
+        VALUES (@U, @E, @P, 'user', @H, @IC, @Token, 0)", conn);
             cmd.Parameters.AddWithValue("@U", user.UserName);
             cmd.Parameters.AddWithValue("@E", (object?)user.Email ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@P", (object?)user.PhoneNumber ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@H", passwordHash);
             cmd.Parameters.AddWithValue("@IC", user.IsCompany);
+            cmd.Parameters.AddWithValue("@Token", (object?)user.ConfirmationToken ?? DBNull.Value);
             return (int)(await cmd.ExecuteScalarAsync())!;
         }
-
         // ── Google OAuth additions ──
 
         /// <summary>Look up a user by email address (for Google sign-in).</summary>

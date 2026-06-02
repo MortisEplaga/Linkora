@@ -217,6 +217,8 @@
         <div class="info-modal-lang-tabs">
             <button class="info-lang-btn active" onclick="switchInfoLang('ru', this)">RU</button>
             <button class="info-lang-btn" onclick="switchInfoLang('lv', this)">LV</button>
+            <button class="info-lang-btn" onclick="switchInfoLang('en', this)">EN</button>
+
         </div>
 
         <div class="info-modal-body">
@@ -330,64 +332,715 @@
                     <div class="faq-a">Atverot izvēlni pie attiecīgā sludinājuma, jūs atradīsiet iespēju "Dzēst".</div>
                 </div>
             </div>
-
+            <div class="info-lang-content" data-lang="en" style="display:none">
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">How do I register? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Click on the menu section, find the “Register” option, and fill in the form that appears. Once you’ve completed it, you’ll become a registered user. When posting an ad, you’ll need to activate your contact information.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Can I use the portal without registering? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Unregistered users can browse published ads and add them to “Favorites” and “Cart”; these will be saved after registration or after logging into your profile.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">How do I activate my phone number and email address? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Go to “My Profile”, then to the “My Data” subsection, where you can activate or change your contact information.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">How do I change my password? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Go to “My Profile” and open “Change Password” to update your current password.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">How do I save ads I’m interested in? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Click the “Add to Favorites” icon on any ad. You’ll later find them in the “Favorites” section.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">How can I track new ads that match my interests? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">You can filter the list of ads using the desired parameters and also subscribe to be notified when new ads matching those filters appear.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">How long does it take for my ad to be approved? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Ads are published instantly. However, they must comply with the portal’s rules, otherwise they will be blocked.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">How long will my published ad remain active? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Each ad is published for 1 month from the date of posting. Once it expires, you can republish it.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">How do I edit the content of an ad? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">All ad content can be edited before publication. After publishing, the price can be edited up to three times, while images and videos can be edited without limits.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">How do I edit the price shown in a published ad? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Open the ad and click the “Edit” button; you can then correct the price.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">What should I do if my ad gets blocked? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">If an ad is blocked, its owner will receive an email explaining the reason. You can edit the ad and resubmit it for review.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">Can I add or change images and videos in my ad? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Check the size and format of your photos and videos. If they don’t meet the requirements and can’t be uploaded, please contact the administration.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-q" onclick="toggleFaq(this)">How do I delete an ad? <span class="faq-arrow">›</span></div>
+                    <div class="faq-a">Open the menu next to the ad and select “Delete”.</div>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="modal-overlay" id="termsOverlay" onclick="closeTermsModal()"></div>
     <div class="modal info-modal" id="termsModal">
         <button class="modal-close" onclick="closeTermsModal()">✕</button>
-        <h2 class="info-modal-title">Terms of use</h2>
+        <h2 class="info-modal-title">Правила пользования порталом объявлений</h2>
 
         <div class="info-modal-lang-tabs">
             <button class="info-lang-btn active" onclick="switchInfoLang('ru', this, 'terms')">RU</button>
+            <button class="info-lang-btn" onclick="switchInfoLang('lv', this, 'terms')">LV</button>
+            <button class="info-lang-btn" onclick="switchInfoLang('en', this, 'terms')">EN</button>
         </div>
 
         <div class="info-modal-body">
+            <!-- Russian -->
             <div class="info-lang-content" data-lang="ru">
-
-                <p class="terms-intro">Самозанятое лицо, далее в тексте – Vena, предоставляет услуги сервиса постов, далее в тексте – УСЛУГА, согласно изложенным ниже Условиям предоставления УСЛУГИ, которые впоследствии могут быть дополнены или изменены в любое время.</p>
+                <p class="terms-intro">
+                    Дата вступления в силу: __________
+                </p>
 
                 <div class="terms-section">
-                    <div class="terms-title">Термины</div>
-                    <p><b>ПОЛЬЗОВАТЕЛЬ</b> – частное или юридическое лицо, размещающее посты в соответствии с Условиями предоставления УСЛУГИ.</p>
-                    <p><b>ПОСТ</b> – коммерческое предложение, связанное с продажей товара или услуги и оформленное в соответствии с Условиями предоставления УСЛУГИ.</p>
+                    <div class="terms-title">1. Общие положения</div>
+                    <p><b>1.1.</b> Портал объявлений (далее — «Vena.lv») предоставляет пользователям возможность публиковать, искать, просматривать и обмениваться информацией о товарах, услугах, вакансиях, недвижимости, транспорте и иных предложениях.</p>
+                    <p><b>1.2.</b> Vena.lv является исключительно информационной площадкой и не выступает продавцом, покупателем, посредником, агентом либо стороной сделки между пользователями.</p>
+                    <p><b>1.3.</b> Используя Vena.lv, пользователь подтверждает, что ознакомился с настоящими Правилами и обязуется их соблюдать.</p>
+                    <p><b>1.4.</b> Администрация вправе изменять Правила в любое время. Новая редакция вступает в силу с момента публикации на Vena.lv.</p>
                 </div>
 
                 <div class="terms-section">
-                    <div class="terms-title">1. Принятие условий</div>
-                    <p>ПОЛЬЗОВАТЕЛЬ понимает и соглашается с тем, что УСЛУГА предоставляется на условиях «как есть» и что Vena не несет ответственности за содержание ПОСТОВ, а также за возможные убытки или неудобства, связанные с использованием УСЛУГИ.</p>
-                    <p>ПОЛЬЗОВАТЕЛЬ несет полную ответственность, если содержание ПОСТОВ нарушает Условия предоставления УСЛУГИ, законодательство ЛР, авторские права, права на хозяйственные и товарные знаки.</p>
-                    <p>Размещая ПОСТ, ПОЛЬЗОВАТЕЛЬ соглашается с Условиями предоставления УСЛУГ.</p>
+                    <div class="terms-title">2. Регистрация пользователя</div>
+                    <p><b>2.1.</b> Для размещения объявлений пользователь обязан зарегистрировать учетную запись.</p>
+                    <p><b>2.2.</b> При регистрации пользователь обязан указывать достоверные сведения.</p>
+                    <p><b>2.3.</b> Запрещается:</p>
+                    <ul>
+                        <li>использовать чужие данные;</li>
+                        <li>создавать аккаунты для обхода блокировок;</li>
+                        <li>передавать доступ к аккаунту третьим лицам.</li>
+                    </ul>
+                    <p><b>2.4.</b> Пользователь несёт полную ответственность за действия, совершённые через его аккаунт.</p>
                 </div>
 
                 <div class="terms-section">
-                    <div class="terms-title">2. Обязательства ПОЛЬЗОВАТЕЛЯ при регистрации</div>
-                    <p>ПОЛЬЗОВАТЕЛЬ соглашается предоставить достоверную, точную, действительную и полную информацию о себе, которая запрашивается при заполнении бланка регистрации УСЛУГИ.</p>
-                    <p>ПОЛЬЗОВАТЕЛЬ обязан хранить конфиденциальность пароля и учетной записи, а также в полной мере отвечает за все действия, предпринятые с паролем или учетной записью ПОЛЬЗОВАТЕЛЯ.</p>
+                    <div class="terms-title">3. Размещение объявлений</div>
+                    <p><b>3.1.</b> Пользователь гарантирует законность размещаемой информации.</p>
+                    <p><b>3.2.</b> Каждое объявление должно:</p>
+                    <ul>
+                        <li>соответствовать выбранной категории;</li>
+                        <li>содержать достоверное описание;</li>
+                        <li>не вводить пользователей в заблуждение;</li>
+                        <li>содержать актуальную контактную информацию.</li>
+                    </ul>
+                    <p><b>3.3.</b> Фотографии должны относиться к предлагаемому товару или услуге.</p>
+                    <p><b>3.4.</b> Администрация вправе изменять категорию объявления, если оно размещено неверно.</p>
                 </div>
 
                 <div class="terms-section">
-                    <div class="terms-title">3. Правила размещения ПОСТОВ</div>
-                    <p>ПОЛЬЗОВАТЕЛЬ вправе разместить больше одного бесплатного ПОСТА единовременно: частное лицо — до 20 постов, предприятие — до 50 постов.</p>
-                    <p>ПОСТ необходимо размещать только в отведенной для него категории. В одном ПОСТЕ разрешается публиковать только один объект.</p>
-                    <p>ПОЛЬЗОВАТЕЛЬ обязуется не публиковать ПОСТЫ, содержание которых нарушает законодательство ЛР, противоречит этическим нормам, содержит ложную или вводящую в заблуждение информацию, контактные данные в тексте, маркетинговые фразы типа «Акция», «Распродажа», а также ПОСТЫ на языках, отличных от латышского, русского или английского.</p>
+                    <div class="terms-title">4. Запрещённый контент</div>
+                    <p>На Vena.lv запрещается размещать:</p>
+                    <p><b>4.1. Незаконные товары и услуги</b></p>
+                    <ul>
+                        <li>наркотические вещества;</li>
+                        <li>поддельные документы;</li>
+                        <li>украденное имущество;</li>
+                        <li>контрафактную продукцию;</li>
+                        <li>запрещённое законодательством оружие;</li>
+                        <li>вредоносное программное обеспечение.</li>
+                    </ul>
+                    <p><b>4.2. Недостоверная информация</b></p>
+                    <ul>
+                        <li>фиктивные объявления;</li>
+                        <li>объявления без намерения совершить сделку;</li>
+                        <li>ложные сведения о товаре;</li>
+                        <li>искусственное завышение характеристик.</li>
+                    </ul>
+                    <p><b>4.3. Контент, нарушающий права третьих лиц</b></p>
+                    <ul>
+                        <li>материалы, нарушающие авторские права;</li>
+                        <li>использование чужих фотографий без разрешения;</li>
+                        <li>публикация персональных данных без согласия владельца.</li>
+                    </ul>
+                    <p><b>4.4. Недопустимый контент</b></p>
+                    <ul>
+                        <li>оскорбления;</li>
+                        <li>угрозы;</li>
+                        <li>разжигание ненависти;</li>
+                        <li>дискриминация;</li>
+                        <li>экстремистские материалы;</li>
+                        <li>порнографические материалы;</li>
+                        <li>спам.</li>
+                    </ul>
                 </div>
 
                 <div class="terms-section">
-                    <div class="terms-title">4. Доставка</div>
-                    <p>Пользователи Портала могут воспользоваться услугой доставки, предоставляемой курьерскими службами. Стоимость доставки зависит от условий выбранной курьерской службы и может изменяться.</p>
-                    <p>Неиспользованную услугу доставки можно аннулировать, обратившись в администрацию Портала. Если услуга уже используется, ее отмена невозможна.</p>
+                    <div class="terms-title">5. Требования к продавцам</div>
+                    <p><b>5.1.</b> Профессиональные продавцы обязаны указывать статус предпринимателя либо юридического лица.</p>
+                    <p><b>5.2.</b> Администрация вправе запросить:</p>
+                    <ul>
+                        <li>имя и фамилию;</li>
+                        <li>адрес регистрации;</li>
+                        <li>регистрационный номер предприятия;</li>
+                        <li>номер НДС (VAT);</li>
+                        <li>документы, подтверждающие предпринимательскую деятельность.</li>
+                    </ul>
+                    <p><b>5.3.</b> Отказ от подтверждения данных может привести к ограничению публикации объявлений.</p>
                 </div>
 
                 <div class="terms-section">
-                    <div class="terms-title">5. Политика конфиденциальности</div>
-                    <p>Настоящая Политика конфиденциальности регулирует использование Vena идентифицирующей личность информации, которую Vena получает во время действий ПОЛЬЗОВАТЕЛЯ на странице и использования предлагаемой УСЛУГИ.</p>
-                    <p>Vena автоматически получает и регистрирует на своих серверах информацию из браузера ПОЛЬЗОВАТЕЛЯ, в том числе IP-адрес, cookie-файлы и запрашиваемые страницы.</p>
-                    <p>ПОЛЬЗОВАТЕЛЬ дает согласие на передачу персональной информации согласно распоряжению суда или запросам государственных учреждений в порядке, предусмотренном законодательством ЛР.</p>
-                    <p>Vena предоставляет ПОЛЬЗОВАТЕЛЮ возможность в любое время редактировать персональную информацию, связанную с УСЛУГОЙ Vena.</p>
+                    <div class="terms-title">6. Модерация объявлений</div>
+                    <p><b>6.1.</b> Все объявления могут проходить автоматическую и ручную проверку.</p>
+                    <p><b>6.2.</b> Администрация вправе:</p>
+                    <ul>
+                        <li>отказать в публикации;</li>
+                        <li>временно скрыть объявление;</li>
+                        <li>удалить объявление;</li>
+                        <li>запросить дополнительные сведения;</li>
+                        <li>ограничить доступ к аккаунту.</li>
+                    </ul>
+                    <p><b>6.3.</b> Причинами удаления могут быть:</p>
+                    <ul>
+                        <li>нарушение настоящих Правил;</li>
+                        <li>жалобы пользователей;</li>
+                        <li>признаки мошенничества;</li>
+                        <li>размещение запрещённого контента.</li>
+                    </ul>
                 </div>
 
+                <div class="terms-section">
+                    <div class="terms-title">7. Жалобы и уведомления о нарушениях</div>
+                    <p><b>7.1.</b> Любой пользователь может сообщить о нарушении через кнопку «Пожаловаться».</p>
+                    <p><b>7.2.</b> Жалоба должна содержать:</p>
+                    <ul>
+                        <li>ссылку на объявление;</li>
+                        <li>описание нарушения;</li>
+                        <li>при необходимости подтверждающие материалы.</li>
+                    </ul>
+                    <p><b>7.3.</b> Администрация рассматривает жалобы в разумный срок.</p>
+                    <p><b>7.4.</b> По результатам рассмотрения могут быть применены меры, предусмотренные настоящими Правилами.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">8. Защита от мошенничества</div>
+                    <p><b>8.1.</b> Пользователям запрещается:</p>
+                    <ul>
+                        <li>требовать предоплату без намерения выполнить обязательства;</li>
+                        <li>использовать поддельные платёжные реквизиты;</li>
+                        <li>публиковать объявления от имени третьих лиц;</li>
+                        <li>создавать фиктивные отзывы.</li>
+                    </ul>
+                    <p><b>8.2.</b> При выявлении признаков мошенничества Администрация вправе передать информацию компетентным органам.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">9. Персональные данные</div>
+                    <p><b>9.1.</b> Обработка персональных данных осуществляется в соответствии с GDPR и Политикой конфиденциальности Портала.</p>
+                    <p><b>9.2.</b> Пользователь имеет право:</p>
+                    <ul>
+                        <li>запросить копию своих данных;</li>
+                        <li>исправить данные;</li>
+                        <li>удалить данные;</li>
+                        <li>ограничить обработку;</li>
+                        <li>перенести данные;</li>
+                        <li>отозвать согласие на обработку.</li>
+                    </ul>
+                    <p><b>9.3.</b> Контактные данные пользователей могут отображаться только в объёме, необходимом для связи по объявлению.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">10. Платные услуги</div>
+                    <p><b>10.1.</b> Vena.lv может предоставлять платные услуги:</p>
+                    <ul>
+                        <li>поднятие объявлений;</li>
+                        <li>выделение цветом;</li>
+                        <li>VIP-размещение;</li>
+                        <li>рекламные баннеры;</li>
+                        <li>продвижение в поиске.</li>
+                    </ul>
+                    <p><b>10.2.</b> Стоимость услуг публикуется в соответствующем разделе сайта.</p>
+                    <p><b>10.3.</b> Оплаченные услуги считаются оказанными после активации на Vena.lv.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">11. Ответственность сторон</div>
+                    <p><b>11.1.</b> Пользователь самостоятельно отвечает за содержание размещённой информации.</p>
+                    <p><b>11.2.</b> Администрация не гарантирует:</p>
+                    <ul>
+                        <li>достоверность объявлений;</li>
+                        <li>качество товаров;</li>
+                        <li>исполнение обязательств между пользователями.</li>
+                    </ul>
+                    <p><b>11.3.</b> Все сделки заключаются исключительно между пользователями.</p>
+                    <p><b>11.4.</b> Администрация не несёт ответственности за убытки, возникшие вследствие использования Портала.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">12. Блокировка аккаунта</div>
+                    <p><b>12.1.</b> Аккаунт может быть временно или постоянно заблокирован за:</p>
+                    <ul>
+                        <li>мошенничество;</li>
+                        <li>массовый спам;</li>
+                        <li>публикацию запрещённых товаров;</li>
+                        <li>размещение ложной информации;</li>
+                        <li>обход ограничений Портала;</li>
+                        <li>систематические нарушения настоящих Правил.</li>
+                    </ul>
+                    <p><b>12.2.</b> Пользователь вправе подать апелляцию через службу поддержки.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">13. Интеллектуальная собственность</div>
+                    <p><b>13.1.</b> Пользователь сохраняет права на размещённый контент.</p>
+                    <p><b>13.2.</b> Размещая контент, пользователь предоставляет Vena.lv право использовать его для отображения, индексации, продвижения и архивирования.</p>
+                    <p><b>13.3.</b> Копирование материалов Vena.lv без разрешения правообладателя запрещено.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">14. Разрешение споров</div>
+                    <p><b>14.1.</b> Споры между пользователем и Администрацией решаются путём переговоров.</p>
+                    <p><b>14.2.</b> Если соглашение не достигнуто, спор рассматривается судом по месту регистрации владельца Vena.lv, если иное не предусмотрено обязательными нормами законодательства Европейского Союза.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">15. Контактная информация</div>
+                    <p><b>Оператор Vena.lv:</b> ____________________</p>
+                    <p><b>E-mail:</b> ____________________</p>
+                    <p><b>Телефон:</b> ____________________</p>
+                </div>
+            </div>
+
+            <!-- Latvian -->
+            <div class="info-lang-content" data-lang="lv" style="display: none;">
+                <p class="terms-intro">
+                    Spēkā stāšanās datums: __________
+                </p>
+
+                <div class="terms-section">
+                    <div class="terms-title">1. Vispārīgie noteikumi</div>
+                    <p><b>1.1.</b> Sludinājumu portāls (turpmāk – “Vena.lv”) nodrošina lietotājiem iespēju publicēt, meklēt, skatīt un apmainīties ar informāciju par precēm, pakalpojumiem, vakancēm, nekustamo īpašumu, transportu un citiem piedāvājumiem.</p>
+                    <p><b>1.2.</b> Vena.lv ir tikai informatīva platforma un nav pārdevējs, pircējs, starpnieks, aģents vai darījuma puse starp lietotājiem.</p>
+                    <p><b>1.3.</b> Izmantojot Vena.lv, lietotājs apliecina, ka ir iepazinies ar šiem Noteikumiem un apņemas tos ievērot.</p>
+                    <p><b>1.4.</b> Administrācija ir tiesīga jebkurā laikā grozīt Noteikumus. Jaunā redakcija stājas spēkā no tās publicēšanas brīža Vena.lv.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">2. Lietotāja reģistrācija</div>
+                    <p><b>2.1.</b> Lai ievietotu sludinājumus, lietotājam ir jāreģistrē lietotāja konts.</p>
+                    <p><b>2.2.</b> Reģistrācijas laikā lietotājam jānorāda patiesa un precīza informācija.</p>
+                    <p><b>2.3.</b> Ir aizliegts:</p>
+                    <ul>
+                        <li>izmantot citu personu datus;</li>
+                        <li>veidot kontus, lai apietu bloķēšanu;</li>
+                        <li>nodot piekļuvi savam kontam trešajām personām.</li>
+                    </ul>
+                    <p><b>2.4.</b> Lietotājs pilnībā atbild par visām darbībām, kas veiktas, izmantojot viņa kontu.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">3. Sludinājumu publicēšana</div>
+                    <p><b>3.1.</b> Lietotājs garantē publicētās informācijas tiesiskumu.</p>
+                    <p><b>3.2.</b> Katram sludinājumam:</p>
+                    <ul>
+                        <li>jāatbilst izvēlētajai kategorijai;</li>
+                        <li>jāietver patiesu aprakstu;</li>
+                        <li>tas nedrīkst maldināt citus lietotājus;</li>
+                        <li>tajā jānorāda aktuāla kontaktinformācija.</li>
+                    </ul>
+                    <p><b>3.3.</b> Fotogrāfijām jāattiecas uz piedāvāto preci vai pakalpojumu.</p>
+                    <p><b>3.4.</b> Administrācija ir tiesīga mainīt sludinājuma kategoriju, ja tas ievietots nepareizi.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">4. Aizliegts saturs</div>
+                    <p>Vena.lv aizliegts publicēt:</p>
+                    <p><b>4.1. Nelikumīgas preces un pakalpojumus</b></p>
+                    <ul>
+                        <li>narkotiskās vielas;</li>
+                        <li>viltotus dokumentus;</li>
+                        <li>zagtu mantu;</li>
+                        <li>kontrafakta produkciju;</li>
+                        <li>normatīvajos aktos aizliegtus ieročus;</li>
+                        <li>kaitniecisku programmatūru.</li>
+                    </ul>
+                    <p><b>4.2. Nepatiesu informāciju</b></p>
+                    <ul>
+                        <li>fiktīvus sludinājumus;</li>
+                        <li>sludinājumus bez nodoma noslēgt darījumu;</li>
+                        <li>nepatiesu informāciju par preci;</li>
+                        <li>mākslīgi pārspīlētas preču vai pakalpojumu īpašības.</li>
+                    </ul>
+                    <p><b>4.3. Saturu, kas pārkāpj trešo personu tiesības</b></p>
+                    <ul>
+                        <li>materiālus, kas pārkāpj autortiesības;</li>
+                        <li>citu personu fotogrāfiju izmantošanu bez atļaujas;</li>
+                        <li>personas datu publicēšanu bez attiecīgās personas piekrišanas.</li>
+                    </ul>
+                    <p><b>4.4. Nepieļaujamu saturu</b></p>
+                    <ul>
+                        <li>apvainojumus;</li>
+                        <li>draudus;</li>
+                        <li>naida kurināšanu;</li>
+                        <li>diskrimināciju;</li>
+                        <li>ekstrēmistiskus materiālus;</li>
+                        <li>pornogrāfiskus materiālus;</li>
+                        <li>surogātpastu (spam).</li>
+                    </ul>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">5. Prasības pārdevējiem</div>
+                    <p><b>5.1.</b> Profesionāliem pārdevējiem jānorāda komersanta vai juridiskās personas statuss.</p>
+                    <p><b>5.2.</b> Administrācija ir tiesīga pieprasīt:</p>
+                    <ul>
+                        <li>vārdu un uzvārdu;</li>
+                        <li>reģistrācijas adresi;</li>
+                        <li>uzņēmuma reģistrācijas numuru;</li>
+                        <li>PVN maksātāja numuru (VAT);</li>
+                        <li>dokumentus, kas apliecina saimniecisko darbību.</li>
+                    </ul>
+                    <p><b>5.3.</b> Atteikšanās apstiprināt datus var radīt sludinājumu publicēšanas ierobežojumus.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">6. Sludinājumu moderācija</div>
+                    <p><b>6.1.</b> Visi sludinājumi var tikt pakļauti automātiskai un manuālai pārbaudei.</p>
+                    <p><b>6.2.</b> Administrācija ir tiesīga:</p>
+                    <ul>
+                        <li>atteikt publicēšanu;</li>
+                        <li>uz laiku paslēpt sludinājumu;</li>
+                        <li>dzēst sludinājumu;</li>
+                        <li>pieprasīt papildu informāciju;</li>
+                        <li>ierobežot piekļuvi lietotāja kontam.</li>
+                    </ul>
+                    <p><b>6.3.</b> Dzēšanas iemesli var būt:</p>
+                    <ul>
+                        <li>šo Noteikumu pārkāpums;</li>
+                        <li>lietotāju sūdzības;</li>
+                        <li>krāpniecības pazīmes;</li>
+                        <li>aizliegta satura publicēšana.</li>
+                    </ul>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">7. Sūdzības un paziņojumi par pārkāpumiem</div>
+                    <p><b>7.1.</b> Jebkurš lietotājs var ziņot par pārkāpumu, izmantojot pogu “Sūdzēties”.</p>
+                    <p><b>7.2.</b> Sūdzībā jānorāda:</p>
+                    <ul>
+                        <li>saite uz sludinājumu;</li>
+                        <li>pārkāpuma apraksts;</li>
+                        <li>nepieciešamības gadījumā pierādījumi.</li>
+                    </ul>
+                    <p><b>7.3.</b> Administrācija izskata sūdzības saprātīgā termiņā.</p>
+                    <p><b>7.4.</b> Izskatīšanas rezultātā var tikt piemēroti šajos Noteikumos paredzētie pasākumi.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">8. Aizsardzība pret krāpšanu</div>
+                    <p><b>8.1.</b> Lietotājiem aizliegts:</p>
+                    <ul>
+                        <li>pieprasīt priekšapmaksu bez nodoma izpildīt saistības;</li>
+                        <li>izmantot viltotus maksājumu rekvizītus;</li>
+                        <li>publicēt sludinājumus trešo personu vārdā;</li>
+                        <li>veidot fiktīvas atsauksmes.</li>
+                    </ul>
+                    <p><b>8.2.</b> Konstatējot krāpniecības pazīmes, Administrācija ir tiesīga nodot informāciju kompetentajām iestādēm.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">9. Personas dati</div>
+                    <p><b>9.1.</b> Personas datu apstrāde tiek veikta saskaņā ar GDPR un Vena.lv Privātuma politiku.</p>
+                    <p><b>9.2.</b> Lietotājam ir tiesības:</p>
+                    <ul>
+                        <li>pieprasīt savu datu kopiju;</li>
+                        <li>labot datus;</li>
+                        <li>dzēst datus;</li>
+                        <li>ierobežot apstrādi;</li>
+                        <li>pārnest datus;</li>
+                        <li>atsaukt piekrišanu datu apstrādei.</li>
+                    </ul>
+                    <p><b>9.3.</b> Lietotāju kontaktinformācija var tikt attēlota tikai tādā apjomā, kāds nepieciešams saziņai par sludinājumu.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">10. Maksas pakalpojumi</div>
+                    <p><b>10.1.</b> Vena.lv var piedāvāt šādus maksas pakalpojumus:</p>
+                    <ul>
+                        <li>sludinājumu pacelšana augstāk sarakstā;</li>
+                        <li>izcelšana ar krāsu;</li>
+                        <li>VIP izvietošana;</li>
+                        <li>reklāmas baneri;</li>
+                        <li>pozīcijas uzlabošana meklēšanas rezultātos.</li>
+                    </ul>
+                    <p><b>10.2.</b> Pakalpojumu cenas tiek publicētas attiecīgajā vietnes sadaļā.</p>
+                    <p><b>10.3.</b> Apmaksātie pakalpojumi tiek uzskatīti par sniegtiem pēc to aktivizēšanas Vena.lv.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">11. Pušu atbildība</div>
+                    <p><b>11.1.</b> Lietotājs pats ir atbildīgs par publicētās informācijas saturu.</p>
+                    <p><b>11.2.</b> Administrācija negarantē:</p>
+                    <ul>
+                        <li>sludinājumu patiesumu;</li>
+                        <li>preču kvalitāti;</li>
+                        <li>lietotāju savstarpējo saistību izpildi.</li>
+                    </ul>
+                    <p><b>11.3.</b> Visi darījumi tiek slēgti tikai starp lietotājiem.</p>
+                    <p><b>11.4.</b> Administrācija neatbild par zaudējumiem, kas radušies Vena.lv izmantošanas rezultātā.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">12. Konta bloķēšana</div>
+                    <p><b>12.1.</b> Konts var tikt uz laiku vai pastāvīgi bloķēts par:</p>
+                    <ul>
+                        <li>krāpšanu;</li>
+                        <li>masveida surogātpastu;</li>
+                        <li>aizliegtu preču publicēšanu;</li>
+                        <li>nepatiesas informācijas ievietošanu;</li>
+                        <li>Vena.lv ierobežojumu apiešanu;</li>
+                        <li>sistemātiskiem šo Noteikumu pārkāpumiem.</li>
+                    </ul>
+                    <p><b>12.2.</b> Lietotājam ir tiesības iesniegt apelāciju klientu atbalsta dienestā.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">13. Intelektuālais īpašums</div>
+                    <p><b>13.1.</b> Lietotājs saglabā tiesības uz publicēto saturu.</p>
+                    <p><b>13.2.</b> Publicējot saturu, lietotājs piešķir Vena.lv tiesības to izmantot attēlošanai, indeksēšanai, popularizēšanai un arhivēšanai.</p>
+                    <p><b>13.3.</b> Vena.lv materiālu kopēšana bez tiesību īpašnieka atļaujas ir aizliegta.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">14. Strīdu izšķiršana</div>
+                    <p><b>14.1.</b> Strīdi starp lietotāju un Administrāciju tiek risināti pārrunu ceļā.</p>
+                    <p><b>14.2.</b> Ja vienošanās netiek panākta, strīds tiek izskatīts tiesā pēc Vena.lv īpašnieka reģistrācijas vietas, ja vien Eiropas Savienības obligātās tiesību normas nenosaka citādi.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">15. Kontaktinformācija</div>
+                    <p><b>Vena.lv operators:</b> ____________________</p>
+                    <p><b>E-pasts:</b> ____________________</p>
+                    <p><b>Tālrunis:</b> ____________________</p>
+                </div>
+            </div>
+
+            <!-- English -->
+            <div class="info-lang-content" data-lang="en" style="display: none;">
+                <p class="terms-intro">
+                    Effective Date: __________
+                </p>
+
+                <div class="terms-section">
+                    <div class="terms-title">1. General Provisions</div>
+                    <p><b>1.1.</b> The Classified Ads Portal (hereinafter referred to as the “Vena.lv”) provides users with the opportunity to publish, search, browse, and exchange information regarding goods, services, job vacancies, real estate, vehicles, and other offers.</p>
+                    <p><b>1.2.</b> The Vena.lv acts solely as an information platform and is not a seller, buyer, intermediary, agent, or party to any transaction between users.</p>
+                    <p><b>1.3.</b> By using the Vena.lv, the user confirms that they have read and agree to comply with these Terms.</p>
+                    <p><b>1.4.</b> The Administration reserves the right to amend these Terms at any time. The updated version becomes effective upon publication on the Vena.lv.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">2. User Registration</div>
+                    <p><b>2.1.</b> To post advertisements, a user must register an account.</p>
+                    <p><b>2.2.</b> During registration, the user must provide accurate information.</p>
+                    <p><b>2.3.</b> The following actions are prohibited:</p>
+                    <ul>
+                        <li>Using another person’s information;</li>
+                        <li>Creating accounts to circumvent restrictions or bans;</li>
+                        <li>Sharing account access with third parties.</li>
+                    </ul>
+                    <p><b>2.4.</b> The user bears full responsibility for all actions performed through their account.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">3. Posting Advertisements</div>
+                    <p><b>3.1.</b> The user guarantees the legality of all information they publish.</p>
+                    <p><b>3.2.</b> Each advertisement must:</p>
+                    <ul>
+                        <li>Belong to the selected category;</li>
+                        <li>Contain an accurate description;</li>
+                        <li>Not mislead users;</li>
+                        <li>Include up-to-date contact information.</li>
+                    </ul>
+                    <p><b>3.3.</b> Photos must correspond to the advertised product or service.</p>
+                    <p><b>3.4.</b> The Administration may change the category of an advertisement if it has been incorrectly assigned.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">4. Prohibited Content</div>
+                    <p>The following content is prohibited on the Vena.lv:</p>
+                    <p><b>4.1. Illegal Goods and Services</b></p>
+                    <ul>
+                        <li>Narcotic substances;</li>
+                        <li>Forged documents;</li>
+                        <li>Stolen property;</li>
+                        <li>Counterfeit products;</li>
+                        <li>Weapons prohibited by law;</li>
+                        <li>Malicious software.</li>
+                    </ul>
+                    <p><b>4.2. False or Misleading Information</b></p>
+                    <ul>
+                        <li>Fake advertisements;</li>
+                        <li>Advertisements posted without the intention of completing a transaction;</li>
+                        <li>False information about goods or services;</li>
+                        <li>Artificially exaggerated characteristics or specifications.</li>
+                    </ul>
+                    <p><b>4.3. Content Infringing Third-Party Rights</b></p>
+                    <ul>
+                        <li>Materials that violate copyright;</li>
+                        <li>Use of third-party photographs without permission;</li>
+                        <li>Publication of personal data without the owner's consent.</li>
+                    </ul>
+                    <p><b>4.4. Unacceptable Content</b></p>
+                    <ul>
+                        <li>Insults;</li>
+                        <li>Threats;</li>
+                        <li>Hate speech;</li>
+                        <li>Discrimination;</li>
+                        <li>Extremist materials;</li>
+                        <li>Pornographic content;</li>
+                        <li>Spam.</li>
+                    </ul>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">5. Requirements for Sellers</div>
+                    <p><b>5.1.</b> Professional sellers must indicate their status as a sole proprietor, business owner, or legal entity.</p>
+                    <p><b>5.2.</b> The Administration may request:</p>
+                    <ul>
+                        <li>Full name;</li>
+                        <li>Registered address;</li>
+                        <li>Company registration number;</li>
+                        <li>VAT number;</li>
+                        <li>Documents confirming business activity.</li>
+                    </ul>
+                    <p><b>5.3.</b> Failure to provide verification information may result in restrictions on posting advertisements.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">6. Advertisement Moderation</div>
+                    <p><b>6.1.</b> All advertisements may be subject to automatic and manual review.</p>
+                    <p><b>6.2.</b> The Administration reserves the right to:</p>
+                    <ul>
+                        <li>Refuse publication;</li>
+                        <li>Temporarily hide an advertisement;</li>
+                        <li>Remove an advertisement;</li>
+                        <li>Request additional information;</li>
+                        <li>Restrict access to an account.</li>
+                    </ul>
+                    <p><b>6.3.</b> Grounds for removal may include:</p>
+                    <ul>
+                        <li>Violation of these Terms;</li>
+                        <li>User complaints;</li>
+                        <li>Signs of fraud;</li>
+                        <li>Publication of prohibited content.</li>
+                    </ul>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">7. Complaints and Violation Reports</div>
+                    <p><b>7.1.</b> Any user may report a violation using the “Report” button.</p>
+                    <p><b>7.2.</b> A complaint should include:</p>
+                    <ul>
+                        <li>A link to the advertisement;</li>
+                        <li>A description of the violation;</li>
+                        <li>Supporting materials, where applicable.</li>
+                    </ul>
+                    <p><b>7.3.</b> The Administration will review complaints within a reasonable period.</p>
+                    <p><b>7.4.</b> Following review, measures provided for under these Terms may be applied.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">8. Fraud Prevention</div>
+                    <p><b>8.1.</b> Users are prohibited from:</p>
+                    <ul>
+                        <li>Requesting advance payment without the intention of fulfilling obligations;</li>
+                        <li>Using fraudulent payment details;</li>
+                        <li>Posting advertisements on behalf of third parties without authorization;</li>
+                        <li>Creating fake reviews.</li>
+                    </ul>
+                    <p><b>8.2.</b> If signs of fraud are identified, the Administration may provide relevant information to competent authorities.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">9. Personal Data</div>
+                    <p><b>9.1.</b> Personal data is processed in accordance with the GDPR and the Vena.lv’s Privacy Policy.</p>
+                    <p><b>9.2.</b> Users have the right to:</p>
+                    <ul>
+                        <li>Request a copy of their personal data;</li>
+                        <li>Correct their data;</li>
+                        <li>Delete their data;</li>
+                        <li>Restrict processing;</li>
+                        <li>Transfer their data;</li>
+                        <li>Withdraw consent for processing.</li>
+                    </ul>
+                    <p><b>9.3.</b> Users’ contact details may only be displayed to the extent necessary for communication regarding an advertisement.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">10. Paid Services</div>
+                    <p><b>10.1.</b> The Vena.lv may offer paid services, including:</p>
+                    <ul>
+                        <li>Advertisement boosting;</li>
+                        <li>Highlighting advertisements with color;</li>
+                        <li>VIP placement;</li>
+                        <li>Advertising banners;</li>
+                        <li>Search promotion.</li>
+                    </ul>
+                    <p><b>10.2.</b> Service fees are published in the relevant section of the website.</p>
+                    <p><b>10.3.</b> Paid services are deemed provided once activated on the Vena.lv.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">11. Liability</div>
+                    <p><b>11.1.</b> Users are solely responsible for the content they publish.</p>
+                    <p><b>11.2.</b> The Administration does not guarantee:</p>
+                    <ul>
+                        <li>The accuracy of advertisements;</li>
+                        <li>The quality of goods or services;</li>
+                        <li>Performance of obligations between users.</li>
+                    </ul>
+                    <p><b>11.3.</b> All transactions are concluded directly between users.</p>
+                    <p><b>11.4.</b> The Administration shall not be liable for any losses arising from the use of the Vena.lv.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">12. Account Suspension</div>
+                    <p><b>12.1.</b> An account may be temporarily or permanently suspended for:</p>
+                    <ul>
+                        <li>Fraud;</li>
+                        <li>Mass spam activity;</li>
+                        <li>Publishing prohibited goods;</li>
+                        <li>Posting false information;</li>
+                        <li>Circumventing Vena.lv restrictions;</li>
+                        <li>Repeated violations of these Terms.</li>
+                    </ul>
+                    <p><b>12.2.</b> Users may appeal a suspension through customer support.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">13. Intellectual Property</div>
+                    <p><b>13.1.</b> Users retain ownership of the content they publish.</p>
+                    <p><b>13.2.</b> By publishing content, users grant the Vena.lv the right to use it for display, indexing, promotion, and archiving purposes.</p>
+                    <p><b>13.3.</b> Copying Vena.lv materials without the copyright holder’s permission is prohibited.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">14. Dispute Resolution</div>
+                    <p><b>14.1.</b> Disputes between a user and the Administration shall first be resolved through negotiations.</p>
+                    <p><b>14.2.</b> If no agreement is reached, the dispute shall be submitted to the court at the place of registration of the Portal owner, unless otherwise required by mandatory provisions of European Union law.</p>
+                </div>
+
+                <div class="terms-section">
+                    <div class="terms-title">15. Contact Information</div>
+                    <p><b>Vena.lv Operator:</b> ____________________</p>
+                    <p><b>E-mail:</b> ____________________</p>
+                    <p><b>Phone:</b> ____________________</p>
+                </div>
             </div>
         </div>
     </div>

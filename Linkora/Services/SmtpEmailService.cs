@@ -52,14 +52,14 @@ namespace Linkora.Services
 </head>
 <body>
   <div class=""wrap"">
-    <div class=""header""><h1>Linkora</h1></div>
+    <div class=""header""><h1>Vena</h1></div>
     <div class=""body"">
       <p>Hello, <strong>{username}</strong>!</p>
       <p>Click the button below to confirm your email address and complete registration.</p>
       <a class=""btn"" href=""{confirmUrl}"">Confirm email</a>
       <p class=""note"">If the button does not work, copy this link into your browser:</p>
       <p class=""link"">{confirmUrl}</p>
-      <p class=""note"">The link expires in 24 hours. If you did not register on Linkora, ignore this email.</p>
+      <p class=""note"">The link expires in 24 hours. If you did not register on Vena, ignore this email.</p>
     </div>
   </div>
 </body>
@@ -68,7 +68,7 @@ namespace Linkora.Services
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(fromName, user));
             message.To.Add(new MailboxAddress(toEmail, toEmail));
-            message.Subject = "Confirm your Linkora account";
+            message.Subject = "Confirm your Vena account";
 
             var bodyBuilder = new BodyBuilder
             {
