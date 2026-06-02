@@ -16,7 +16,10 @@
 const TRANSLATIONS = {
     en: {
         'btn_close': 'Close',
-
+        "support_name_ph": "Your name",
+        "support_email_ph": "Email",
+        "support_phone_ph": "Phone (optional)",
+        "support_message_ph": "Describe the error",
         // ── Header ──
         'all_categories': 'All categories',
         'search_btn': 'Search',
@@ -211,7 +214,10 @@ const TRANSLATIONS = {
 
     lv: {
         'btn_close': 'Aizvērt',
-
+        "support_name_ph": "Jūsu vārds",
+        "support_email_ph": "E-pasts",
+        "support_phone_ph": "Tālrunis (nav obligāti)",
+        "support_message_ph": "Aprakstiet kļūdu",
         // ── Header ──
         'all_categories': 'Visas kategorijas',
         'search_btn': 'Meklēt',
@@ -406,7 +412,10 @@ const TRANSLATIONS = {
 
     ru: {
         'btn_close': 'Закрыть',
-
+        "support_name_ph": "Ваше имя",
+        "support_email_ph": "Email",
+        "support_phone_ph": "Телефон (необязательно)",
+        "support_message_ph": "Опишите ошибку",
         // ── Header ──
         'all_categories': 'Все категории',
         'search_btn': 'Поиск',

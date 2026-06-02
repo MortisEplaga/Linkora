@@ -204,11 +204,12 @@
                 <a href="#" onclick="openFaqModal(); return false;" class="footer-link">FAQ</a>
                 <span class="footer-sep">·</span>
                 <a href="#" onclick="openTermsModal(); return false;" class="footer-link">Terms of use</a>
+                <span class="footer-sep">·</span>
+                <a href="#" onclick="openSupportModal(); return false;" class="footer-link">Support</a>
             </div>
             <div class="footer-copy">© 2026 Vena</div>
         </div>
     </footer>
-
     <div class="modal-overlay" id="faqOverlay" onclick="closeFaqModal()"></div>
     <div class="modal info-modal" id="faqModal">
         <button class="modal-close" onclick="closeFaqModal()">✕</button>
@@ -1044,7 +1045,58 @@
             </div>
         </div>
     </div>
+    <!-- Support Modal -->
+    <div class="modal-overlay" id="supportOverlay" onclick="closeSupportModal()"></div>
+    <div class="modal info-modal" id="supportModal">
+        <button class="modal-close" onclick="closeSupportModal()">✕</button>
+        <h2 class="info-modal-title" id="supportTitle">Technical Support</h2>
 
+        <div class="info-modal-lang-tabs">
+            <button class="info-lang-btn active" onclick="switchSupportLang('ru', this)">RU</button>
+            <button class="info-lang-btn" onclick="switchSupportLang('lv', this)">LV</button>
+            <button class="info-lang-btn" onclick="switchSupportLang('en', this)">EN</button>
+        </div>
+
+        <div class="info-modal-body">
+            <div class="info-lang-content" data-lang="ru">
+                <p>Техническое обслуживание и техническая поддержка этого сайта обеспечивается командой vena.lv. Не стесняйтесь, свяжитесь с нами, если Вы нашли ошибку.</p>
+            </div>
+            <div class="info-lang-content" data-lang="lv" style="display:none">
+                <p>Šīs vietnes tehnisko uzturēšanu un atbalstu nodrošina vena.lv komanda. Ja pamanāt kļūdu, lūdzu, sazinieties ar mums.</p>
+            </div>
+            <div class="info-lang-content" data-lang="en" style="display:none">
+                <p>Technical maintenance and support for this website are provided by the vena.lv team. Please don't hesitate to contact us if you find an error or issue.</p>
+            </div>
+
+            <form id="supportForm" onsubmit="submitSupportForm(event)" style="margin-top:20px;">
+                <input type="hidden" id="supportAfToken" />
+                <div class="auth-field">
+                    <input type="text" class="auth-input" id="supportName"
+                           data-i18n="support_name_ph"
+                           data-i18n-placeholder="support_name_ph" required />
+                </div>
+                <div class="auth-field">
+                    <input type="email" class="auth-input" id="supportEmail"
+                           data-i18n="support_email_ph"
+                           data-i18n-placeholder="support_email_ph" required />
+                </div>
+                <div class="auth-field">
+                    <input type="tel" class="auth-input" id="supportPhone"
+                           data-i18n="support_phone_ph"
+                           data-i18n-placeholder="support_phone_ph" />
+                </div>
+                <div class="auth-field">
+                    <textarea class="auth-input" id="supportMessage" rows="4"
+                              placeholder="Describe the error"
+                              required
+                              style="resize:vertical;"></textarea>
+                </div>
+                <div id="supportError" class="auth-error" style="display:none"></div>
+                <div id="supportSuccess" style="display:none;color:green;margin-bottom:10px;"></div>
+                <button type="submit" class="auth-submit">Send</button>
+            </form>
+        </div>
+    </div>
     <script src="~/js/catmenu.js"></script>
     @await RenderSectionAsync("Scripts", required: false)
     <script>
@@ -1337,6 +1389,136 @@
                     } catch {}
                 })();
                 </text>
+        }
+        let currentSupportLang = 'en';
+
+                // ── Support Modal ──
+        function openSupportModal() {
+            document.getElementById('supportAfToken').value = document.getElementById('afToken').value;
+            document.getElementById('supportError').style.display = 'none';
+            document.getElementById('supportSuccess').style.display = 'none';
+            document.getElementById('supportForm').reset();
+
+            const activeBtn = document.querySelector(`#supportModal .info-lang-btn[onclick*="${currentSupportLang}"]`);
+            if (activeBtn) {
+                switchSupportLang(currentSupportLang, activeBtn);
+            } else {
+                const defaultBtn = document.querySelector('#supportModal .info-lang-btn:last-child');
+                if (defaultBtn) switchSupportLang('en', defaultBtn);
+            }
+
+            document.getElementById('supportOverlay').classList.add('modal-open');
+            document.getElementById('supportModal').classList.add('modal-open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function switchSupportLang(lang, btn) {
+            currentSupportLang = lang;  
+
+            const modal = document.getElementById('supportModal');
+            modal.querySelectorAll('.info-lang-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            modal.querySelectorAll('.info-lang-content').forEach(el => {
+                el.style.display = el.dataset.lang === lang ? '' : 'none';
+            });
+
+            const translations = {
+                ru: {
+                    support_name_ph: 'Ваше имя',
+                    support_email_ph: 'Email',
+                    support_phone_ph: 'Телефон (необязательно)',
+                    support_message_ph: 'Опишите ошибку',
+                    support_send_btn: 'Отправить',
+                    support_error_default: 'Пожалуйста, заполните все обязательные поля.',
+                    support_success_default: 'Спасибо! Ваше сообщение отправлено.'
+                },
+                lv: {
+                    support_name_ph: 'Jūsu vārds',
+                    support_email_ph: 'E-pasts',
+                    support_phone_ph: 'Tālrunis (nav obligāti)',
+                    support_message_ph: 'Aprakstiet kļūdu',
+                    support_send_btn: 'Sūtīt',
+                    support_error_default: 'Lūdzu, aizpildiet visus obligātos laukus.',
+                    support_success_default: 'Paldies! Jūsu ziņa ir nosūtīta.'
+                },
+                en: {
+                    support_name_ph: 'Your name',
+                    support_email_ph: 'Email',
+                    support_phone_ph: 'Phone (optional)',
+                    support_message_ph: 'Describe the error',
+                    support_send_btn: 'Send',
+                    support_error_default: 'Please fill all required fields.',
+                    support_success_default: 'Thank you! Your message has been sent.'
+                }
+            };
+
+            const t = translations[lang] || translations.en;
+
+            const nameEl = document.getElementById('supportName');
+            const emailEl = document.getElementById('supportEmail');
+            const phoneEl = document.getElementById('supportPhone');
+            const messageEl = document.getElementById('supportMessage');
+            if (nameEl) nameEl.placeholder = t.support_name_ph;
+            if (emailEl) emailEl.placeholder = t.support_email_ph;
+            if (phoneEl) phoneEl.placeholder = t.support_phone_ph;
+            if (messageEl) messageEl.placeholder = t.support_message_ph;
+
+            const submitBtn = modal.querySelector('.auth-submit');
+            if (submitBtn) submitBtn.textContent = t.support_send_btn;
+
+            modal.querySelectorAll('[data-support-i18n]').forEach(el => {
+                const key = el.getAttribute('data-support-i18n');
+                if (translations[lang] && translations[lang][key] !== undefined) {
+                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                        el.placeholder = translations[lang][key];
+                    } else {
+                        el.innerText = translations[lang][key];
+                    }
+                }
+            });
+        }
+                async function submitSupportForm(event) {
+            event.preventDefault();
+            const errorEl = document.getElementById('supportError');
+            const successEl = document.getElementById('supportSuccess');
+            errorEl.style.display = 'none';
+            successEl.style.display = 'none';
+
+            const payload = {
+                name: document.getElementById('supportName').value.trim(),
+                email: document.getElementById('supportEmail').value.trim(),
+                phone: document.getElementById('supportPhone').value.trim(),
+                message: document.getElementById('supportMessage').value.trim()
+            };
+
+            if (!payload.name || !payload.email || !payload.message) {
+                errorEl.textContent = 'Please fill all required fields (name, email, message).';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            try {
+        const res = await fetch('/api/support/contact', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.getElementById('supportAfToken').value
+            },
+            body: JSON.stringify(payload)
+        });
+
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(text || 'Request failed');
+                }
+
+                successEl.textContent = 'Thank you! Your message has been sent.';
+                successEl.style.display = 'block';
+                document.getElementById('supportForm').reset();
+            } catch (err) {
+                errorEl.textContent = err.message || 'An error occurred. Please try again later.';
+                errorEl.style.display = 'block';
+            }
         }
     </script>
 
