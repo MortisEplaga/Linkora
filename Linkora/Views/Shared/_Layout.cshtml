@@ -8,13 +8,22 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Linkora.styles.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/header.css" />
-    <link rel="stylesheet" href="~/css/category.css" />
+    <link rel="stylesheet" href="~/css/Header.css" />
+    <link rel="stylesheet" href="~/css/Category.css" />
     <link rel="stylesheet" href="~/css/catmenu.css" />
     <link rel="stylesheet" href="~/css/create.css" />
     <link rel="stylesheet" href="~/css/auth.css" />
     <link rel="stylesheet" href="~/css/seller.css" />
     <link rel="stylesheet" href="~/css/Subscription.css" />
+    <link rel="stylesheet" href="~/css/Messages.css" />
+    <link rel="stylesheet" href="~/css/myads.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/favourite.css" />
+    <link rel="stylesheet" href="~/css/details.css" />
+    <link rel="stylesheet" href="~/css/Compare.css" />
+    <link rel="stylesheet" href="~/css/admin.css" />
+
+
 
     @await RenderSectionAsync("Styles", required: false)
     <!-- i18n must load before body renders to avoid flash -->
@@ -1393,6 +1402,11 @@
         let currentSupportLang = 'en';
 
                 // ── Support Modal ──
+                function closeSupportModal() {
+            document.getElementById('supportOverlay').classList.remove('modal-open');
+            document.getElementById('supportModal').classList.remove('modal-open');
+            document.body.style.overflow = '';
+        }
         function openSupportModal() {
             document.getElementById('supportAfToken').value = document.getElementById('afToken').value;
             document.getElementById('supportError').style.display = 'none';
