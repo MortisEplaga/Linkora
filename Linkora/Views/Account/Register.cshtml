@@ -26,6 +26,13 @@
                     <path fill="none" d="M0 0h48v48H0z" />
                 </svg>
             </a>
+            <a class="auth-social auth-social-facebook" href="javascript:void(0);"
+               onclick="loginWithFacebook('@Context.Request.Query["returnUrl"]')"
+               title="Sign in with Facebook">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877f2">
+                    <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879v-6.99h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.99C18.343 21.128 22 16.991 22 12z" />
+                </svg>
+            </a>
         </div>
         <div class="auth-divider"><span>or</span></div>
 
@@ -125,5 +132,58 @@
 
     function toggle(id, ok) {
         document.getElementById(id)?.classList.toggle('auth-rule-ok', ok);
+    }
+</script>
+<script>
+    window.fbAsyncInit = function() {
+      FB.init({
+        appId      : '837576922674717',
+        cookie     : true,
+        xfbml      : true,
+        version    : 'v25.0'
+      });
+
+      FB.AppEvents.logPageView();
+
+    };
+
+    (function(d, s, id){
+       var js, fjs = d.getElementsByTagName(s)[0];
+       if (d.getElementById(id)) {return;}
+       js = d.createElement(s); js.id = id;
+       js.src = "https://connect.facebook.net/en_US/sdk.js";
+       fjs.parentNode.insertBefore(js, fjs);
+     }(document, 'script', 'facebook-jssdk'));
+         function loginWithFacebook(returnUrl) {
+        FB.login(function(response) {
+            if (response.authResponse) {
+                const accessToken = response.authResponse.accessToken;
+                fetch('/Account/FacebookLogin', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.getElementById('afToken')?.value || ''
+                    },
+                    body: JSON.stringify({
+                        accessToken: accessToken,
+                        returnUrl: returnUrl || window.location.pathname
+                    })
+                })
+                .then(res => {
+                    if (res.ok) {
+                        const url = res.url || returnUrl;
+                        window.location.href = url || '/';
+                    } else {
+                        return res.text().then(err => { throw new Error(err) });
+                    }
+                })
+                .catch(err => {
+                    console.error('Facebook login failed', err);
+                    alert('Ошибка входа через Facebook. Попробуйте позже.');
+                });
+            } else {
+                console.log('Пользователь отменил вход');
+            }
+        }, { scope: 'public_profile,email' });
     }
 </script>

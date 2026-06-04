@@ -146,5 +146,63 @@ namespace Linkora.Repositories
             cmd.Parameters.AddWithValue("@T", token);
             await cmd.ExecuteNonQueryAsync();
         }
+        public async Task<int> CreateExternalUserAsync(User user)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(@"
+        INSERT INTO Users (UserName, Email, Role, PasswordHash, AvatarImagePath, EmailConfirmed, IsCompany, ConfirmationToken)
+        OUTPUT INSERTED.Id
+        VALUES (@U, @E, 'user', NULL, @A, @EC, @IC, NULL)", conn);
+            cmd.Parameters.AddWithValue("@U", user.UserName);
+            cmd.Parameters.AddWithValue("@E", (object?)user.Email ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@A", (object?)user.AvatarImagePath ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@EC", user.EmailConfirmed);
+            cmd.Parameters.AddWithValue("@IC", user.IsCompany);
+            return (int)(await cmd.ExecuteScalarAsync())!;
+        }
+        public async Task<User?> GetByFacebookIdAsync(string facebookId)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(
+                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed, IsCompany, FacebookId FROM Users WHERE FacebookId = @FbId", conn);
+            cmd.Parameters.AddWithValue("@FbId", facebookId);
+            await using var r = await cmd.ExecuteReaderAsync();
+            return await r.ReadAsync() ? MapRow(r) : null;
+        }
+
+        public async Task UpdateFacebookIdAsync(int userId, string facebookId)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(
+                "UPDATE Users SET FacebookId = @FbId WHERE Id = @Id", conn);
+            cmd.Parameters.AddWithValue("@FbId", facebookId);
+            cmd.Parameters.AddWithValue("@Id", userId);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        public async Task MarkForDeletionAsync(int userId, string deletionRequestCode)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(
+                "UPDATE Users SET DeletionRequestCode = @Code, DeletionRequestedAt = GETUTCDATE() WHERE Id = @Id", conn);
+            cmd.Parameters.AddWithValue("@Code", deletionRequestCode);
+            cmd.Parameters.AddWithValue("@Id", userId);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        public async Task<User?> GetByDeletionCodeAsync(string code)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(
+                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed, IsCompany, FacebookId FROM Users WHERE DeletionRequestCode = @Code", conn);
+            cmd.Parameters.AddWithValue("@Code", code);
+            await using var r = await cmd.ExecuteReaderAsync();
+            return await r.ReadAsync() ? MapRow(r) : null;
+        }
     }
 }

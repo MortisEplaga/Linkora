@@ -65,7 +65,10 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
-
+app.MapControllerRoute(
+    name: "terms",
+    pattern: "terms",
+    defaults: new { controller = "Home", action = "Terms" });
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 

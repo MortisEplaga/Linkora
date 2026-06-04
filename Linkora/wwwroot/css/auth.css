@@ -1,4 +1,17 @@
-﻿.auth-social-google {
+﻿.auth-social {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    text-decoration: none;
+    line-height: 1;
+}
+
+.auth-social-facebook {
+    padding: 0;
+}
+.auth-social-google {
     display: flex;
     align-items: center;
     justify-content: center;

@@ -2,6 +2,7 @@
 using Linkora.Repositories;
 using Linkora.Services;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -260,6 +261,147 @@ namespace Linkora.Controllers
             }
             var result = sb.ToString().Trim('_');
             return string.IsNullOrEmpty(result) ? "user" : result;
+        }
+        [HttpPost]
+        [Route("Account/FacebookLogin")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> FacebookLogin([FromBody] FacebookLoginModel model)
+        {
+            var returnUrl = model.ReturnUrl ?? Url.Content("~/");
+            if (string.IsNullOrEmpty(model.AccessToken))
+                return BadRequest("Access token required");
+
+            using var http = new HttpClient();
+            var graphUrl = $"https://graph.facebook.com/me?fields=id,name,email&access_token={model.AccessToken}";
+            var response = await http.GetAsync(graphUrl);
+            if (!response.IsSuccessStatusCode)
+                return BadRequest("Invalid Facebook token");
+
+            var fbUser = await response.Content.ReadFromJsonAsync<FacebookUserInfo>();
+            if (fbUser == null || string.IsNullOrEmpty(fbUser.Id))
+                return BadRequest("Could not retrieve user info");
+
+            User? user = null;
+
+            if (!string.IsNullOrEmpty(fbUser.Email))
+                user = await _userRepository.GetByEmailAsync(fbUser.Email);
+
+            if (user == null)
+            {
+                string baseName;
+                if (!string.IsNullOrEmpty(fbUser.Email))
+                    baseName = fbUser.Email.Split('@')[0];
+                else
+                    baseName = $"fb_{fbUser.Id}";
+                baseName = SanitizeUsername(fbUser.Name ?? baseName);
+                var username = await _userRepository.EnsureUniqueUsernameAsync(baseName);
+
+                var avatarUrl = $"https://graph.facebook.com/{fbUser.Id}/picture?type=large";
+
+                user = new User
+                {
+                    UserName = username,
+                    Email = !string.IsNullOrEmpty(fbUser.Email) ? fbUser.Email : null,
+                    EmailConfirmed = !string.IsNullOrEmpty(fbUser.Email), 
+                    AvatarImagePath = avatarUrl,
+                    IsCompany = false,
+                };
+
+                await _userRepository.CreateExternalUserAsync(user);
+
+                user = await _userRepository.GetByEmailAsync(user.Email) ?? await _userRepository.GetByUsernameAsync(username);
+                if (user == null)
+                    return BadRequest("Failed to create user");
+            }
+            else
+            {
+                if (string.IsNullOrEmpty(user.AvatarImagePath))
+                {
+                    var avatarUrl = $"https://graph.facebook.com/{fbUser.Id}/picture?type=large";
+                    await _userRepository.UpdateAvatarAsync(user.Id, avatarUrl);
+                    user.AvatarImagePath = avatarUrl;
+                }
+            }
+            if (string.IsNullOrEmpty(user.FacebookId))
+            {
+                await _userRepository.UpdateFacebookIdAsync(user.Id, fbUser.Id);
+                user.FacebookId = fbUser.Id;
+            }
+            await SignInAsync(user);
+            return LocalRedirect(returnUrl);
+        }
+        [HttpPost]
+        [Route("Account/FacebookDataDeletion")]
+        public async Task<IActionResult> FacebookDataDeletion()
+        {
+            var form = await Request.ReadFormAsync();
+            var signedRequest = form["signed_request"].FirstOrDefault();
+            if (string.IsNullOrEmpty(signedRequest))
+                return BadRequest("Missing signed_request");
+
+            var facebookUserId = DecodeSignedRequest(signedRequest);
+            if (string.IsNullOrEmpty(facebookUserId))
+                return BadRequest("Invalid signed_request");
+
+            var user = await _userRepository.GetByFacebookIdAsync(facebookUserId);
+            if (user == null)
+            {
+                return Ok(new { url = Url.Action("DeletionStatus", "Account", new { code = "not_found" }, Request.Scheme), confirmation_code = "not_found" });
+            }
+
+            var confirmationCode = Guid.NewGuid().ToString("N");
+
+            await _userRepository.MarkForDeletionAsync(user.Id, confirmationCode);
+
+            var statusUrl = Url.Action("DeletionStatus", "Account", new { code = confirmationCode }, Request.Scheme);
+
+            return Ok(new { url = statusUrl, confirmation_code = confirmationCode });
+        }
+
+        private string DecodeSignedRequest(string signedRequest)
+        {
+            try
+            {
+                var parts = signedRequest.Split('.');
+                if (parts.Length != 2) return null;
+
+                var payload = parts[1];
+                payload = payload.Replace('-', '+').Replace('_', '/');
+                while (payload.Length % 4 != 0) payload += "=";
+                var jsonBytes = Convert.FromBase64String(payload);
+                var json = System.Text.Encoding.UTF8.GetString(jsonBytes);
+
+                var data = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(json);
+                if (data != null && data.TryGetValue("user_id", out var userId))
+                    return userId.ToString();
+            }
+            catch { }
+            return null;
+        }
+
+        [HttpGet]
+        [Route("Account/DeletionStatus")]
+        public async Task<IActionResult> DeletionStatus(string code)
+        {
+            if (string.IsNullOrEmpty(code))
+                return BadRequest();
+
+            if (code == "not_found")
+            {
+                ViewBag.Message = "No data associated with this request.";
+                return View();
+            }
+
+            var user = await _userRepository.GetByDeletionCodeAsync(code);
+            if (user == null)
+            {
+                ViewBag.Message = "Invalid or expired request code.";
+                return View();
+            }
+
+            ViewBag.Message = $"Your data deletion request for user '{user.UserName}' has been received and will be processed within 30 days.";
+
+            return View();
         }
     }
 }

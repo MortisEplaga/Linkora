@@ -2,6 +2,8 @@
     border-top: 1px solid #e5e5e5;
     background: #fff;
     margin-top: 40px;
+    align-items: center;
+    padding: 10px;
 }
 
 .footer-inner {
@@ -19,27 +21,30 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    justify-content: center;
 }
 
 .footer-link {
     font-size: 13px;
-    color: #666;
+    color: #6c757d !important;
     text-decoration: none;
     transition: color 0.15s;
 }
 
     .footer-link:hover {
-        color: #1a1a1a;
+        color: #00b0a3 !important;
     }
 
 .footer-sep {
-    color: #ccc;
+    color: #6c757d;
     font-size: 12px;
 }
 
 .footer-copy {
     font-size: 13px;
-    color: #aaa;
+    color: #6c757d;
+    text-align: center;
+    padding: 10px;
 }
 
 /* ── Info modal (FAQ / Terms) ── */
@@ -1218,7 +1223,6 @@ body {
         text-decoration: underline;
     }
 
-Нет стилей для .modal и .modal-overlay с классом .open. Добавьте в site.css:
 css.modal-overlay {
     display: none;
     position: fixed;

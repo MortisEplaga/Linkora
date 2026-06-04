@@ -8,5 +8,9 @@ namespace Linkora.Controllers
         {
             return RedirectToAction("Index", "Category", new { id = 3711 });
         }
+        public IActionResult Terms()
+        {
+            return View();
+        }
     }
 }

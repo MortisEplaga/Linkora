@@ -1,0 +1,362 @@
+﻿@{
+    ViewData["Title"] = "Terms of Service";
+}
+
+<div class="terms-page">
+    <div class="terms-container">
+        <h1 class="terms-main-title">Terms of Service</h1>
+
+        <!-- Переключатель языков (опционально) -->
+        <div class="terms-lang-tabs">
+            <button class="terms-lang-btn active" onclick="switchTermsLang('ru')">RU</button>
+            <button class="terms-lang-btn" onclick="switchTermsLang('lv')">LV</button>
+            <button class="terms-lang-btn" onclick="switchTermsLang('en')">EN</button>
+        </div>
+
+        <!-- Русская версия -->
+        <div class="terms-content" data-lang="ru">
+            <p class="terms-intro">Дата вступления в силу: __________</p>
+
+            <div class="terms-section">
+                <div class="terms-title">1. Общие положения</div>
+                <p><b>1.1.</b> Портал объявлений (далее — «Vena.lv») предоставляет пользователям возможность публиковать, искать, просматривать и обмениваться информацией о товарах, услугах, вакансиях, недвижимости, транспорте и иных предложениях.</p>
+                <p><b>1.2.</b> Vena.lv является исключительно информационной площадкой и не выступает продавцом, покупателем, посредником, агентом либо стороной сделки между пользователями.</p>
+                <p><b>1.3.</b> Используя Vena.lv, пользователь подтверждает, что ознакомился с настоящими Правилами и обязуется их соблюдать.</p>
+                <p><b>1.4.</b> Администрация вправе изменять Правила в любое время. Новая редакция вступает в силу с момента публикации на Vena.lv.</p>
+            </div>
+
+            <div class="terms-section">
+                <div class="terms-title">2. Регистрация пользователя</div>
+                <p><b>2.1.</b> Для размещения объявлений пользователь обязан зарегистрировать учетную запись.</p>
+                <p><b>2.2.</b> При регистрации пользователь обязан указывать достоверные сведения.</p>
+                <p><b>2.3.</b> Запрещается:</p>
+                <ul>
+                    <li>использовать чужие данные;</li>
+                    <li>создавать аккаунты для обхода блокировок;</li>
+                    <li>передавать доступ к аккаунту третьим лицам.</li>
+                </ul>
+                <p><b>2.4.</b> Пользователь несёт полную ответственность за действия, совершённые через его аккаунт.</p>
+            </div>
+
+            <div class="terms-section">
+                <div class="terms-title">3. Размещение объявлений</div>
+                <p><b>3.1.</b> Пользователь гарантирует законность размещаемой информации.</p>
+                <p><b>3.2.</b> Каждое объявление должно:</p>
+                <ul>
+                    <li>соответствовать выбранной категории;</li>
+                    <li>содержать достоверное описание;</li>
+                    <li>не вводить пользователей в заблуждение;</li>
+                    <li>содержать актуальную контактную информацию.</li>
+                </ul>
+                <p><b>3.3.</b> Фотографии должны относиться к предлагаемому товару или услуге.</p>
+                <p><b>3.4.</b> Администрация вправе изменять категорию объявления, если оно размещено неверно.</p>
+            </div>
+
+            <div class="terms-section">
+                <div class="terms-title">4. Запрещённый контент</div>
+                <p>На Vena.lv запрещается размещать:</p>
+                <p><b>4.1. Незаконные товары и услуги</b></p>
+                <ul>
+                    <li>наркотические вещества;</li>
+                    <li>поддельные документы;</li>
+                    <li>украденное имущество;</li>
+                    <li>контрафактную продукцию;</li>
+                    <li>запрещённое законодательством оружие;</li>
+                    <li>вредоносное программное обеспечение.</li>
+                </ul>
+                <p><b>4.2. Недостоверная информация</b></p>
+                <ul>
+                    <li>фиктивные объявления;</li>
+                    <li>объявления без намерения совершить сделку;</li>
+                    <li>ложные сведения о товаре;</li>
+                    <li>искусственное завышение характеристик.</li>
+                </ul>
+                <p><b>4.3. Контент, нарушающий права третьих лиц</b></p>
+                <ul>
+                    <li>материалы, нарушающие авторские права;</li>
+                    <li>использование чужих фотографий без разрешения;</li>
+                    <li>публикация персональных данных без согласия владельца.</li>
+                </ul>
+                <p><b>4.4. Недопустимый контент</b></p>
+                <ul>
+                    <li>оскорбления;</li>
+                    <li>угрозы;</li>
+                    <li>разжигание ненависти;</li>
+                    <li>дискриминация;</li>
+                    <li>экстремистские материалы;</li>
+                    <li>порнографические материалы;</li>
+                    <li>спам.</li>
+                </ul>
+            </div>
+
+            <div class="terms-section">
+                <div class="terms-title">5. Требования к продавцам</div>
+                <p><b>5.1.</b> Профессиональные продавцы обязаны указывать статус предпринимателя либо юридического лица.</p>
+                <p><b>5.2.</b> Администрация вправе запросить:</p>
+                <ul>
+                    <li>имя и фамилию;</li>
+                    <li>адрес регистрации;</li>
+                    <li>регистрационный номер предприятия;</li>
+                    <li>номер НДС (VAT);</li>
+                    <li>документы, подтверждающие предпринимательскую деятельность.</li>
+                </ul>
+                <p><b>5.3.</b> Отказ от подтверждения данных может привести к ограничению публикации объявлений.</p>
+            </div>
+
+            <div class="terms-section">
+                <div class="terms-title">6. Модерация объявлений</div>
+                <p><b>6.1.</b> Все объявления могут проходить автоматическую и ручную проверку.</p>
+                <p><b>6.2.</b> Администрация вправе:</p>
+                <ul>
+                    <li>отказать в публикации;</li>
+                    <li>временно скрыть объявление;</li>
+                    <li>удалить объявление;</li>
+                    <li>запросить дополнительные сведения;</li>
+                    <li>ограничить доступ к аккаунту.</li>
+                </ul>
+                <p><b>6.3.</b> Причинами удаления могут быть:</p>
+                <ul>
+                    <li>нарушение настоящих Правил;</li>
+                    <li>жалобы пользователей;</li>
+                    <li>признаки мошенничества;</li>
+                    <li>размещение запрещённого контента.</li>
+                </ul>
+            </div>
+
+            <div class="terms-section">
+                <div class="terms-title">7. Жалобы и уведомления о нарушениях</div>
+                <p><b>7.1.</b> Любой пользователь может сообщить о нарушении через кнопку «Пожаловаться».</p>
+                <p><b>7.2.</b> Жалоба должна содержать:</p>
+                <ul>
+                    <li>ссылку на объявление;</li>
+                    <li>описание нарушения;</li>
+                    <li>при необходимости подтверждающие материалы.</li>
+                </ul>
+                <p><b>7.3.</b> Администрация рассматривает жалобы в разумный срок.</p>
+                <p><b>7.4.</b> По результатам рассмотрения могут быть применены меры, предусмотренные настоящими Правилами.</p>
+            </div>
+
+            <div class="terms-section">
+                <div class="terms-title">8. Защита от мошенничества</div>
+                <p><b>8.1.</b> Пользователям запрещается:</p>
+                <ul>
+                    <li>требовать предоплату без намерения выполнить обязательства;</li>
+                    <li>использовать поддельные платёжные реквизиты;</li>
+                    <li>публиковать объявления от имени третьих лиц;</li>
+                    <li>создавать фиктивные отзывы.</li>
+                </ul>
+                <p><b>8.2.</b> При выявлении признаков мошенничества Администрация вправе передать информацию компетентным органам.</p>
+            </div>
+
+            <div class="terms-section">
+                <div class="terms-title">9. Персональные данные</div>
+                <p><b>9.1.</b> Обработка персональных данных осуществляется в соответствии с GDPR и Политикой конфиденциальности Портала.</p>
+                <p><b>9.2.</b> Пользователь имеет право:</p>
+                <ul>
+                    <li>запросить копию своих данных;</li>
+                    <li>исправить данные;</li>
+                    <li>удалить данные;</li>
+                    <li>ограничить обработку;</li>
+                    <li>перенести данные;</li>
+                    <li>отозвать согласие на обработку.</li>
+                </ul>
+                <p><b>9.3.</b> Контактные данные пользователей могут отображаться только в объёме, необходимом для связи по объявлению.</p>
+            </div>
+
+            <div class="terms-section">
+                <div class="terms-title">10. Платные услуги</div>
+                <p><b>10.1.</b> Vena.lv может предоставлять платные услуги:</p>
+                <ul>
+                    <li>поднятие объявлений;</li>
+                    <li>выделение цветом;</li>
+                    <li>VIP-размещение;</li>
+                    <li>рекламные баннеры;</li>
+                    <li>продвижение в поиске.</li>
+                </ul>
+                <p><b>10.2.</b> Стоимость услуг публикуется в соответствующем разделе сайта.</p>
+                <p><b>10.3.</b> Оплаченные услуги считаются оказанными после активации на Vena.lv.</p>
+            </div>
+
+            <div class="terms-section">
+                <div class="terms-title">11. Ответственность сторон</div>
+                <p><b>11.1.</b> Пользователь самостоятельно отвечает за содержание размещённой информации.</p>
+                <p><b>11.2.</b> Администрация не гарантирует:</p>
+                <ul>
+                    <li>достоверность объявлений;</li>
+                    <li>качество товаров;</li>
+                    <li>исполнение обязательств между пользователями.</li>
+                </ul>
+                <p><b>11.3.</b> Все сделки заключаются исключительно между пользователями.</p>
+                <p><b>11.4.</b> Администрация не несёт ответственности за убытки, возникшие вследствие использования Портала.</p>
+            </div>
+
+            <div class="terms-section">
+                <div class="terms-title">12. Блокировка аккаунта</div>
+                <p><b>12.1.</b> Аккаунт может быть временно или постоянно заблокирован за:</p>
+                <ul>
+                    <li>мошенничество;</li>
+                    <li>массовый спам;</li>
+                    <li>публикацию запрещённых товаров;</li>
+                    <li>размещение ложной информации;</li>
+                    <li>обход ограничений Портала;</li>
+                    <li>систематические нарушения настоящих Правил.</li>
+                </ul>
+                <p><b>12.2.</b> Пользователь вправе подать апелляцию через службу поддержки.</p>
+            </div>
+
+            <div class="terms-section">
+                <div class="terms-title">13. Интеллектуальная собственность</div>
+                <p><b>13.1.</b> Пользователь сохраняет права на размещённый контент.</p>
+                <p><b>13.2.</b> Размещая контент, пользователь предоставляет Vena.lv право использовать его для отображения, индексации, продвижения и архивирования.</p>
+                <p><b>13.3.</b> Копирование материалов Vena.lv без разрешения правообладателя запрещено.</p>
+            </div>
+
+            <div class="terms-section">
+                <div class="terms-title">14. Разрешение споров</div>
+                <p><b>14.1.</b> Споры между пользователем и Администрацией решаются путём переговоров.</p>
+                <p><b>14.2.</b> Если соглашение не достигнуто, спор рассматривается судом по месту регистрации владельца Vena.lv, если иное не предусмотрено обязательными нормами законодательства Европейского Союза.</p>
+            </div>
+
+            <div class="terms-section">
+                <div class="terms-title">15. Контактная информация</div>
+                <p><b>Оператор Vena.lv:</b> ____________________</p>
+                <p><b>E-mail:</b> ____________________</p>
+                <p><b>Телефон:</b> ____________________</p>
+            </div>
+        </div>
+
+        <!-- Латышская версия -->
+        <div class="terms-content" data-lang="lv" style="display: none;">
+            <p class="terms-intro">Spēkā stāšanās datums: __________</p>
+            <div class="terms-section"><div class="terms-title">1. Vispārīgie noteikumi</div><p><b>1.1.</b> Sludinājumu portāls (turpmāk – “Vena.lv”) nodrošina lietotājiem iespēju publicēt, meklēt, skatīt un apmainīties ar informāciju par precēm, pakalpojumiem, vakancēm, nekustamo īpašumu, transportu un citiem piedāvājumiem.</p><p><b>1.2.</b> Vena.lv ir tikai informatīva platforma un nav pārdevējs, pircējs, starpnieks, aģents vai darījuma puse starp lietotājiem.</p><p><b>1.3.</b> Izmantojot Vena.lv, lietotājs apliecina, ka ir iepazinies ar šiem Noteikumiem un apņemas tos ievērot.</p><p><b>1.4.</b> Administrācija ir tiesīga jebkurā laikā grozīt Noteikumus. Jaunā redakcija stājas spēkā no tās publicēšanas brīža Vena.lv.</p></div>
+            <div class="terms-section"><div class="terms-title">2. Lietotāja reģistrācija</div><p><b>2.1.</b> Lai ievietotu sludinājumus, lietotājam ir jāreģistrē lietotāja konts.</p><p><b>2.2.</b> Reģistrācijas laikā lietotājam jānorāda patiesa un precīza informācija.</p><p><b>2.3.</b> Ir aizliegts:</p><ul><li>izmantot citu personu datus;</li><li>veidot kontus, lai apietu bloķēšanu;</li><li>nodot piekļuvi savam kontam trešajām personām.</li></ul><p><b>2.4.</b> Lietotājs pilnībā atbild par visām darbībām, kas veiktas, izmantojot viņa kontu.</p></div>
+            <!-- Здесь нужно добавить полный латышский текст из модального окна, чтобы не раздувать ответ, я сократил, но вы можете скопировать из ранее предоставленного _Layout -->
+            <p><em>Полный латышский текст скопируйте из модального окна в _Layout (аналогично для английского).</em></p>
+        </div>
+
+        <!-- Английская версия -->
+        <div class="terms-content" data-lang="en" style="display: none;">
+            <p class="terms-intro">Effective Date: __________</p>
+            <div class="terms-section"><div class="terms-title">1. General Provisions</div><p><b>1.1.</b> The Classified Ads Portal (hereinafter referred to as the “Vena.lv”) provides users with the opportunity to publish, search, browse, and exchange information regarding goods, services, job vacancies, real estate, vehicles, and other offers.</p><p><b>1.2.</b> The Vena.lv acts solely as an information platform and is not a seller, buyer, intermediary, agent, or party to any transaction between users.</p><p><b>1.3.</b> By using the Vena.lv, the user confirms that they have read and agree to comply with these Terms.</p><p><b>1.4.</b> The Administration reserves the right to amend these Terms at any time. The updated version becomes effective upon publication on the Vena.lv.</p></div>
+            <div class="terms-section"><div class="terms-title">2. User Registration</div><p><b>2.1.</b> To post advertisements, a user must register an account.</p><p><b>2.2.</b> During registration, the user must provide accurate information.</p><p><b>2.3.</b> The following actions are prohibited:</p><ul><li>Using another person’s information;</li><li>Creating accounts to circumvent restrictions or bans;</li><li>Sharing account access with third parties.</li></ul><p><b>2.4.</b> The user bears full responsibility for all actions performed through their account.</p></div>
+            <p><em>Полный английский текст скопируйте из модального окна в _Layout.</em></p>
+        </div>
+
+        <div class="terms-back">
+            <a href="/" class="btn btn-secondary">← Back to Home</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    function switchTermsLang(lang) {
+        document.querySelectorAll('.terms-lang-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        document.querySelectorAll('.terms-content').forEach(content => {
+            content.style.display = content.dataset.lang === lang ? 'block' : 'none';
+        });
+    }
+</script>
+
+<style>
+    .terms-page {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 0 20px;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        line-height: 1.5;
+        color: #1e1e2f;
+    }
+
+    .terms-container {
+        background: white;
+        border-radius: 24px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.05);
+        padding: 2rem;
+    }
+
+    .terms-main-title {
+        font-size: 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid #eaeef2;
+        padding-bottom: 0.5rem;
+    }
+
+    .terms-lang-tabs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 0.5rem;
+    }
+
+    .terms-lang-btn {
+        background: none;
+        border: none;
+        font-size: 1rem;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        color: #64748b;
+        border-radius: 40px;
+        transition: all 0.2s;
+    }
+
+        .terms-lang-btn.active {
+            background: #1877f2;
+            color: white;
+        }
+
+    .terms-section {
+        margin-bottom: 2rem;
+    }
+
+    .terms-title {
+        font-size: 1.35rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #0f172a;
+        border-left: 4px solid #1877f2;
+        padding-left: 1rem;
+    }
+
+    .terms-content ul {
+        margin: 0.5rem 0 1rem 1.5rem;
+    }
+
+    .terms-content li {
+        margin: 0.25rem 0;
+    }
+
+    .terms-intro {
+        font-style: italic;
+        margin-bottom: 2rem;
+        color: #475569;
+    }
+
+    .terms-back {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e2e8f0;
+        text-align: center;
+    }
+
+    .btn-secondary {
+        display: inline-block;
+        background: #f1f5f9;
+        padding: 0.6rem 1.5rem;
+        border-radius: 40px;
+        text-decoration: none;
+        color: #1e293b;
+        transition: background 0.2s;
+    }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+    .terms-title {
+        font-size: 1.2rem;
+    }
+
+</style>

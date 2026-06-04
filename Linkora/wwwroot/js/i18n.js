@@ -15,6 +15,9 @@
 
 const TRANSLATIONS = {
     en: {
+        footer_faq: "FAQ",
+        footer_terms: "Terms of use",
+        footer_support: "Support",
         'btn_close': 'Close',
         "support_name_ph": "Your name",
         "support_email_ph": "Email",
@@ -213,6 +216,9 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        footer_faq: "BUJ",
+        footer_terms: "Lietošanas noteikumi",
+        footer_support: "Atbalsts",
         'btn_close': 'Aizvērt',
         "support_name_ph": "Jūsu vārds",
         "support_email_ph": "E-pasts",
@@ -411,6 +417,9 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        footer_faq: "FAQ",
+        footer_terms: "Правила пользования",
+        footer_support: "Поддержка",
         'btn_close': 'Закрыть',
         "support_name_ph": "Ваше имя",
         "support_email_ph": "Email",
