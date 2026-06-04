@@ -217,9 +217,9 @@
     <footer class="site-footer">
         <div class="footer-links">
             <a href="#" onclick="openFaqModal(); return false;" class="footer-link" data-i18n="footer_faq">FAQ</a>
-            <span class="footer-sep">·</span>
+            <span class="footer-sep">•</span>
             <a href="#" onclick="openTermsModal(); return false;" class="footer-link" data-i18n="footer_terms">Terms of use</a>
-            <span class="footer-sep">·</span>
+            <span class="footer-sep">•</span>
             <a href="#" onclick="openSupportModal(); return false;" class="footer-link" data-i18n="footer_support">Support</a>
         </div>
         <div class="footer-copy">© 2026 Vena</div>
@@ -228,8 +228,7 @@
     <div class="modal-overlay" id="faqOverlay" onclick="closeFaqModal()"></div>
     <div class="modal info-modal" id="faqModal">
         <button class="modal-close" onclick="closeFaqModal()">✕</button>
-        <h2 class="info-modal-title">FAQ</h2>
-
+        <h2 class="info-modal-title" data-i18n="faq_title">FAQ</h2>
         <div class="info-modal-lang-tabs">
             <button class="info-lang-btn active" onclick="switchInfoLang('ru', this)">RU</button>
             <button class="info-lang-btn" onclick="switchInfoLang('lv', this)">LV</button>
@@ -408,8 +407,7 @@
     <div class="modal-overlay" id="termsOverlay" onclick="closeTermsModal()"></div>
     <div class="modal info-modal" id="termsModal">
         <button class="modal-close" onclick="closeTermsModal()">✕</button>
-        <h2 class="info-modal-title">Правила пользования порталом объявлений</h2>
-
+        <h2 class="info-modal-title" data-i18n="terms_title">Правила пользования порталом объявлений</h2>
         <div class="info-modal-lang-tabs">
             <button class="info-lang-btn active" onclick="switchInfoLang('ru', this, 'terms')">RU</button>
             <button class="info-lang-btn" onclick="switchInfoLang('lv', this, 'terms')">LV</button>
@@ -1064,8 +1062,7 @@
     <div class="modal-overlay" id="supportOverlay" onclick="closeSupportModal()"></div>
     <div class="modal info-modal" id="supportModal">
         <button class="modal-close" onclick="closeSupportModal()">✕</button>
-        <h2 class="info-modal-title" id="supportTitle">Technical Support</h2>
-
+        <h2 class="info-modal-title" id="supportTitle" data-i18n="support_title">Technical Support</h2>
         <div class="info-modal-lang-tabs">
             <button class="info-lang-btn active" onclick="switchSupportLang('ru', this)">RU</button>
             <button class="info-lang-btn" onclick="switchSupportLang('lv', this)">LV</button>
@@ -1108,7 +1105,7 @@
                 </div>
                 <div id="supportError" class="auth-error" style="display:none"></div>
                 <div id="supportSuccess" style="display:none;color:green;margin-bottom:10px;"></div>
-                <button type="submit" class="auth-submit">Send</button>
+                <button type="submit" class="auth-submit" data-i18n="support_send_btn">Send</button>
             </form>
         </div>
     </div>
@@ -1597,5 +1594,83 @@
             }, { scope: 'public_profile,email' });
         }
         </script>
+    <script>
+        function getCurrentLanguage() {
+            return localStorage.getItem('lang') || 'en';
+        }
+
+        const originalOpenFaqModal = window.openFaqModal;
+        const originalOpenTermsModal = window.openTermsModal;
+        const originalOpenSupportModal = window.openSupportModal;
+
+        window.openFaqModal = function() {
+            if (originalOpenFaqModal) originalOpenFaqModal();
+            else {
+                document.getElementById('faqOverlay')?.classList.add('modal-open');
+                document.getElementById('faqModal')?.classList.add('modal-open');
+                document.body.style.overflow = 'hidden';
+            }
+            const lang = getCurrentLanguage();
+            const modal = document.getElementById('faqModal');
+            if (modal) {
+                const buttons = modal.querySelectorAll('.info-lang-btn');
+                for (let btn of buttons) {
+                    const btnLang = btn.textContent.trim().toUpperCase();
+                    if ((lang === 'ru' && btnLang === 'RU') ||
+                        (lang === 'lv' && btnLang === 'LV') ||
+                        (lang === 'en' && btnLang === 'EN')) {
+                        switchInfoLang(lang, btn);
+                        break;
+                    }
+                }
+            }
+        };
+
+        window.openTermsModal = function() {
+            if (originalOpenTermsModal) originalOpenTermsModal();
+            else {
+                document.getElementById('termsOverlay')?.classList.add('modal-open');
+                document.getElementById('termsModal')?.classList.add('modal-open');
+                document.body.style.overflow = 'hidden';
+            }
+            const lang = getCurrentLanguage();
+            const modal = document.getElementById('termsModal');
+            if (modal) {
+                const buttons = modal.querySelectorAll('.info-lang-btn');
+                for (let btn of buttons) {
+                    const btnLang = btn.textContent.trim().toUpperCase();
+                    if ((lang === 'ru' && btnLang === 'RU') ||
+                        (lang === 'lv' && btnLang === 'LV') ||
+                        (lang === 'en' && btnLang === 'EN')) {
+                        switchInfoLang(lang, btn);
+                        break;
+                    }
+                }
+            }
+        };
+
+        window.openSupportModal = function() {
+            if (originalOpenSupportModal) originalOpenSupportModal();
+            else {
+                document.getElementById('supportOverlay')?.classList.add('modal-open');
+                document.getElementById('supportModal')?.classList.add('modal-open');
+                document.body.style.overflow = 'hidden';
+            }
+            const lang = getCurrentLanguage();
+            const modal = document.getElementById('supportModal');
+            if (modal) {
+                const buttons = modal.querySelectorAll('.info-lang-btn');
+                for (let btn of buttons) {
+                    const btnLang = btn.textContent.trim().toUpperCase();
+                    if ((lang === 'ru' && btnLang === 'RU') ||
+                        (lang === 'lv' && btnLang === 'LV') ||
+                        (lang === 'en' && btnLang === 'EN')) {
+                        switchSupportLang(lang, btn);
+                        break;
+                    }
+                }
+            }
+        };
+    </script>
 </body>
 </html>

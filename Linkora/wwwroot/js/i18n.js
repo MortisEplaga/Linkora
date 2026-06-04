@@ -15,6 +15,10 @@
 
 const TRANSLATIONS = {
     en: {
+        faq_title: "FAQ",
+        terms_title: "Terms of use",
+        support_title: "Technical Support",
+        support_send_btn: "Send",
         footer_faq: "FAQ",
         footer_terms: "Terms of use",
         footer_support: "Support",
@@ -216,7 +220,11 @@ const TRANSLATIONS = {
     },
 
     lv: {
-        footer_faq: "BUJ",
+        faq_title: "Bieži uzdotie jautājumi",
+        terms_title: "Portāla lietošanas noteikumi",
+        support_title: "Tehniskā palīdzība",
+        support_send_btn: "Sūtīt",
+        footer_faq: "Biežāk uzdotie jautājumi",
         footer_terms: "Lietošanas noteikumi",
         footer_support: "Atbalsts",
         'btn_close': 'Aizvērt',
@@ -417,6 +425,10 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        faq_title: "FAQ",
+        terms_title: "Правила пользования порталом объявлений",
+        support_title: "Техническая поддержка",
+        support_send_btn: "Отправить",
         footer_faq: "FAQ",
         footer_terms: "Правила пользования",
         footer_support: "Поддержка",
