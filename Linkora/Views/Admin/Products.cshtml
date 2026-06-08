@@ -19,7 +19,7 @@
 
     <main class="admin-main">
         <h1 class="admin-page-title">
-            Listings
+            <th data-i18n="admin_listing_col">Listing</th>
             <span class="admin-page-subtitle">@total results</span>
         </h1>
 
@@ -57,19 +57,19 @@
         <div class="admin-card">
             @if (!products.Any())
             {
-                <div class="admin-empty">No listings found</div>
+                <div class="admin-empty" data-i18n="admin_no_listings">No listings found</div>
             }
             else
             {
                 <table class="admin-table">
                     <thead>
                         <tr>
-                            <th>Listing</th>
-                            <th>Seller</th>
-                            <th>Price</th>
-                            <th>Reports</th>
-                            <th>Date</th>
-                            <th>Actions</th>
+                            <th data-i18n="admin_listing_col">Listing</th>
+                            <th data-i18n="admin_seller_col">Seller</th>
+                            <th data-i18n="admin_price_col">Price</th>
+                            <th data-i18n="admin_reports_col">Reports</th>
+                            <th data-i18n="admin_date_col">Date</th>
+                            <th data-i18n="admin_actions_col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -127,26 +127,26 @@
                                         {
                                             <button class="admin-btn admin-btn-approve"
                                                     onclick="setStatus(@p.Id, 'Active', this)">
-                                                Approve
+                                                <span data-i18n="admin_approve">Approve</span>
                                             </button>
                                         }
                                         @if (status == "Moderation" || status == "Active")
                                         {
                                             <button class="admin-btn admin-btn-reject"
                                                     onclick="setStatus(@p.Id, 'Rejected', this)">
-                                                Reject
+                                                <span data-i18n="admin_reject">Reject</span>
                                             </button>
                                         }
                                         @if (status == "Archived")
                                         {
                                             <button class="admin-btn admin-btn-restore"
                                                     onclick="setStatus(@p.Id, 'Active', this)">
-                                                Restore
+                                                <span data-i18n="admin_restore">Restore</span>
                                             </button>
                                         }
                                         <button class="admin-btn admin-btn-danger"
                                                 onclick="confirmDelete(@p.Id, '@p.Name.Replace("'","\\'")')">
-                                            Delete
+                                            <span data-i18n="admin_delete">Delete</span>
                                         </button>
                                     </div>
                                 </td>
@@ -179,14 +179,13 @@
     </main>
 </div>
 
-<!-- Confirm dialog -->
 <div class="admin-confirm-overlay" id="confirmOverlay">
     <div class="admin-confirm-box">
-        <div class="admin-confirm-title">Delete listing?</div>
+        <div class="admin-confirm-title" data-i18n="admin_confirm_delete_listing">Delete listing?</div>
         <div class="admin-confirm-text" id="confirmText"></div>
         <div class="admin-confirm-actions">
-            <button class="admin-btn admin-btn-view" onclick="closeConfirm()">Cancel</button>
-            <button class="admin-btn admin-btn-danger" id="confirmOk">Delete</button>
+            <button class="admin-btn admin-btn-view" onclick="closeConfirm()" data-i18n="admin_cancel_btn">Cancel</button>
+            <button class="admin-btn admin-btn-danger" id="confirmOk" data-i18n="admin_delete">Delete</button>
         </div>
     </div>
 </div>
@@ -247,5 +246,6 @@
     document.getElementById('confirmOverlay').addEventListener('click', e => {
         if (e.target === e.currentTarget) closeConfirm();
     });
+        document.addEventListener('DOMContentLoaded', applyTranslations);
 </script>
 }

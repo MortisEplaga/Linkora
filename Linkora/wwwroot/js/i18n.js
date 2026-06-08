@@ -15,6 +15,11 @@
 
 const TRANSLATIONS = {
     en: {
+        'admin_company': 'Company',
+        'admin_private': 'Private',
+        'admin_confirm_action': 'Confirm action',
+        'admin_cancel_btn': 'Cancel',
+        'admin_confirm_btn': 'Confirm',
         // ── Profile edit ──
         'profile_edit_title': 'Edit profile',
         'profile_basic_info': 'Basic information',
@@ -292,6 +297,11 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'admin_company': 'Uzņēmums',
+        'admin_private': 'Privātpersona',
+        'admin_confirm_action': 'Apstiprināt darbību',
+        'admin_cancel_btn': 'Atcelt',
+        'admin_confirm_btn': 'Apstiprināt',
         // ── Profile edit ──
         'profile_edit_title': 'Rediģēt profilu',
         'profile_basic_info': 'Pamatinformācija',
@@ -569,6 +579,11 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'admin_company': 'Компания',
+        'admin_private': 'Частное лицо',
+        'admin_confirm_action': 'Подтвердить действие',
+        'admin_cancel_btn': 'Отмена',
+        'admin_confirm_btn': 'Подтвердить',
         // ── Profile edit ──
         'profile_edit_title': 'Редактировать профиль',
         'profile_basic_info': 'Основная информация',

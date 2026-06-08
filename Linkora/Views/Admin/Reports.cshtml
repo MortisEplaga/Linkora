@@ -40,7 +40,7 @@
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5">
                         <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
                     </svg>
-                    <p style="margin-top:12px">No @status.ToLower() reports</p>
+                    <p style="margin-top:12px" data-i18n="admin_no_reports">No reports found</p>
                 </div>
             }
             else
@@ -48,13 +48,13 @@
                 <table class="admin-table">
                     <thead>
                         <tr>
-                            <th>Listing</th>
-                            <th>Reason</th>
-                            <th>Reporter</th>
-                            <th>Comment</th>
-                            <th>Listing status</th>
-                            <th>Date</th>
-                            <th>Actions</th>
+                            <th data-i18n="admin_listing_col">Listing</th>
+                            <th data-i18n="admin_reason_col">Reason</th>
+                            <th data-i18n="admin_reporter_col">Reporter</th>
+                            <th data-i18n="admin_comment_col">Comment</th>
+                            <th data-i18n="admin_listing_status_col">Listing status</th>
+                            <th data-i18n="admin_date_col">Date</th>
+                            <th data-i18n="admin_actions_col">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -118,23 +118,23 @@
                                             <button class="admin-btn admin-btn-approve"
                                                     onclick="resolveReport(@r.Id, 'resolve', this)"
                                                     title="Confirm report — keep listing blocked">
-                                                Confirm
+                                                <span data-i18n="admin_report_confirm">Confirm</span>
                                             </button>
                                             <!-- Reject report: restore product -->
                                             <button class="admin-btn admin-btn-reject"
                                                     onclick="resolveReport(@r.Id, 'reject_report', this)"
                                                     title="Dismiss report — restore listing">
-                                                Dismiss
+                                                <span data-i18n="admin_report_dismiss">Dismiss</span>
                                             </button>
                                             <!-- Approve listing independently -->
                                             <button class="admin-btn admin-btn-view"
                                                     onclick="approveProduct(@r.ProductId, @r.Id, this)"
                                                     title="Approve listing and close report">
-                                                Approve listing
+                                                <span data-i18n="admin_approve_listing">Approve listing</span>
                                             </button>
                                         }
                                         <a class="admin-btn admin-btn-view"
-                                           href="/Product/Details/@r.ProductId" target="_blank">
+                                           href="/Product/Details/@r.ProductId" target="_blank" data-i18n="admin_view">
                                             View
                                         </a>
                                     </div>
@@ -215,5 +215,6 @@
         t.className = `admin-toast ${type} show`;
         setTimeout(() => t.className = 'admin-toast', 2500);
     }
+        document.addEventListener('DOMContentLoaded', applyTranslations);
 </script>
 }

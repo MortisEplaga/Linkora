@@ -64,6 +64,27 @@
             margin-bottom: 16px;
             display: none;
         }
+        .profile-card .auth-field-password {
+            position: relative;
+        }
+
+            .profile-card .auth-field-password .auth-input {
+                padding-right: 42px;
+            }
+
+            .profile-card .auth-field-password .auth-eye {
+                position: absolute;
+                right: 12px;
+                top: 50%;
+                transform: translateY(-50%);
+                bottom: auto;
+                background: none;
+                border: none;
+                cursor: pointer;
+                font-size: 16px;
+                padding: 0;
+                line-height: 1;
+            }
 
         .dark-theme .profile-card {
             background: #252525 !important;
@@ -78,70 +99,84 @@
             color: #666 !important;
             border-top-color: #333 !important;
         }
+
+        .dark-theme .profile-error {
+            background: #2a1a1a !important;
+            border-color: #5a2a2a !important;
+            color: #ff8080 !important;
+        }
+
+        .dark-theme .profile-success {
+            background: #1a2a1f !important;
+            border-color: #2a5a3a !important;
+            color: #6fcf97 !important;
+        }
     </style>
 }
 
 <div class="profile-page">
     <div class="profile-card">
-        <h1 class="profile-title">Edit profile</h1>
+        <h1 class="profile-title" data-i18n="profile_edit_title">Edit profile</h1>
 
         <div class="profile-error" id="profileError"></div>
-        <div class="profile-success" id="profileSuccess">Saved successfully</div>
+        <div class="profile-success" id="profileSuccess" data-i18n="profile_saved">Saved successfully</div>
 
-        <div class="profile-section-title">Basic information</div>
+        <div class="profile-section-title" data-i18n="profile_basic_info">Basic information</div>
 
         <div class="auth-field">
-            <label class="auth-label">Username</label>
+            <label class="auth-label" data-i18n="profile_username_label">Username</label>
             <input type="text" class="auth-input" id="fieldUserName" value="@user.UserName" />
         </div>
 
         <div class="auth-field">
-            <label class="auth-label">Phone</label>
+            <label class="auth-label" data-i18n="profile_phone_label">Phone</label>
             <input type="tel" class="auth-input" id="fieldPhone"
                    value="@(user.PhoneNumber ?? "")" placeholder="+371 XXXXXXXX" />
         </div>
 
         <div class="auth-field">
-            <label class="auth-label">Email</label>
+            <label class="auth-label" data-i18n="profile_email_label">Email</label>
             <input type="email" class="auth-input" value="@(user.Email ?? "")" disabled
-                   style="opacity:0.5;cursor:default" title="Email cannot be changed" />
+                   style="opacity:0.5;cursor:default" />
         </div>
 
-        <div class="profile-section-title">Change password</div>
+        <div class="profile-section-title" data-i18n="profile_change_password">Change password</div>
 
         <div class="auth-field auth-field-password">
-            <label class="auth-label">Current password</label>
+            <label class="auth-label" data-i18n="profile_current_pwd">Current password</label>
             <input type="password" class="auth-input" id="fieldCurrentPwd"
+                   data-i18n-placeholder="profile_current_pwd_ph"
                    placeholder="Enter current password" />
             <button type="button" class="auth-eye" onclick="togglePass('fieldCurrentPwd',this)">👁</button>
         </div>
 
         <div class="auth-field auth-field-password">
-            <label class="auth-label">New password</label>
+            <label class="auth-label" data-i18n="profile_new_pwd">New password</label>
             <input type="password" class="auth-input" id="fieldNewPwd"
+                   data-i18n-placeholder="profile_new_pwd_ph"
                    placeholder="Leave blank to keep current"
                    oninput="checkStrengthProfile(this)" />
             <button type="button" class="auth-eye" onclick="togglePass('fieldNewPwd',this)">👁</button>
         </div>
 
         <ul class="auth-rules" id="profileRules" style="display:none">
-            <li id="pr-len">At least 8 characters</li>
-            <li id="pr-upper">Uppercase letter</li>
-            <li id="pr-lower">Lowercase letter</li>
-            <li id="pr-digit">Digit</li>
+            <li id="pr-len" data-i18n="auth_rule_len">At least 8 characters</li>
+            <li id="pr-upper" data-i18n="auth_rule_upper">Uppercase letter</li>
+            <li id="pr-lower" data-i18n="auth_rule_lower">Lowercase letter</li>
+            <li id="pr-digit" data-i18n="auth_rule_digit">Digit</li>
         </ul>
 
-        <div class="profile-section-title">Interface</div>
+        <div class="profile-section-title" data-i18n="profile_interface">Interface</div>
 
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-            <label class="auth-label" style="margin:0">Dark mode</label>
+            <label class="auth-label" style="margin:0" data-i18n="profile_dark_mode">Dark mode</label>
             <button class="settings-toggle" id="profileThemeToggle" onclick="toggleThemeProfile()">
                 <span class="settings-toggle-knob"></span>
             </button>
         </div>
 
         <div style="display:flex;align-items:center;justify-content:space-between">
-            <label class="auth-label" style="margin:0">Language</label>
+            <label class="auth-label" style="margin:0" data-i18n="profile_language">Language</label>
             <div class="settings-lang-pills">
                 <button class="settings-lang-pill" id="plEN" onclick="setLangProfile('en')">EN</button>
                 <button class="settings-lang-pill" id="plLV" onclick="setLangProfile('lv')">LV</button>
@@ -149,18 +184,19 @@
             </div>
         </div>
 
-        <button class="auth-submit" style="margin-top:28px" onclick="saveProfile()">Save</button>
+        <button class="auth-submit" style="margin-top:28px"
+                data-i18n="profile_save_btn"
+                onclick="saveProfile()">
+            Save
+        </button>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        // Инициализация UI
         (function () {
             const dark = localStorage.getItem('theme') === 'dark';
-            const toggle = document.getElementById('profileThemeToggle');
-            if (dark) toggle.classList.add('settings-toggle-on');
-
+            document.getElementById('profileThemeToggle').classList.toggle('settings-toggle-on', dark);
             const lang = localStorage.getItem('lang') || 'en';
             document.getElementById('pl' + lang.toUpperCase())?.classList.add('settings-lang-pill-active');
         })();
@@ -187,8 +223,7 @@
 
         function checkStrengthProfile(input) {
             const v = input.value;
-            const rules = document.getElementById('profileRules');
-            rules.style.display = v.length ? 'flex' : 'none';
+            document.getElementById('profileRules').style.display = v.length ? 'flex' : 'none';
             const set = (id, ok) => document.getElementById(id)?.classList.toggle('auth-rule-ok', ok);
             set('pr-len',   v.length >= 8);
             set('pr-upper', /[A-Z]/.test(v));
@@ -225,9 +260,8 @@
                 document.getElementById('profileRules').style.display = 'none';
             } else {
                 const data = await res.json();
-                const msgs = data.errors?.join(', ') || 'Error saving profile';
-                errorEl.textContent    = msgs;
-                errorEl.style.display  = 'block';
+                errorEl.textContent   = data.errors?.join(', ') || 'Error saving profile';
+                errorEl.style.display = 'block';
             }
         }
     </script>
