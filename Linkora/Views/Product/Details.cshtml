@@ -60,6 +60,8 @@
 
         <!-- Инфо -->
         <div class="details-info">
+            <h1 class="details-title">@p.Name</h1>
+
             @if (p.Price.HasValue)
             {
                 <div class="details-price">@p.Price.Value.ToString("N2") €</div>
@@ -68,7 +70,6 @@
             {
                 <div class="details-price" data-i18n="price_on_request">Price on request</div>
             }
-            <h1 class="details-title">@p.Name</h1>
             <div class="details-meta">
                 <span>@p.Address</span>
                 <span>@(p.CreatedTime?.ToString("dd MMM, HH:mm"))</span>

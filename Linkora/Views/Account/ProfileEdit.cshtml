@@ -11,21 +11,18 @@
             margin: 40px auto;
             padding: 0 16px 48px;
         }
-
         .profile-card {
             background: #fff;
             border: 1px solid #e8e8e8;
             border-radius: 12px;
             padding: 32px;
         }
-
         .profile-title {
             font-size: 22px;
             font-weight: 700;
             color: #1a1a1a;
             margin: 0 0 28px;
         }
-
         .profile-section-title {
             font-size: 13px;
             font-weight: 700;
@@ -36,13 +33,11 @@
             padding-top: 24px;
             border-top: 1px solid #f0f0f0;
         }
-
-            .profile-section-title:first-of-type {
-                margin-top: 0;
-                padding-top: 0;
-                border-top: none;
-            }
-
+        .profile-section-title:first-of-type {
+            margin-top: 0;
+            padding-top: 0;
+            border-top: none;
+        }
         .profile-error {
             background: #fff0f0;
             border: 1px solid #ffcccc;
@@ -53,7 +48,6 @@
             margin-bottom: 16px;
             display: none;
         }
-
         .profile-success {
             background: #f0fff4;
             border: 1px solid #b2f0c8;
@@ -67,45 +61,40 @@
         .profile-card .auth-field-password {
             position: relative;
         }
-
-            .profile-card .auth-field-password .auth-input {
-                padding-right: 42px;
-            }
-
-            .profile-card .auth-field-password .auth-eye {
+        .profile-card .auth-field-password .auth-input {
+            padding-right: 42px;
+        }
+        .profile-card .auth-field-password .auth-eye {
                 position: absolute;
-                right: 12px;
-                top: 50%;
-                transform: translateY(-50%);
-                bottom: auto;
-                background: none;
+                right: 12px; 
+                top: 50%; 
+                transform: translateY(-0%); 
+                background: transparent;
                 border: none;
                 cursor: pointer;
-                font-size: 16px;
+                font-size: 1.2rem;
                 padding: 0;
+                margin: 0;
                 line-height: 1;
+                color: #888;
+                transition: opacity 0.2s;
             }
-
         .dark-theme .profile-card {
             background: #252525 !important;
             border-color: #333 !important;
         }
-
         .dark-theme .profile-title {
             color: #e8e8e8 !important;
         }
-
         .dark-theme .profile-section-title {
             color: #666 !important;
             border-top-color: #333 !important;
         }
-
         .dark-theme .profile-error {
             background: #2a1a1a !important;
             border-color: #5a2a2a !important;
             color: #ff8080 !important;
         }
-
         .dark-theme .profile-success {
             background: #1a2a1f !important;
             border-color: #2a5a3a !important;
@@ -186,83 +175,81 @@
 
         <button class="auth-submit" style="margin-top:28px"
                 data-i18n="profile_save_btn"
-                onclick="saveProfile()">
-            Save
-        </button>
+                onclick="saveProfile()">Save</button>
     </div>
 </div>
 
 @section Scripts {
-    <script>
-        (function () {
-            const dark = localStorage.getItem('theme') === 'dark';
-            document.getElementById('profileThemeToggle').classList.toggle('settings-toggle-on', dark);
-            const lang = localStorage.getItem('lang') || 'en';
-            document.getElementById('pl' + lang.toUpperCase())?.classList.add('settings-lang-pill-active');
-        })();
+<script>
+    (function () {
+        const dark = localStorage.getItem('theme') === 'dark';
+        document.getElementById('profileThemeToggle').classList.toggle('settings-toggle-on', dark);
+        const lang = localStorage.getItem('lang') || 'en';
+        document.getElementById('pl' + lang.toUpperCase())?.classList.add('settings-lang-pill-active');
+    })();
 
-        function toggleThemeProfile() {
-            const isDark = document.documentElement.classList.toggle('dark-theme');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            document.getElementById('profileThemeToggle').classList.toggle('settings-toggle-on', isDark);
+    function toggleThemeProfile() {
+        const isDark = document.documentElement.classList.toggle('dark-theme');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        document.getElementById('profileThemeToggle').classList.toggle('settings-toggle-on', isDark);
+    }
+
+    function setLangProfile(lang) {
+        localStorage.setItem('lang', lang);
+        document.cookie = `lang=${lang};path=/;max-age=31536000`;
+        document.querySelectorAll('.settings-lang-pill').forEach(b => b.classList.remove('settings-lang-pill-active'));
+        document.getElementById('pl' + lang.toUpperCase())?.classList.add('settings-lang-pill-active');
+        location.reload();
+    }
+
+    function togglePass(id, btn) {
+        const input = document.getElementById(id);
+        input.type = input.type === 'password' ? 'text' : 'password';
+        btn.style.opacity = input.type === 'text' ? '0.4' : '1';
+    }
+
+    function checkStrengthProfile(input) {
+        const v = input.value;
+        document.getElementById('profileRules').style.display = v.length ? 'flex' : 'none';
+        const set = (id, ok) => document.getElementById(id)?.classList.toggle('auth-rule-ok', ok);
+        set('pr-len',   v.length >= 8);
+        set('pr-upper', /[A-Z]/.test(v));
+        set('pr-lower', /[a-z]/.test(v));
+        set('pr-digit', /[0-9]/.test(v));
+    }
+
+    async function saveProfile() {
+        const errorEl   = document.getElementById('profileError');
+        const successEl = document.getElementById('profileSuccess');
+        errorEl.style.display   = 'none';
+        successEl.style.display = 'none';
+
+        const payload = {
+            userName:        document.getElementById('fieldUserName').value.trim(),
+            phone:           document.getElementById('fieldPhone').value.trim() || null,
+            currentPassword: document.getElementById('fieldCurrentPwd').value || null,
+            newPassword:     document.getElementById('fieldNewPwd').value || null,
+        };
+
+        const res = await fetch('/Profile/Save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            successEl.style.display = 'block';
+            document.getElementById('fieldCurrentPwd').value = '';
+            document.getElementById('fieldNewPwd').value = '';
+            document.getElementById('profileRules').style.display = 'none';
+        } else {
+            const data = await res.json();
+            errorEl.textContent   = data.errors?.join(', ') || 'Error saving profile';
+            errorEl.style.display = 'block';
         }
-
-        function setLangProfile(lang) {
-            localStorage.setItem('lang', lang);
-            document.cookie = `lang=${lang};path=/;max-age=31536000`;
-            document.querySelectorAll('.settings-lang-pill').forEach(b => b.classList.remove('settings-lang-pill-active'));
-            document.getElementById('pl' + lang.toUpperCase())?.classList.add('settings-lang-pill-active');
-            location.reload();
-        }
-
-        function togglePass(id, btn) {
-            const input = document.getElementById(id);
-            input.type = input.type === 'password' ? 'text' : 'password';
-            btn.style.opacity = input.type === 'text' ? '0.4' : '1';
-        }
-
-        function checkStrengthProfile(input) {
-            const v = input.value;
-            document.getElementById('profileRules').style.display = v.length ? 'flex' : 'none';
-            const set = (id, ok) => document.getElementById(id)?.classList.toggle('auth-rule-ok', ok);
-            set('pr-len',   v.length >= 8);
-            set('pr-upper', /[A-Z]/.test(v));
-            set('pr-lower', /[a-z]/.test(v));
-            set('pr-digit', /[0-9]/.test(v));
-        }
-
-        async function saveProfile() {
-            const errorEl   = document.getElementById('profileError');
-            const successEl = document.getElementById('profileSuccess');
-            errorEl.style.display   = 'none';
-            successEl.style.display = 'none';
-
-            const payload = {
-                userName:        document.getElementById('fieldUserName').value.trim(),
-                phone:           document.getElementById('fieldPhone').value.trim() || null,
-                currentPassword: document.getElementById('fieldCurrentPwd').value || null,
-                newPassword:     document.getElementById('fieldNewPwd').value || null,
-            };
-
-            const res = await fetch('/Profile/Save', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (res.ok) {
-                successEl.style.display = 'block';
-                document.getElementById('fieldCurrentPwd').value = '';
-                document.getElementById('fieldNewPwd').value = '';
-                document.getElementById('profileRules').style.display = 'none';
-            } else {
-                const data = await res.json();
-                errorEl.textContent   = data.errors?.join(', ') || 'Error saving profile';
-                errorEl.style.display = 'block';
-            }
-        }
-    </script>
+    }
+</script>
 }

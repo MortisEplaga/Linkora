@@ -567,18 +567,17 @@
 }
 
 .product-card-price {
-    font-size: 16px;
-    font-weight: 700;
-    color: #1a1a1a;
-}
-
-.product-card-name {
     font-size: 14px;
     color: #333;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+.product-card-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a1a;}
 
 .product-card-address,
 .product-card-date {

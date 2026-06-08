@@ -32,7 +32,7 @@ namespace Linkora.Repositories
                 ? ", TRY_CAST(mpc.Value AS decimal(18,2)) as Price"
                 : @", (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
            FROM MapperProductCategory m
-           JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price'
+           JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
            WHERE m.ProductId = p.Id) as Price";
             var order = sort switch
             {
@@ -208,7 +208,7 @@ namespace Linkora.Repositories
             await using var priceCmd = new SqlCommand(@"
                 SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
                 FROM MapperProductCategory m
-                JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price'
+                JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
                 WHERE m.ProductId = @Id", conn);
             priceCmd.Parameters.AddWithValue("@Id", id);
             var priceVal = await priceCmd.ExecuteScalarAsync();
@@ -235,7 +235,7 @@ namespace Linkora.Repositories
        ) AS AvatarImagePath,
                        (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
                         FROM MapperProductCategory m
-                        JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price'
+                        JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
                         WHERE m.ProductId = p.Id) as Price
                 FROM Products p
                 WHERE p.CategoryId = @CatId AND p.Id != @ExcId
@@ -269,7 +269,7 @@ namespace Linkora.Repositories
        ) AS AvatarImagePath, p.Status,
                (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
                 FROM MapperProductCategory m
-                JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price'
+                JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
                 WHERE m.ProductId = p.Id) as Price,
                ISNULL(p.ViewCount, 0),
                (SELECT COUNT(*) FROM Favourites WHERE ProductId = p.Id AND Can = 1) as FavCount,
