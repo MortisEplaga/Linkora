@@ -17,8 +17,8 @@
 
     <main class="admin-main">
         <h1 class="admin-page-title">
-            Users
-            <span class="admin-page-subtitle">@total total</span>
+            <span data-i18n="admin_users">Users</span>
+            <span class="admin-page-subtitle">@total <span data-i18n="admin_total_label">total</span></span>
         </h1>
 
         <div class="admin-toolbar">
@@ -26,12 +26,13 @@
                 <input type="hidden" name="role" value="@role" />
                 <div class="admin-search-wrap" style="max-width:100%;flex:1">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2">
-                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
                     </svg>
                     <input class="admin-search-input" name="search" value="@search"
-                           placeholder="Name or email..." />
+                           data-i18n-placeholder="admin_search_user_ph" placeholder="Name or email..." />
                 </div>
-                <button type="submit" class="admin-btn admin-btn-primary">Search</button>
+                <button type="submit" class="admin-btn admin-btn-primary" data-i18n="admin_search_btn">Search</button>
                 @if (search != null)
                 {
                     <a href="/Admin/Users?role=@role" class="admin-btn admin-btn-view">✕</a>
@@ -39,11 +40,12 @@
             </form>
 
             <div class="admin-status-tabs">
-                @foreach (var (r, label) in new[] { ("all","All"), ("user","Users"), ("admin","Admins"), ("banned","Banned") })
+                @foreach (var r in new[] { "all", "user", "admin", "banned" })
                 {
                     <a class="admin-status-tab @(role == r ? "active" : "")"
-                       href="/Admin/Users?role=@r&page=1@(search != null ? "&search=" + Uri.EscapeDataString(search) : "")">
-                        @label
+                       href="/Admin/Users?role=@r&page=1@(search != null ? "&search=" + Uri.EscapeDataString(search) : "")"
+                       data-i18n="admin_role_tab_@r">
+                        @r
                     </a>
                 }
             </div>
@@ -83,8 +85,8 @@
                                             else
                                             {
                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
-                                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                                    <circle cx="12" cy="7" r="4"/>
+                                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                                    <circle cx="12" cy="7" r="4" />
                                                 </svg>
                                             }
                                         </div>
@@ -152,7 +154,7 @@
                                             </button>
                                         }
                                         <button class="admin-btn admin-btn-danger"
-                                                onclick="confirmDeleteUser(@u.Id, '@u.UserName.Replace("'","\\'")')">
+                                                onclick="confirmDeleteUser(@u.Id, '@u.UserName.Replace("'", "\\'")')">
                                             <span data-i18n="admin_delete">Delete</span>
                                         </button>
                                     </div>
@@ -167,7 +169,7 @@
                     <div class="admin-pagination">
                         @if (page > 1)
                         {
-                            <a class="admin-page-btn" href="/Admin/Users?role=@role&page=@(page-1)&search=@search">‹</a>
+                            <a class="admin-page-btn" href="/Admin/Users?role=@role&page=@(page - 1)&search=@search">‹</a>
                         }
                         @for (int i = Math.Max(1, page - 2); i <= Math.Min(totalPages, page + 2); i++)
                         {
@@ -176,7 +178,7 @@
                         }
                         @if (page < totalPages)
                         {
-                            <a class="admin-page-btn" href="/Admin/Users?role=@role&page=@(page+1)&search=@search">›</a>
+                            <a class="admin-page-btn" href="/Admin/Users?role=@role&page=@(page + 1)&search=@search">›</a>
                         }
                     </div>
                 }
@@ -199,62 +201,96 @@
 <div class="admin-toast" id="toast"></div>
 
 @section Scripts {
-<script>
-    const afToken = document.getElementById('afToken')?.value ?? '';
+    <script>
+        const afToken = document.getElementById('afToken')?.value ?? '';
 
-    async function setRole(id, role, btn) {
-        btn.disabled = true;
-        const res = await fetch(`/Admin/SetUserRole?id=${id}&role=${role}`, {
-            method: 'POST', headers: { 'RequestVerificationToken': afToken }
-        });
-        if (res.ok) {
-            const badge = document.getElementById('role-badge-' + id);
-            if (badge) {
-                badge.textContent = role;
-                badge.className = `admin-badge admin-badge-${role}`;
+        // Локализация динамического текста для JS
+        const jsLangs = {
+            en: {
+                role_updated: 'Role updated to ',
+                err_role: 'Error updating role',
+                confirm_del_title: 'Delete user?',
+                confirm_del_text: 'This will permanently delete "{name}" and all their data. Cannot be undone.',
+                del_success: 'User deleted',
+                err_del: 'Error: '
+            },
+            lv: {
+                role_updated: 'Loma nomainīta uz ',
+                err_role: 'Kļūda, atjaunojot lomu',
+                confirm_del_title: 'Dzēst lietotāju?',
+                confirm_del_text: 'Šis neatgriezeniski dzēsīs lietotāju "{name}" un visus viņa datus. Šo darbību nevarēs atcelt.',
+                del_success: 'Lietotājs izdzēsts',
+                err_del: 'Kļūda: '
+            },
+            ru: {
+                role_updated: 'Роль обновлена на ',
+                err_role: 'Ошибка обновления роли',
+                confirm_del_title: 'Удалить пользователя?',
+                confirm_del_text: 'Это навсегда удалит пользователя "{name}" и все его данные. Действие нельзя отменить.',
+                del_success: 'Пользователь удален',
+                err_del: 'Ошибка: '
             }
-            showToast(`Role updated to ${role}`, 'success');
-            setTimeout(() => location.reload(), 800);
-        } else {
-            showToast('Error updating role', 'error');
-        }
-        btn.disabled = false;
-    }
+        };
 
-    let pendingAction = null;
-    function confirmDeleteUser(id, name) {
-        document.getElementById('confirmTitle').textContent = t('admin_confirm_delete_user');
-        document.getElementById('confirmText').textContent =
-            `This will permanently delete "${name}" and all their data. Cannot be undone.`;
-        document.getElementById('confirmOk').onclick = () => doDeleteUser(id);
-        document.getElementById('confirmOverlay').classList.add('open');
-    }
-    function closeConfirm() {
-        document.getElementById('confirmOverlay').classList.remove('open');
-    }
-    async function doDeleteUser(id) {
-        closeConfirm();
-        const res = await fetch(`/Admin/DeleteUser?id=${id}`, {
-            method: 'POST', headers: { 'RequestVerificationToken': afToken }
+        function getJsText(key) {
+            const currentLang = localStorage.getItem('lang') || 'en';
+            return jsLangs[currentLang]?.[key] || jsLangs['en'][key];
+        }
+
+        async function setRole(id, role, btn) {
+            btn.disabled = true;
+            const res = await fetch(`/Admin/SetUserRole?id=${id}&role=${role}`, {
+                method: 'POST', headers: { 'RequestVerificationToken': afToken }
+            });
+            if (res.ok) {
+                const badge = document.getElementById('role-badge-' + id);
+                if (badge) {
+                    badge.textContent = role;
+                    badge.className = `admin-badge admin-badge-${role}`;
+                }
+                showToast(getJsText('role_updated') + role, 'success');
+                setTimeout(() => location.reload(), 800);
+            } else {
+                showToast(getJsText('err_role'), 'error');
+            }
+            btn.disabled = false;
+        }
+
+        let pendingAction = null;
+        function confirmDeleteUser(id, name) {
+            document.getElementById('confirmTitle').textContent = getJsText('confirm_del_title');
+            document.getElementById('confirmText').textContent = getJsText('confirm_del_text').replace('{name}', name);
+            document.getElementById('confirmOk').onclick = () => doDeleteUser(id);
+            document.getElementById('confirmOverlay').classList.add('open');
+        }
+
+        function closeConfirm() {
+            document.getElementById('confirmOverlay').classList.remove('open');
+        }
+
+        async function doDeleteUser(id) {
+            closeConfirm();
+            const res = await fetch(`/Admin/DeleteUser?id=${id}`, {
+                method: 'POST', headers: { 'RequestVerificationToken': afToken }
+            });
+            if (res.ok) {
+                document.getElementById('urow-' + id)?.remove();
+                showToast(getJsText('del_success'), 'success');
+            } else {
+                showToast(getJsText('err_del') + await res.text(), 'error');
+            }
+        }
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `admin-toast ${type} show`;
+            setTimeout(() => t.className = 'admin-toast', 2500);
+        }
+
+        document.getElementById('confirmOverlay').addEventListener('click', e => {
+            if (e.target === e.currentTarget) closeConfirm();
         });
-        if (res.ok) {
-            document.getElementById('urow-' + id)?.remove();
-            showToast('User deleted', 'success');
-        } else {
-            showToast('Error: ' + await res.text(), 'error');
-        }
-    }
-
-    function showToast(msg, type = 'success') {
-        const t = document.getElementById('toast');
-        t.textContent = msg;
-        t.className = `admin-toast ${type} show`;
-        setTimeout(() => t.className = 'admin-toast', 2500);
-    }
-
-    document.getElementById('confirmOverlay').addEventListener('click', e => {
-        if (e.target === e.currentTarget) closeConfirm();
-    });
         document.addEventListener('DOMContentLoaded', applyTranslations);
-</script>
+    </script>
 }

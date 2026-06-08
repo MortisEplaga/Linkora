@@ -19,37 +19,33 @@
 
     <main class="admin-main">
         <h1 class="admin-page-title">
-            <th data-i18n="admin_listing_col">Listing</th>
-            <span class="admin-page-subtitle">@total results</span>
+            <span data-i18n="admin_listings">Listings</span>
+            <span class="admin-page-subtitle">@total <span data-i18n="admin_results">results</span></span>
         </h1>
 
         <div class="admin-toolbar">
-            <!-- Search -->
             <form method="get" action="/Admin/Products" style="display:flex;gap:8px;flex:1;max-width:340px">
                 <input type="hidden" name="status" value="@status" />
                 <div class="admin-search-wrap" style="max-width:100%;flex:1">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2">
-                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
                     </svg>
                     <input class="admin-search-input" name="search" value="@search"
-                           placeholder="Search by name..." />
+                           data-i18n-placeholder="admin_search_by_name_ph" placeholder="Search by name..." />
                 </div>
-                <button type="submit" class="admin-btn admin-btn-primary">Search</button>
+                <button type="submit" class="admin-btn admin-btn-primary" data-i18n="admin_search_btn">Search</button>
                 @if (search != null)
                 {
                     <a href="/Admin/Products?status=@status" class="admin-btn admin-btn-view">✕</a>
                 }
             </form>
 
-            <!-- Status tabs -->
             <div class="admin-status-tabs">
-                @foreach (var (s, label) in new[] {
-                    ("Moderation","Moderation"), ("Active","Active"),
-                    ("Rejected","Rejected"), ("Archived","Archived"), ("Succeeded","Succeeded")
-                })
+                @foreach (var s in new[] { "Moderation", "Active", "Rejected", "Archived", "Succeeded" })
                 {
                     <a class="admin-status-tab @(status == s ? "active" : "")"
-                       href="@TabUrl(s)">@label</a>
+                       href="@TabUrl(s)" data-i18n="admin_status_@(s.ToLower())">@s</a>
                 }
             </div>
         </div>
@@ -87,8 +83,9 @@
                                         {
                                             <div class="admin-table-img" style="display:flex;align-items:center;justify-content:center">
                                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
-                                                    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-                                                    <polyline points="21 15 16 10 5 21"/>
+                                                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                                                    <circle cx="8.5" cy="8.5" r="1.5" />
+                                                    <polyline points="21 15 16 10 5 21" />
                                                 </svg>
                                             </div>
                                         }
@@ -106,7 +103,7 @@
                                     </a>
                                 </td>
                                 <td style="font-weight:600">
-                                    @(p.Price.HasValue ? p.Price.Value.ToString("N2") + " €" : "—")
+                                    @(p.Price.HasValue? p.Price.Value.ToString("N2") + " €" : "—")
                                 </td>
                                 <td>
                                     @if (p.ReportCount > 0)
@@ -145,7 +142,7 @@
                                             </button>
                                         }
                                         <button class="admin-btn admin-btn-danger"
-                                                onclick="confirmDelete(@p.Id, '@p.Name.Replace("'","\\'")')">
+                                                onclick="confirmDelete(@p.Id, '@p.Name.Replace("'", "\\'")')">
                                             <span data-i18n="admin_delete">Delete</span>
                                         </button>
                                     </div>
@@ -155,13 +152,12 @@
                     </tbody>
                 </table>
 
-                <!-- Pagination -->
                 @if (totalPages > 1)
                 {
                     <div class="admin-pagination">
                         @if (page > 1)
                         {
-                            <a class="admin-page-btn" href="/Admin/Products?status=@status&page=@(page-1)&search=@search">‹</a>
+                            <a class="admin-page-btn" href="/Admin/Products?status=@status&page=@(page - 1)&search=@search">‹</a>
                         }
                         @for (int i = Math.Max(1, page - 2); i <= Math.Min(totalPages, page + 2); i++)
                         {
@@ -170,7 +166,7 @@
                         }
                         @if (page < totalPages)
                         {
-                            <a class="admin-page-btn" href="/Admin/Products?status=@status&page=@(page+1)&search=@search">›</a>
+                            <a class="admin-page-btn" href="/Admin/Products?status=@status&page=@(page + 1)&search=@search">›</a>
                         }
                     </div>
                 }
@@ -193,59 +189,90 @@
 <div class="admin-toast" id="toast"></div>
 
 @section Scripts {
-<script>
-    const afToken = document.getElementById('afToken')?.value ?? '';
+    <script>
+        const afToken = document.getElementById('afToken')?.value ?? '';
 
-    async function setStatus(id, status, btn) {
-        btn.disabled = true;
-        const res = await fetch(`/Admin/SetProductStatus?id=${id}&status=${status}`, {
-            method: 'POST',
-            headers: { 'RequestVerificationToken': afToken }
-        });
-        if (res.ok) {
-            document.getElementById('row-' + id)?.remove();
-            showToast('Status updated to ' + status, 'success');
-        } else {
-            showToast('Error updating status', 'error');
-            btn.disabled = false;
+        // Перевод текстов внутри JS (динамические уведомления)
+        const jsLangs = {
+            en: {
+                status_updated: 'Status updated to ',
+                err_status: 'Error updating status',
+                confirm_question: 'Are you sure you want to delete "{name}"? This cannot be undone.',
+                deleted_success: 'Listing deleted',
+                err_delete: 'Error deleting listing'
+            },
+            lv: {
+                status_updated: 'Statuss atjaunots uz ',
+                err_status: 'Kļūda, atjaunojot statusu',
+                confirm_question: 'Vai tiešām vēlaties dzēst "{name}"? Šo darbību nevarēs atcelt.',
+                deleted_success: 'Sludinājums izdzēsts',
+                err_delete: 'Kļūda, dzēšot sludinājumu'
+            },
+            ru: {
+                status_updated: 'Статус обновлен на ',
+                err_status: 'Ошибка обновления статуса',
+                confirm_question: 'Вы уверены, что хотите удалить "{name}"? Это действие нельзя отменить.',
+                deleted_success: 'Sludinājums izdzēsts',
+                err_delete: 'Ошибка удаления объявления'
+            }
+        };
+
+        function getJsText(key) {
+            const currentLang = localStorage.getItem('lang') || 'en';
+            return jsLangs[currentLang]?.[key] || jsLangs['en'][key];
         }
-    }
 
-    let deleteId = null;
-    function confirmDelete(id, name) {
-        deleteId = id;
-        document.getElementById('confirmText').textContent =
-            `Are you sure you want to delete "${name}"? This cannot be undone.`;
-        document.getElementById('confirmOverlay').classList.add('open');
-        document.getElementById('confirmOk').onclick = doDelete;
-    }
-    function closeConfirm() {
-        document.getElementById('confirmOverlay').classList.remove('open');
-    }
-    async function doDelete() {
-        closeConfirm();
-        const res = await fetch(`/Product/Delete?id=${deleteId}`, {
-            method: 'POST',
-            headers: { 'RequestVerificationToken': afToken }
-        });
-        if (res.ok) {
-            document.getElementById('row-' + deleteId)?.remove();
-            showToast('Listing deleted', 'success');
-        } else {
-            showToast('Error deleting listing', 'error');
+        async function setStatus(id, status, btn) {
+            btn.disabled = true;
+            const res = await fetch(`/Admin/SetProductStatus?id=${id}&status=${status}`, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': afToken }
+            });
+            if (res.ok) {
+                document.getElementById('row-' + id)?.remove();
+                showToast(getJsText('status_updated') + status, 'success');
+            } else {
+                showToast(getJsText('err_status'), 'error');
+                btn.disabled = false;
+            }
         }
-    }
 
-    function showToast(msg, type = 'success') {
-        const t = document.getElementById('toast');
-        t.textContent = msg;
-        t.className = `admin-toast ${type} show`;
-        setTimeout(() => t.className = 'admin-toast', 2500);
-    }
+        let deleteId = null;
+        function confirmDelete(id, name) {
+            deleteId = id;
+            document.getElementById('confirmText').textContent = getJsText('confirm_question').replace('{name}', name);
+            document.getElementById('confirmOverlay').classList.add('open');
+            document.getElementById('confirmOk').onclick = doDelete;
+        }
 
-    document.getElementById('confirmOverlay').addEventListener('click', e => {
-        if (e.target === e.currentTarget) closeConfirm();
-    });
+        function closeConfirm() {
+            document.getElementById('confirmOverlay').classList.remove('open');
+        }
+
+        async function doDelete() {
+            closeConfirm();
+            const res = await fetch(`/Product/Delete?id=${deleteId}`, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': afToken }
+            });
+            if (res.ok) {
+                document.getElementById('row-' + deleteId)?.remove();
+                showToast(getJsText('deleted_success'), 'success');
+            } else {
+                showToast(getJsText('err_delete'), 'error');
+            }
+        }
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `admin-toast ${type} show`;
+            setTimeout(() => t.className = 'admin-toast', 2500);
+        }
+
+        document.getElementById('confirmOverlay').addEventListener('click', e => {
+            if (e.target === e.currentTarget) closeConfirm();
+        });
         document.addEventListener('DOMContentLoaded', applyTranslations);
-</script>
+    </script>
 }
