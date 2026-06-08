@@ -37,14 +37,12 @@
         <form method="post" asp-controller="Account" asp-action="Login">
             <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
 
-            <div class="auth-field">
-                <input type="text" class="auth-input"
-                       name="username"
-                       placeholder="Username or email"
-                       autocomplete="username"
-                       required />
-            </div>
-            <div class="auth-field auth-field-password">
+            <input type="text" class="auth-input"
+                   name="username"
+                   placeholder="Username, email or phone"
+                   autocomplete="username"
+                   required />
+                <div class="auth-field auth-field-password">
                 <input type="password" class="auth-input"
                        name="password"
                        id="loginPassword"

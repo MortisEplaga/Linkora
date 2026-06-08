@@ -20,5 +20,6 @@ namespace Linkora.Repositories
         Task UpdateFacebookIdAsync(int userId, string facebookId);
         Task MarkForDeletionAsync(int userId, string deletionRequestCode);
         Task<User?> GetByDeletionCodeAsync(string code);
+        Task<User?> GetByPhoneAsync(string phone);
     }
 }

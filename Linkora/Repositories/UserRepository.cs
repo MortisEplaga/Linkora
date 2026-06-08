@@ -23,9 +23,16 @@ namespace Linkora.Repositories
             AvatarImagePath = r.IsDBNull(r.GetOrdinal("AvatarImagePath")) ? null : r.GetString(r.GetOrdinal("AvatarImagePath")),
             EmailConfirmed = !r.IsDBNull(r.GetOrdinal("EmailConfirmed")) && r.GetBoolean(r.GetOrdinal("EmailConfirmed")),
         };
-
-        // ── Existing methods ──
-
+        public async Task<User?> GetByPhoneAsync(string phone)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(
+                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed FROM Users WHERE PhoneNumber = @P", conn);
+            cmd.Parameters.AddWithValue("@P", phone);
+            await using var r = await cmd.ExecuteReaderAsync();
+            return await r.ReadAsync() ? MapRow(r) : null;
+        }
         public async Task<User?> GetByUsernameAsync(string username)
         {
             await using var conn = new SqlConnection(_connectionString);

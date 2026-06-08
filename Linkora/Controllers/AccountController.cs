@@ -32,6 +32,10 @@ namespace Linkora.Controllers
         public async Task<IActionResult> Login(string username, string password, string? returnUrl = null)
         {
             var user = await _userRepository.GetByUsernameAsync(username);
+            if (user == null)
+                user = await _userRepository.GetByEmailAsync(username);
+            if (user == null)
+                user = await _userRepository.GetByPhoneAsync(username);
 
             if (user == null || user.PasswordHash != Hash(password))
             {
@@ -60,6 +64,7 @@ namespace Linkora.Controllers
             string email,
             string password,
             string confirm,
+            string? phone = null,
             bool isCompany = false)
         {
             if (string.IsNullOrWhiteSpace(username))
@@ -113,6 +118,7 @@ namespace Linkora.Controllers
             {
                 UserName = username,
                 Email = email,
+                PhoneNumber = phone,
                 IsCompany = isCompany,
                 ConfirmationToken = token,
             };

@@ -19,7 +19,6 @@
                     <textarea class="create-input create-textarea" id="adDescription" placeholder="Describe the item" data-i18n-placeholder="desc_ph">@p.Description</textarea>
                 </div>
 
-                <!-- Цена появляется здесь если категория её предусматривает -->
                 <div class="create-field" id="priceFieldWrap" style="display:none">
                     <label class="create-label" data-i18n="price_label">Price</label>
                     <input type="number" class="create-input" id="adPrice" min="0" placeholder="0.00" />
@@ -111,13 +110,63 @@
     window.addEventListener('DOMContentLoaded', async () => {
         const catId = document.getElementById('selectedCategoryId').value;
         const productId = @p.Id;
+
+        const catName = '@Html.Raw(ViewBag.CategoryName ?? "")';
+        if (catName) {
+            document.getElementById('catSelectorText').textContent = catName;
+        }
+
         if (catId) {
             const valRes = await fetch(`/Product/ParamValues?productId=${productId}`);
             const values = await valRes.json();
             await loadParams(catId, values);
         }
+
+        await loadExistingMedia(productId);
     });
 
+    async function loadExistingMedia(productId) {
+        try {
+            const res = await fetch(`/Product/MediaFiles?productId=${productId}`);
+            if (!res.ok) return;
+            const media = await res.json();
+            if (!media.length) return;
+
+            const preview = document.getElementById('photosPreview');
+
+            media.forEach(item => {
+                const wrap = document.createElement('div');
+                wrap.className = 'create-photo-thumb';
+                wrap.dataset.existingPath = item.filePath;
+
+                if (item.mediaType === 'video') {
+                    wrap.innerHTML = `
+                        <video src="${item.filePath}" class="thumb-video" muted playsinline
+                               onmouseenter="this.play()" onmouseleave="this.pause();this.currentTime=0"></video>
+                        <div class="thumb-video-badge">▶</div>
+                        <button type="button" onclick="removeExisting(this)">✕</button>`;
+                } else {
+                    wrap.innerHTML = `
+                        <img src="${item.filePath}" onerror="this.src='/img/no-photo.svg'" />
+                        <button type="button" onclick="removeExisting(this)">✕</button>`;
+                }
+                preview.appendChild(wrap);
+            });
+
+            window.existingMediaPaths = media.map(m => m.filePath);
+        } catch (e) {
+            console.error('Failed to load media:', e);
+        }
+    }
+
+    function removeExisting(btn) {
+        const wrap = btn.parentElement;
+        const path = wrap.dataset.existingPath;
+        if (window.existingMediaPaths) {
+            window.existingMediaPaths = window.existingMediaPaths.filter(p => p !== path);
+        }
+        wrap.remove();
+    }
     async function openCreateCatMenu() {
         if (!createAllCategories.length) {
             const res = await fetch('/Category/All');
@@ -297,6 +346,95 @@
             reader.readAsDataURL(file);
         });
     }
+    let citiesCache = null;
+
+    async function addressSearch(input, type) {
+        const val = input.value.toLowerCase();
+
+        if (type === 'city') {
+            if (!citiesCache) {
+                const res = await fetch('/Product/Cities');
+                citiesCache = await res.json();
+            }
+            const filtered = citiesCache.filter(c => c.name.toLowerCase().includes(val));
+            filtered.sort((a, b) => {
+                const an = a.name.toLowerCase().startsWith(val) ? 0 : 1;
+                const bn = b.name.toLowerCase().startsWith(val) ? 0 : 1;
+                return an - bn || a.name.localeCompare(b.name);
+            });
+            showDrop('adCityDrop', filtered, (item) => {
+                document.getElementById('adCity').value   = item.name;
+                document.getElementById('adCityId').value = item.id;
+                hideDrop('adCityDrop');
+                document.getElementById('adStreet').value   = '';
+                document.getElementById('adStreetId').value = '';
+                document.getElementById('adHouse').value    = '';
+                document.getElementById('adHouseId').value  = '';
+                document.getElementById('streetField').style.display = 'block';
+                document.getElementById('houseField').style.display  = 'none';
+            });
+        } else if (type === 'street') {
+            const cityId = document.getElementById('adCityId').value;
+            if (!cityId) return;
+            const res = await fetch(`/Product/Streets?cityId=${cityId}`);
+            const streets = await res.json();
+            const filteredS = streets.filter(s => s.name.toLowerCase().includes(val));
+            filteredS.sort((a, b) => {
+                const an = a.name.toLowerCase().startsWith(val) ? 0 : 1;
+                const bn = b.name.toLowerCase().startsWith(val) ? 0 : 1;
+                return an - bn || a.name.localeCompare(b.name);
+            });
+            showDrop('adStreetDrop', filteredS, (item) => {
+                document.getElementById('adStreet').value   = item.name;
+                document.getElementById('adStreetId').value = item.id;
+                hideDrop('adStreetDrop');
+                document.getElementById('adHouse').value    = '';
+                document.getElementById('adHouseId').value  = '';
+                document.getElementById('houseField').style.display = 'block';
+            });
+        } else if (type === 'house') {
+            const streetId = document.getElementById('adStreetId').value;
+            if (!streetId) return;
+            const res = await fetch(`/Product/Houses?streetId=${streetId}`);
+            const houses = await res.json();
+            const filteredH = houses.filter(h => h.name.toLowerCase().includes(val));
+            filteredH.sort((a, b) => {
+                const an = a.name.toLowerCase().startsWith(val) ? 0 : 1;
+                const bn = b.name.toLowerCase().startsWith(val) ? 0 : 1;
+                return an - bn || a.name.localeCompare(b.name);
+            });
+            showDrop('adHouseDrop', filteredH, (item) => {
+                document.getElementById('adHouse').value   = item.name;
+                document.getElementById('adHouseId').value = item.id;
+                hideDrop('adHouseDrop');
+            });
+        }
+    }
+
+    function showDrop(dropId, items, onSelect) {
+        const drop = document.getElementById(dropId);
+        drop.innerHTML = '';
+        if (!items.length) { drop.style.display = 'none'; return; }
+        items.slice(0, 10).forEach(item => {
+            const el = document.createElement('div');
+            el.className = 'create-drop-item';
+            el.textContent = item.name;
+            el.onclick = () => onSelect(item);
+            drop.appendChild(el);
+        });
+        drop.style.display = 'block';
+    }
+
+    function hideDrop(dropId) {
+        document.getElementById(dropId).style.display = 'none';
+    }
+
+    document.addEventListener('click', e => {
+        ['adCityDrop','adStreetDrop','adHouseDrop'].forEach(id => {
+            const drop = document.getElementById(id);
+            if (drop && !drop.contains(e.target)) drop.style.display = 'none';
+        });
+    });
 
     async function submitEdit(id) {
         const btn = document.querySelector('.create-submit');
@@ -314,10 +452,10 @@
             fd.append('title',       document.getElementById('adTitle').value);
             fd.append('description', document.getElementById('adDescription').value);
             fd.append('qty',         document.getElementById('adQty').value || '1');
-            fd.append('address',     document.getElementById('adAddress').value);
+            fd.append('address', document.getElementById('adCity').value);
             fd.append('categoryId',  document.getElementById('selectedCategoryId').value);
+            fd.append('keepMediaJson', JSON.stringify(window.existingMediaPaths || []));
 
-            // Параметры
             const params = {};
             const priceInput = document.getElementById('adPrice');
             if (priceInput.dataset.paramId && priceInput.value)

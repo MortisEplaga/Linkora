@@ -132,16 +132,32 @@ namespace Linkora.Controllers
             if (product == null) return NotFound();
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             if (product.UserId != userId) return Forbid();
+
+            string? categoryName = null;
+            if (product.CategoryId.HasValue)
+            {
+                var cat = await _categoryRepository.GetByIdAsync(product.CategoryId.Value);
+                categoryName = cat?.Name;
+            }
+
             ViewBag.Product = product;
+            ViewBag.CategoryName = categoryName;
             return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> MediaFiles(int productId)
+        {
+            var media = await _productRepository.GetMediaAsync(productId);
+            return Json(media.Select(m => new { filePath = m.FilePath, mediaType = m.MediaType }));
         }
 
         [Authorize]
         [HttpPost]
-        [Authorize, HttpPost]
         public async Task<IActionResult> Edit(int id, string title, string? description,
-    int? qty, string? address, int? categoryId,
-    string? paramsJson, List<IFormFile>? photos, bool replaceMedia = false)
+            int? qty, string? address, int? categoryId,
+            string? paramsJson, List<IFormFile>? photos,
+            string? keepMediaJson = null, bool replaceMedia = false)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var existing = await _productRepository.GetByIdAsync(id);
@@ -155,15 +171,35 @@ namespace Linkora.Controllers
             var paramValues = ParseParamsJson(paramsJson);
             bool wasArchived = existing.Status == ProductStatus.Archived;
 
-            if (photos?.Count > 0)
-            {
-                await _productRepository.DeleteMediaAsync(id);
-                var media = await SaveUploadedFiles(photos);
-                await _productRepository.SaveMediaAsync(id, media);
-            }
+            var keepPaths = string.IsNullOrEmpty(keepMediaJson)
+                ? new List<string>()
+                : System.Text.Json.JsonSerializer.Deserialize<List<string>>(keepMediaJson) ?? new();
 
             var currentMedia = await _productRepository.GetMediaAsync(id);
-            string? newAvatar = currentMedia.FirstOrDefault()?.FilePath ?? existing.AvatarImagePath;
+            var toDelete = currentMedia.Where(m => !keepPaths.Contains(m.FilePath)).ToList();
+
+            if (toDelete.Any())
+            {
+                foreach (var m in toDelete)
+                {
+                    var full = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", m.FilePath.TrimStart('/'));
+                    if (System.IO.File.Exists(full)) System.IO.File.Delete(full);
+                }
+                await using var conn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
+                await conn.OpenAsync();
+                var ids = string.Join(",", toDelete.Select(m => m.Id));
+                await using var cmd = new SqlCommand($"DELETE FROM ProductMedia WHERE Id IN ({ids})", conn);
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            if (photos?.Count > 0)
+            {
+                var newMedia = await SaveUploadedFiles(photos);
+                await _productRepository.SaveMediaAsync(id, newMedia);
+            }
+
+            var refreshedMedia = await _productRepository.GetMediaAsync(id);
+            string? newAvatar = refreshedMedia.FirstOrDefault()?.FilePath ?? existing.AvatarImagePath;
 
             await _productRepository.UpdateAsync(new Product
             {

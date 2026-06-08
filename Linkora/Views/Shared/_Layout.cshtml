@@ -117,6 +117,11 @@
             <div class="auth-field">
                 <input type="email" class="auth-input" id="regEmail" placeholder="Email" />
             </div>
+            <div class="auth-field">
+                <input type="tel" class="auth-input" id="regPhone"
+                       placeholder="Phone (optional)"
+                       data-i18n-placeholder="auth_phone_ph" />
+            </div>
             <div class="auth-field auth-field-password">
                 <input type="password" class="auth-input" id="regPassword"
                        placeholder="Password"
@@ -152,6 +157,7 @@
     <form id="registerForm" method="post" action="/Account/Register" style="display:none">
         <input type="hidden" name="username" id="fRegUsername" />
         <input type="hidden" name="email" id="fRegEmail" />
+        <input type="hidden" name="phone" id="fRegPhone" />
         <input type="hidden" name="password" id="fRegPassword" />
         <input type="hidden" name="confirm" id="fRegConfirm" />
     </form>
@@ -1186,6 +1192,7 @@
             document.getElementById('fRegEmail').value    = document.getElementById('regEmail').value;
             document.getElementById('fRegPassword').value = document.getElementById('regPassword').value;
             document.getElementById('fRegConfirm').value  = document.getElementById('regConfirm').value;
+            document.getElementById('fRegPhone').value = document.getElementById('regPhone')?.value ?? '';
             document.getElementById('registerForm').submit();
         }
         function togglePass(id, btn) {
