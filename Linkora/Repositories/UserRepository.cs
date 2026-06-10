@@ -22,13 +22,14 @@ namespace Linkora.Repositories
             PasswordHash = r.IsDBNull(r.GetOrdinal("PasswordHash")) ? null : r.GetString(r.GetOrdinal("PasswordHash")),
             AvatarImagePath = r.IsDBNull(r.GetOrdinal("AvatarImagePath")) ? null : r.GetString(r.GetOrdinal("AvatarImagePath")),
             EmailConfirmed = !r.IsDBNull(r.GetOrdinal("EmailConfirmed")) && r.GetBoolean(r.GetOrdinal("EmailConfirmed")),
+            PreferredAdDuration = r.IsDBNull(r.GetOrdinal("PreferredAdDuration")) ? null : r.GetInt32(r.GetOrdinal("PreferredAdDuration"))
         };
         public async Task<User?> GetByPhoneAsync(string phone)
         {
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(
-                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed FROM Users WHERE PhoneNumber = @P", conn);
+                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed, PreferredAdDuration FROM Users WHERE PhoneNumber = @P", conn);
             cmd.Parameters.AddWithValue("@P", phone);
             await using var r = await cmd.ExecuteReaderAsync();
             return await r.ReadAsync() ? MapRow(r) : null;
@@ -38,7 +39,7 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(
-                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed FROM Users WHERE UserName = @U", conn);
+                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed, PreferredAdDuration FROM Users WHERE UserName = @U", conn);
             cmd.Parameters.AddWithValue("@U", username);
             await using var r = await cmd.ExecuteReaderAsync();
             return await r.ReadAsync() ? MapRow(r) : null;
@@ -49,7 +50,7 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(
-                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed FROM Users WHERE Id = @Id", conn);
+                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed, PreferredAdDuration FROM Users WHERE Id = @Id", conn);
             cmd.Parameters.AddWithValue("@Id", id);
             await using var r = await cmd.ExecuteReaderAsync();
             return await r.ReadAsync() ? MapRow(r) : null;
@@ -79,7 +80,7 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(
-                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed FROM Users WHERE Email = @E", conn);
+                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed, PreferredAdDuration FROM Users WHERE Email = @E", conn);
             cmd.Parameters.AddWithValue("@E", email);
             await using var r = await cmd.ExecuteReaderAsync();
             return await r.ReadAsync() ? MapRow(r) : null;

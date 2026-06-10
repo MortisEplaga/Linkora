@@ -93,7 +93,17 @@
                 </div>
                 <div class="create-photos-preview" id="photosPreview"></div>
             </div>
-
+            <div class="create-section">
+                <div class="auth-field">
+                    <label class="auth-label" data-i18n="profile_ad_duration">How many days will the ad be active?</label>
+                    <div class="duration-pills" id="pubDurationPills">
+                    </div>
+                    <div class="duration-hint" data-i18n="profile_ad_duration_hint">
+                        Applied by default when posting an ad. If not set, 30 days is used.
+                    </div>
+                    <input type="hidden" id="pubDurationValue" value="30" />
+                </div>
+            </div>
             <button class="create-submit" onclick="submitEdit(@p.Id)" data-i18n="save_btn">Save</button>
         </div>
     </div>
@@ -457,6 +467,7 @@
             fd.append('address', addressParts.join(', '));            
             fd.append('categoryId',  document.getElementById('selectedCategoryId').value);
             fd.append('keepMediaJson', JSON.stringify(window.existingMediaPaths || []));
+            fd.append('publishDays', document.getElementById('pubDurationValue').value || '30');
 
             const params = {};
             const priceInput = document.getElementById('adPrice');
@@ -560,4 +571,62 @@
         fill.style.background = pct > 90 ? '#e53e3e' : pct > 70 ? '#f6a623' : '#00b0a3';
         label.textContent = (totalBytes / 1_048_576).toFixed(1) + ' / 50 MB';
     }
-    </script>
+
+    const DURATION_OPTIONS = [1, 3, 7, 14, 30];
+    const DEFAULT_DURATION = 30;
+
+    function selectPubDuration(days, btn) {
+        document.querySelectorAll('#pubDurationPills .duration-pill')
+            .forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('pubDurationValue').value = days;
+    }
+
+    async function initDurationUI() {
+        let preferred = DEFAULT_DURATION;
+        try {
+            const res = await fetch('/Profile/AdDurationPref');
+            if (res.ok) {
+                const data = await res.json();
+                if (data.days && DURATION_OPTIONS.includes(data.days)) {
+                    preferred = data.days;
+                }
+            }
+        } catch(e) { console.warn('Could not load duration preference', e); }
+
+        const hiddenInput = document.getElementById('pubDurationValue');
+        if (hiddenInput) hiddenInput.value = preferred;
+
+        const container = document.getElementById('pubDurationPills');
+        if (!container) return;
+
+        const existingBtns = container.querySelectorAll('.duration-pill');
+        if (existingBtns.length) {
+            existingBtns.forEach(btn => {
+                const days = parseInt(btn.dataset.days);
+                if (days === preferred) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        } else {
+            container.innerHTML = '';
+            DURATION_OPTIONS.forEach(days => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'duration-pill';
+                btn.dataset.days = days;
+                btn.textContent = `${days}`;
+                btn.onclick = () => selectPubDuration(days, btn);
+                if (days === preferred) btn.classList.add('active');
+                container.appendChild(btn);
+            });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (document.getElementById('pubDurationPills')) {
+            initDurationUI();
+        }
+    });    </script>

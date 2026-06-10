@@ -6,7 +6,7 @@ namespace Linkora.Services
     {
         private readonly ILogger<ArchiveOldProductsService> _logger;
         private readonly IServiceScopeFactory _serviceScopeFactory;
-        private readonly TimeSpan _interval = TimeSpan.FromHours(24); // Раз в сутки
+        private readonly TimeSpan _interval = TimeSpan.FromHours(24);
 
         public ArchiveOldProductsService(
             ILogger<ArchiveOldProductsService> logger,
@@ -18,24 +18,24 @@ namespace Linkora.Services
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            _logger.LogInformation("ArchiveOldProductsService запущен");
+            _logger.LogInformation("ArchiveOldProductsService started");
 
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
                 {
-                    await ArchiveOldProducts();
+                    await ArchiveExpiredProducts();
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Ошибка при архивации старых продуктов");
+                    _logger.LogError(ex, "Error archiving expired products");
                 }
 
                 await Task.Delay(_interval, stoppingToken);
             }
         }
 
-        private async Task ArchiveOldProducts()
+        private async Task ArchiveExpiredProducts()
         {
             using var scope = _serviceScopeFactory.CreateScope();
             var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
@@ -45,15 +45,19 @@ namespace Linkora.Services
             await connection.OpenAsync();
 
             var sql = @"
-                UPDATE Products 
-                SET Status = 'Archived' 
-                WHERE Status = 'Active' 
-                AND CreatedAt < DATEADD(month, -1, GETDATE())";
+UPDATE Products
+SET Status = 'Archived'
+WHERE Status = 'Active'
+  AND (
+        (ExpiresAt IS NOT NULL AND ExpiresAt < GETDATE())
+        OR
+        (ExpiresAt IS NULL AND DATEADD(DAY, PublishDurationDays, CreatedTime) < GETDATE())
+      )";
 
             using var command = new SqlCommand(sql, connection);
-            var affectedRows = await command.ExecuteNonQueryAsync();
+            var affected = await command.ExecuteNonQueryAsync();
 
-            _logger.LogInformation("Архивировано {Count} старых продуктов", affectedRows);
+            _logger.LogInformation("Archived {Count} expired products", affected);
         }
     }
 }

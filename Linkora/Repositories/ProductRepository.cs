@@ -488,15 +488,20 @@ namespace Linkora.Repositories
             var rowsAffected = await command.ExecuteNonQueryAsync();
             return rowsAffected > 0;
         }
-        public async Task<int> CreateAsync(Product product, Dictionary<int, string> paramValues)
+        public async Task<int> CreateAsync(Product product, Dictionary<int, string> paramValues, int publishDurationDays = 30)
         {
+            if (!new[] { 7, 14, 30, 60, 90 }.Contains(publishDurationDays))
+                publishDurationDays = 30;
+
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
             await using var cmd = new SqlCommand(@"
-        INSERT INTO Products (Name, Description, Qty, Address, CategoryId, UserId, AvatarImagePath, CreatedTime, Status)
-        OUTPUT INSERTED.Id
-        VALUES (@Name, @Description, @Qty, @Address, @CategoryId, @UserId, @AvatarImagePath, GETDATE(), 'Moderation')", conn);
+                INSERT INTO Products (Name, Description, Qty, Address, CategoryId, UserId, AvatarImagePath,
+                                      CreatedTime, Status, PublishDurationDays, ExpiresAt)
+                OUTPUT INSERTED.Id
+                VALUES (@Name, @Description, @Qty, @Address, @CategoryId, @UserId, @AvatarImagePath,
+                        GETDATE(), 'Moderation', @Duration, DATEADD(DAY, @Duration, GETDATE()))", conn);
 
             cmd.Parameters.AddWithValue("@Name", product.Name);
             cmd.Parameters.AddWithValue("@Description", (object?)product.Description ?? DBNull.Value);
@@ -505,6 +510,7 @@ namespace Linkora.Repositories
             cmd.Parameters.AddWithValue("@CategoryId", (object?)product.CategoryId ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@UserId", product.UserId!);
             cmd.Parameters.AddWithValue("@AvatarImagePath", (object?)product.AvatarImagePath ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@Duration", publishDurationDays);
 
             var newId = (int)(await cmd.ExecuteScalarAsync())!;
 
@@ -512,8 +518,8 @@ namespace Linkora.Repositories
             {
                 if (string.IsNullOrWhiteSpace(value)) continue;
                 await using var p = new SqlCommand(@"
-            INSERT INTO MapperProductCategory (ProductId, CategoryId, Value)
-            VALUES (@ProductId, @CategoryId, @Value)", conn);
+                    INSERT INTO MapperProductCategory (ProductId, CategoryId, Value)
+                    VALUES (@ProductId, @CategoryId, @Value)", conn);
                 p.Parameters.AddWithValue("@ProductId", newId);
                 p.Parameters.AddWithValue("@CategoryId", paramId);
                 p.Parameters.AddWithValue("@Value", value);

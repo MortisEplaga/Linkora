@@ -1,4 +1,82 @@
-﻿.create-photos-hint {
+﻿.duration-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.duration-pill {
+    padding: 7px 16px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    background: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    color: #555;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+    .duration-pill:hover {
+        border-color: #aaa;
+        color: #1a1a1a;
+    }
+
+    .duration-pill.active {
+        background: #1a1a1a;
+        border-color: #1a1a1a;
+        color: #fff;
+    }
+
+.duration-hint {
+    font-size: 12px;
+    color: #aaa;
+    margin-top: 6px;
+}
+
+/* Тёмная тема для страницы создания объявления */
+.dark-theme .create-form, /* основная карточка формы */
+.dark-theme .create-page {
+    background: #252525 !important;
+    border-color: #333 !important;
+}
+
+.dark-theme .create-title {
+    color: #e8e8e8 !important;
+}
+
+.dark-theme .create-section-title {
+    color: #666 !important;
+    border-top-color: #333 !important;
+}
+
+.dark-theme .create-error {
+    background: #2a1a1a !important;
+    border-color: #5a2a2a !important;
+    color: #ff8080 !important;
+}
+
+.dark-theme .create-success {
+    background: #1a2a1f !important;
+    border-color: #2a5a3a !important;
+    color: #6fcf97 !important;
+}
+
+.dark-theme .duration-pill {
+    background: #2a2a2a !important;
+    border-color: #444 !important;
+    color: #888 !important;
+}
+
+    .dark-theme .duration-pill.active {
+        background: #e8e8e8 !important;
+        border-color: #e8e8e8 !important;
+        color: #1a1a1a !important;
+    }
+    
+    .create-photos-hint {
+
+
     font-size: 12px;
     color: #bbb;
 }

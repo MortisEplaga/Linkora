@@ -154,10 +154,12 @@ namespace Linkora.Controllers
 
         [Authorize]
         [HttpPost]
+        [Authorize]
+        [HttpPost]
         public async Task<IActionResult> Edit(int id, string title, string? description,
-            int? qty, string? address, int? categoryId,
-            string? paramsJson, List<IFormFile>? photos,
-            string? keepMediaJson = null, bool replaceMedia = false)
+    int? qty, string? address, int? categoryId,
+    string? paramsJson, List<IFormFile>? photos,
+    string? keepMediaJson = null, bool replaceMedia = false, int? publishDays = null)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var existing = await _productRepository.GetByIdAsync(id);
@@ -213,6 +215,21 @@ namespace Linkora.Controllers
                 AvatarImagePath = newAvatar,
             }, paramValues);
 
+            if (publishDays.HasValue && new[] { 7, 14, 30, 60, 90 }.Contains(publishDays.Value))
+            {
+                await using var conn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
+                await conn.OpenAsync();
+                await using var cmd = new SqlCommand(@"
+            UPDATE Products
+            SET PublishDurationDays = @D,
+                ExpiresAt = DATEADD(DAY, @D, GETDATE())
+            WHERE Id = @Id AND UserId = @UserId", conn);
+                cmd.Parameters.AddWithValue("@D", publishDays.Value);
+                cmd.Parameters.AddWithValue("@Id", id);
+                cmd.Parameters.AddWithValue("@UserId", userId);
+                await cmd.ExecuteNonQueryAsync();
+            }
+
             if (wasArchived)
                 await _productRepository.ReactivateProductAsync(id, userId);
 
@@ -264,10 +281,13 @@ namespace Linkora.Controllers
         [Authorize]
         [HttpPost]
         [Authorize, HttpPost]
+        [Authorize]
+        [HttpPost]
         public async Task<IActionResult> Create(
     string title, string? description, int? qty,
     string? address, int? categoryId,
-    List<IFormFile>? photos, string? paramsJson)
+    List<IFormFile>? photos, string? paramsJson,
+    int? publishDays = null)
         {
             if (string.IsNullOrWhiteSpace(title)) return BadRequest("Title is required");
 
@@ -277,8 +297,27 @@ namespace Linkora.Controllers
 
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
-            var media = photos?.Count > 0 ? await SaveUploadedFiles(photos) : new();
+            // Resolve duration: explicit request value → user preference → system default
+            int duration = 30;
+            if (publishDays.HasValue && new[] { 7, 14, 30, 60, 90 }.Contains(publishDays.Value))
+            {
+                duration = publishDays.Value;
+            }
+            else
+            {
+                // Load user preference
+                await using var conn = new Microsoft.Data.SqlClient.SqlConnection(
+                    _configuration.GetConnectionString("DefaultConnection")!);
+                await conn.OpenAsync();
+                await using var cmd = new Microsoft.Data.SqlClient.SqlCommand(
+                    "SELECT PreferredAdDuration FROM Users WHERE Id = @Id", conn);
+                cmd.Parameters.AddWithValue("@Id", userId);
+                var pref = await cmd.ExecuteScalarAsync();
+                if (pref != null && pref != DBNull.Value)
+                    duration = (int)pref;
+            }
 
+            var media = photos?.Count > 0 ? await SaveUploadedFiles(photos) : new();
             var paramValues = ParseParamsJson(paramsJson);
 
             var newId = await _productRepository.CreateAsync(new Product
@@ -290,13 +329,10 @@ namespace Linkora.Controllers
                 Address = address,
                 CategoryId = categoryId,
                 AvatarImagePath = media.FirstOrDefault()?.FilePath,
-            }, paramValues);
+            }, paramValues, duration);
 
             if (media.Count > 0)
-            {
-                var firstMedia = media[0];
                 await _productRepository.SaveMediaAsync(newId, media);
-            }
 
             var userName = User.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
             await _notificationRepository.NotifySubscribersAsync(userId, newId, title, userName);

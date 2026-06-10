@@ -23,7 +23,7 @@ namespace Linkora.Repositories
         Task<bool> ReactivateProductAsync(int productId, int userId);
         Task<IEnumerable<Product>> GetUserProductsByStatusAsync(int userId, string status);
         Task<bool> UpdateProductStatusAsync(int productId, ProductStatus status);
-        Task<int> CreateAsync(Product product, Dictionary<int, string> paramValues);
+        Task<int> CreateAsync(Product product, Dictionary<int, string> paramValues, int publishDurationDays = 30);
         Task<List<ProductMedia>> GetMediaAsync(int productId);
         Task SaveMediaAsync(int productId, List<ProductMedia> media);
         Task DeleteMediaAsync(int productId);

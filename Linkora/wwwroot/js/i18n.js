@@ -15,6 +15,11 @@
 
 const TRANSLATIONS = {
     en: {
+        'profile_ad_duration': 'Preferred ad duration (days)',
+        'profile_ad_duration_hint': 'Applied by default when posting an ad. If not set, 30 days is used.',
+        'ad_duration_label': 'Publication duration',
+        'days_label': 'days',
+
         'admin_dash_title': 'Dashboard',
         'admin_dash_subtitle': 'Vena admin panel',
         'admin_stat_total_users': 'Total users',
@@ -340,6 +345,11 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'profile_ad_duration': 'Vēlamais sludinājuma ilgums (dienas)',
+        'profile_ad_duration_hint': 'Tiek izmantots pēc noklusējuma, publicējot sludinājumu. Ja nav iestatīts, tiek izmantoti 30 dienas.',
+        'ad_duration_label': 'Publicēšanas ilgums',
+        'days_label': 'dienas',
+
         'admin_dash_title': 'Info panelis',
         'admin_dash_subtitle': 'Vena administratora panelis',
         'admin_stat_total_users': 'Kopā lietotāju',
@@ -675,6 +685,11 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'profile_ad_duration': 'Предпочитаемый срок показа (дней)',
+        'profile_ad_duration_hint': 'Применяется по умолчанию при публикации объявления. Если не задано, используется 30 дней.',
+        'ad_duration_label': 'Срок публикации',
+        'days_label': 'дней',
+
         'admin_dash_title': 'Панель управления',
         'admin_dash_subtitle': 'Панель администратора Vena',
         'admin_stat_total_users': 'Всего пользователей',

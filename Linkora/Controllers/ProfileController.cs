@@ -15,6 +15,8 @@ namespace Linkora.Controllers
         private readonly IUserRepository _userRepository;
         private readonly string _connectionString;
 
+        private static readonly int[] AllowedDurations = { 1, 3, 7, 14, 30 };
+
         public ProfileController(IUserRepository userRepository, IConfiguration configuration)
         {
             _userRepository = userRepository;
@@ -57,6 +59,16 @@ namespace Linkora.Controllers
                     errors.Add("Phone already used by another account");
             }
 
+            // Validate duration
+            int? duration = null;
+            if (dto.PreferredAdDuration.HasValue)
+            {
+                if (!AllowedDurations.Contains(dto.PreferredAdDuration.Value))
+                    errors.Add("Invalid ad duration value");
+                else
+                    duration = dto.PreferredAdDuration.Value;
+            }
+
             if (errors.Any())
                 return BadRequest(new { errors });
 
@@ -81,13 +93,20 @@ namespace Linkora.Controllers
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
-            var sql = newHash != null
-                ? "UPDATE Users SET UserName = @U, PhoneNumber = @P, PasswordHash = @H WHERE Id = @Id"
-                : "UPDATE Users SET UserName = @U, PhoneNumber = @P WHERE Id = @Id";
+            var setParts = new List<string>
+            {
+                "UserName = @U",
+                "PhoneNumber = @P",
+                "PreferredAdDuration = @D"
+            };
+            if (newHash != null) setParts.Add("PasswordHash = @H");
+
+            var sql = $"UPDATE Users SET {string.Join(", ", setParts)} WHERE Id = @Id";
 
             await using var cmd = new SqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@U", dto.UserName);
             cmd.Parameters.AddWithValue("@P", (object?)dto.Phone ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@D", (object?)duration ?? DBNull.Value);
             if (newHash != null) cmd.Parameters.AddWithValue("@H", newHash);
             cmd.Parameters.AddWithValue("@Id", userId);
             await cmd.ExecuteNonQueryAsync();
@@ -100,6 +119,18 @@ namespace Linkora.Controllers
             var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
             return Convert.ToHexString(bytes).ToLower();
         }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> AdDurationPref()
+        {
+            if (!User.Identity!.IsAuthenticated)
+                return Json(new { days = 30 });
+
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var user = await _userRepository.GetByIdAsync(userId);
+            return Json(new { days = user?.PreferredAdDuration ?? 30 });
+        }
     }
 
     public class ProfileSaveDto
@@ -108,5 +139,6 @@ namespace Linkora.Controllers
         public string? Phone { get; set; }
         public string? CurrentPassword { get; set; }
         public string? NewPassword { get; set; }
+        public int? PreferredAdDuration { get; set; }
     }
 }
