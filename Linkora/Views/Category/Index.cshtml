@@ -13,6 +13,7 @@
 
 @{
     var parent = breadcrumb.Count > 1 ? breadcrumb[breadcrumb.Count - 2] : null;
+    var hasPriceSort = products.Any(p => p.Price.HasValue);
 }
 
 <div class="category-header">
@@ -21,19 +22,20 @@
         <span class="category-count">@products.Count</span>
     </h1>
     @if (ViewBag.Search != null)
-{
-        var removeUrl = Url.Action("Index", "Category", new {
+    {
+        var removeUrl = Url.Action("Index", "Category", new
+        {
             id = category.Id,
             sort = sort,
             city = (string?)ViewBag.City
         });
-    <div style="margin-bottom: 12px;">
-        <span class="search-chip">
-            @ViewBag.Search
-            <a class="search-chip-remove" href="@removeUrl">✕</a>
-        </span>
-    </div>
-}
+        <div style="margin-bottom: 12px;">
+            <span class="search-chip">
+                @ViewBag.Search
+                <a class="search-chip-remove" href="@removeUrl">✕</a>
+            </span>
+        </div>
+    }
 </div>
 
 <div class="category-body">
@@ -54,7 +56,6 @@
                     @child.Name
                 </a>
             }
-        
         </nav>
 
         @{
@@ -79,7 +80,7 @@
                                 <span class="param-title">@vm.Param.Name</span>
                                 <input type="checkbox" class="param-check-input"
                                        name="p_@vm.Param.Id" value="true"
-                                       @(activeFilters.ContainsKey(vm.Param.Id) ? "checked" : "")/>
+                                       @(activeFilters.ContainsKey(vm.Param.Id) ? "checked" : "") />
                             </div>
                         }
                         else
@@ -168,7 +169,6 @@
     </div>
     <div class="category-content">
 
-        <!-- Тулбар -->
         <div class="listing-toolbar">
             <div class="listing-view-btns">
                 <button class="listing-view-btn" id="btnGrid" onclick="setView('grid')" title="Grid">
@@ -183,7 +183,7 @@
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                     <circle cx="12" cy="10" r="3" />
                 </svg>
-                <span id="regionBtnLabel">@(ViewBag.City != null ? (string)ViewBag.City : "All regions")</span>
+                <span id="regionBtnLabel" data-i18n="@(ViewBag.City == null ? "all_regions" : null)">@(ViewBag.City != null ? (string)ViewBag.City : "All regions")</span>
             </button>
             <div class="listing-sort-wrap">
                 <button class="listing-sort-btn" onclick="toggleSort(event)">
@@ -204,7 +204,6 @@
             </div>
         </div>
 
-        <!-- Список -->
         <div class="listing-grid" id="listingContainer">
             @foreach (var p in products)
             {
@@ -237,7 +236,7 @@
                                 <img src="@p.Seller?.AvatarPath" style="width:40px;height:40px;border-radius:50%;object-fit:cover"
                                      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
                                 <svg style="display:none;width:40px;height:40px" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                                }
+                            }
                             else
                             {
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
@@ -291,12 +290,13 @@
             document.getElementById('sortDrop').classList.toggle('open');
         }
 
-        function setSortLabel(label) {
-        const sortLabel = document.getElementById('sortLabel');
-            if (sortLabel) {
-                const sortMap = { new: t('sort_newest'), cheap: t('sort_cheapest'), expensive: t('sort_expensive') };
-                sortLabel.textContent = sortMap[sortLabel.dataset.sort || 'new'] || t('sort_newest');
-            }
+        function setSortLabel() {
+            const sortLabel = document.getElementById('sortLabel');
+            if (!sortLabel) return;
+            const lang = localStorage.getItem('lang') || 'en';
+            const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
+            const sortMap = { new: dict.sort_newest, cheap: dict.sort_cheapest, expensive: dict.sort_expensive };
+            sortLabel.textContent = sortMap[sortLabel.dataset.sort || 'new'] || dict.sort_newest || 'Newest first';
         }
 
         document.addEventListener('click', e => {
@@ -306,39 +306,38 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             setView(localStorage.getItem('listingView') || 'grid');
+            setSortLabel();
 
-            // Восстановить выбранный регион
             const url = new URL(window.location.href);
             const city = url.searchParams.get('city');
             if (city) {
                 selectedRegion = { name: city };
-        document.querySelector('.regions-btn').innerHTML =
-            '<img src="/img/marker_for_adv.svg" alt="" class="regions-icon" />' + city;
+                document.querySelector('.regions-btn').innerHTML =
+                    '<img src="/img/marker_for_adv.svg" alt="" class="regions-icon" />' + city;
             }
 
-            // Подсветить избранное
             const res = await fetch('/Favourite/UserItems');
             if (!res.ok) return;
             const { favs, cart } = await res.json();
             document.querySelectorAll('.product-card-action-btn').forEach(btn => {
-                const isFav  = btn.getAttribute('onclick')?.includes('true');
+                const isFav = btn.getAttribute('onclick')?.includes('true');
                 const prodId = parseInt(btn.getAttribute('onclick')?.match(/\d+/)?.[0]);
-                if (isFav  && favs.includes(prodId)) btn.classList.add('product-card-action-active');
+                if (isFav && favs.includes(prodId)) btn.classList.add('product-card-action-active');
                 if (!isFav && cart.includes(prodId)) btn.classList.add('product-card-action-active');
             });
-            document.getElementById('filterForm')?.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const inputs = this.querySelectorAll('input, select');
-            inputs.forEach(input => {
-                if (input.type === 'checkbox' && !input.checked) {
-                    input.disabled = true;
-                } else if (input.value.trim() === '') {
-                    input.disabled = true;
-                }
-            });
-            this.submit();
-        });
 
+            document.getElementById('filterForm')?.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const inputs = this.querySelectorAll('input, select');
+                inputs.forEach(input => {
+                    if (input.type === 'checkbox' && !input.checked) {
+                        input.disabled = true;
+                    } else if (input.value.trim() === '') {
+                        input.disabled = true;
+                    }
+                });
+                this.submit();
+            });
         });
     </script>
 </div>
@@ -346,11 +345,11 @@
 <script>
     function rangeSync(input, side) {
         const wrap = input.closest('.param-range');
-        const min  = parseFloat(wrap.dataset.min);
-        const max  = parseFloat(wrap.dataset.max);
+        const min = parseFloat(wrap.dataset.min);
+        const max = parseFloat(wrap.dataset.max);
         const step = parseFloat(wrap.dataset.step) || 1;
         const from = wrap.querySelector('.param-range-from');
-        const to   = wrap.querySelector('.param-range-to');
+        const to = wrap.querySelector('.param-range-to');
 
         let val = parseFloat(input.value);
         if (!isNaN(val)) {
@@ -376,8 +375,12 @@
         const hidden = block.querySelectorAll('.param-option-hidden');
         const isHidden = hidden[0]?.style.display === 'none';
         hidden.forEach(el => el.style.display = isHidden ? '' : 'none');
-        btn.textContent = isHidden ? t('hide_btn') : t('more_btn') + ' ' + hidden.length;
+
+        const lang = localStorage.getItem('lang') || 'en';
+        const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
+        btn.textContent = isHidden ? (dict.hide_btn || 'Hide') : (dict.more_btn || 'More') + ' ' + hidden.length;
     }
+
     function selectPill(pill, paramId) {
         const pills = pill.closest('.param-pills');
         const wasActive = pill.classList.contains('param-pill-active');
@@ -390,17 +393,22 @@
             input.value = '';
         }
     }
+
     function resetFilters(categoryId) {
-            window.location.href = '/Category/Index/' + categoryId;
-        }
-            function clientSort(type, el) {
-        // Обновить подпись и активный класс
-            document.querySelectorAll('.param-show-more[data-count]').forEach(btn => {
-        btn.textContent = t('more_btn') + ' ' + btn.dataset.count;
-    });
+        window.location.href = '/Category/Index/' + categoryId;
+    }
+
+    function clientSort(type, el) {
+        const lang = localStorage.getItem('lang') || 'en';
+        const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
+
+        document.querySelectorAll('.param-show-more[data-count]').forEach(btn => {
+            btn.textContent = (dict.more_btn || 'More') + ' ' + btn.dataset.count;
+        });
         document.querySelectorAll('.listing-sort-item').forEach(i => i.classList.remove('active'));
         el.classList.add('active');
-        const labels = { new: t('sort_newest'), cheap: t('sort_cheapest'), expensive: t('sort_expensive') };
+
+        const labels = { new: dict.sort_newest, cheap: dict.sort_cheapest, expensive: dict.sort_expensive };
         document.getElementById('sortLabel').textContent = labels[type];
         document.getElementById('sortDrop').classList.remove('open');
 
