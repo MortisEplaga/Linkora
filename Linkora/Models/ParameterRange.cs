@@ -8,7 +8,7 @@ namespace Linkora.Models
     {
         [Required]
         public Category Param { get; set; } = null!;
-        public List<string> Options { get; set; } = [];
+        public List<SelectOption> Options { get; set; } = [];
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal? Min { get; set; }
@@ -18,5 +18,10 @@ namespace Linkora.Models
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal? Step { get; set; }
+    }
+    public class SelectOption
+    {
+        public int Id { get; set; }
+        public string Text { get; set; } = "";
     }
 }

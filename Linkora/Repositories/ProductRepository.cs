@@ -154,7 +154,88 @@ namespace Linkora.Repositories
                 });
             return result;
         }
+        public async Task<Dictionary<int, string>> GetParamDisplayValuesAsync(int productId, string lang)
+        {
+            // 1. Загружаем все опции SelectOptions в словарь: Id -> (Value, ValueLV, ValueRU)
+            var options = await LoadSelectOptionsDictionaryAsync();
 
+            var result = new Dictionary<int, string>();
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            await using var cmd = new SqlCommand(@"
+        SELECT m.CategoryId, m.Value, c.Type
+        FROM MapperProductCategory m
+        JOIN Category c ON c.Id = m.CategoryId
+        WHERE m.ProductId = @ProductId", conn);
+            cmd.Parameters.AddWithValue("@ProductId", productId);
+
+            await using var r = await cmd.ExecuteReaderAsync();
+            var multiValues = new Dictionary<int, List<string>>();
+
+            while (await r.ReadAsync())
+            {
+                var paramId = r.GetInt32(0);
+                var rawValue = r.IsDBNull(1) ? "" : r.GetString(1);
+                var type = r.IsDBNull(2) ? (int?)null : r.GetInt32(2);
+
+                string text;
+                if (type == 2) // одиночный выбор
+                {
+                    text = ResolveOptionTextFromDictionary(rawValue, options, lang);
+                }
+                else if (type == 4) // множественный выбор
+                {
+                    var ids = rawValue.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                    var texts = ids.Select(id => ResolveOptionTextFromDictionary(id, options, lang));
+                    if (!multiValues.ContainsKey(paramId))
+                        multiValues[paramId] = new List<string>();
+                    multiValues[paramId].AddRange(texts);
+                    continue; // не добавляем в result сейчас, добавим позже
+                }
+                else // другие типы (1, 3 и т.д.) – берём rawValue как есть
+                {
+                    text = rawValue;
+                }
+
+                result[paramId] = text;
+            }
+
+            foreach (var (paramId, list) in multiValues)
+                result[paramId] = string.Join(", ", list);
+
+            return result;
+        }
+
+        private string ResolveOptionTextFromDictionary(string idStr, Dictionary<int, (string Value, string ValueLV, string ValueRU)> options, string lang)
+        {
+            if (!int.TryParse(idStr, out int id) || !options.TryGetValue(id, out var texts))
+                return idStr; // fallback
+            return lang switch
+            {
+                "lv" => texts.ValueLV,
+                "ru" => texts.ValueRU,
+                _ => texts.Value
+            };
+        }
+
+        private async Task<Dictionary<int, (string Value, string ValueLV, string ValueRU)>> LoadSelectOptionsDictionaryAsync()
+        {
+            var dict = new Dictionary<int, (string, string, string)>();
+            await using var conn = new SqlConnection(_connectionString);
+            await using var cmd = new SqlCommand("SELECT Id, Value, ValueLV, ValueRU FROM SelectOptions", conn);
+            await conn.OpenAsync();
+            await using var r = await cmd.ExecuteReaderAsync();
+            while (await r.ReadAsync())
+            {
+                var id = r.GetInt32(0);
+                var value = r.GetString(1);
+                var valueLv = r.IsDBNull(2) ? value : r.GetString(2);
+                var valueRu = r.IsDBNull(3) ? value : r.GetString(3);
+                dict[id] = (value, valueLv, valueRu);
+            }
+            return dict;
+        }
         public async Task<Product?> GetByIdAsync(int id)
         {
             await using var conn = new SqlConnection(_connectionString);
@@ -599,6 +680,50 @@ namespace Linkora.Repositories
                 "UPDATE Products SET ViewCount = ViewCount + 1 WHERE Id = @Id", conn);
             cmd.Parameters.AddWithValue("@Id", productId);
             await cmd.ExecuteNonQueryAsync();
+        }
+        public async Task DeleteAsync(int productId)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await DeleteProductCascade(conn, productId);
+        }
+
+        private async Task DeleteProductCascade(SqlConnection conn, int productId)
+        {
+            await using var mediaCmd = new SqlCommand(
+                "SELECT FilePath FROM ProductMedia WHERE ProductId = @Id", conn);
+            mediaCmd.Parameters.AddWithValue("@Id", productId);
+            await using var mediaReader = await mediaCmd.ExecuteReaderAsync();
+            var paths = new List<string>();
+            while (await mediaReader.ReadAsync())
+                paths.Add(mediaReader.GetString(0));
+            await mediaReader.CloseAsync();
+
+            foreach (var path in paths)
+            {
+                var full = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", path.TrimStart('/'));
+                if (System.IO.File.Exists(full)) System.IO.File.Delete(full);
+            }
+
+            var steps = new[]
+            {
+        "DELETE FROM ProductMedia          WHERE ProductId = @Id",
+        "DELETE FROM MapperProductCategory WHERE ProductId = @Id",
+        "DELETE FROM Favourites            WHERE ProductId = @Id",
+        "DELETE FROM Reports               WHERE ProductId = @Id",
+        "DELETE FROM Notifications         WHERE ProductId = @Id",
+        "DELETE FROM Messages              WHERE ConversationId IN (SELECT Id FROM Conversations WHERE ProductId = @Id)",
+        "DELETE FROM Conversations         WHERE ProductId = @Id",
+        "DELETE FROM Reviews               WHERE ProductId = @Id",
+        "DELETE FROM Products              WHERE Id = @Id",
+    };
+
+            foreach (var sql in steps)
+            {
+                await using var cmd = new SqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@Id", productId);
+                await cmd.ExecuteNonQueryAsync();
+            }
         }
     }
 }

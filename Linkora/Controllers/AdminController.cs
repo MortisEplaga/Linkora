@@ -260,9 +260,34 @@ namespace Linkora.Controllers
 
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
+
+            var productIds = new List<int>();
+            await using var getProductsCmd = new SqlCommand(
+                "SELECT Id FROM Products WHERE UserId = @UserId", conn);
+            getProductsCmd.Parameters.AddWithValue("@UserId", id);
+            await using var reader = await getProductsCmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+                productIds.Add(reader.GetInt32(0));
+            await reader.CloseAsync();
+
+            foreach (var productId in productIds)
+            {
+                await _productRepository.DeleteAsync(productId);
+            }
+
             await using var cmd = new SqlCommand("DELETE FROM Users WHERE Id = @Id", conn);
             cmd.Parameters.AddWithValue("@Id", id);
             await cmd.ExecuteNonQueryAsync();
+
+            return Ok();
+        }
+
+        [HttpPost, IgnoreAntiforgeryToken]
+        public async Task<IActionResult> DeleteProduct(int id)
+        {
+            if (!IsAdmin()) return Forbid();
+
+            await _productRepository.DeleteAsync(id);
             return Ok();
         }
 

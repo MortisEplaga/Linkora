@@ -15,6 +15,7 @@
 
 const TRANSLATIONS = {
     en: {
+        'yes': 'Yes',
         'profile_ad_duration': 'Preferred ad duration (days)',
         'profile_ad_duration_hint': 'Applied by default when posting an ad. If not set, 30 days is used.',
         'ad_duration_label': 'Publication duration',
@@ -345,6 +346,7 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'yes': 'Jā',
         'profile_ad_duration': 'Vēlamais sludinājuma ilgums (dienas)',
         'profile_ad_duration_hint': 'Tiek izmantots pēc noklusējuma, publicējot sludinājumu. Ja nav iestatīts, tiek izmantoti 30 dienas.',
         'ad_duration_label': 'Publicēšanas ilgums',
@@ -685,6 +687,7 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'yes': 'Да',
         'profile_ad_duration': 'Предпочитаемый срок показа (дней)',
         'profile_ad_duration_hint': 'Применяется по умолчанию при публикации объявления. Если не задано, используется 30 дней.',
         'ad_duration_label': 'Срок публикации',

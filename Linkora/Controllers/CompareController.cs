@@ -1,5 +1,6 @@
 ﻿using Linkora.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using System.Security.Claims;
@@ -10,16 +11,17 @@ namespace Linkora.Controllers
     public class CompareController : Controller
     {
         private readonly string _connectionString;
-
-        public CompareController(IConfiguration configuration)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public CompareController(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection")!;
+            _httpContextAccessor = httpContextAccessor;
         }
-
+        private string GetLang() => _httpContextAccessor.HttpContext?.Request.Cookies["lang"] ?? "en";
         public async Task<IActionResult> Index()
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-
+            var lang = GetLang();
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
@@ -76,29 +78,58 @@ namespace Linkora.Controllers
             // Fetch all parameters for these products
             var productIds = string.Join(",", products.Select(p => p.Id));
             await using var paramCmd = new SqlCommand($@"
-                SELECT mpc.ProductId, c.Name, mpc.Value
-                FROM MapperProductCategory mpc
-                JOIN Category c ON c.Id = mpc.CategoryId
-                WHERE mpc.ProductId IN ({productIds})
-                  AND c.Name != 'Price'
-                ORDER BY c.Name", conn);
+    SELECT mpc.ProductId, c.Id AS ParamId, c.Name, c.Type, mpc.Value,
+           so.Value AS OptText, so.ValueLV, so.ValueRU
+    FROM MapperProductCategory mpc
+    JOIN Category c ON c.Id = mpc.CategoryId
+    LEFT JOIN SelectOptions so ON c.Type IN (2,4) AND TRY_CAST(mpc.Value AS int) = so.Id
+    WHERE mpc.ProductId IN ({productIds})
+      AND c.Name != 'Price'
+    ORDER BY c.Name", conn);
 
             // paramMatrix[paramName][productId] = value
             var paramMatrix = new Dictionary<string, Dictionary<int, string>>();
+            var multiParts = new Dictionary<(string ParamName, int ProductId), List<string>>();
             await using (var r = await paramCmd.ExecuteReaderAsync())
             {
                 while (await r.ReadAsync())
                 {
                     var productId = r.GetInt32(0);
-                    var paramName = r.GetString(1);
-                    var value = r.IsDBNull(2) ? "" : r.GetString(2);
+                    var paramName = r.GetString(2);
+                    var paramType = r.IsDBNull(3) ? (int?)null : r.GetInt32(3);
+                    var rawValue = r.IsDBNull(4) ? "" : r.GetString(4);
 
-                    if (!paramMatrix.ContainsKey(paramName))
-                        paramMatrix[paramName] = new Dictionary<int, string>();
-                    paramMatrix[paramName][productId] = value;
+                    string value;
+                    if (paramType is 2 or 4)
+                    {
+                        value = ResolveOptionText(r, lang, rawValue);
+                    }
+                    else
+                    {
+                        value = rawValue;
+                    }
+
+                    if (paramType == 4)
+                    {
+                        var key = (paramName, productId);
+                        if (!multiParts.ContainsKey(key)) multiParts[key] = new();
+                        multiParts[key].Add(value);
+                    }
+                    else
+                    {
+                        if (!paramMatrix.ContainsKey(paramName))
+                            paramMatrix[paramName] = new Dictionary<int, string>();
+                        paramMatrix[paramName][productId] = value;
+                    }
                 }
             }
 
+            foreach (var ((paramName, productId), parts) in multiParts)
+            {
+                if (!paramMatrix.ContainsKey(paramName))
+                    paramMatrix[paramName] = new Dictionary<int, string>();
+                paramMatrix[paramName][productId] = string.Join(", ", parts);
+            }
             // Only params that exist for at least one product
             var allParams = paramMatrix.Keys.OrderBy(k => k).ToList();
 
@@ -106,6 +137,13 @@ namespace Linkora.Controllers
             ViewBag.AllParams = allParams;
             ViewBag.ParamMatrix = paramMatrix;
             return View();
+        }
+        private static string ResolveOptionText(SqlDataReader r, string lang, string fallback)
+        {
+            if (r.IsDBNull(5)) return fallback; 
+            if (lang == "lv" && !r.IsDBNull(6)) return r.GetString(6);
+            if (lang == "ru" && !r.IsDBNull(7)) return r.GetString(7);
+            return r.GetString(5);
         }
     }
 }

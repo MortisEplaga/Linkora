@@ -266,39 +266,47 @@
         block.innerHTML = `<div class="param-title">${p.name}</div>`;
 
         if (p.type === 3) {
-            block.innerHTML += `
-                <div class="param-check-row">
-                    <span>Да</span>
-                    <input type="checkbox" class="param-check-input" data-param="${p.id}"
-                           ${val === 'true' ? 'checked' : ''} />
-                </div>`;
-        } else if (p.type === 2) {
-            const pills = p.options.map(opt =>
-                `<label class="param-pill ${val === opt ? 'param-pill-active' : ''}"
-                        onclick="pillClick(this)">${opt}</label>`
-            ).join('');
-            block.innerHTML += `<div class="param-pills" data-param="${p.id}">${pills}</div>`;
-        } else if (p.type === 4) {
-            const selected = val ? val.split(',') : [];
-            const LIMIT = 5;
-            const checksHtml = p.options.map((opt, i) =>
-                `<label class="param-option" ${i >= LIMIT ? 'style="display:none"' : ''}>
-                    <input type="checkbox" data-param="${p.id}"
-                           ${selected.includes(opt) ? 'checked' : ''} /> ${opt}
-                </label>`
-            ).join('');
-            block.innerHTML += `<div class="param-options" data-param="${p.id}">${checksHtml}</div>`;
-            if (p.options.length > LIMIT) {
-                const btn = document.createElement('button');
-                btn.className = 'param-show-more';
-                btn.textContent = `${t('more_btn')} ${p.options.length - LIMIT}`;
-                btn.onclick = () => {
-                    block.querySelectorAll('.param-option[style="display:none"]')
-                         .forEach(el => el.style.display = '');
-                    btn.style.display = 'none';
-                };
-                block.appendChild(btn);
-            }
+        let lang = localStorage.getItem('lang') || 'en';
+        let yesText = 'Yes';
+        if (lang === 'ru') yesText = 'Да';
+        else if (lang === 'lv') yesText = 'Jā';
+
+        block.innerHTML += `
+            <div class="param-check-row">
+                <span>${yesText}</span>
+                <input type="checkbox" class="param-check-input" data-param="${p.id}"
+                       ${val === 'true' ? 'checked' : ''} />
+            </div>`;
+    } else if (p.type === 2) {
+        const pills = p.options.map(opt =>
+            `<label class="param-pill ${val == opt.id ? 'param-pill-active' : ''}"
+                    data-id="${opt.id}"
+                    onclick="pillClick(this)">${opt.text}</label>`
+        ).join('');
+        block.innerHTML += `<div class="param-pills" data-param="${p.id}">${pills}</div>`;
+    } else if (p.type === 4) {
+    const selected = val ? val.split(',') : [];
+    const LIMIT = 5;
+    const checksHtml = p.options.map((opt, i) =>
+        `<label class="param-option" ${i >= LIMIT ? 'style="display:none"' : ''}>
+            <input type="checkbox" data-param="${p.id}" data-id="${opt.id}"
+                   ${selected.includes(String(opt.id)) ? 'checked' : ''} /> ${opt.text}
+        </label>`
+    ).join('');
+    block.innerHTML += `<div class="param-options" data-param="${p.id}">${checksHtml}</div>`;
+                if (p.options.length > LIMIT) {
+        const btn = document.createElement('button');
+        btn.className = 'param-show-more';
+        btn.setAttribute('data-i18n', 'more_btn');
+        btn.setAttribute('data-count', p.options.length - LIMIT);
+        btn.onclick = () => {
+            block.querySelectorAll('.param-option[style="display:none"]')
+                 .forEach(el => el.style.display = '');
+            btn.style.display = 'none';
+        };
+        block.appendChild(btn);
+        translateDynamicElement(btn);
+    }
         } else if (p.type === 5) {
             block.innerHTML += `
                 <input type="number" class="param-range-input"
@@ -358,12 +366,12 @@
 
             document.querySelectorAll('.param-pills[data-param]').forEach(el => {
                 const active = el.querySelector('.param-pill-active');
-                if (active) params[el.dataset.param] = active.textContent.trim();
+                if (active) params[el.dataset.param] = active.dataset.id;
             });
 
             document.querySelectorAll('.param-options[data-param]').forEach(el => {
                 const vals = [...el.querySelectorAll('input[type=checkbox]:checked')]
-                    .map(cb => cb.parentElement.textContent.trim());
+                    .map(cb => cb.dataset.id);
                 if (vals.length) params[el.dataset.param] = vals.join(',');
             });
 
@@ -600,5 +608,22 @@
         }
     });
     
-                    
-                    </script>
+        document.addEventListener('DOMContentLoaded', () => {
+        if (document.getElementById('pubDurationPills')) {
+            initDurationUI();
+        }
+        });   function translateDynamicElement(el) {
+        const lang = localStorage.getItem('lang') || 'en';
+        const dict = TRANSLATIONS[lang] || TRANSLATIONS['en'];
+
+        const key = el.getAttribute('data-i18n');
+        if (key && dict[key] !== undefined) {
+            let text = dict[key];
+            const count = el.getAttribute('data-count');
+            if (count !== null) {
+                text = `${text} ${count}`;
+            }
+            el.textContent = text;
+        }
+    }
+</script>

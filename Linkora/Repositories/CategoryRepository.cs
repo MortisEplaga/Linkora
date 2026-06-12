@@ -1,5 +1,6 @@
 using Linkora.Models;
 using Microsoft.AspNetCore.Http;
+using Microsoft.CodeAnalysis.Options;
 using Microsoft.Data.SqlClient;
 
 namespace Linkora.Repositories
@@ -151,22 +152,23 @@ namespace Linkora.Repositories
             {
                 var vm = new Parameter { Param = p };
 
-                if (p.Type == 2 || p.Type == 4) // selection / multi
+                if (p.Type == 2 || p.Type == 4) 
                 {
                     await using var cmdO = new SqlCommand(
-                        "SELECT Value, ValueLV, ValueRU FROM SelectOptions WHERE CategoryId = @Id", conn);
+                        "SELECT Id, Value, ValueLV, ValueRU FROM SelectOptions WHERE CategoryId = @Id", conn);
                     cmdO.Parameters.AddWithValue("@Id", p.Id);
                     await using var ro = await cmdO.ExecuteReaderAsync();
                     while (await ro.ReadAsync())
                     {
-                        string option;
-                        if (lang == "lv" && !ro.IsDBNull(1))
-                            option = ro.GetString(1);
-                        else if (lang == "ru" && !ro.IsDBNull(2))
-                            option = ro.GetString(2);
+                        string optionText;
+                        if (lang == "lv" && !ro.IsDBNull(2))
+                            optionText = ro.GetString(2);
+                        else if (lang == "ru" && !ro.IsDBNull(3))
+                            optionText = ro.GetString(3);
                         else
-                            option = ro.GetString(0);
-                        vm.Options.Add(option);
+                            optionText = ro.GetString(1);
+
+                        vm.Options.Add(new SelectOption { Id = ro.GetInt32(0), Text = optionText });
                     }
                 }
                 else if (p.Type == 5) // range
@@ -213,19 +215,20 @@ namespace Linkora.Repositories
                 if (p.Type == 2 || p.Type == 4)
                 {
                     await using var cmdO = new SqlCommand(
-                        "SELECT Value, ValueLV, ValueRU FROM SelectOptions WHERE CategoryId = @Id", conn);
+                        "SELECT Id, Value, ValueLV, ValueRU FROM SelectOptions WHERE CategoryId = @Id", conn);
                     cmdO.Parameters.AddWithValue("@Id", p.Id);
                     await using var ro = await cmdO.ExecuteReaderAsync();
                     while (await ro.ReadAsync())
                     {
-                        string option;
-                        if (lang == "lv" && !ro.IsDBNull(1))
-                            option = ro.GetString(1);
-                        else if (lang == "ru" && !ro.IsDBNull(2))
-                            option = ro.GetString(2);
+                        string optionText;
+                        if (lang == "lv" && !ro.IsDBNull(2))
+                            optionText = ro.GetString(2);
+                        else if (lang == "ru" && !ro.IsDBNull(3))
+                            optionText = ro.GetString(3);
                         else
-                            option = ro.GetString(0);
-                        vm.Options.Add(option);
+                            optionText = ro.GetString(1);
+
+                        vm.Options.Add(new SelectOption { Id = ro.GetInt32(0), Text = optionText });
                     }
                 }
                 else if (p.Type == 5)

@@ -313,15 +313,14 @@
             if (currentLang === 'ru') document.getElementById('headerLangRU')?.classList.add('active');
         })();
 
-        // ---------- Placeholder translation function (if needed) ----------
         function t(key) {
             const lang = localStorage.getItem('lang') || 'en';
             return translations[lang]?.[key] || key;
         }
 
-        // ---------- Translations dictionary (example – replace with your full dictionary) ----------
         const translations = {
             en: {
+                notif_new_listing: "{0} posted a new listing: {1}",
                 all_regions: "All regions",
                 loading_text: "Loading...",
                 no_reviews_yet: "No reviews yet.",
@@ -349,9 +348,10 @@
                 about_me_tab: "About me",
                 from_me_tab: "From me",
                 reviews_title: "Reviews",
-                settings_language: "Language"  // kept for compatibility but not used in modal
+                settings_language: "Language"  
             },
             lv: {
+                notif_new_listing: "{0} publicēja jaunu sludinājumu: {1}",
                 all_regions: "Visi reģioni",
                 loading_text: "Ielādē...",
                 no_reviews_yet: "Nav atsauksmju.",
@@ -382,6 +382,7 @@
                 settings_language: "Valoda"
             },
             ru: {
+                notif_new_listing: "{0} опубликовал новое объявление: {1}",
                 all_regions: "Все регионы",
                 loading_text: "Загрузка...",
                 no_reviews_yet: "Нет отзывов.",
@@ -413,7 +414,6 @@
             }
         };
 
-        // ---------- Notifications (for logged-in users) ----------
         let notifAllData = [];
         let notifCurrentTab = 'all';
         let notifModalOpen = false;
@@ -498,7 +498,7 @@
                          src="${n.fromUserAvatar || '/img/no-photo.svg'}"
                          onerror="this.src='/img/no-photo.svg'" />
                     <div class="notif-item-body">
-                        <div class="notif-item-msg">${escapeHtml(n.message)}</div>
+                        <div class="notif-item-msg">${escapeHtml(translateNotificationMessage(n.message))}</div>
                         <div class="notif-item-time">${n.createdAt}</div>
                         ${n.productId && n.productName ? `
                             <div class="notif-item-product">
@@ -694,5 +694,18 @@
 
         // Apply translations after DOM ready
         document.addEventListener('DOMContentLoaded', applyTranslations);
+
+                function translateNotificationMessage(message) {
+            const lang = localStorage.getItem('lang') || 'en';
+            const pattern = /^(.+?) posted a new listing: (.+)$/;
+            const match = message.match(pattern);
+            if (match && translations[lang] && translations[lang]["notif_new_listing"]) {
+                const author = match[1];
+                const product = match[2];
+                const template = translations[lang]["notif_new_listing"];
+                return template.replace("{0}", author).replace("{1}", product);
+            }
+            return message; 
+        }
     </script>
 </header>

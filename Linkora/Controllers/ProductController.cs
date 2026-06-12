@@ -79,7 +79,7 @@ namespace Linkora.Controllers
                 id = p.Param.Id,
                 name = p.Param.Name,
                 type = p.Param.Type,
-                options = p.Options,
+                options = p.Options.Select(o => new { id = o.Id, text = o.Text }),
                 min = p.Min,
                 max = p.Max,
                 step = p.Step
@@ -98,7 +98,8 @@ namespace Linkora.Controllers
                 ? await _productRepository.GetSimilarAsync(product.CategoryId.Value, id)
                 : new List<Product>();
 
-            var paramValues = await _productRepository.GetParamValuesAsync(id);
+            var lang = Request.Cookies["lang"] ?? "en";
+            var paramValues = await _productRepository.GetParamDisplayValuesAsync(id, lang);
             List<Parameter> paramDefs = new();
             if (paramValues.Count > 0 && product.CategoryId.HasValue)
             {
@@ -240,19 +241,22 @@ namespace Linkora.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            await using var conn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
-            await conn.OpenAsync();
-            await using var cmd = new SqlCommand("DELETE FROM Products WHERE Id=@Id AND UserId=@U", conn);
-            cmd.Parameters.AddWithValue("@Id", id);
-            cmd.Parameters.AddWithValue("@U", userId);
-            await cmd.ExecuteNonQueryAsync();
+            var isAdmin = User.IsInRole("admin");
+
+            var product = await _productRepository.GetByIdAsync(id);
+            if (product == null) return NotFound();
+            if (product.UserId != userId && !isAdmin) return Forbid();
+
+            await _productRepository.DeleteAsync(id);
             return Ok();
         }
+
         [HttpGet]
         public async Task<IActionResult> ParamValues(int productId)
         {
-            var values = await _productRepository.GetParamValuesAsync(productId);
-            return Json(values);
+            var lang = Request.Cookies["lang"] ?? "en";
+            var paramValues = await _productRepository.GetParamDisplayValuesAsync(productId, lang);
+            return Json(paramValues);
         }
         [Authorize]
         [HttpPost]

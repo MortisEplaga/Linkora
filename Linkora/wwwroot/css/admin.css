@@ -193,9 +193,16 @@
     }
 
 /* ── Table ── */
+.admin-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; 
+    margin-bottom: 1rem;
+}
+
 .admin-table {
     width: 100%;
     border-collapse: collapse;
+    white-space: nowrap;
 }
 
     .admin-table th {
@@ -208,6 +215,7 @@
         text-align: left;
         background: #fafafa;
         border-bottom: 1px solid #f0f0f0;
+        white-space: nowrap;
     }
 
     .admin-table td {

@@ -92,12 +92,14 @@
                             <div class="param-pills">
                                 @for (int i = 0; i < vm.Options.Count; i++)
                                 {
+                                    var opt = vm.Options[i];
                                     var isActive = activeFilters.TryGetValue(vm.Param.Id, out var selVals)
-                                    && selVals.Contains(vm.Options[i]);
+                                    && selVals.Contains(opt.Id.ToString());
                                     <label class="param-pill @(isActive ? "param-pill-active" : "") @(i >= 5 ? "param-option-hidden" : "")"
                                            style="@(i >= 5 ? "display:none" : "")"
+                                           data-id="@opt.Id"
                                            onclick="selectPill(this, '@vm.Param.Id')">
-                                        @vm.Options[i]
+                                        @opt.Text
                                     </label>
                                 }
                             </div>
@@ -116,14 +118,15 @@
                             <div class="param-options">
                                 @for (int i = 0; i < vm.Options.Count; i++)
                                 {
+                                    var opt = vm.Options[i];
                                     var isChecked = activeFilters.TryGetValue(vm.Param.Id, out var cv)
-                                    && cv.Contains(vm.Options[i]);
+                                    && cv.Contains(opt.Id.ToString());
                                     <label class="param-option @(i >= 5 ? "param-option-hidden" : "")"
                                            style="@(i >= 5 ? "display:none" : "")">
                                         <input type="checkbox" name="p_@vm.Param.Id"
-                                               value="@vm.Options[i]"
-                                               @(isChecked ? "checked" : "")/>
-                                        @vm.Options[i]
+                                               value="@opt.Id"
+                                               @(isChecked ? "checked" : "") />
+                                        @opt.Text
                                     </label>
                                 }
                             </div>
@@ -134,7 +137,6 @@
                                 </button>
                             }
                         }
-
                         @if (vm.Param.Type == 5)
                         {
                             var fFrom = activeRangeFrom.TryGetValue(vm.Param.Id, out var rf) ? rf.ToString(System.Globalization.CultureInfo.InvariantCulture) : "";
@@ -186,21 +188,17 @@
             <div class="listing-sort-wrap">
                 <button class="listing-sort-btn" onclick="toggleSort(event)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6" /><line x1="7" y1="12" x2="21" y2="12" /><line x1="11" y1="18" x2="21" y2="18" /></svg>
-                    <span id="sortLabel" data-sort="@sort">@(sort == "cheap" ? "Cheapest first" : sort == "expensive" ? "Most expensive" : "Newest first")</span>
-                    ▾
+                    <span id="sortLabel" data-sort="@sort"></span> ▾
                 </button>
-                @{
-                    var hasPriceSort = (bool)ViewBag.HasPriceSort;
-                }
                 <div class="listing-sort-drop" id="sortDrop">
                     <a class="listing-sort-item@(sort == "new" ? " active" : "")"
-                       onclick="clientSort('new', this)" data-i18n="sort_newest">Newest first</a>
+                       onclick="clientSort('new', this)" data-i18n="sort_newest"></a>
                     @if (hasPriceSort)
                     {
                         <a class="listing-sort-item@(sort == "cheap" ? " active" : "")"
-                           onclick="clientSort('cheap', this)" data-i18n="sort_cheapest">Cheapest first</a>
+                           onclick="clientSort('cheap', this)" data-i18n="sort_cheapest"></a>
                         <a class="listing-sort-item@(sort == "expensive" ? " active" : "")"
-                           onclick="clientSort('expensive', this)" data-i18n="sort_expensive">Most expensive</a>
+                           onclick="clientSort('expensive', this)" data-i18n="sort_expensive"></a>
                     }
                 </div>
             </div>
@@ -258,6 +256,7 @@
             }
         </div>
     </div>
+
     <script>
         async function toggleFav(btn, productId, can) {
             const res = await fetch('/Favourite/Toggle', {
@@ -379,19 +378,19 @@
         hidden.forEach(el => el.style.display = isHidden ? '' : 'none');
         btn.textContent = isHidden ? t('hide_btn') : t('more_btn') + ' ' + hidden.length;
     }
-        function selectPill(pill, paramId) {
-            const pills = pill.closest('.param-pills');
-            const wasActive = pill.classList.contains('param-pill-active');
-            pills.querySelectorAll('.param-pill').forEach(p => p.classList.remove('param-pill-active'));
-            const input = document.getElementById('pill_' + paramId);
-            if (!wasActive) {
-                pill.classList.add('param-pill-active');
-                input.value = pill.textContent.trim();
-            } else {
-                input.value = '';
-            }
+    function selectPill(pill, paramId) {
+        const pills = pill.closest('.param-pills');
+        const wasActive = pill.classList.contains('param-pill-active');
+        pills.querySelectorAll('.param-pill').forEach(p => p.classList.remove('param-pill-active'));
+        const input = document.getElementById('pill_' + paramId);
+        if (!wasActive) {
+            pill.classList.add('param-pill-active');
+            input.value = pill.dataset.id;
+        } else {
+            input.value = '';
         }
-        function resetFilters(categoryId) {
+    }
+    function resetFilters(categoryId) {
             window.location.href = '/Category/Index/' + categoryId;
         }
             function clientSort(type, el) {
