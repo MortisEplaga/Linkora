@@ -25,7 +25,8 @@ namespace Linkora.Controllers
             var parameters = await _categoryRepository.GetParametersAsync(breadcrumb.Select(c => c.Id));
             var descendantIds = await _categoryRepository.GetDescendantIdsAsync(id);
 
-            // Парсим фильтры из query string
+            parameters = parameters.Where(p => p.Param.Type != 7).ToList();
+
             var filters = new Dictionary<int, List<string>>();
             var rangeFrom = new Dictionary<int, decimal>();
             var rangeTo = new Dictionary<int, decimal>();
@@ -65,7 +66,6 @@ namespace Linkora.Controllers
             ViewBag.Sort = sort;
             ViewBag.Search = q;
             ViewBag.HasPriceSort = priceParamId.HasValue;
-            // Передаём активные фильтры во view для предзаполнения
             ViewBag.Filters = filters;
             ViewBag.RangeFrom = rangeFrom;
             ViewBag.RangeTo = rangeTo;

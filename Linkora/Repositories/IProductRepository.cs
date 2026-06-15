@@ -30,5 +30,8 @@ namespace Linkora.Repositories
         Task IncrementViewCountAsync(int productId);
         Task DeleteAsync(int productId);
         Task<Dictionary<int, string>> GetParamDisplayValuesAsync(int productId, string lang);
+        Task<CategoryRulesDto> GetCategoryRulesAsync(IEnumerable<int> categoryIds);
+
+
     }
 }

@@ -49,4 +49,29 @@ namespace Linkora.Models
         [NotMapped] public int FavCount { get; set; }
         [NotMapped] public int CartCount { get; set; }
     }
+    public class CategoryRulesDto
+    {
+        public List<VisibilityRuleDto> VisibilityRules { get; set; } = new();
+        public List<ValidationRuleDto> ValidationRules { get; set; } = new();
+        public List<string> CustomScriptPaths { get; set; } = new();
+    }
+
+    public class VisibilityRuleDto
+    {
+        public int TargetParamId { get; set; }
+        public int TriggerParamId { get; set; }
+        public string? TriggerValue { get; set; }
+        public string TriggerOperator { get; set; } = "eq";
+        public string Action { get; set; } = "show";
+    }
+
+    public class ValidationRuleDto
+    {
+        public int ParamId { get; set; }
+        public string RuleType { get; set; } = "";
+        public string? RuleValue { get; set; }
+        public int? TriggerParamId { get; set; }
+        public string? TriggerValue { get; set; }
+        public string? ErrorMessageKey { get; set; }
+    }
 }

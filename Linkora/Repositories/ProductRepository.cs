@@ -11,7 +11,57 @@ namespace Linkora.Repositories
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection")!;
         }
+        public async Task<CategoryRulesDto> GetCategoryRulesAsync(IEnumerable<int> categoryIds)
+        {
+            var ids = string.Join(",", categoryIds);
+            var result = new CategoryRulesDto();
 
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            await using var cmd = new SqlCommand($@"
+        SELECT TargetParamId, TriggerParamId, TriggerValue, TriggerOperator, Action
+        FROM ParameterVisibilityRules WHERE CategoryId IN ({ids});
+
+        SELECT ParamId, RuleType, RuleValue, TriggerParamId, TriggerValue, ErrorMessageKey
+        FROM ParameterValidationRules
+        WHERE ParamId IN (
+            SELECT Id FROM Category WHERE ParentId IN ({ids}) AND Type IN (2,3,4,5,7)
+        );
+
+        SELECT ScriptPath FROM ParameterCustomScripts WHERE CategoryId IN ({ids});
+    ", conn);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+                result.VisibilityRules.Add(new VisibilityRuleDto
+                {
+                    TargetParamId = reader.GetInt32(0),
+                    TriggerParamId = reader.GetInt32(1),
+                    TriggerValue = reader.IsDBNull(2) ? null : reader.GetString(2),
+                    TriggerOperator = reader.GetString(3),
+                    Action = reader.GetString(4)
+                });
+
+            await reader.NextResultAsync();
+            while (await reader.ReadAsync())
+                result.ValidationRules.Add(new ValidationRuleDto
+                {
+                    ParamId = reader.GetInt32(0),
+                    RuleType = reader.GetString(1),
+                    RuleValue = reader.IsDBNull(2) ? null : reader.GetString(2),
+                    TriggerParamId = reader.IsDBNull(3) ? null : reader.GetInt32(3),
+                    TriggerValue = reader.IsDBNull(4) ? null : reader.GetString(4),
+                    ErrorMessageKey = reader.IsDBNull(5) ? null : reader.GetString(5)
+                });
+
+            await reader.NextResultAsync();
+            while (await reader.ReadAsync())
+                result.CustomScriptPaths.Add(reader.GetString(0));
+
+            return result;
+        }
         public async Task<List<Product>> GetByCategoryAsync(
             IEnumerable<int> categoryIds,
             string sort = "new",
@@ -156,7 +206,6 @@ namespace Linkora.Repositories
         }
         public async Task<Dictionary<int, string>> GetParamDisplayValuesAsync(int productId, string lang)
         {
-            // 1. Загружаем все опции SelectOptions в словарь: Id -> (Value, ValueLV, ValueRU)
             var options = await LoadSelectOptionsDictionaryAsync();
 
             var result = new Dictionary<int, string>();
@@ -180,20 +229,20 @@ namespace Linkora.Repositories
                 var type = r.IsDBNull(2) ? (int?)null : r.GetInt32(2);
 
                 string text;
-                if (type == 2) // одиночный выбор
+                if (type == 2) 
                 {
                     text = ResolveOptionTextFromDictionary(rawValue, options, lang);
                 }
-                else if (type == 4) // множественный выбор
+                else if (type == 4) 
                 {
                     var ids = rawValue.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                     var texts = ids.Select(id => ResolveOptionTextFromDictionary(id, options, lang));
                     if (!multiValues.ContainsKey(paramId))
                         multiValues[paramId] = new List<string>();
                     multiValues[paramId].AddRange(texts);
-                    continue; // не добавляем в result сейчас, добавим позже
+                    continue; 
                 }
-                else // другие типы (1, 3 и т.д.) – берём rawValue как есть
+                else 
                 {
                     text = rawValue;
                 }
@@ -210,7 +259,7 @@ namespace Linkora.Repositories
         private string ResolveOptionTextFromDictionary(string idStr, Dictionary<int, (string Value, string ValueLV, string ValueRU)> options, string lang)
         {
             if (!int.TryParse(idStr, out int id) || !options.TryGetValue(id, out var texts))
-                return idStr; // fallback
+                return idStr; 
             return lang switch
             {
                 "lv" => texts.ValueLV,
@@ -285,7 +334,6 @@ namespace Linkora.Repositories
             await r.CloseAsync();
 
 
-            // Загружаем цену из MapperProductCategory
             await using var priceCmd = new SqlCommand(@"
                 SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
                 FROM MapperProductCategory m
@@ -401,7 +449,6 @@ namespace Linkora.Repositories
             cmd.Parameters.AddWithValue("@UserId", product.UserId!);
             await cmd.ExecuteNonQueryAsync();
 
-            // Удаляем старые параметры и вставляем новые
             await using var del = new SqlCommand(
                 "DELETE FROM MapperProductCategory WHERE ProductId = @Id", conn);
             del.Parameters.AddWithValue("@Id", product.Id);
@@ -418,7 +465,7 @@ namespace Linkora.Repositories
                 ins.Parameters.AddWithValue("@Value", value);
                 await ins.ExecuteNonQueryAsync();
             }
-        }        // ProductRepository.cs
+        }        
         public async Task<Dictionary<string, int>> GetCountsByStatusAsync(int userId)
         {
             var result = new Dictionary<string, int>();
@@ -458,7 +505,6 @@ namespace Linkora.Repositories
             using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync();
 
-            // Получаем путь к изображению перед архивацией
             var getImageSql = "SELECT AvatarImagePath FROM Products WHERE Id = @Id AND UserId = @UserId";
             using var getCommand = new SqlCommand(getImageSql, connection);
             getCommand.Parameters.AddWithValue("@Id", productId);
@@ -466,7 +512,6 @@ namespace Linkora.Repositories
 
             var imagePath = await getCommand.ExecuteScalarAsync() as string;
 
-            // Удаляем файл с диска
             if (!string.IsNullOrEmpty(imagePath))
             {
                 var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", imagePath.TrimStart('/'));
@@ -476,7 +521,6 @@ namespace Linkora.Repositories
                 }
             }
 
-            // Обновляем статус и очищаем путь к изображению
             var sql = @"
         UPDATE Products 
         SET Status = 'Succeeded', 

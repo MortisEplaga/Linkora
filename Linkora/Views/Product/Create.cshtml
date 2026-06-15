@@ -128,7 +128,7 @@
         <div class="catmenu-col" id="createCatCol0"></div>
     </div>
 </div>
-
+<script src="~/js/param-rules-engine.js"></script>
 <script>
     let createAllCategories = [];
     let createSelectedCatId = null;
@@ -189,7 +189,11 @@
         document.getElementById('catSelectorText').textContent = name;
         closeCreateCatMenu();
         await loadParams(id, {});
-    }
+    if (window.ParamRulesEngine) {
+                await ParamRulesEngine.loadRules(id);
+            } else {
+                console.error("ParamRulesEngine is not loaded!");
+            }    }
 
     async function loadParams(categoryId, existingValues = {}) {
         const res = await fetch(`/Product/Parameters?categoryId=${categoryId}`);
@@ -312,17 +316,26 @@
                 <input type="number" class="param-range-input"
                        placeholder="${p.min}–${p.max}" min="${p.min}" max="${p.max}" step="${p.step}"
                        data-param="${p.id}" value="${val}" />`;
+        } else if (p.type === 7) {
+        block.innerHTML += `
+            <input type="text" class="create-input param-text-input"
+                   data-param="${p.id}" value="${val}"
+                   placeholder="" />`;
         }
         return block;
-    }
+        }
 
     function pillClick(pill) {
         const pills = pill.closest('.param-pills');
         pills.querySelectorAll('.param-pill').forEach(p => p.classList.remove('param-pill-active'));
         pill.classList.add('param-pill-active');
+         if (window.ParamRulesEngine) {
+        window.ParamRulesEngine.triggerUpdate();
+    }
     }
 
     async function submitAd() {
+        if (!ParamRulesEngine.validateAll()) return;
         const title = document.getElementById('adTitle').value.trim();
         if (!title) { alert('Please enter a title'); return; }
 

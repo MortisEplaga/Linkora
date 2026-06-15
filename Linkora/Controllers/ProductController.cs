@@ -365,5 +365,13 @@ namespace Linkora.Controllers
             }
             return result;
         }
+        [HttpGet]
+        public async Task<IActionResult> CategoryRules(int categoryId)
+        {
+            var breadcrumb = await _categoryRepository.GetBreadcrumbAsync(categoryId);
+            var catIds = breadcrumb.Select(c => c.Id).ToList();
+            var rules = await _productRepository.GetCategoryRulesAsync(catIds);
+            return Json(rules);
+        }
     }
 }

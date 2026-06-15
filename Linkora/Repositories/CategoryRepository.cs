@@ -141,7 +141,7 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
 
             await using var cmdP = new SqlCommand(
-                $"SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId IN ({ids}) AND Type IN (2,3,4,5)", conn);
+                $"SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId IN ({ids}) AND Type IN (2,3,4,5,7)", conn);
 
             var parameters = new List<Category>();
             await using (var r = await cmdP.ExecuteReaderAsync())
@@ -200,7 +200,7 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
 
             await using var cmdP = new SqlCommand(
-                "SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId = @ParentId AND Type IN (2,3,4,5)", conn);
+                "SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId = @ParentId AND Type IN (2,3,4,5,7)", conn);
             cmdP.Parameters.AddWithValue("@ParentId", categoryId);
 
             var parameters = new List<Category>();
