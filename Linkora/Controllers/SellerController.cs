@@ -96,11 +96,11 @@ namespace Linkora.Controllers
             {
                 "cheap" => @"(SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
                                   FROM MapperProductCategory m
-                                  JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price'
+                                  JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
                                   WHERE m.ProductId = p.Id) ASC",
                 "expensive" => @"(SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
                                   FROM MapperProductCategory m
-                                  JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price'
+                                  JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
                                   WHERE m.ProductId = p.Id) DESC",
                 _ => "p.CreatedTime DESC"
             };
@@ -115,7 +115,7 @@ namespace Linkora.Controllers
        ) AS AvatarImagePath,
                        (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
                         FROM MapperProductCategory m
-                        JOIN Category c2 ON c2.Id = m.CategoryId AND c2.Name = 'Price'
+                        JOIN Category c2 ON c2.Id = m.CategoryId AND c2.Name = 'Price, €'
                         WHERE m.ProductId = p.Id) as Price
                 FROM Products p
                 WHERE p.UserId = @UserId
