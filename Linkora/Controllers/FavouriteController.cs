@@ -90,7 +90,7 @@ namespace Linkora.Controllers
     SELECT f.Can, p.Id, p.Name,
            (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
             FROM MapperProductCategory m
-            JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price'
+            JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
             WHERE m.ProductId = p.Id) as Price,
            p.Address, p.CreatedTime,
            COALESCE(

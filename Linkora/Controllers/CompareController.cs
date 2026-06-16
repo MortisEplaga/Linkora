@@ -36,7 +36,7 @@ namespace Linkora.Controllers
                        (SELECT COUNT(*) FROM ProductMedia pm2 WHERE pm2.ProductId = p.Id) AS MediaCount,
                        (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
                         FROM MapperProductCategory m
-                        JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price'
+                        JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
                         WHERE m.ProductId = p.Id) AS Price,
                        cat.Name AS CategoryName, u.UserName
                 FROM Favourites f
