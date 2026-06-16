@@ -142,10 +142,12 @@
                 <button type="button" class="auth-eye" onclick="togglePass('regConfirm',this)">👁</button>
             </div>
             <label class="auth-check-row">
-                <input type="checkbox" id="chkTerms" />
-                <span data-i18n="auth_terms">I accept the <a href="#">Terms of Service</a></span>
+                <input type="checkbox" id="chkTerms" onchange="toggleRegisterButton()" />
+                <span data-i18n="auth_terms_prefix">I accept the </span>
+                <a href="#" id="termsLink" class="terms-link" onclick="openTermsModal(); return false;" data-i18n="auth_terms_link">Terms of Service</a>
             </label>
-            <button class="auth-submit" onclick="submitRegister()" data-i18n="auth_submit_register">Register</button>
+
+            <button class="auth-submit" id="registerBtn" onclick="submitRegister()" data-i18n="auth_submit_register" disabled>Register</button>
         </div>
     </div>
     <!-- Hidden forms -->
@@ -1678,6 +1680,42 @@
                 }
             }
         };
+        function updateRegisterButton() {
+            const username = document.getElementById('regUsername');
+            const email = document.getElementById('regEmail');
+            const password = document.getElementById('regPassword');
+            const confirm = document.getElementById('regConfirm');
+            const checkbox = document.getElementById('chkTerms');
+            const button = document.getElementById('registerBtn');
+
+            if (!button) return;
+
+            const allFilled =
+                username.value.trim() !== '' &&
+                email.value.trim() !== '' &&
+                password.value.trim() !== '' &&
+                confirm.value.trim() !== '' &&
+                checkbox.checked;
+
+            button.disabled = !allFilled;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateRegisterButton();
+
+            const fields = ['regUsername', 'regEmail', 'regPassword', 'regConfirm'];
+            fields.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', updateRegisterButton);
+                }
+            });
+
+            const chk = document.getElementById('chkTerms');
+            if (chk) {
+                chk.addEventListener('change', updateRegisterButton);
+            }
+        });
     </script>
 </body>
 </html>
