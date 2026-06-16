@@ -411,6 +411,7 @@
     }
 .notif-wrap {
     position: relative;
+    order: 2;
 }
 
 .notif-bell-btn {
@@ -693,16 +694,21 @@
     position: relative;
     width: 36px;
     height: 36px;
-    padding: 0;
+    padding: 4px 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 0;
+    border: 0;
     background: transparent;
     cursor: pointer;
     color: #fff;
     transition: border-color 0.15s;
+}
+.user-info-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0px; 
 }
 
     .notif-bell-btn:hover {

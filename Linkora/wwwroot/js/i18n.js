@@ -303,7 +303,8 @@ const TRANSLATIONS = {
         'member_since_label': 'Member since',
         'ratings_label': 'Ratings:',
         'ratings_count': 'ratings',
-
+        'share': 'Share',
+        "report": "Report",
         // ── Reviews modal ──
         'reviews_title': 'Reviews',
         'about_me_tab': 'About me',
@@ -644,7 +645,8 @@ const TRANSLATIONS = {
         'member_since_label': 'Dalībnieks kopš',
         'ratings_label': 'Vērtējumi:',
         'ratings_count': 'vērtējumi',
-
+        'share': 'Dalīties',
+        "report": "Ziņot",
         // ── Reviews modal ──
         'reviews_title': 'Atsauksmes',
         'about_me_tab': 'Par mani',
@@ -985,7 +987,8 @@ const TRANSLATIONS = {
         'member_since_label': 'Участник с',
         'ratings_label': 'Рейтинг:',
         'ratings_count': 'оценок',
-
+        'share': 'Поделиться',
+        "report": "Пожаловаться",
         // ── Reviews modal ──
         'reviews_title': 'Отзывы',
         'about_me_tab': 'Обо мне',

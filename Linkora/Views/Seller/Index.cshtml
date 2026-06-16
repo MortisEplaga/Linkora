@@ -29,7 +29,7 @@
             @seller.UserName
             @if (seller.IsCompany)
             {
-                <span class="seller-badge">Company</span>
+                <span class="seller-badge" data-i18n="company_badge">Company</span>
             }
         </div>
         @if (reviewCount > 0)
@@ -46,7 +46,9 @@
                     }
                 </span>
                 <span class="seller-rating-val">@reviewAvg.ToString("F1")</span>
-                <span class="seller-rating-count" data-i18n="ratings_label">Ratings: @reviewCount</span>
+                <span class="seller-rating-count">
+                    <span data-i18n="ratings_label">Ratings:</span> @reviewCount
+                </span>
             </button>
         }
         <div class="seller-header-meta">
@@ -80,9 +82,7 @@
     <div class="category-left">
         <nav class="category-sidebar">
             <a class="sidebar-current @(activeCatId == null ? "sidebar-item-active" : "")"
-               href="/Seller/Index/@seller.Id?sort=@sort" data-i18n="all_categories_side">
-                All categories
-            </a>
+               href="/Seller/Index/@seller.Id?sort=@sort" data-i18n="all_categories_side">All categories</a>
             @foreach (var cat in categories)
             {
                 <a class="sidebar-child @(activeCatId == cat.Id ? "sidebar-item-active" : "")"
@@ -120,16 +120,15 @@
                         <line x1="7" y1="12" x2="21" y2="12" />
                         <line x1="11" y1="18" x2="21" y2="18" />
                     </svg>
-                    <span id="sortLabel" data-sort="@sort">@(sort == "cheap" ? "Cheapest first" : sort == "expensive" ? "Most expensive" : "Newest first")</span>
-                    ▾
+                    <span id="sortLabel" data-sort="@sort"></span> ▾
                 </button>
                 <div class="listing-sort-drop" id="sortDrop">
                     <a class="listing-sort-item @(sort == "new" ? "active" : "")"
-                       href="/Seller/Index/@seller.Id?@(activeCatId.HasValue ? $"categoryId={activeCatId}&" : "")sort=new">Newest first</a>
+                       href="/Seller/Index/@seller.Id?@(activeCatId.HasValue ? $"categoryId={activeCatId}&" : "")sort=new" data-i18n="sort_newest"></a>
                     <a class="listing-sort-item @(sort == "cheap" ? "active" : "")"
-                       href="/Seller/Index/@seller.Id?@(activeCatId.HasValue ? $"categoryId={activeCatId}&" : "")sort=cheap">Cheapest first</a>
+                       href="/Seller/Index/@seller.Id?@(activeCatId.HasValue ? $"categoryId={activeCatId}&" : "")sort=cheap" data-i18n="sort_cheapest"></a>
                     <a class="listing-sort-item @(sort == "expensive" ? "active" : "")"
-                       href="/Seller/Index/@seller.Id?@(activeCatId.HasValue ? $"categoryId={activeCatId}&" : "")sort=expensive">Most expensive</a>
+                       href="/Seller/Index/@seller.Id?@(activeCatId.HasValue ? $"categoryId={activeCatId}&" : "")sort=expensive" data-i18n="sort_expensive"></a>
                 </div>
             </div>
         </div>
@@ -156,7 +155,6 @@
     </div>
 </div>
 
-<!-- Модалка отзывов -->
 <div class="reviews-overlay" id="reviewsOverlay" onclick="closeReviews()"></div>
 <div class="reviews-modal" id="reviewsModal">
     <div class="reviews-modal-header">
@@ -251,10 +249,11 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        setView(localStorage.getItem('listingView') || 'grid');
-        loadSubscriptionState(@seller.Id);
-    });
+    function t(key) {
+        const lang = localStorage.getItem('lang') || 'en';
+        const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
+        return dict[key] || key;
+    }
 
     function setView(v) {
         localStorage.setItem('listingView', v);
@@ -274,6 +273,35 @@
             document.getElementById('sortDrop').classList.remove('open');
     });
 
+    function setSortLabel() {
+        const label = document.getElementById('sortLabel');
+        if (!label) return;
+        const sortKey = label.dataset.sort || 'new';
+        const map = {
+            'new': 'sort_newest',
+            'cheap': 'sort_cheapest',
+            'expensive': 'sort_expensive'
+        };
+        label.textContent = t(map[sortKey]) || t('sort_newest');
+    }
+
+    function translatePage() {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (key) {
+                el.textContent = t(key);
+            }
+        });
+        document.querySelectorAll('[data-i18n-title]').forEach(el => {
+            const key = el.getAttribute('data-i18n-title');
+            if (key) {
+                el.title = t(key);
+            }
+        });
+
+        setSortLabel();
+    }
+
     function openReviews() {
         document.getElementById('reviewsOverlay').classList.add('open');
         document.getElementById('reviewsModal').classList.add('open');
@@ -283,7 +311,6 @@
         document.getElementById('reviewsOverlay').classList.remove('open');
         document.getElementById('reviewsModal').classList.remove('open');
     }
-
 
     function applySubscriptionState(subscribed, count) {
         const btn      = document.getElementById('subscribeBtn');
@@ -348,4 +375,10 @@
             btn.disabled = false;
         }
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setView(localStorage.getItem('listingView') || 'grid');
+        loadSubscriptionState(@seller.Id);
+        translatePage();
+    });
 </script>
