@@ -121,7 +121,7 @@
                             vm.Options.Select(o => new { id = o.Id, text = o.Text }));
 
                             <div class="free-text-select" data-param="@vm.Param.Id"
-                                 data-options="@optionsJson.Replace("\"", "&quot;")"
+                                 data-options='@Html.Raw(System.Text.Json.JsonSerializer.Serialize(vm.Options.Select(o => new { id = o.Id, text = o.Text })))'
                                  style="position:relative">
                                 <input type="text" class="param-range-input free-text-select-input"
                                        data-param="@vm.Param.Id"
@@ -482,18 +482,4 @@
 
         cards.forEach(c => container.appendChild(c));
     }
-</script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('.free-text-select').forEach(wrapper => {
-            const paramId = parseInt(wrapper.dataset.param);
-            let options = [];
-            try {
-                options = JSON.parse(wrapper.dataset.options || '[]');
-            } catch (e) {
-                console.warn('Invalid options JSON for param', paramId);
-            }
-            FreeTextSelect.create(wrapper, options);
-        });
-    });
 </script>
