@@ -229,7 +229,7 @@ namespace Linkora.Repositories
                 var type = r.IsDBNull(2) ? (int?)null : r.GetInt32(2);
 
                 string text;
-                if (type == 2) 
+                if (type == 2 || type == 8) 
                 {
                     text = ResolveOptionTextFromDictionary(rawValue, options, lang);
                 }

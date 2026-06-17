@@ -60,6 +60,8 @@ namespace Linkora.Controllers
             if (existingId != null)
                 return Json(new { id = (int)existingId, created = false });
 
+            if (!dto.CreateIfNotFound)
+                return Json(new { id = 0, created = false });
             await using var insCmd = new SqlCommand(@"
                 INSERT INTO SelectOptions (CategoryId, Value, ValueLV, ValueRU)
                 OUTPUT INSERTED.Id

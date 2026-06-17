@@ -13,7 +13,7 @@
 .catmenu {
     display: none;
     position: fixed;
-    top: 60px; /* высота хедера */
+    top: 60px;
     left: 0;
     bottom: 0;
     z-index: 1000;
@@ -49,11 +49,6 @@
     transition: background 0.1s;
 }
 
-    .catmenu-item:hover,
-    .catmenu-item-active {
-        background: #f5f5f5;
-    }
-
 .catmenu-link {
     display: block;
     padding: 10px 0;
@@ -67,4 +62,26 @@
     font-size: 18px;
     color: #aaa;
     line-height: 1;
+}
+
+.catmenu-col .catmenu-item:nth-child(odd) {
+    background-color: #f5f5f5;
+}
+
+.catmenu-col .catmenu-item:nth-child(even) {
+    background-color: #ffffff;
+}
+
+.catmenu-item:hover {
+    background-color: #00b0a3 !important;
+    color: #ffffff;
+}
+
+    .catmenu-item:hover .catmenu-link,
+    .catmenu-item:hover .catmenu-arrow {
+        color: #ffffff;
+    }
+
+.catmenu-item-active {
+    background: #f5f5f5;
 }

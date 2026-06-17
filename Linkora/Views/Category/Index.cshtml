@@ -347,7 +347,7 @@
                 if (!isFav && cart.includes(prodId)) btn.classList.add('product-card-action-active');
             });
 
-                document.getElementById('filterForm')?.addEventListener('submit', async function (e) {
+            document.getElementById('filterForm')?.addEventListener('submit', async function (e) {
             e.preventDefault();
             const form = this;
 
@@ -366,7 +366,11 @@
                             'Content-Type': 'application/json',
                             'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
                         },
-                        body: JSON.stringify({ paramId: parseInt(paramId), text })
+                        body: JSON.stringify({
+                    paramId: paramId,
+                    text: text,
+                    createIfNotFound: false   
+                })
                     });
                     if (res.ok) {
                         const data = await res.json();
@@ -478,4 +482,18 @@
 
         cards.forEach(c => container.appendChild(c));
     }
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.free-text-select').forEach(wrapper => {
+            const paramId = parseInt(wrapper.dataset.param);
+            let options = [];
+            try {
+                options = JSON.parse(wrapper.dataset.options || '[]');
+            } catch (e) {
+                console.warn('Invalid options JSON for param', paramId);
+            }
+            FreeTextSelect.create(wrapper, options);
+        });
+    });
 </script>

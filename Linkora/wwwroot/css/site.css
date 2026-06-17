@@ -1,4 +1,38 @@
-﻿.site-footer {
+﻿.free-text-select {
+    position: relative;
+}
+
+.free-text-select-drop {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-top: none;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: none;
+}
+
+    .free-text-select-drop li {
+        padding: 6px 10px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+        .free-text-select-drop li:hover {
+            background: #f0f0f0;
+        }
+
+        .free-text-select-drop li.active {
+            background: #e0e0e0;
+        }
+        .site-footer {
     border-top: 1px solid #e5e5e5;
     background: #fff;
     margin-top: 40px;

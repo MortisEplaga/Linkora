@@ -78,5 +78,6 @@ namespace Linkora.Models
     {
         public int ParamId { get; set; }
         public string Text { get; set; } = "";
+        public bool CreateIfNotFound { get; set; } = true;
     }
 }
