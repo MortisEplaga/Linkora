@@ -26,8 +26,9 @@
 
 
     @await RenderSectionAsync("Styles", required: false)
-    <!-- i18n must load before body renders to avoid flash -->
+
     <script src="~/js/i18n.js"></script>
+    <script src="~/js/free-text-select.js"></script>
 </head>
 <body>
 
@@ -1348,7 +1349,7 @@
                     .then(data => {
                         if (!data.count) return;
                         const avg = data.avg;
-                        ratingEl.innerHTML = [1,2,3,4,5,7].map(i => {
+                        ratingEl.innerHTML = [1,2,3,4,5,7,8].map(i => {
                             const fill = i <= Math.floor(avg) ? '#f5a623' : 'none';
                             const partial = i === Math.ceil(avg) && avg % 1 > 0;
                             if (partial) {

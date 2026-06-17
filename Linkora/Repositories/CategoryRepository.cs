@@ -128,8 +128,6 @@ namespace Linkora.Repositories
 
             return breadcrumb;
         }
-
-        // ── Параметры категории (Type 2–5) + их данные (перегрузка для коллекции ID) ──
         public async Task<List<Parameter>> GetParametersAsync(IEnumerable<int> categoryIds)
         {
             var result = new List<Parameter>();
@@ -141,8 +139,7 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
 
             await using var cmdP = new SqlCommand(
-                $"SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId IN ({ids}) AND Type IN (2,3,4,5,7)", conn);
-
+                           $"SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId IN ({ids}) AND Type IN (2,3,4,5,7,8)", conn);
             var parameters = new List<Category>();
             await using (var r = await cmdP.ExecuteReaderAsync())
                 while (await r.ReadAsync())
@@ -152,7 +149,7 @@ namespace Linkora.Repositories
             {
                 var vm = new Parameter { Param = p };
 
-                if (p.Type == 2 || p.Type == 4) 
+                if (p.Type == 2 || p.Type == 4 || p.Type == 8)
                 {
                     await using var cmdO = new SqlCommand(
                         "SELECT Id, Value, ValueLV, ValueRU FROM SelectOptions WHERE CategoryId = @Id", conn);
@@ -171,7 +168,7 @@ namespace Linkora.Repositories
                         vm.Options.Add(new SelectOption { Id = ro.GetInt32(0), Text = optionText });
                     }
                 }
-                else if (p.Type == 5) // range
+                else if (p.Type == 5) 
                 {
                     await using var cmdR = new SqlCommand(
                         "SELECT MinValue, MaxValue, Step FROM ParameterRange WHERE ParamId = @Id", conn);
@@ -200,7 +197,7 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
 
             await using var cmdP = new SqlCommand(
-                "SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId = @ParentId AND Type IN (2,3,4,5,7)", conn);
+                "SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId = @ParentId AND Type IN (2,3,4,5,7,8)", conn);
             cmdP.Parameters.AddWithValue("@ParentId", categoryId);
 
             var parameters = new List<Category>();
@@ -212,7 +209,7 @@ namespace Linkora.Repositories
             {
                 var vm = new Parameter { Param = p };
 
-                if (p.Type == 2 || p.Type == 4)
+                if (p.Type == 2 || p.Type == 4 || p.Type == 8)
                 {
                     await using var cmdO = new SqlCommand(
                         "SELECT Id, Value, ValueLV, ValueRU FROM SelectOptions WHERE CategoryId = @Id", conn);

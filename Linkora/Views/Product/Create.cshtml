@@ -281,13 +281,20 @@
                 <input type="checkbox" class="param-check-input" data-param="${p.id}"
                        ${val === 'true' ? 'checked' : ''} />
             </div>`;
-    } else if (p.type === 2) {
-        const pills = p.options.map(opt =>
-            `<label class="param-pill ${val == opt.id ? 'param-pill-active' : ''}"
-                    data-id="${opt.id}"
-                    onclick="pillClick(this)">${opt.text}</label>`
-        ).join('');
-        block.innerHTML += `<div class="param-pills" data-param="${p.id}">${pills}</div>`;
+        } else if (p.type === 2) {
+           const pills = p.options.map(opt =>
+               `<label class="param-pill ${val == opt.id ? 'param-pill-active' : ''}"
+                       data-id="${opt.id}"
+                       onclick="pillClick(this)">${opt.text}</label>`
+           ).join('');
+           block.innerHTML += `<div class="param-pills" data-param="${p.id}">${pills}</div>`;
+       } else if (p.type === 8) {
+        var initialText = '';
+        if (val) {
+            var found = (p.options || []).find(function (o) { return String(o.id) === String(val); });
+            if (found) initialText = found.text;
+        }
+        block.innerHTML += FreeTextSelect.buildHtml(p.id, initialText, val || '', p.options || []);
     } else if (p.type === 4) {
     const selected = val ? val.split(',') : [];
     const LIMIT = 5;
@@ -381,6 +388,9 @@
                 const active = el.querySelector('.param-pill-active');
                 if (active) params[el.dataset.param] = active.dataset.id;
             });
+
+            const freeTextValues = await FreeTextSelect.resolveAll(document.getElementById('createParams'));
+            Object.assign(params, freeTextValues);
 
             document.querySelectorAll('.param-options[data-param]').forEach(el => {
                 const vals = [...el.querySelectorAll('input[type=checkbox]:checked')]

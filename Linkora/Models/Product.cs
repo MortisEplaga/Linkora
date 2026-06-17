@@ -74,4 +74,9 @@ namespace Linkora.Models
         public string? TriggerValue { get; set; }
         public string? ErrorMessageKey { get; set; }
     }
+    public class ResolveSelectOptionDto
+    {
+        public int ParamId { get; set; }
+        public string Text { get; set; } = "";
+    }
 }

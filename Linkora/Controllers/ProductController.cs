@@ -32,6 +32,45 @@ namespace Linkora.Controllers
             return result;
         }
         [HttpPost]
+        public async Task<IActionResult> ResolveSelectOption([FromBody] ResolveSelectOptionDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Text))
+                return BadRequest("Text is required");
+
+            var lang = Request.Cookies["lang"] ?? "en";
+            var col = lang switch
+            {
+                "lv" => "ValueLV",
+                "ru" => "ValueRU",
+                _ => "Value"
+            };
+            var trimmed = dto.Text.Trim();
+
+            await using var conn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
+            await conn.OpenAsync();
+
+            await using var findCmd = new SqlCommand($@"
+                SELECT Id FROM SelectOptions
+                WHERE CategoryId = @ParamId
+                  AND LTRIM(RTRIM({col})) = LTRIM(RTRIM(@Text))", conn);
+            findCmd.Parameters.AddWithValue("@ParamId", dto.ParamId);
+            findCmd.Parameters.AddWithValue("@Text", trimmed);
+            var existingId = await findCmd.ExecuteScalarAsync();
+
+            if (existingId != null)
+                return Json(new { id = (int)existingId, created = false });
+
+            await using var insCmd = new SqlCommand(@"
+                INSERT INTO SelectOptions (CategoryId, Value, ValueLV, ValueRU)
+                OUTPUT INSERTED.Id
+                VALUES (@ParamId, @Text, @Text, @Text)", conn);
+            insCmd.Parameters.AddWithValue("@ParamId", dto.ParamId);
+            insCmd.Parameters.AddWithValue("@Text", trimmed);
+            var newId = (int)(await insCmd.ExecuteScalarAsync())!;
+
+            return Json(new { id = newId, created = true });
+        }
+        [HttpPost]
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> VerifyRecaptcha([FromBody] RecaptchaDto dto)
         {
@@ -84,7 +123,8 @@ namespace Linkora.Controllers
                 max = p.Max,
                 step = p.Step
             }));
-        }
+        } 
+
         public async Task<IActionResult> Details(int id)
         {
             var product = await _productRepository.GetByIdAsync(id);
@@ -301,7 +341,6 @@ namespace Linkora.Controllers
 
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
-            // Resolve duration: explicit request value → user preference → system default
             int duration = 30;
             if (publishDays.HasValue && new[] { 7, 14, 30, 60, 90 }.Contains(publishDays.Value))
             {
@@ -309,7 +348,6 @@ namespace Linkora.Controllers
             }
             else
             {
-                // Load user preference
                 await using var conn = new Microsoft.Data.SqlClient.SqlConnection(
                     _configuration.GetConnectionString("DefaultConnection")!);
                 await conn.OpenAsync();

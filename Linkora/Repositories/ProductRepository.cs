@@ -26,7 +26,7 @@ namespace Linkora.Repositories
         SELECT ParamId, RuleType, RuleValue, TriggerParamId, TriggerValue, ErrorMessageKey
         FROM ParameterValidationRules
         WHERE ParamId IN (
-            SELECT Id FROM Category WHERE ParentId IN ({ids}) AND Type IN (2,3,4,5,7)
+            SELECT Id FROM Category WHERE ParentId IN ({ids}) AND Type IN (2,3,4,5,7,8)
         );
 
         SELECT ScriptPath FROM ParameterCustomScripts WHERE CategoryId IN ({ids});

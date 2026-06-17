@@ -90,29 +90,50 @@
 
                         @if (vm.Param.Type == 2)
                         {
-                            <div class="param-pills">
-                                @for (int i = 0; i < vm.Options.Count; i++)
+                                <div class="param-pills">
+                                    @for (int i = 0; i < vm.Options.Count; i++)
+                                    {
+                                        var opt = vm.Options[i];
+                                        var isActive = activeFilters.TryGetValue(vm.Param.Id, out var selVals)
+                                        && selVals.Contains(opt.Id.ToString());
+                                        <label class="param-pill @(isActive ? "param-pill-active" : "") @(i >= 5 ? "param-option-hidden" : "")"
+                                               style="@(i >= 5 ? "display:none" : "")"
+                                               data-id="@opt.Id"
+                                               onclick="selectPill(this, '@vm.Param.Id')">
+                                            @opt.Text
+                                        </label>
+                                    }
+                                </div>
+                                <input type="hidden" name="p_@vm.Param.Id" id="pill_@vm.Param.Id"
+                                       value="@(activeFilters.TryGetValue(vm.Param.Id, out var pv) ? pv.FirstOrDefault() : "")" />
+                                @if (vm.Options.Count > 5)
                                 {
-                                    var opt = vm.Options[i];
-                                    var isActive = activeFilters.TryGetValue(vm.Param.Id, out var selVals)
-                                    && selVals.Contains(opt.Id.ToString());
-                                    <label class="param-pill @(isActive ? "param-pill-active" : "") @(i >= 5 ? "param-option-hidden" : "")"
-                                           style="@(i >= 5 ? "display:none" : "")"
-                                           data-id="@opt.Id"
-                                           onclick="selectPill(this, '@vm.Param.Id')">
-                                        @opt.Text
-                                    </label>
+                                    <button type="button" class="param-show-more" onclick="toggleOptions(this)">
+                                        More @(vm.Options.Count - 5)
+                                    </button>
                                 }
-                            </div>
-                            <input type="hidden" name="p_@vm.Param.Id" id="pill_@vm.Param.Id"
-                                   value="@(activeFilters.TryGetValue(vm.Param.Id, out var pv) ? pv.FirstOrDefault() : "")" />
-                            @if (vm.Options.Count > 5)
-                            {
-                                <button type="button" class="param-show-more" onclick="toggleOptions(this)">
-                                    More @(vm.Options.Count - 5)
-                                </button>
-                            }
                         }
+                        @if (vm.Param.Type == 8)
+                        {
+                            var activeId = activeFilters.TryGetValue(vm.Param.Id, out var fv) ? fv.FirstOrDefault() : null;
+                            var activeOpt = activeId != null ? vm.Options.FirstOrDefault(o => o.Id.ToString() == activeId) : null;
+                            var optionsJson = System.Text.Json.JsonSerializer.Serialize(
+                            vm.Options.Select(o => new { id = o.Id, text = o.Text }));
+
+                            <div class="free-text-select" data-param="@vm.Param.Id"
+                                 data-options="@optionsJson.Replace("\"", "&quot;")"
+                                 style="position:relative">
+                                <input type="text" class="param-range-input free-text-select-input"
+                                       data-param="@vm.Param.Id"
+                                       value="@(activeOpt?.Text ?? "")" autocomplete="off"
+                                       oninput="FreeTextSelect.onInput(this)"
+                                       onfocus="FreeTextSelect.onFocus(this)" />
+                                <input type="hidden" name="p_@vm.Param.Id" class="free-text-select-id"
+                                       value="@(activeOpt?.Id.ToString() ?? "")" />
+                                <div class="create-dropdown free-text-select-drop"></div>
+                            </div>
+                        }
+
 
                         @if (vm.Param.Type == 4)
                         {
@@ -326,18 +347,47 @@
                 if (!isFav && cart.includes(prodId)) btn.classList.add('product-card-action-active');
             });
 
-            document.getElementById('filterForm')?.addEventListener('submit', function (e) {
-                e.preventDefault();
-                const inputs = this.querySelectorAll('input, select');
-                inputs.forEach(input => {
-                    if (input.type === 'checkbox' && !input.checked) {
-                        input.disabled = true;
-                    } else if (input.value.trim() === '') {
-                        input.disabled = true;
+                document.getElementById('filterForm')?.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const form = this;
+
+            const freeTextWraps = form.querySelectorAll('.free-text-select');
+            for (const wrap of freeTextWraps) {
+                const input = wrap.querySelector('.free-text-select-input');
+                const hidden = wrap.querySelector('.free-text-select-id');
+                const text = input.value.trim();
+                if (!text) { hidden.value = ''; continue; }
+
+                const paramId = wrap.dataset.param;
+                try {
+                    const res = await fetch('/Product/ResolveSelectOption', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
+                        },
+                        body: JSON.stringify({ paramId: parseInt(paramId), text })
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        hidden.value = data.id;
                     }
-                });
-                this.submit();
+                } catch (err) {
+                    console.error('Failed to resolve filter option', err);
+                }
+            }
+
+            const inputs = form.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                if (input.type === 'checkbox' && !input.checked) {
+                    input.disabled = true;
+                } else if (input.value.trim() === '') {
+                    input.disabled = true;
+                }
             });
+            form.submit();
+        });
+
         });
     </script>
 </div>
