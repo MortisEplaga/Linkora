@@ -8,7 +8,7 @@ namespace Linkora.Repositories
         Task<IEnumerable<Report>> GetReportsByProductIdAsync(int productId);
         Task<IEnumerable<Report>> GetPendingReportsAsync();
         Task UpdateReportStatusAsync(int reportId, ReportStatus status);
-        Task<List<ReportReason>> GetActiveReportReasonsAsync(); // новый метод
+        Task<List<ReportReason>> GetActiveReportReasonsAsync();
 
     }
 }

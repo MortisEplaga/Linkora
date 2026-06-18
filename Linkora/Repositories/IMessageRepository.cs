@@ -29,8 +29,6 @@ namespace Linkora.Repositories
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection")!;
         }
-        // MessageRepository.cs
-        // MessageRepository.cs
         public async Task<bool> CanReviewAsync(int conversationId, int userId)
         {
             await using var conn = new SqlConnection(_connectionString);
@@ -48,11 +46,9 @@ namespace Linkora.Repositories
             var buyerId = reader.GetInt32(2);
             var sellerId = reader.GetInt32(3);
 
-            // Определяем, кого должен оценить текущий пользователь
             int targetUserId = (userId == buyerId) ? sellerId : (userId == sellerId ? buyerId : 0);
             if (targetUserId == 0) return false;
 
-            // Проверяем, есть ли уже отзыв от userId на targetUserId по этому productId
             var checkSql = @"
         SELECT COUNT(*) FROM Reviews
         WHERE AuthorId = @UserId AND TargetUserId = @TargetId AND ProductId = @ProductId";
@@ -88,7 +84,7 @@ namespace Linkora.Repositories
 
         public async Task<bool> HasUserReviewedAsync(int conversationId, int userId)
         {
-            return !await CanReviewAsync(conversationId, userId); // если canReview=false, значит уже оставил отзыв
+            return !await CanReviewAsync(conversationId, userId); 
         }
 
         public async Task<int> CreateReviewAsync(int authorId, int targetUserId, int productId, int rating, string? comment)
@@ -237,7 +233,6 @@ namespace Linkora.Repositories
             await using var r = await cmd.ExecuteReaderAsync();
             if (!await r.ReadAsync()) return null;
 
-            // Сохраняем статус до закрытия ридера
             string? productStatus = r.IsDBNull(8) ? null : r.GetString(8);
 
             var conv = new Conversation
@@ -257,13 +252,11 @@ namespace Linkora.Repositories
 
             await r.CloseAsync();
 
-            // Определяем, можно ли оставить отзыв (только для диалогов с продуктом, у которого статус succeeded)
             if (conv.ProductId.HasValue && productStatus == "Succeeded")
             {
                 int targetUserId = (userId == conv.BuyerId) ? conv.SellerId : (userId == conv.SellerId ? conv.BuyerId : 0);
                 if (targetUserId != 0)
                 {
-                    // Проверяем, оставлен ли уже отзыв
                     await using var checkCmd = new SqlCommand(@"
                 SELECT COUNT(*) FROM Reviews
                 WHERE AuthorId = @UserId AND TargetUserId = @TargetId AND ProductId = @ProductId", conn);
@@ -280,10 +273,7 @@ namespace Linkora.Repositories
                     }
                 }
             }
-            else
-            {
-                conv.CanReview = false;
-            }
+            else { conv.CanReview = false; }
 
             return conv;
         }
@@ -292,7 +282,6 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
-            // Ищем существующий
             await using var findCmd = new SqlCommand(@"
                 SELECT Id FROM Conversations
                 WHERE ProductId = @ProductId AND BuyerId = @BuyerId AND SellerId = @SellerId", conn);
@@ -302,7 +291,6 @@ namespace Linkora.Repositories
             var existing = await findCmd.ExecuteScalarAsync();
             if (existing != null) return (int)existing;
 
-            // Создаём новый
             await using var createCmd = new SqlCommand(@"
                 INSERT INTO Conversations (ProductId, BuyerId, SellerId, CreatedAt, IsSystem)
                 OUTPUT INSERTED.Id

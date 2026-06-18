@@ -116,7 +116,7 @@
                     </div>
                     <input type="hidden" id="pubDurationValue" value="30" />
                 </div>
-            </div>            
+            </div>
             <button class="create-submit" onclick="submitAd()" data-i18n="publish_btn">Publish</button>
         </div>
     </div>
@@ -189,41 +189,40 @@
         document.getElementById('catSelectorText').textContent = name;
         closeCreateCatMenu();
         await loadParams(id, {});
-    if (window.ParamRulesEngine) {
-                await ParamRulesEngine.loadRules(id);
-            } else {
-                console.error("ParamRulesEngine is not loaded!");
-            }    }
+        if (window.ParamRulesEngine) {
+            await ParamRulesEngine.loadRules(id);
+        } else {
+            console.error("ParamRulesEngine is not loaded!");
+        }
+    }
 
     async function loadParams(categoryId, existingValues = {}) {
         const res = await fetch(`/Product/Parameters?categoryId=${categoryId}`);
         const params = await res.json();
         const container = document.getElementById('createParams');
-        const section   = document.getElementById('paramsSection');
+        const section = document.getElementById('paramsSection');
         container.innerHTML = '';
 
-        // Динамический перенос поля цены (логика из Edit.cshtml)
-        const priceParam = params.find(p => { 
+        const priceParam = params.find(p => {
             const nameLower = p.name.toLowerCase();
             return nameLower === 'price, €' || nameLower === 'цена, €' || nameLower === 'cena, €';
         });
-        const priceWrap  = document.getElementById('priceFieldWrap');
+        const priceWrap = document.getElementById('priceFieldWrap');
         const priceInput = document.getElementById('adPrice');
-        const qtyWrap    = document.getElementById('qtyFieldWrap');
+        const qtyWrap = document.getElementById('qtyFieldWrap');
 
         if (priceParam) {
             priceInput.value = existingValues[priceParam.id] ?? '';
             priceInput.dataset.paramId = priceParam.id;
             priceWrap.style.display = '';
-            qtyWrap.style.gridColumn = ''; // qty занимает левую половину
+            qtyWrap.style.gridColumn = ''; 
         } else {
             priceWrap.style.display = 'none';
             priceInput.value = '';
             delete priceInput.dataset.paramId;
-            qtyWrap.style.gridColumn = '1 / -1'; // qty на всю ширину
+            qtyWrap.style.gridColumn = '1 / -1'; 
         }
 
-        // Остальные параметры (исключая найденный id цены)
         const otherParams = params.filter(p => p.id !== (priceParam ? priceParam.id : null));
         if (!otherParams.length) { section.style.display = 'none'; return; }
         section.style.display = 'block';
@@ -242,7 +241,7 @@
         otherParams.forEach(p => {
             const h = estimateHeight(p);
             if (h1 <= h2) { col1.push(p); h1 += h; }
-            else          { col2.push(p); h2 += h; }
+            else { col2.push(p); h2 += h; }
         });
 
         function buildCol(items, totalOtherHeight) {
@@ -270,76 +269,75 @@
         block.innerHTML = `<div class="param-title">${p.name}</div>`;
 
         if (p.type === 3) {
-        let lang = localStorage.getItem('lang') || 'en';
-        let yesText = 'Yes';
-        if (lang === 'ru') yesText = 'Да';
-        else if (lang === 'lv') yesText = 'Jā';
+            const lang = localStorage.getItem('lang') || 'en';
+            const dict = TRANSLATIONS[lang] || TRANSLATIONS['en'];
+            const yesText = dict['yes'] || 'Yes';
 
-        block.innerHTML += `
-            <div class="param-check-row">
-                <span>${yesText}</span>
-                <input type="checkbox" class="param-check-input" data-param="${p.id}"
-                       ${val === 'true' ? 'checked' : ''} />
-            </div>`;
+            block.innerHTML += `
+                <div class="param-check-row">
+                    <span>${yesText}</span>
+                    <input type="checkbox" class="param-check-input" data-param="${p.id}"
+                           ${val === 'true' ? 'checked' : ''} />
+                </div>`;
         } else if (p.type === 2) {
-           const pills = p.options.map(opt =>
-               `<label class="param-pill ${val == opt.id ? 'param-pill-active' : ''}"
-                       data-id="${opt.id}"
-                       onclick="pillClick(this)">${opt.text}</label>`
-           ).join('');
-           block.innerHTML += `<div class="param-pills" data-param="${p.id}">${pills}</div>`;
-       } else if (p.type === 8) {
-        var initialText = '';
-        if (val) {
-            var found = (p.options || []).find(function (o) { return String(o.id) === String(val); });
-            if (found) initialText = found.text;
-        }
-        block.innerHTML += FreeTextSelect.buildHtml(p.id, initialText, val || '', p.options || []);
-    } else if (p.type === 4) {
-    const selected = val ? val.split(',') : [];
-    const LIMIT = 5;
-    const checksHtml = p.options.map((opt, i) =>
-        `<label class="param-option" ${i >= LIMIT ? 'style="display:none"' : ''}>
-            <input type="checkbox" data-param="${p.id}" data-id="${opt.id}"
-                   ${selected.includes(String(opt.id)) ? 'checked' : ''} /> ${opt.text}
-        </label>`
-    ).join('');
-    block.innerHTML += `<div class="param-options" data-param="${p.id}">${checksHtml}</div>`;
-                if (p.options.length > LIMIT) {
-        const btn = document.createElement('button');
-        btn.className = 'param-show-more';
-        btn.setAttribute('data-i18n', 'more_btn');
-        btn.setAttribute('data-count', p.options.length - LIMIT);
-        btn.onclick = () => {
-            block.querySelectorAll('.param-option[style="display:none"]')
-                 .forEach(el => el.style.display = '');
-            btn.style.display = 'none';
-        };
-        block.appendChild(btn);
-        translateDynamicElement(btn);
-    }
+            const pills = p.options.map(opt =>
+                `<label class="param-pill ${val == opt.id ? 'param-pill-active' : ''}"
+                        data-id="${opt.id}"
+                        onclick="pillClick(this)">${opt.text}</label>`
+            ).join('');
+            block.innerHTML += `<div class="param-pills" data-param="${p.id}">${pills}</div>`;
+        } else if (p.type === 8) {
+            var initialText = '';
+            if (val) {
+                var found = (p.options || []).find(function (o) { return String(o.id) === String(val); });
+                if (found) initialText = found.text;
+            }
+            block.innerHTML += FreeTextSelect.buildHtml(p.id, initialText, val || '', p.options || []);
+        } else if (p.type === 4) {
+            const selected = val ? val.split(',') : [];
+            const LIMIT = 5;
+            const checksHtml = p.options.map((opt, i) =>
+                `<label class="param-option" ${i >= LIMIT ? 'style="display:none"' : ''}>
+                    <input type="checkbox" data-param="${p.id}" data-id="${opt.id}"
+                           ${selected.includes(String(opt.id)) ? 'checked' : ''} /> ${opt.text}
+                </label>`
+            ).join('');
+            block.innerHTML += `<div class="param-options" data-param="${p.id}">${checksHtml}</div>`;
+            if (p.options.length > LIMIT) {
+                const btn = document.createElement('button');
+                btn.className = 'param-show-more';
+                btn.setAttribute('data-i18n', 'more_btn');
+                btn.setAttribute('data-count', p.options.length - LIMIT);
+                btn.onclick = () => {
+                    block.querySelectorAll('.param-option[style="display:none"]')
+                        .forEach(el => el.style.display = '');
+                    btn.style.display = 'none';
+                };
+                block.appendChild(btn);
+                translateDynamicElement(btn);
+            }
         } else if (p.type === 5) {
             block.innerHTML += `
                 <input type="number" class="param-range-input"
                        placeholder="${p.min}–${p.max}" min="${p.min}" max="${p.max}" step="${p.step}"
                        data-param="${p.id}" value="${val}" />`;
         } else if (p.type === 7) {
-        block.innerHTML += `
-            <input type="text" class="create-input param-text-input"
-                   data-param="${p.id}" value="${val}"
-                   placeholder="" />`;
+            block.innerHTML += `
+                <input type="text" class="create-input param-text-input"
+                       data-param="${p.id}" value="${val}"
+                       placeholder="" />`;
         }
         return block;
-        }
+    }
 
     function pillClick(pill) {
         const pills = pill.closest('.param-pills');
         pills.querySelectorAll('.param-pill').forEach(p => p.classList.remove('param-pill-active'));
         pill.classList.add('param-pill-active');
-         if (window.ParamRulesEngine) {
-        window.ParamRulesEngine.triggerUpdate();
+        if (window.ParamRulesEngine) {
+            window.ParamRulesEngine.triggerUpdate();
         }
-        }
+    }
 
     async function submitAd() {
         if (!ParamRulesEngine.validateAll()) return;
@@ -361,10 +359,10 @@
 
         try {
             const fd = new FormData();
-            fd.append('title',       title);
+            fd.append('title', title);
             fd.append('description', document.getElementById('adDescription').value);
-            fd.append('qty',         document.getElementById('adQty').value || '1');
-            fd.append('categoryId',  document.getElementById('selectedCategoryId').value);
+            fd.append('qty', document.getElementById('adQty').value || '1');
+            fd.append('categoryId', document.getElementById('selectedCategoryId').value);
             fd.append('publishDays', document.getElementById('pubDurationValue').value || '30');
 
             const adPriceInput = document.getElementById('adPrice');
@@ -443,15 +441,15 @@
                 return an - bn || a.name.localeCompare(b.name);
             });
             showDrop('adCityDrop', filtered, (item) => {
-                document.getElementById('adCity').value   = item.name;
+                document.getElementById('adCity').value = item.name;
                 document.getElementById('adCityId').value = item.id;
                 hideDrop('adCityDrop');
-                document.getElementById('adStreet').value   = '';
+                document.getElementById('adStreet').value = '';
                 document.getElementById('adStreetId').value = '';
-                document.getElementById('adHouse').value    = '';
-                document.getElementById('adHouseId').value  = '';
+                document.getElementById('adHouse').value = '';
+                document.getElementById('adHouseId').value = '';
                 document.getElementById('streetField').style.display = 'block';
-                document.getElementById('houseField').style.display  = 'none';
+                document.getElementById('houseField').style.display = 'none';
             });
         } else if (type === 'street') {
             const cityId = document.getElementById('adCityId').value;
@@ -465,11 +463,11 @@
                 return an - bn || a.name.localeCompare(b.name);
             });
             showDrop('adStreetDrop', filteredS, (item) => {
-                document.getElementById('adStreet').value   = item.name;
+                document.getElementById('adStreet').value = item.name;
                 document.getElementById('adStreetId').value = item.id;
                 hideDrop('adStreetDrop');
-                document.getElementById('adHouse').value    = '';
-                document.getElementById('adHouseId').value  = '';
+                document.getElementById('adHouse').value = '';
+                document.getElementById('adHouseId').value = '';
                 document.getElementById('houseField').style.display = 'block';
             });
         } else if (type === 'house') {
@@ -484,7 +482,7 @@
                 return an - bn || a.name.localeCompare(b.name);
             });
             showDrop('adHouseDrop', filteredH, (item) => {
-                document.getElementById('adHouse').value   = item.name;
+                document.getElementById('adHouse').value = item.name;
                 document.getElementById('adHouseId').value = item.id;
                 hideDrop('adHouseDrop');
             });
@@ -510,7 +508,7 @@
     }
 
     document.addEventListener('click', e => {
-        ['adCityDrop','adStreetDrop','adHouseDrop'].forEach(id => {
+        ['adCityDrop', 'adStreetDrop', 'adHouseDrop'].forEach(id => {
             const drop = document.getElementById(id);
             if (drop && !drop.contains(e.target)) drop.style.display = 'none';
         });
@@ -521,7 +519,7 @@
             if (!selectedFiles.find(f => f.name === file.name && f.size === file.size))
                 selectedFiles.push(file);
         });
-        input.value = '';   
+        input.value = '';
         renderPreviews();
     }
 
@@ -564,8 +562,8 @@
     }
 
     function updateSizeBar(totalBytes) {
-        const bar   = document.getElementById('sizeBar');
-        const fill  = document.getElementById('sizeFill');
+        const bar = document.getElementById('sizeBar');
+        const fill = document.getElementById('sizeFill');
         const label = document.getElementById('sizeLabel');
         if (selectedFiles.length === 0) { bar.style.display = 'none'; return; }
         bar.style.display = 'block';
@@ -595,7 +593,7 @@
                     preferred = data.days;
                 }
             }
-        } catch(e) { console.warn('Could not load duration preference', e); }
+        } catch (e) { console.warn('Could not load duration preference', e); }
 
         const hiddenInput = document.getElementById('pubDurationValue');
         if (hiddenInput) hiddenInput.value = preferred;
@@ -633,12 +631,14 @@
             initDurationUI();
         }
     });
-    
-        document.addEventListener('DOMContentLoaded', () => {
+
+    document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('pubDurationPills')) {
             initDurationUI();
         }
-        });   function translateDynamicElement(el) {
+    });
+
+    function translateDynamicElement(el) {
         const lang = localStorage.getItem('lang') || 'en';
         const dict = TRANSLATIONS[lang] || TRANSLATIONS['en'];
 

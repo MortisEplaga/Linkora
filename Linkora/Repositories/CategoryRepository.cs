@@ -49,7 +49,6 @@ namespace Linkora.Repositories
             };
         }
 
-        // ── Все категории ──
         public async Task<List<Category>> GetAllAsync()
         {
             var result = new List<Category>();
@@ -65,8 +64,6 @@ namespace Linkora.Repositories
 
             return result;
         }
-
-        // ── Одна категория по Id ──
         public async Task<Category?> GetByIdAsync(int id)
         {
             await using var conn = new SqlConnection(_connectionString);
@@ -80,8 +77,6 @@ namespace Linkora.Repositories
 
             return await reader.ReadAsync() ? MapRow(reader) : null;
         }
-
-        // ── Дочерние категории ──
         public async Task<List<Category>> GetChildrenAsync(int parentId)
         {
             var result = new List<Category>();
@@ -100,8 +95,6 @@ namespace Linkora.Repositories
 
             return result;
         }
-
-        // ── Хлебные крошки ──
         public async Task<List<Category>> GetBreadcrumbAsync(int categoryId)
         {
             var breadcrumb = new List<Category>();
@@ -187,8 +180,6 @@ namespace Linkora.Repositories
 
             return result;
         }
-
-        // ── Параметры категории (один categoryId) ──
         public async Task<List<Parameter>> GetParametersAsync(int categoryId)
         {
             var result = new List<Parameter>();
@@ -247,7 +238,6 @@ namespace Linkora.Repositories
 
             return result;
         }
-
         public async Task<List<int>> GetDescendantIdsAsync(int categoryId)
         {
             var ids = new List<int>();

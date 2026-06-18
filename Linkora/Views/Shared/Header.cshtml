@@ -287,13 +287,11 @@
             document.cookie = `lang=${lang};path=/;max-age=31536000`;
             applyTranslations();
 
-            // Update active state in header switcher
             document.querySelectorAll('.lang-pill').forEach(btn => btn.classList.remove('active'));
             if (lang === 'en') document.getElementById('headerLangEN')?.classList.add('active');
             if (lang === 'lv') document.getElementById('headerLangLV')?.classList.add('active');
             if (lang === 'ru') document.getElementById('headerLangRU')?.classList.add('active');
 
-            // Also update region button label if present
             const regionBtnLabel = document.getElementById('regionBtnLabel');
             if (regionBtnLabel && (regionBtnLabel.textContent === 'All regions' || regionBtnLabel.textContent === 'Visi reģioni' || regionBtnLabel.textContent === 'Все регионы')) {
                 regionBtnLabel.textContent = t('all_regions');
@@ -308,12 +306,10 @@
             if (themeToggleBtn) themeToggleBtn.classList.toggle('settings-toggle-on', isDark);
         }
 
-        // Apply theme on load
         (function() {
             if (localStorage.getItem('theme') === 'dark')
                 document.documentElement.classList.add('dark-theme');
 
-            // Set active language pill in header
             const currentLang = localStorage.getItem('lang') || 'en';
             if (currentLang === 'en') document.getElementById('headerLangEN')?.classList.add('active');
             if (currentLang === 'lv') document.getElementById('headerLangLV')?.classList.add('active');
@@ -599,7 +595,6 @@
             }
         })();
 
-        // ---------- Settings modal (logged-in only) ----------
         function openSettingsModal() {
             if (!document.getElementById('settingsOverlay')) return;
             document.getElementById('userDropdown')?.classList.remove('open');
@@ -619,7 +614,6 @@
             if (themeToggle) themeToggle.classList.toggle('settings-toggle-on', dark);
         }
 
-        // ---------- Reviews modal (logged-in only) ----------
         async function openMyReviewsModal() {
             if (!document.getElementById('myReviewsOverlay')) return;
             document.getElementById('userDropdown')?.classList.remove('open');
@@ -682,7 +676,6 @@
             }
         }
 
-        // ---------- Search handler ----------
         function handleGlobalSearch(e) {
             e.preventDefault();
             const input = e.target.querySelector('.search-input');
@@ -699,7 +692,6 @@
             }
         }
 
-        // Apply translations after DOM ready
         document.addEventListener('DOMContentLoaded', applyTranslations);
 
                 function translateNotificationMessage(message) {

@@ -25,7 +25,6 @@ namespace Linkora.Controllers
                 await using var conn = new SqlConnection(_connectionString);
                 await conn.OpenAsync();
 
-                // Проверяем есть ли уже запись
                 await using var check = new SqlCommand(
                     "SELECT Id FROM Favourites WHERE ProductId = @P AND UserId = @U AND Can = @C", conn);
                 check.Parameters.AddWithValue("@P", productId);
@@ -35,7 +34,6 @@ namespace Linkora.Controllers
 
                 if (existing != null)
                 {
-                    // Уже есть — удаляем
                     await using var del = new SqlCommand(
                         "DELETE FROM Favourites WHERE Id = @Id", conn);
                     del.Parameters.AddWithValue("@Id", existing);
@@ -44,7 +42,6 @@ namespace Linkora.Controllers
                 }
                 else
                 {
-                    // Нет — добавляем
                     await using var ins = new SqlCommand(
                         "INSERT INTO Favourites (ProductId, UserId, Can) VALUES (@P, @U, @C)", conn);
                     ins.Parameters.AddWithValue("@P", productId);

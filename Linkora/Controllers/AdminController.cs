@@ -23,10 +23,8 @@ namespace Linkora.Controllers
             _reportRepository = reportRepository;
         }
 
-        private bool IsAdmin() =>
-            User.FindFirst(ClaimTypes.Role)?.Value == "admin";
+        private bool IsAdmin() => User.FindFirst(ClaimTypes.Role)?.Value == "admin";
 
-        // ── Dashboard ──
         public async Task<IActionResult> Index()
         {
             if (!IsAdmin()) return Forbid();
@@ -36,35 +34,27 @@ namespace Linkora.Controllers
 
             var stats = new AdminDashboardViewModel();
 
-            // Total users
             await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Users", conn))
                 stats.TotalUsers = (int)(await cmd.ExecuteScalarAsync())!;
 
-            // Total products
             await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Products", conn))
                 stats.TotalProducts = (int)(await cmd.ExecuteScalarAsync())!;
 
-            // Pending moderation
             await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Products WHERE Status = 'Moderation'", conn))
                 stats.PendingModeration = (int)(await cmd.ExecuteScalarAsync())!;
 
-            // Pending reports
             await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Reports WHERE Status = 'Pending'", conn))
                 stats.PendingReports = (int)(await cmd.ExecuteScalarAsync())!;
 
-            // New users today
             await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Users WHERE CAST(CreatedAt AS DATE) = CAST(GETDATE() AS DATE)", conn))
                 stats.NewUsersToday = (int)(await cmd.ExecuteScalarAsync())!;
 
-            // New products today
             await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Products WHERE CAST(CreatedTime AS DATE) = CAST(GETDATE() AS DATE)", conn))
                 stats.NewProductsToday = (int)(await cmd.ExecuteScalarAsync())!;
 
-            // Active products
             await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Products WHERE Status = 'Active'", conn))
                 stats.ActiveProducts = (int)(await cmd.ExecuteScalarAsync())!;
 
-            // Products by status
             await using (var cmd = new SqlCommand(@"
                 SELECT Status, COUNT(*) FROM Products GROUP BY Status", conn))
             {
@@ -73,7 +63,6 @@ namespace Linkora.Controllers
                     stats.ProductsByStatus[r.GetString(0)] = r.GetInt32(1);
             }
 
-            // Recent activity (last 10 products)
             await using (var cmd = new SqlCommand(@"
                 SELECT TOP 10 p.Id, p.Name, p.Status, p.CreatedTime, u.UserName
                 FROM Products p
@@ -95,8 +84,6 @@ namespace Linkora.Controllers
             ViewBag.Stats = stats;
             return View();
         }
-
-        // ── Products moderation ──
         public async Task<IActionResult> Products(string status = "Moderation", int page = 1, string? search = null)
         {
             if (!IsAdmin()) return Forbid();
@@ -164,7 +151,6 @@ namespace Linkora.Controllers
             return View();
         }
 
-        // ── Approve / Reject product ──
         [HttpPost, IgnoreAntiforgeryToken]
         public async Task<IActionResult> SetProductStatus(int id, string status)
         {
@@ -177,8 +163,6 @@ namespace Linkora.Controllers
             await cmd.ExecuteNonQueryAsync();
             return Ok();
         }
-
-        // ── Users ──
         public async Task<IActionResult> Users(int page = 1, string? search = null, string role = "all")
         {
             if (!IsAdmin()) return Forbid();
@@ -291,7 +275,6 @@ namespace Linkora.Controllers
             return Ok();
         }
 
-        // ── Reports ──
         public async Task<IActionResult> Reports(string status = "Pending", int page = 1)
         {
             if (!IsAdmin()) return Forbid();
@@ -362,7 +345,6 @@ namespace Linkora.Controllers
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
-            // Update report status
             var newStatus = action == "resolve" ? "Resolved" : "Rejected";
             await using var cmd = new SqlCommand(
                 "UPDATE Reports SET Status = @S WHERE Id = @Id", conn);
@@ -370,7 +352,6 @@ namespace Linkora.Controllers
             cmd.Parameters.AddWithValue("@Id", id);
             await cmd.ExecuteNonQueryAsync();
 
-            // If resolving — keep product in moderation; if rejecting report — restore product to Active
             if (action == "reject_report")
             {
                 await using var pCmd = new SqlCommand(@"
@@ -384,7 +365,6 @@ namespace Linkora.Controllers
             return Ok(new { status = newStatus });
         }
 
-        // ── Stats API for charts ──
         [HttpGet]
         public async Task<IActionResult> StatsApi()
         {
@@ -393,7 +373,6 @@ namespace Linkora.Controllers
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
-            // Last 7 days registrations
             await using var cmd = new SqlCommand(@"
                 SELECT CAST(CreatedAt AS DATE) AS Day, COUNT(*) AS Cnt
                 FROM Users
@@ -406,7 +385,6 @@ namespace Linkora.Controllers
                 while (await r.ReadAsync())
                     regData.Add(new { day = r.GetDateTime(0).ToString("dd MMM"), count = r.GetInt32(1) });
 
-            // Last 7 days products
             await using var cmd2 = new SqlCommand(@"
                 SELECT CAST(CreatedTime AS DATE) AS Day, COUNT(*) AS Cnt
                 FROM Products
@@ -422,6 +400,4 @@ namespace Linkora.Controllers
             return Json(new { registrations = regData, products = prodData });
         }
     }
-
-    // ── ViewModels ──
 }

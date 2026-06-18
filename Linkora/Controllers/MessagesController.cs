@@ -15,7 +15,6 @@ namespace Linkora.Controllers
             _messageRepository = messageRepository;
         }
 
-        // Страница сообщений (список + опционально открытый диалог)
         public async Task<IActionResult> Index(int? id)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -41,7 +40,6 @@ namespace Linkora.Controllers
             return View();
         }
 
-        // Создать диалог и отправить первое сообщение (из деталей объявления)
         [HttpPost]
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> Start([FromBody] StartMessageDto dto)

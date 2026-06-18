@@ -1158,10 +1158,8 @@
         }
     </script>
     <script>
-        // ── Apply translations immediately ──
         applyTranslations();
 
-        // ── Auth ──
         function openAuthModal(tab) {
             switchTab(tab || 'login');
             document.getElementById('authOverlay').classList.add('modal-open');
@@ -1215,7 +1213,6 @@
             set('rule-digit', /[0-9]/.test(v));
         }
 
-        // ── User menu ──
         function toggleUserMenu() {
             document.getElementById('userDropdown').classList.toggle('open');
         }
@@ -1226,7 +1223,6 @@
             }
         });
 
-        // ── Region ──
         let regionCities = [];
         let selectedRegion = null;
         async function openRegionModal() {
@@ -1288,7 +1284,6 @@
             }
         }
 
-        // ── Favourites / Cart ──
         async function toggleFav(btn, productId, can) {
             const res = await fetch(`/Favourite/Toggle?productId=${productId}&can=${can}`, {
                 method: 'POST',
@@ -1309,7 +1304,6 @@
             }
         }
 
-        // ── Seller modal ──
         function openSellerModal(name, avatar, phone, isCompany, email, date, sellerId) {
             const avatarEl = document.getElementById('smAvatar');
             avatarEl.innerHTML = avatar
@@ -1372,7 +1366,6 @@
             document.getElementById('sellerModal').classList.remove('open');
         }
 
-        // ── Unread badge ──
         @if (User.Identity!.IsAuthenticated)
         {
                 <text>
@@ -1414,7 +1407,6 @@
         }
         let currentSupportLang = 'en';
 
-                // ── Support Modal ──
                 function closeSupportModal() {
             document.getElementById('supportOverlay').classList.remove('modal-open');
             document.getElementById('supportModal').classList.remove('modal-open');

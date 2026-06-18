@@ -72,9 +72,6 @@ namespace Linkora.Repositories
             cmd.Parameters.AddWithValue("@Token", (object?)user.ConfirmationToken ?? DBNull.Value);
             return (int)(await cmd.ExecuteScalarAsync())!;
         }
-        // ── Google OAuth additions ──
-
-        /// <summary>Look up a user by email address (for Google sign-in).</summary>
         public async Task<User?> GetByEmailAsync(string email)
         {
             await using var conn = new SqlConnection(_connectionString);
@@ -85,8 +82,6 @@ namespace Linkora.Repositories
             await using var r = await cmd.ExecuteReaderAsync();
             return await r.ReadAsync() ? MapRow(r) : null;
         }
-
-        /// <summary>Create a Google-only account (no password hash).</summary>
         public async Task<int> CreateGoogleUserAsync(User user)
         {
             await using var conn = new SqlConnection(_connectionString);
@@ -100,8 +95,6 @@ namespace Linkora.Repositories
             cmd.Parameters.AddWithValue("@A", (object?)user.AvatarImagePath ?? DBNull.Value);
             return (int)(await cmd.ExecuteScalarAsync())!;
         }
-
-        /// <summary>Update the avatar path (e.g. after Google login refreshes the picture URL).</summary>
         public async Task UpdateAvatarAsync(int userId, string avatarPath)
         {
             await using var conn = new SqlConnection(_connectionString);
@@ -112,10 +105,6 @@ namespace Linkora.Repositories
             cmd.Parameters.AddWithValue("@Id", userId);
             await cmd.ExecuteNonQueryAsync();
         }
-
-        /// <summary>
-        /// Return <paramref name="baseUsername"/> if it's free, otherwise append _2, _3, … until unique.
-        /// </summary>
         public async Task<string> EnsureUniqueUsernameAsync(string baseUsername)
         {
             await using var conn = new SqlConnection(_connectionString);

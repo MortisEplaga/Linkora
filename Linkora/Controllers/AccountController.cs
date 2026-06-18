@@ -20,8 +20,6 @@ namespace Linkora.Controllers
             _userRepository = userRepository;
             _emailService = emailService;
         }
-
-        // ── Login ──
         public IActionResult Login(string? returnUrl = null)
         {
             ViewBag.ReturnUrl = returnUrl;
@@ -54,8 +52,6 @@ namespace Linkora.Controllers
             await SignInAsync(user);
             return Redirect(returnUrl ?? "/");
         }
-
-        // ── Register ──
         public IActionResult Register() => View();
 
         [HttpPost]
@@ -127,26 +123,16 @@ namespace Linkora.Controllers
 
             var confirmUrl = Url.Action("ConfirmEmail", "Account", new { token }, Request.Scheme)!;
 
-            try
-            {
-                await _emailService.SendConfirmationEmailAsync(email, username, confirmUrl);
-            }
-            catch
-            {
-                // User is created — show success anyway; they can request a new link later
-            }
+            try { await _emailService.SendConfirmationEmailAsync(email, username, confirmUrl); }
+            catch { }
 
             return RedirectToAction(nameof(RegisterConfirmation), new { email });
         }
-
-        // ── Registration confirmation pending page ──
         public IActionResult RegisterConfirmation(string email)
         {
             ViewBag.Email = email;
             return View();
         }
-
-        // ── Email confirmation link ──
         public async Task<IActionResult> ConfirmEmail(string token)
         {
             if (string.IsNullOrWhiteSpace(token))
@@ -159,28 +145,23 @@ namespace Linkora.Controllers
 
             await _userRepository.ConfirmEmailAsync(token);
 
-            // Refresh user object and sign in automatically
             var confirmed = await _userRepository.GetByIdAsync(user.Id);
             if (confirmed != null)
                 await SignInAsync(confirmed);
 
             return RedirectToAction(nameof(ConfirmEmailResult), new { success = true });
         }
-
         public IActionResult ConfirmEmailResult(bool success)
         {
             ViewBag.Success = success;
             return View();
         }
-
-        // ── Google OAuth ──
         public IActionResult GoogleLogin(string? returnUrl = null)
         {
             var redirectUrl = Url.Action("GoogleSignedIn", "Account", new { returnUrl });
             var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
             return Challenge(properties, "Google");
         }
-
         public async Task<IActionResult> GoogleSignedIn(string? returnUrl = null)
         {
             var result = await HttpContext.AuthenticateAsync("Cookies");

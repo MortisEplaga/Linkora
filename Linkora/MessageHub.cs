@@ -15,7 +15,6 @@ namespace Linkora.Hubs
             _messageRepository = messageRepository;
         }
 
-        // Подключаемся к комнате диалога
         public async Task JoinConversation(int conversationId)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, $"conv_{conversationId}");
@@ -26,7 +25,6 @@ namespace Linkora.Hubs
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"conv_{conversationId}");
         }
 
-        // Отправка сообщения
         public async Task SendMessage(int conversationId, string text)
         {
             var userIdStr = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -49,14 +47,10 @@ namespace Linkora.Hubs
                 isRead = false,
             };
 
-            // Шлём всем в комнате
             await Clients.Group($"conv_{conversationId}").SendAsync("ReceiveMessage", payload);
 
-            // Обновляем счётчик непрочитанных у получателя
             await Clients.User(userId.ToString()).SendAsync("UnreadCountChanged");
         }
-
-        // Пометить прочитанным при открытии чата
         public async Task MarkRead(int conversationId)
         {
             var userIdStr = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -65,8 +59,6 @@ namespace Linkora.Hubs
             await _messageRepository.MarkReadAsync(conversationId, userId);
             await Clients.User(userId.ToString()).SendAsync("UnreadCountChanged");
         }
-
-        // Для адресации по userId
         public override async Task OnConnectedAsync()
         {
             var userIdStr = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;

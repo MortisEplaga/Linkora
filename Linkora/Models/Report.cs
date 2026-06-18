@@ -22,13 +22,11 @@ namespace Linkora.Models
 
         [Required]
         [StringLength(50)]
-        public int ReportReasonId { get; set; } // Spam, Inappropriate, Fake, Other
+        public int ReportReasonId { get; set; } 
 
         [StringLength(500)]
         public string? Comment { get; set; }
-
         public DateTime CreatedAt { get; set; } = DateTime.Now;
-
         public ReportStatus Status { get; set; } = ReportStatus.Pending;
     }
 
@@ -50,8 +48,6 @@ namespace Linkora.Models
         [Required]
         [StringLength(100)]
         public string ReasonText { get; set; } = string.Empty;
-
-        // Можно добавить флаг IsActive, если нужно скрывать какие-то причины
         public bool IsActive { get; set; } = true;
     }
 }

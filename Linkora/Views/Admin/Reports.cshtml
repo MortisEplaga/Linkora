@@ -175,7 +175,6 @@
     <script>
         const afToken = document.getElementById('afToken')?.value ?? '';
 
-        // Локализация тостов из скриптов
         const jsLangs = {
             en: {
                 toast_report: 'Report ',
@@ -218,11 +217,9 @@
 
         async function approveProduct(productId, reportId, btn) {
             btn.disabled = true;
-            // Approve product
             await fetch(`/Admin/SetProductStatus?id=${productId}&status=Active`, {
                 method: 'POST', headers: { 'RequestVerificationToken': afToken }
             });
-            // Resolve report
             await resolveReport(reportId, 'resolve', btn);
             showToast(getJsText('toast_approved_resolved'), 'success');
         }

@@ -9,10 +9,10 @@ public class Review
     public int Id { get; set; }
     public int AuthorId { get; set; }
     public int TargetUserId { get; set; }
-    public int Rating { get; set; } // 1-5
+    public int Rating { get; set; }
     public string? Comment { get; set; }
     public DateTime CreatedAt { get; set; }
-    public int? ProductId { get; set; } // связь со сделкой
+    public int? ProductId { get; set; }
 
     [ForeignKey("AuthorId")]
     public virtual User Author { get; set; }

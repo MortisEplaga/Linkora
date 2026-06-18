@@ -47,7 +47,6 @@ namespace Linkora.Repositories
             await using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync();
 
-            // 1. Создаем жалобу
             var sql = @"
         INSERT INTO Reports (ProductId, UserId, ReportReasonId, Comment, CreatedAt, Status)
         OUTPUT INSERTED.Id
@@ -56,14 +55,13 @@ namespace Linkora.Repositories
             await using var command = new SqlCommand(sql, connection);
             command.Parameters.AddWithValue("@ProductId", productId);
             command.Parameters.AddWithValue("@UserId", userId);
-            command.Parameters.AddWithValue("@ReportReasonId", reportReasonId); // Новый параметр
+            command.Parameters.AddWithValue("@ReportReasonId", reportReasonId); 
             command.Parameters.AddWithValue("@Comment", comment ?? (object)DBNull.Value);
             command.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
             command.Parameters.AddWithValue("@Status", ReportStatus.Pending.ToString());
 
             var id = (int)await command.ExecuteScalarAsync();
 
-            // 2. Обновляем статус продукта на Moderation
             var updateProductSql = @"
         UPDATE Products 
         SET Status = 'Moderation' 
@@ -73,7 +71,6 @@ namespace Linkora.Repositories
             updateCommand.Parameters.AddWithValue("@ProductId", productId);
             await updateCommand.ExecuteNonQueryAsync();
 
-            // Возвращаем созданный отчет
             return new Report
             {
                 Id = id,

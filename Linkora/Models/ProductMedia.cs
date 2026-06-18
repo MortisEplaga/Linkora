@@ -16,7 +16,7 @@ namespace Linkora.Models
         public string FilePath { get; set; } = "";
 
         [Required, StringLength(10)]
-        public string MediaType { get; set; } = "image"; // "image" | "video"
+        public string MediaType { get; set; } = "image";
 
         public int SortOrder { get; set; }
     }

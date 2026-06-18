@@ -5,11 +5,11 @@ namespace Linkora.Models
 {
     public enum ProductStatus
     {
-        Active,      // Активное
-        Moderation,  // На модерации (после жалобы)
-        Rejected,    // Отклонено модератором
-        Archived,    // В архиве (скрыто пользователем или автоматически)
-        Succeeded    // Успешно завершено
+        Active,      
+        Moderation,  
+        Rejected,   
+        Archived,    
+        Succeeded    
     }
 
     [Table("Products")]

@@ -20,7 +20,6 @@ namespace Linkora.Controllers
         private string GetLang() => _httpContextAccessor.HttpContext?.Request.Cookies["lang"] ?? "en";
         public async Task<IActionResult> Index(int id, int? categoryId, string sort = "new")
         {
-            // Загружаем продавца
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
@@ -42,7 +41,6 @@ namespace Linkora.Controllers
             };
             await ur.CloseAsync();
 
-            // Рейтинг и кол-во отзывов
             await using var revCmd = new SqlCommand(
                 "SELECT COUNT(*), AVG(CAST(Rating AS float)) FROM Reviews WHERE TargetUserId = @Id", conn);
             revCmd.Parameters.AddWithValue("@Id", id);
@@ -91,7 +89,6 @@ namespace Linkora.Controllers
             }
             await cr.CloseAsync();
 
-            // Товары продавца
             var order = sort switch
             {
                 "cheap" => @"(SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
@@ -140,7 +137,6 @@ namespace Linkora.Controllers
                 });
             await pr.CloseAsync();
 
-            // Отзывы (последние 50)
             await using var reviewsCmd = new SqlCommand(@"
                 SELECT r.Id, r.Rating, r.Comment, r.CreatedAt,
                        u.UserName, u.AvatarImagePath

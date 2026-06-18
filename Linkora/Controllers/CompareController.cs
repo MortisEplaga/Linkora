@@ -25,7 +25,6 @@ namespace Linkora.Controllers
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
-            // Fetch cart products with basic info
             await using var cmd = new SqlCommand(@"
                 SELECT p.Id, p.Name, p.Address, p.CreatedTime,
                        COALESCE(
@@ -75,7 +74,6 @@ namespace Linkora.Controllers
                 return View();
             }
 
-            // Fetch all parameters for these products
             var productIds = string.Join(",", products.Select(p => p.Id));
             await using var paramCmd = new SqlCommand($@"
     SELECT mpc.ProductId, c.Id AS ParamId, c.Name, c.Type, mpc.Value,
@@ -87,7 +85,6 @@ namespace Linkora.Controllers
       AND c.Name != 'Price'
     ORDER BY c.Name", conn);
 
-            // paramMatrix[paramName][productId] = value
             var paramMatrix = new Dictionary<string, Dictionary<int, string>>();
             var multiParts = new Dictionary<(string ParamName, int ProductId), List<string>>();
             await using (var r = await paramCmd.ExecuteReaderAsync())
@@ -130,7 +127,6 @@ namespace Linkora.Controllers
                     paramMatrix[paramName] = new Dictionary<int, string>();
                 paramMatrix[paramName][productId] = string.Join(", ", parts);
             }
-            // Only params that exist for at least one product
             var allParams = paramMatrix.Keys.OrderBy(k => k).ToList();
 
             ViewBag.Products = products;

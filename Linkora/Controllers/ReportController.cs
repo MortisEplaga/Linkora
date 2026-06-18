@@ -26,11 +26,10 @@ namespace Linkora.Controllers
             _reportRepository = reportRepository;
             _productRepository = productRepository;
         }
-        // Controllers/ReportController.cs (добавить)
         [HttpGet("reasons")]
         public async Task<IActionResult> GetReportReasons()
         {
-            await using var conn = new SqlConnection(_connectionString); // Вам понадобится _connectionString
+            await using var conn = new SqlConnection(_connectionString); 
             await conn.OpenAsync();
             await using var cmd = new SqlCommand("SELECT Id, ReasonText FROM ReportReasons WHERE IsActive = 1 ORDER BY ReasonText", conn);
             await using var reader = await cmd.ExecuteReaderAsync();
@@ -50,14 +49,9 @@ namespace Linkora.Controllers
             if (!int.TryParse(userIdStr, out int userId))
                 return Unauthorized();
 
-            // Проверяем, существует ли продукт
             var product = await _productRepository.GetByIdAsync(request.ProductId);
             if (product == null)
                 return NotFound("Продукт не найден");
-
-            // Нельзя жаловаться на свой продукт
-            //if (product.UserId == userId)
-            //    return BadRequest("Нельзя жаловаться на свое объявление");
 
             var report = await _reportRepository.CreateReportAsync(
                 request.ProductId,
@@ -75,7 +69,6 @@ namespace Linkora.Controllers
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
-            // "about" — отзывы обо мне, "from" — отзывы от меня
             var isAbout = tab == "about";
             var whereField = isAbout ? "r.TargetUserId" : "r.AuthorId";
             var joinUserId = isAbout ? "r.AuthorId" : "r.TargetUserId";

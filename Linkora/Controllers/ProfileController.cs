@@ -59,7 +59,6 @@ namespace Linkora.Controllers
                     errors.Add("Phone already used by another account");
             }
 
-            // Validate duration
             int? duration = null;
             if (dto.PreferredAdDuration.HasValue)
             {

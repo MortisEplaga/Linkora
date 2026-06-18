@@ -315,7 +315,6 @@ namespace Linkora.Repositories
                 CreatedTime = r.IsDBNull(4) ? null : r.GetDateTime(4),
                 AvatarImagePath = r.IsDBNull(5) ? null : r.GetString(5),
                 CategoryId = r.IsDBNull(6) ? null : r.GetInt32(6),
-                // Статус
                 Status = r.IsDBNull(7)
            ? ProductStatus.Active
            : Enum.Parse<ProductStatus>(r.GetString(7), true),
@@ -590,7 +589,6 @@ namespace Linkora.Repositories
                 AvatarImagePath = reader.IsDBNull(reader.GetOrdinal("AvatarImagePath")) ? null : reader.GetString(reader.GetOrdinal("AvatarImagePath")),
                 CreatedTime = reader.GetDateTime(reader.GetOrdinal("CreatedTime")),
 
-                // Новые поля
                 Status = reader.IsDBNull(reader.GetOrdinal("Status"))
                     ? ProductStatus.Active
                     : Enum.Parse<ProductStatus>(reader.GetString(reader.GetOrdinal("Status"))),
@@ -690,13 +688,11 @@ namespace Linkora.Repositories
                 await ins.ExecuteNonQueryAsync();
             }
         }
-
         public async Task DeleteMediaAsync(int productId)
         {
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
-            // Получаем пути для удаления файлов с диска
             await using var sel = new SqlCommand(
                 "SELECT FilePath FROM ProductMedia WHERE ProductId = @Id", conn);
             sel.Parameters.AddWithValue("@Id", productId);

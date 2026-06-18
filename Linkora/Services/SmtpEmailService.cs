@@ -79,8 +79,6 @@ namespace Linkora.Services
             using var client = new SmtpClient();
             try
             {
-                // Для порта 465 используем SSL сразу (SecureSocketOptions.SslOnConnect)
-                // Для портов 587/25 используем STARTTLS (SecureSocketOptions.StartTls) или Auto
                 var options = port == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
                 if (!enableSsl) options = SecureSocketOptions.None;
 

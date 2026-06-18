@@ -66,7 +66,6 @@ const TRANSLATIONS = {
         'admin_confirm_action': 'Confirm action',
         'admin_cancel_btn': 'Cancel',
         'admin_confirm_btn': 'Confirm',
-        // ── Profile edit ──
         'profile_edit_title': 'Edit profile',
         'profile_basic_info': 'Basic information',
         'profile_username_label': 'Username',
@@ -83,9 +82,7 @@ const TRANSLATIONS = {
         'profile_save_btn': 'Save',
         'profile_saved': 'Saved successfully',
         'profile_settings_link': 'Profile settings',
-        // ── Auth additions ──
         'auth_phone_ph': 'Phone (optional)',
-        // ── Admin ──
         'admin_dashboard': 'Dashboard',
         'admin_listings': 'Listings',
         'admin_users': 'Users',
@@ -150,15 +147,12 @@ const TRANSLATIONS = {
         "support_email_ph": "Email",
         "support_phone_ph": "Phone (optional)",
         "support_message_ph": "Describe the error",
-        // ── Header ──
         'all_categories': 'All categories',
         'search_btn': 'Search',
         'search_placeholder': 'Search...',
         'post_ad_btn': '+ Post an ad',
         'sign_in_btn': 'Sign in',
         'all_regions_btn': 'All regions',
-
-        // ── User dropdown ──
         'my_ads': 'My ads',
         'messages': 'Messages',
         'favourites': 'Favourites',
@@ -166,8 +160,6 @@ const TRANSLATIONS = {
         'reviews': 'Reviews',
         'settings': 'Settings',
         'logout': 'Logout',
-
-        // ── Auth modal ──
         'auth_sign_in': 'Sign in',
         'auth_register': 'Register',
         'auth_or': 'or',
@@ -187,25 +179,17 @@ const TRANSLATIONS = {
         'auth_submit_login': 'Sign in',
         'auth_submit_register': 'Register',
         'auth_no_account': 'No account?',
-
-        // ── Region modal ──
         'region_title': 'Select region',
         'region_search_ph': 'Enter city',
         'all_regions': 'All regions',
-
-        // ── Settings modal ──
         'settings_title': 'Settings',
         'settings_dark': 'Dark mode',
         'settings_language': 'Language',
-
-        // ── Seller modal ──
         'seller_other_listings': 'Other listings →',
         'seller_member_since': 'Member since',
         'seller_show_contact': 'Show contact',
         'company_badge': 'Company',
         'unknown_seller': 'Unknown',
-
-        // ── Category / Filters ──
         'apply_filters': 'Apply filters',
         'reset_filters': 'Reset',
         'sort_newest': 'Newest first',
@@ -215,8 +199,6 @@ const TRANSLATIONS = {
         'hide_btn': 'Hide',
         'save_search': 'Save search',
         'sorting_label': 'Sorting',
-
-        // ── Product Details ──
         'description': 'Description',
         'parameters': 'Parameters',
         'similar_listings': 'Similar listings',
@@ -233,8 +215,6 @@ const TRANSLATIONS = {
         'send_btn': 'Send',
         'price_on_request': 'Price on request',
         'link_copied': 'Link copied!',
-
-        // ── My Ads ──
         'my_ads_title': 'My ads',
         'tab_active': 'Active',
         'tab_moderation': 'Under moderation',
@@ -247,16 +227,12 @@ const TRANSLATIONS = {
         'select_user': 'Select user',
         'no_partners': 'No partners found',
         'confirm_delete': 'Delete this ad?',
-
-        // ── Favourites ──
         'favourites_tab': 'Favourites',
         'cart_tab': 'Cart',
         'nothing_here': 'Nothing here yet',
         'items_in_cart': 'Items in cart',
         'total_label': 'Total',
         'without_price_note': 'item(s) without price not included',
-
-        // ── Messages ──
         'messages_title': 'Messages',
         'select_conversation': 'Select a conversation',
         'no_conversations': 'No conversations yet',
@@ -264,8 +240,6 @@ const TRANSLATIONS = {
         'how_rate': 'How would you rate this user?',
         'optional_comment': 'Optional comment',
         'submit_review_btn': 'Submit review',
-
-        // ── Create / Edit ──
         'post_ad_title': 'Post an ad',
         'edit_ad_title': 'Edit ad',
         'basic_info': 'Basic information',
@@ -290,11 +264,7 @@ const TRANSLATIONS = {
         'publishing': 'Publishing...',
         'saving': 'Saving...',
         'change_category': 'Change category',
-
-        // ── Breadcrumb ──
         'home': 'All categories',
-
-        // ── Seller page ──
         'all_categories_side': 'All categories',
         'subscribe_btn': 'Subscribe',
         'member_since_label': 'Member since',
@@ -302,18 +272,13 @@ const TRANSLATIONS = {
         'ratings_count': 'ratings',
         'share': 'Share',
         "report": "Report",
-        // ── Reviews modal ──
         'reviews_title': 'Reviews',
         'about_me_tab': 'About me',
         'from_me_tab': 'From me',
         'loading_text': 'Loading...',
         'no_reviews_yet': 'No reviews yet',
         'failed_load': 'Failed to load',
-
-        // ── Privacy / Footer ──
         'privacy': 'Privacy',
-
-        // ── Misc ──
         'address_label': 'Address',
         'for_business': 'For business',
         'career': 'Career',
@@ -321,7 +286,6 @@ const TRANSLATIONS = {
         'catalogs': 'Catalogs',
         'login_register': 'Login and registration',
         'place_an_ad': 'Place an ad',
-
         'compare_title': 'Compare listings',
         'compare_all_params': 'All parameters',
         'compare_show_diff': 'Show differences',
@@ -330,7 +294,6 @@ const TRANSLATIONS = {
         'go_to_cart': 'Go to cart',
         'compare_btn': 'Compare',
         'go_to_compare': 'Go to comparison',
-
         'notifications': 'Notifications',
         'notif_mark_all_read': 'Mark all as read',
         'notif_tab_all': 'All',
@@ -352,7 +315,6 @@ const TRANSLATIONS = {
         'days_label': 'dienas',
         "auth_terms_prefix": "Es piekrītu ",
         "auth_terms_link": "lietošanas noteikumiem",
-
         'admin_dash_title': 'Info panelis',
         'admin_dash_subtitle': 'Vena administratora panelis',
         'admin_stat_total_users': 'Kopā lietotāju',
@@ -411,7 +373,6 @@ const TRANSLATIONS = {
         'admin_confirm_action': 'Apstiprināt darbību',
         'admin_cancel_btn': 'Atcelt',
         'admin_confirm_btn': 'Apstiprināt',
-        // ── Profile edit ──
         'profile_edit_title': 'Rediģēt profilu',
         'profile_basic_info': 'Pamatinformācija',
         'profile_username_label': 'Lietotājvārds',
@@ -428,9 +389,7 @@ const TRANSLATIONS = {
         'profile_save_btn': 'Saglabāt',
         'profile_saved': 'Saglabāts veiksmīgi',
         'profile_settings_link': 'Profila iestatījumi',
-        // ── Auth additions ──
         'auth_phone_ph': 'Tālrunis (nav obligāti)',
-        // ── Admin ──
         'admin_dashboard': 'Panelis',
         'admin_listings': 'Sludinājumi',
         'admin_users': 'Lietotāji',
@@ -495,15 +454,12 @@ const TRANSLATIONS = {
         "support_email_ph": "E-pasts",
         "support_phone_ph": "Tālrunis (nav obligāti)",
         "support_message_ph": "Aprakstiet kļūdu",
-        // ── Header ──
         'all_categories': 'Visas kategorijas',
         'search_btn': 'Meklēt',
         'search_placeholder': 'Meklēt...',
         'post_ad_btn': '+ Publicēt sludinājumu',
         'sign_in_btn': 'Ieiet',
         'all_regions_btn': 'Visi reģioni',
-
-        // ── User dropdown ──
         'my_ads': 'Mani sludinājumi',
         'messages': 'Ziņojumi',
         'favourites': 'Izlase',
@@ -511,8 +467,6 @@ const TRANSLATIONS = {
         'reviews': 'Atsauksmes',
         'settings': 'Iestatījumi',
         'logout': 'Iziet',
-
-        // ── Auth modal ──
         'auth_sign_in': 'Ieiet',
         'auth_register': 'Reģistrēties',
         'auth_or': 'vai',
@@ -532,25 +486,17 @@ const TRANSLATIONS = {
         'auth_submit_login': 'Ieiet',
         'auth_submit_register': 'Reģistrēties',
         'auth_no_account': 'Nav konta?',
-
-        // ── Region modal ──
         'region_title': 'Izvēlēties reģionu',
         'region_search_ph': 'Ievadiet pilsētu',
         'all_regions': 'Visi reģioni',
-
-        // ── Settings modal ──
         'settings_title': 'Iestatījumi',
         'settings_dark': 'Tumšais režīms',
         'settings_language': 'Valoda',
-
-        // ── Seller modal ──
         'seller_other_listings': 'Citi sludinājumi →',
         'seller_member_since': 'Dalībnieks kopš',
         'seller_show_contact': 'Rādīt kontaktu',
         'company_badge': 'Uzņēmums',
         'unknown_seller': 'Nezināms',
-
-        // ── Category / Filters ──
         'apply_filters': 'Lietot filtrus',
         'reset_filters': 'Atiestatīt',
         'sort_newest': 'Jaunākie vispirms',
@@ -560,8 +506,6 @@ const TRANSLATIONS = {
         'hide_btn': 'Slēpt',
         'save_search': 'Saglabāt meklēšanu',
         'sorting_label': 'Kārtošana',
-
-        // ── Product Details ──
         'description': 'Apraksts',
         'parameters': 'Parametri',
         'similar_listings': 'Līdzīgi sludinājumi',
@@ -578,8 +522,6 @@ const TRANSLATIONS = {
         'send_btn': 'Nosūtīt',
         'price_on_request': 'Cena pēc pieprasījuma',
         'link_copied': 'Saite nokopēta!',
-
-        // ── My Ads ──
         'my_ads_title': 'Mani sludinājumi',
         'tab_active': 'Aktīvie',
         'tab_moderation': 'Moderācijā',
@@ -592,16 +534,12 @@ const TRANSLATIONS = {
         'select_user': 'Izvēlieties lietotāju',
         'no_partners': 'Partneru nav atrasts',
         'confirm_delete': 'Dzēst šo sludinājumu?',
-
-        // ── Favourites ──
         'favourites_tab': 'Izlase',
         'cart_tab': 'Grozs',
         'nothing_here': 'Šeit vēl nav nekas',
         'items_in_cart': 'Preces grozā',
         'total_label': 'Kopā',
         'without_price_note': 'prece(s) bez cenas nav iekļautas',
-
-        // ── Messages ──
         'messages_title': 'Ziņojumi',
         'select_conversation': 'Izvēlieties sarunu',
         'no_conversations': 'Sarunu vēl nav',
@@ -609,8 +547,6 @@ const TRANSLATIONS = {
         'how_rate': 'Kā jūs vērtētu šo lietotāju?',
         'optional_comment': 'Neobligāts komentārs',
         'submit_review_btn': 'Iesniegt atsauksmi',
-
-        // ── Create / Edit ──
         'post_ad_title': 'Publicēt sludinājumu',
         'edit_ad_title': 'Rediģēt sludinājumu',
         'basic_info': 'Pamatinformācija',
@@ -635,11 +571,7 @@ const TRANSLATIONS = {
         'publishing': 'Publicē...',
         'saving': 'Saglabā...',
         'change_category': 'Mainīt kategoriju',
-
-        // ── Breadcrumb ──
         'home': 'Visas kategorijas',
-
-        // ── Seller page ──
         'all_categories_side': 'Visas kategorijas',
         'subscribe_btn': 'Sekot',
         'member_since_label': 'Dalībnieks kopš',
@@ -647,18 +579,13 @@ const TRANSLATIONS = {
         'ratings_count': 'vērtējumi',
         'share': 'Dalīties',
         "report": "Ziņot",
-        // ── Reviews modal ──
         'reviews_title': 'Atsauksmes',
         'about_me_tab': 'Par mani',
         'from_me_tab': 'No manis',
         'loading_text': 'Ielādē...',
         'no_reviews_yet': 'Atsauksmju vēl nav',
         'failed_load': 'Neizdevās ielādēt',
-
-        // ── Privacy / Footer ──
         'privacy': 'Privātuma politika',
-
-        // ── Misc ──
         'address_label': 'Adrese',
         'for_business': 'Biznesam',
         'career': 'Karjera',
@@ -666,7 +593,6 @@ const TRANSLATIONS = {
         'catalogs': 'Katalogi',
         'login_register': 'Ieeja un reģistrācija',
         'place_an_ad': 'Publicēt sludinājumu',
-
         'compare_title': 'Sludinājumu salīdzinājums',
         'compare_all_params': 'Visi parametri',
         'compare_show_diff': 'Rādīt atšķirības',
@@ -675,7 +601,6 @@ const TRANSLATIONS = {
         'go_to_cart': 'Uz grozu',
         'compare_btn': 'Salīdzināt',
         'go_to_compare': 'Uz salīdzinājumu',
-
         'notifications': 'Paziņojumi',
         'notif_mark_all_read': 'Atzīmēt visus kā lasītus',
         'notif_tab_all': 'Visi',
@@ -755,7 +680,6 @@ const TRANSLATIONS = {
         'admin_confirm_action': 'Подтвердить действие',
         'admin_cancel_btn': 'Отмена',
         'admin_confirm_btn': 'Подтвердить',
-        // ── Profile edit ──
         'profile_edit_title': 'Редактировать профиль',
         'profile_basic_info': 'Основная информация',
         'profile_username_label': 'Имя пользователя',
@@ -772,9 +696,7 @@ const TRANSLATIONS = {
         'profile_save_btn': 'Сохранить',
         'profile_saved': 'Сохранено успешно',
         'profile_settings_link': 'Настройки профиля',
-        // ── Auth additions ──
         'auth_phone_ph': 'Телефон (необязательно)',
-        // ── Admin ──
         'admin_dashboard': 'Панель управления',
         'admin_listings': 'Объявления',
         'admin_users': 'Пользователи',
@@ -839,15 +761,12 @@ const TRANSLATIONS = {
         "support_email_ph": "Email",
         "support_phone_ph": "Телефон (необязательно)",
         "support_message_ph": "Опишите ошибку",
-        // ── Header ──
         'all_categories': 'Все категории',
         'search_btn': 'Поиск',
         'search_placeholder': 'Поиск...',
         'post_ad_btn': '+ Подать объявление',
         'sign_in_btn': 'Войти',
         'all_regions_btn': 'Все регионы',
-
-        // ── User dropdown ──
         'my_ads': 'Мои объявления',
         'messages': 'Сообщения',
         'favourites': 'Избранное',
@@ -855,8 +774,6 @@ const TRANSLATIONS = {
         'reviews': 'Отзывы',
         'settings': 'Настройки',
         'logout': 'Выйти',
-
-        // ── Auth modal ──
         'auth_sign_in': 'Войти',
         'auth_register': 'Регистрация',
         'auth_or': 'или',
@@ -876,25 +793,17 @@ const TRANSLATIONS = {
         'auth_submit_login': 'Войти',
         'auth_submit_register': 'Зарегистрироваться',
         'auth_no_account': 'Нет аккаунта?',
-
-        // ── Region modal ──
         'region_title': 'Выберите регион',
         'region_search_ph': 'Введите город',
         'all_regions': 'Все регионы',
-
-        // ── Settings modal ──
         'settings_title': 'Настройки',
         'settings_dark': 'Тёмный режим',
         'settings_language': 'Язык',
-
-        // ── Seller modal ──
         'seller_other_listings': 'Другие объявления →',
         'seller_member_since': 'Участник с',
         'seller_show_contact': 'Показать контакты',
         'company_badge': 'Компания',
         'unknown_seller': 'Неизвестный',
-
-        // ── Category / Filters ──
         'apply_filters': 'Применить фильтры',
         'reset_filters': 'Сбросить',
         'sort_newest': 'Сначала новые',
@@ -904,8 +813,6 @@ const TRANSLATIONS = {
         'hide_btn': 'Скрыть',
         'save_search': 'Сохранить поиск',
         'sorting_label': 'Сортировка',
-
-        // ── Product Details ──
         'description': 'Описание',
         'parameters': 'Характеристики',
         'similar_listings': 'Похожие объявления',
@@ -922,8 +829,6 @@ const TRANSLATIONS = {
         'send_btn': 'Отправить',
         'price_on_request': 'Цена по запросу',
         'link_copied': 'Ссылка скопирована!',
-
-        // ── My Ads ──
         'my_ads_title': 'Мои объявления',
         'tab_active': 'Активные',
         'tab_moderation': 'На модерации',
@@ -936,16 +841,12 @@ const TRANSLATIONS = {
         'select_user': 'Выберите пользователя',
         'no_partners': 'Партнёры не найдены',
         'confirm_delete': 'Удалить это объявление?',
-
-        // ── Favourites ──
         'favourites_tab': 'Избранное',
         'cart_tab': 'Корзина',
         'nothing_here': 'Здесь пока ничего нет',
         'items_in_cart': 'Товаров в корзине',
         'total_label': 'Итого',
         'without_price_note': 'товар(ы) без цены не учтены',
-
-        // ── Messages ──
         'messages_title': 'Сообщения',
         'select_conversation': 'Выберите диалог',
         'no_conversations': 'Диалогов пока нет',
@@ -953,8 +854,6 @@ const TRANSLATIONS = {
         'how_rate': 'Как бы вы оценили этого пользователя?',
         'optional_comment': 'Необязательный комментарий',
         'submit_review_btn': 'Отправить отзыв',
-
-        // ── Create / Edit ──
         'post_ad_title': 'Подать объявление',
         'edit_ad_title': 'Редактировать объявление',
         'basic_info': 'Основная информация',
@@ -979,11 +878,7 @@ const TRANSLATIONS = {
         'publishing': 'Публикация...',
         'saving': 'Сохранение...',
         'change_category': 'Изменить категорию',
-
-        // ── Breadcrumb ──
         'home': 'Все категории',
-
-        // ── Seller page ──
         'all_categories_side': 'Все категории',
         'subscribe_btn': 'Подписаться',
         'member_since_label': 'Участник с',
@@ -991,18 +886,13 @@ const TRANSLATIONS = {
         'ratings_count': 'оценок',
         'share': 'Поделиться',
         "report": "Пожаловаться",
-        // ── Reviews modal ──
         'reviews_title': 'Отзывы',
         'about_me_tab': 'Обо мне',
         'from_me_tab': 'От меня',
         'loading_text': 'Загрузка...',
         'no_reviews_yet': 'Пока нет отзывов',
         'failed_load': 'Не удалось загрузить',
-
-        // ── Privacy / Footer ──
         'privacy': 'Конфиденциальность',
-
-        // ── Misc ──
         'address_label': 'Адрес',
         'for_business': 'Для бизнеса',
         'career': 'Карьера',
@@ -1010,7 +900,6 @@ const TRANSLATIONS = {
         'catalogs': 'Каталоги',
         'login_register': 'Вход и регистрация',
         'place_an_ad': 'Подать объявление',
-
         'compare_title': 'Сравнение объявлений',
         'compare_all_params': 'Все параметры',
         'compare_show_diff': 'Показать различия',
@@ -1019,7 +908,6 @@ const TRANSLATIONS = {
         'go_to_cart': 'В корзину',
         'compare_btn': 'Сравнить',
         'go_to_compare': 'Перейти к сравнению',
-
         'notifications': 'Уведомления',
         'notif_mark_all_read': 'Отметить все как прочитанные',
         'notif_tab_all': 'Все',
