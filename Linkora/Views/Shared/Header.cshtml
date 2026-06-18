@@ -43,7 +43,7 @@
                                         </svg>
                                     }
                                     @User.Identity.Name
-                                    </button>
+                                </button>
                                 <!-- Notification Bell -->
                                 <div class="notif-wrap" id="notifWrap">
                                     <button class="login-btn notif-bell-btn" onclick="toggleNotifModal(event)" title="Notifications">
@@ -54,6 +54,15 @@
                                         <span class="notif-badge" id="notifBadge" style="display:none"></span>
                                     </button>
                                 </div>
+                                <!-- Cart Icon (moved from dropdown) -->
+                                <a asp-controller="Favourite" asp-action="Index" asp-route-tab="cart" class="login-btn cart-btn" title="Cart">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="9" cy="21" r="1" />
+                                        <circle cx="20" cy="21" r="1" />
+                                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                                    </svg>
+                                    <span class="msg-nav-badge" id="cartNavBadge" style="display:none;margin-left:auto"></span>
+                                </a>
                             </div>
 
                             <div class="user-dropdown" id="userDropdown">
@@ -65,28 +74,6 @@
                                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-shield-user-icon lucide-shield-user"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /><path d="M6.376 18.91a6 6 0 0 1 11.249.003" /><circle cx="12" cy="11" r="4" /></svg>
                                         </a>
                                     }
-                                    <!-- Notification Modal -->
-                                    <div class="notif-overlay" id="notifOverlay" onclick="closeNotifModal()"></div>
-                                    <div class="notif-modal" id="notifModal">
-                                        <div class="notif-modal-header">
-                                            <span class="notif-modal-title" data-i18n="notifications">Notifications</span>
-                                            <div style="display:flex;align-items:center;gap:8px">
-                                                <button class="notif-mark-all-btn" onclick="markAllReadModal()" id="markAllBtn" data-i18n="notif_mark_all_read">
-                                                    Mark all as read
-                                                </button>
-                                                <button class="notif-modal-close" onclick="closeNotifModal()">✕</button>
-                                            </div>
-                                        </div>
-                                        <div class="notif-tabs">
-                                            <button class="notif-tab notif-tab-active" id="tabAll" onclick="switchNotifTab('all')">All</button>
-                                            <button class="notif-tab" id="tabUnread" onclick="switchNotifTab('unread')" data-i18n="notif_no_unread">
-                                                Unread <span class="notif-tab-count" id="tabUnreadCount" style="display:none"></span>
-                                            </button>
-                                        </div>
-                                        <div class="notif-modal-list" id="notifModalList">
-                                            <div class="notif-modal-empty">Loading...</div>
-                                        </div>
-                                    </div>
                                 </div>
                                 <div class="user-dropdown-divider"></div>
                                 <a class="user-dropdown-item" asp-controller="Product" asp-action="My">
@@ -118,11 +105,7 @@
                                     <span data-i18n="reviews">Reviews</span>
                                 </a>
                                 <div class="user-dropdown-divider"></div>
-                                <a class="user-dropdown-item" asp-controller="Favourite" asp-action="Index" asp-route-tab="cart">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>
-                                    <span data-i18n="cart">Cart</span>
-                                    <span class="msg-nav-badge" id="cartNavBadge" style="display:none;margin-left:auto"></span>
-                                </a>
+                                <!-- Cart link removed from here -->
                                 <div class="user-dropdown-divider"></div>
                                 <a class="user-dropdown-item" onclick="openSettingsModal()" style="cursor:pointer">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -135,6 +118,28 @@
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
                                     <span data-i18n="logout">Logout</span>
                                 </a>
+                            </div>
+                            <!-- Notification Modal -->
+                            <div class="notif-overlay" id="notifOverlay" onclick="closeNotifModal()"></div>
+                            <div class="notif-modal" id="notifModal">
+                                <div class="notif-modal-header">
+                                    <span class="notif-modal-title" data-i18n="notifications">Notifications</span>
+                                    <div style="display:flex;align-items:center;gap:8px">
+                                        <button class="notif-mark-all-btn" onclick="markAllReadModal()" id="markAllBtn" data-i18n="notif_mark_all_read">
+                                            Mark all as read
+                                        </button>
+                                        <button class="notif-modal-close" onclick="closeNotifModal()">✕</button>
+                                    </div>
+                                </div>
+                                <div class="notif-tabs">
+                                    <button class="notif-tab notif-tab-active" id="tabAll" onclick="switchNotifTab('all')">All</button>
+                                    <button class="notif-tab" id="tabUnread" onclick="switchNotifTab('unread')" data-i18n="notif_no_unread">
+                                        Unread <span class="notif-tab-count" id="tabUnreadCount" style="display:none"></span>
+                                    </button>
+                                </div>
+                                <div class="notif-modal-list" id="notifModalList">
+                                    <div class="notif-modal-empty">Loading...</div>
+                                </div>
                             </div>
                         </div>
                     }
@@ -261,7 +266,7 @@
         </div>
     }
 
-   <script>
+    <script>
         function applyTranslations() {
             const lang = localStorage.getItem('lang') || 'en';
             document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -350,7 +355,7 @@
                 about_me_tab: "About me",
                 from_me_tab: "From me",
                 reviews_title: "Reviews",
-                settings_language: "Language"  
+                settings_language: "Language"
             },
             lv: {
                 notif_new_listing: "{0} publicēja jaunu sludinājumu: {1}",
@@ -707,7 +712,7 @@
                 const template = translations[lang]["notif_new_listing"];
                 return template.replace("{0}", author).replace("{1}", product);
             }
-            return message; 
+            return message;
         }
     </script>
 </header>

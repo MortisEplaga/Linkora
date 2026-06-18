@@ -338,8 +338,8 @@
         pill.classList.add('param-pill-active');
          if (window.ParamRulesEngine) {
         window.ParamRulesEngine.triggerUpdate();
-    }
-    }
+        }
+        }
 
     async function submitAd() {
         if (!ParamRulesEngine.validateAll()) return;
@@ -354,7 +354,10 @@
 
         const btn = document.querySelector('.create-submit');
         btn.disabled = true;
-        btn.textContent = t('publishing');
+
+        const lang = localStorage.getItem('lang') || 'en';
+        const dict = TRANSLATIONS[lang] || TRANSLATIONS['en'];
+        btn.textContent = dict['publishing'] || 'Publishing...';
 
         try {
             const fd = new FormData();
@@ -419,7 +422,7 @@
             alert('Network error: ' + e.message);
         } finally {
             btn.disabled = false;
-            btn.textContent = t('publish_btn');
+            translateDynamicElement(btn);
         }
     }
 

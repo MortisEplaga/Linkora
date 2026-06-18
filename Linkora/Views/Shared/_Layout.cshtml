@@ -116,7 +116,10 @@
                 <input type="text" class="auth-input" id="regUsername" placeholder="Username" />
             </div>
             <div class="auth-field">
-                <input type="email" class="auth-input" id="regEmail" placeholder="Email" />
+                <input type="email" id="regEmail" name="email" class="form-control" placeholder="Email" />
+                <div id="emailError" data-i18n="auth_email_invalid" style="color: red; display: none; font-size: 0.85em; margin-top: 5px;">
+                    Неверный формат email (ожидается: xxxxx@domen.dm)
+                </div>
             </div>
             <div class="auth-field">
                 <input type="tel" class="auth-input" id="regPhone"
@@ -301,7 +304,6 @@
                     <div class="faq-a">Открыв меню возле соответствующего поста, вы найдете возможность «Удалить».</div>
                 </div>
             </div>
-
             <div class="info-lang-content" data-lang="lv" style="display:none">
                 <div class="faq-item">
                     <div class="faq-q" onclick="toggleFaq(this)">Kā reģistrēties? <span class="faq-arrow">›</span></div>
@@ -637,7 +639,6 @@
                     <p><b>Телефон:</b> ____________________</p>
                 </div>
             </div>
-
             <!-- Latvian -->
             <div class="info-lang-content" data-lang="lv" style="display: none;">
                 <p class="terms-intro">
@@ -851,7 +852,6 @@
                     <p><b>Tālrunis:</b> ____________________</p>
                 </div>
             </div>
-
             <!-- English -->
             <div class="info-lang-content" data-lang="en" style="display: none;">
                 <p class="terms-intro">
@@ -1688,12 +1688,25 @@
             const confirm = document.getElementById('regConfirm');
             const checkbox = document.getElementById('chkTerms');
             const button = document.getElementById('registerBtn');
+            const emailError = document.getElementById('emailError'); 
 
             if (!button) return;
+
+            const emailRegex = /^[^\s\x40]+\x40[^\s\x40]+\.[^\s\x40]+$/;
+            const isEmailValid = emailRegex.test(email.value.trim());
+
+            if (emailError) {
+                if (email.value.trim() !== '' && !isEmailValid) {
+                    emailError.style.display = 'block';
+                } else {
+                    emailError.style.display = 'none'; 
+                }
+            }
 
             const allFilled =
                 username.value.trim() !== '' &&
                 email.value.trim() !== '' &&
+                isEmailValid && 
                 password.value.trim() !== '' &&
                 confirm.value.trim() !== '' &&
                 checkbox.checked;

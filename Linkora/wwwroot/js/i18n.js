@@ -1,9 +1,4 @@
-// ============================================================
-//  Linkora i18n — Interface Translation System
-//  Usage: add data-i18n="key" to elements
-//         add data-i18n-placeholder="key" to inputs
-//         add data-i18n-title="key" to elements needing title attr
-// ============================================================
+
 (function () {
     const cookieLang = document.cookie.split(';')
         .find(c => c.trim().startsWith('lang='))
@@ -15,6 +10,7 @@
 
 const TRANSLATIONS = {
     en: {
+        'auth_email_invalid': 'Invalid email format (expected: xxxxx@domen.dm)',
         'yes': 'Yes',
         'profile_ad_duration': 'Preferred ad duration (days)',
         'profile_ad_duration_hint': 'Applied by default when posting an ad. If not set, 30 days is used.',
@@ -348,6 +344,7 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'auth_email_invalid': 'Nepareizs e-pasta formāts (sagaidāms: xxxxx@domen.dm)',
         'yes': 'Jā',
         'profile_ad_duration': 'Vēlamais sludinājuma ilgums (dienas)',
         'profile_ad_duration_hint': 'Tiek izmantots pēc noklusējuma, publicējot sludinājumu. Ja nav iestatīts, tiek izmantoti 30 dienas.',
@@ -692,6 +689,7 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'auth_email_invalid': 'Неверный формат email (ожидается: xxxxx@domen.dm)',
         'yes': 'Да',
         'profile_ad_duration': 'Предпочитаемый срок показа (дней)',
         'profile_ad_duration_hint': 'Применяется по умолчанию при публикации объявления. Если не задано, используется 30 дней.',
@@ -1035,8 +1033,6 @@ const TRANSLATIONS = {
     }
 };
 
-// ── Core translation engine ──────────────────────────────────
-
 function t(key) {
     const lang = localStorage.getItem('lang') || 'en';
     const dict = TRANSLATIONS[lang] || TRANSLATIONS['en'];
@@ -1047,30 +1043,25 @@ function applyTranslations() {
     const lang = localStorage.getItem('lang') || 'en';
     const dict = TRANSLATIONS[lang] || TRANSLATIONS['en'];
 
-    // textContent replacements
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.dataset.i18n;
         if (dict[key] !== undefined) el.textContent = dict[key];
     });
 
-    // placeholder replacements
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         const key = el.dataset.i18nPlaceholder;
         if (dict[key] !== undefined) el.placeholder = dict[key];
     });
 
-    // title attribute replacements
     document.querySelectorAll('[data-i18n-title]').forEach(el => {
         const key = el.dataset.i18nTitle;
         if (dict[key] !== undefined) el.title = dict[key];
     });
 
-    // value replacements (buttons/inputs)
     document.querySelectorAll('[data-i18n-value]').forEach(el => {
         const key = el.dataset.i18nValue;
         if (dict[key] !== undefined) el.value = dict[key];
     });
 }
 
-// Apply on DOM ready
 document.addEventListener('DOMContentLoaded', applyTranslations);
