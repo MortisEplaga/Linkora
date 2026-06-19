@@ -130,7 +130,7 @@
                                         @if (status == "Moderation" || status == "Active")
                                         {
                                             <button class="admin-btn admin-btn-reject"
-                                                    onclick="setStatus(@p.Id, 'Rejected', this)">
+                                                    onclick="openRejectModal(@p.Id)">
                                                 <span data-i18n="admin_reject">Reject</span>
                                             </button>
                                         }
@@ -185,11 +185,74 @@
         </div>
     </div>
 </div>
-
+<div class="modal-overlay" id="rejectOverlay" onclick="closeRejectModal()"></div>
+<div class="modal" id="rejectModal">
+    <button class="modal-close" onclick="closeRejectModal()">✕</button>
+    <h2 class="auth-title" data-i18n="admin_reject_modal_title">Reject listing</h2>
+    <div class="auth-field">
+        <label class="auth-label" data-i18n="report_reason_label">Reason</label>
+        <select class="auth-input" id="rejectReasonSelect">
+            <option value="" data-i18n="report_reason_ph">Select a reason</option>
+        </select>
+    </div>
+    <div class="auth-field">
+        <label class="auth-label" data-i18n="report_comment_label">Comment (optional)</label>
+        <textarea class="auth-input" id="rejectComment" rows="3"></textarea>
+    </div>
+    <div class="auth-actions" style="display:flex; gap:12px;">
+        <button class="admin-btn admin-btn-reject" onclick="submitRejectProduct()" data-i18n="admin_reject">Reject</button>
+        <button class="admin-btn admin-btn-view" onclick="closeRejectModal()" data-i18n="admin_cancel_btn">Cancel</button>
+    </div>
+</div>
 <div class="admin-toast" id="toast"></div>
 
 @section Scripts {
     <script>
+                let rejectReasons = [];
+        let currentRejectProductId = null;
+
+        async function openRejectModal(productId) {
+            currentRejectProductId = productId;
+            if (!rejectReasons.length) {
+                const res = await fetch('/api/Report/reasons');
+                if (res.ok) rejectReasons = await res.json();
+            }
+            const select = document.getElementById('rejectReasonSelect');
+            select.innerHTML = `<option value="">${t('report_reason_ph')}</option>`;
+            rejectReasons.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r.id;
+                opt.textContent = r.text;
+                select.appendChild(opt);
+            });
+            document.getElementById('rejectComment').value = '';
+            document.getElementById('rejectOverlay').classList.add('modal-open');
+            document.getElementById('rejectModal').classList.add('modal-open');
+        }
+
+        function closeRejectModal() {
+            document.getElementById('rejectOverlay').classList.remove('modal-open');
+            document.getElementById('rejectModal').classList.remove('modal-open');
+        }
+
+        async function submitRejectProduct() {
+            const reasonId = document.getElementById('rejectReasonSelect').value;
+            if (!reasonId) return;
+
+            const comment = document.getElementById('rejectComment').value;
+            const res = await fetch(
+                `/Admin/RejectProductWithReason?id=${currentRejectProductId}&reasonId=${reasonId}&comment=${encodeURIComponent(comment)}`,
+                { method: 'POST', headers: { 'RequestVerificationToken': afToken } }
+            );
+
+            if (res.ok) {
+                closeRejectModal();
+                document.getElementById('row-' + currentRejectProductId)?.remove();
+                showToast(getJsText('status_updated') + 'Rejected', 'success');
+            } else {
+                showToast(getJsText('err_status'), 'error');
+            }
+        }
         const afToken = document.getElementById('afToken')?.value ?? '';
 
         const jsLangs = {

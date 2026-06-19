@@ -10,6 +10,7 @@
 
 const TRANSLATIONS = {
     en: {
+        'admin_reject_modal_title': 'Reject listing',
         'admin_conf_options': 'Option Confirmation',
         'admin_category_param_col': 'Category / Parameter',
         'auth_email_invalid': 'Invalid email format (expected: xxxxx@domen.dm)',
@@ -309,6 +310,7 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'admin_reject_modal_title': 'Noraidīt sludinājumu',
         'admin_conf_options': 'Opciju apstiprināšana',
         'admin_category_param_col': 'Kategorija / Parametrs',
         'auth_email_invalid': 'Nepareizs e-pasta formāts (sagaidāms: xxxxx@domen.dm)',
@@ -618,6 +620,7 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'admin_reject_modal_title': 'Отклонить объявление',
         'admin_conf_options': 'Подтверждение параметров',
         'admin_category_param_col': 'Категория / Параметр',
         'auth_email_invalid': 'Неверный формат email (ожидается: xxxxx@domen.dm)',

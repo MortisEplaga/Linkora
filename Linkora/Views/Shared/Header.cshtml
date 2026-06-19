@@ -318,11 +318,16 @@
 
         function t(key) {
             const lang = localStorage.getItem('lang') || 'en';
-            return translations[lang]?.[key] || key;
+            const local = translations[lang]?.[key];
+            if (local) return local;
+            if (typeof TRANSLATIONS !== 'undefined') {
+                return TRANSLATIONS[lang]?.[key] || TRANSLATIONS.en?.[key] || key;
+            }
+            return key;
         }
-
         const translations = {
             en: {
+                notif_rejected_reason: "Your listing was rejected. Reason: {0}",
                 notif_new_listing: "{0} posted a new listing: {1}",
                 all_regions: "All regions",
                 loading_text: "Loading...",
@@ -354,6 +359,7 @@
                 settings_language: "Language"
             },
             lv: {
+                notif_rejected_reason: "Jūsu sludinājums tika noraidīts. Iemesls: {0}",
                 notif_new_listing: "{0} publicēja jaunu sludinājumu: {1}",
                 all_regions: "Visi reģioni",
                 loading_text: "Ielādē...",
@@ -385,6 +391,7 @@
                 settings_language: "Valoda"
             },
             ru: {
+                notif_rejected_reason: "Ваше объявление было отклонено. Причина: {0}",
                 notif_new_listing: "{0} опубликовал новое объявление: {1}",
                 all_regions: "Все регионы",
                 loading_text: "Загрузка...",
@@ -437,6 +444,33 @@
             document.getElementById('notifOverlay').classList.add('open');
             document.getElementById('notifModal').classList.add('open');
             await loadAllNotifications();
+        }
+                function translateNotificationMessage(message) {
+            const lang = localStorage.getItem('lang') || 'en';
+
+            if (message.startsWith('REJECTED_REASON::')) {
+                const parts = message.split('::');
+                const reasonEn = parts[1] || '';
+                const reasonLv = parts[2] || reasonEn;
+                const reasonRu = parts[3] || reasonEn;
+                const comment = parts[4] || '';
+                const reasonText = lang === 'lv' ? reasonLv : (lang === 'ru' ? reasonRu : reasonEn);
+                const template = (translations[lang] && translations[lang].notif_rejected_reason)
+                    || translations.en.notif_rejected_reason;
+                let result = template.replace('{0}', reasonText);
+                if (comment) result += ' (' + comment + ')';
+                return result;
+            }
+
+            const pattern = /^(.+?) posted a new listing: (.+)$/;
+            const match = message.match(pattern);
+            if (match && translations[lang] && translations[lang]["notif_new_listing"]) {
+                const author = match[1];
+                const product = match[2];
+                const template = translations[lang]["notif_new_listing"];
+                return template.replace("{0}", author).replace("{1}", product);
+            }
+            return message;
         }
 
         function closeNotifModal() {
@@ -694,8 +728,24 @@
 
         document.addEventListener('DOMContentLoaded', applyTranslations);
 
-                function translateNotificationMessage(message) {
+        function translateNotificationMessage(message) {
             const lang = localStorage.getItem('lang') || 'en';
+
+            try {
+                const parsed = JSON.parse(message);
+                if (parsed && parsed.type === 'rejected_reason') {
+                    const reasonText = lang === 'lv' ? parsed.reasonLv
+                        : lang === 'ru' ? parsed.reasonRu
+                        : parsed.reasonEn;
+                    const template = (translations[lang] && translations[lang].notif_rejected_reason)
+                        || translations.en.notif_rejected_reason;
+                    let result = template.replace('{0}', reasonText);
+                    if (parsed.comment) result += ' (' + parsed.comment + ')';
+                    return result;
+                }
+            } catch {
+            }
+
             const pattern = /^(.+?) posted a new listing: (.+)$/;
             const match = message.match(pattern);
             if (match && translations[lang] && translations[lang]["notif_new_listing"]) {
@@ -705,6 +755,5 @@
                 return template.replace("{0}", author).replace("{1}", product);
             }
             return message;
-        }
-    </script>
+        }    </script>
 </header>

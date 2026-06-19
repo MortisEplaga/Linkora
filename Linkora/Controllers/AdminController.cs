@@ -13,14 +13,16 @@ namespace Linkora.Controllers
         private readonly string _connectionString;
         private readonly IProductRepository _productRepository;
         private readonly IReportRepository _reportRepository;
-
+        private readonly INotificationRepository _notificationRepository;
         public AdminController(IConfiguration configuration,
             IProductRepository productRepository,
-            IReportRepository reportRepository)
+            IReportRepository reportRepository,
+    INotificationRepository notificationRepository)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection")!;
             _productRepository = productRepository;
             _reportRepository = reportRepository;
+            _notificationRepository = notificationRepository;
         }
 
         private bool IsAdmin() => User.FindFirst(ClaimTypes.Role)?.Value == "admin";
@@ -460,6 +462,55 @@ namespace Linkora.Controllers
             bool success = await _productRepository.RejectProductAndOptionAsync(optionId, productId);
             if (success) return Ok();
             return BadRequest();
+        }
+        [HttpPost, IgnoreAntiforgeryToken]
+        public async Task<IActionResult> RejectProductWithReason(int id, int reasonId, string? comment = null)
+        {
+            if (!IsAdmin()) return Forbid();
+
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            string reasonEn, reasonLv, reasonRu;
+            await using (var reasonCmd = new SqlCommand(
+                "SELECT ReasonText, ReasonTextLV, ReasonTextRU FROM ReportReasons WHERE Id = @Id", conn))
+            {
+                reasonCmd.Parameters.AddWithValue("@Id", reasonId);
+                await using var r = await reasonCmd.ExecuteReaderAsync();
+                if (!await r.ReadAsync()) return BadRequest("Invalid reason");
+                reasonEn = r.IsDBNull(0) ? "" : r.GetString(0);
+                reasonLv = r.IsDBNull(1) ? reasonEn : r.GetString(1);
+                reasonRu = r.IsDBNull(2) ? reasonEn : r.GetString(2);
+            }
+
+            int ownerId;
+            await using (var prodCmd = new SqlCommand("SELECT UserId FROM Products WHERE Id = @Id", conn))
+            {
+                prodCmd.Parameters.AddWithValue("@Id", id);
+                var result = await prodCmd.ExecuteScalarAsync();
+                if (result == null || result == DBNull.Value) return NotFound();
+                ownerId = (int)result;
+            }
+
+            await using (var updCmd = new SqlCommand("UPDATE Products SET Status = 'Rejected' WHERE Id = @Id", conn))
+            {
+                updCmd.Parameters.AddWithValue("@Id", id);
+                await updCmd.ExecuteNonQueryAsync();
+            }
+
+            var payload = new
+            {
+                type = "rejected_reason",
+                reasonEn,
+                reasonLv,
+                reasonRu,
+                comment = comment ?? ""
+            };
+            var message = System.Text.Json.JsonSerializer.Serialize(payload);
+
+            await _notificationRepository.CreateAsync(ownerId, null, id, message);
+
+            return Ok();
         }
     }
 }

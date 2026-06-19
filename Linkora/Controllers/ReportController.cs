@@ -29,19 +29,28 @@ namespace Linkora.Controllers
         [HttpGet("reasons")]
         public async Task<IActionResult> GetReportReasons()
         {
-            await using var conn = new SqlConnection(_connectionString); 
+            var lang = Request.Cookies["lang"] ?? "en";
+
+            await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
-            await using var cmd = new SqlCommand("SELECT Id, ReasonText FROM ReportReasons WHERE IsActive = 1 ORDER BY ReasonText", conn);
+            await using var cmd = new SqlCommand(
+                "SELECT Id, ReasonText, ReasonTextLV, ReasonTextRU FROM ReportReasons WHERE IsActive = 1 ORDER BY ReasonText", conn);
             await using var reader = await cmd.ExecuteReaderAsync();
 
             var reasons = new List<object>();
             while (await reader.ReadAsync())
             {
-                reasons.Add(new { id = reader.GetInt32(0), text = reader.GetString(1) });
+                var textEn = reader.GetString(1);
+                var text = lang switch
+                {
+                    "lv" => reader.IsDBNull(2) ? textEn : reader.GetString(2),
+                    "ru" => reader.IsDBNull(3) ? textEn : reader.GetString(3),
+                    _ => textEn
+                };
+                reasons.Add(new { id = reader.GetInt32(0), text });
             }
             return Ok(reasons);
         }
-
         [HttpPost("create")]
         public async Task<IActionResult> CreateReport([FromBody] ReportRequest request)
         {
