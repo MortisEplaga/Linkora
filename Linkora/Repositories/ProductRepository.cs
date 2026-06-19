@@ -255,7 +255,6 @@ namespace Linkora.Repositories
 
             return result;
         }
-
         private string ResolveOptionTextFromDictionary(string idStr, Dictionary<int, (string Value, string ValueLV, string ValueRU)> options, string lang)
         {
             if (!int.TryParse(idStr, out int id) || !options.TryGetValue(id, out var texts))
@@ -267,12 +266,11 @@ namespace Linkora.Repositories
                 _ => texts.Value
             };
         }
-
         private async Task<Dictionary<int, (string Value, string ValueLV, string ValueRU)>> LoadSelectOptionsDictionaryAsync()
         {
             var dict = new Dictionary<int, (string, string, string)>();
             await using var conn = new SqlConnection(_connectionString);
-            await using var cmd = new SqlCommand("SELECT Id, Value, ValueLV, ValueRU FROM SelectOptions", conn);
+            await using var cmd = new SqlCommand("SELECT Id, Value, ValueLV, ValueRU FROM SelectOptions where IsConf = 1", conn);
             await conn.OpenAsync();
             await using var r = await cmd.ExecuteReaderAsync();
             while (await r.ReadAsync())
@@ -348,7 +346,6 @@ namespace Linkora.Repositories
 
             return product;
         }
-
         public async Task<List<Product>> GetSimilarAsync(int categoryId, int excludeId, int count = 8)
         {
             var result = new List<Product>();
@@ -383,7 +380,6 @@ namespace Linkora.Repositories
                 });
             return result;
         }
-
         public async Task<List<Product>> GetByUserAsync(int userId, string status = "active")
         {
             var result = new List<Product>();
@@ -552,7 +548,6 @@ namespace Linkora.Repositories
             var rowsAffected = await command.ExecuteNonQueryAsync();
             return rowsAffected > 0;
         }
-
         public async Task<IEnumerable<Product>> GetUserProductsByStatusAsync(int userId, string status)
         {
             var products = new List<Product>();
@@ -671,7 +666,6 @@ namespace Linkora.Repositories
                 });
             return result;
         }
-
         public async Task SaveMediaAsync(int productId, List<ProductMedia> media)
         {
             await using var conn = new SqlConnection(_connectionString);
@@ -727,7 +721,6 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
             await DeleteProductCascade(conn, productId);
         }
-
         private async Task DeleteProductCascade(SqlConnection conn, int productId)
         {
             await using var mediaCmd = new SqlCommand(
@@ -765,46 +758,47 @@ namespace Linkora.Repositories
                 await cmd.ExecuteNonQueryAsync();
             }
         }
-        public async Task<(List<AdminConfOptionRow> Items, int TotalCount)> GetUnconfirmedOptionsAsync(int page, int pageSize)
+        public async Task<(List<AdminConfOptionRow> Items, int TotalCount)> GetUnconfirmedOptionsAsync()
         {
             var items = new List<AdminConfOptionRow>();
             int totalCount = 0;
-            var offset = (page - 1) * pageSize;
 
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
             var sql = @"
-                SELECT COUNT(*)
-                FROM dbo.SelectOptions so
-                INNER JOIN dbo.MapperProductCategory mpc ON so.CategoryId = mpc.CategoryId AND so.Value = mpc.Value
-                INNER JOIN dbo.Products p ON mpc.ProductId = p.Id
-                INNER JOIN dbo.Users u ON p.UserId = u.Id
-                INNER JOIN dbo.Category c ON p.CategoryId = c.Id
-                WHERE so.IsConf = 0;
+SELECT COUNT(*) FROM dbo.SelectOptions so
+INNER JOIN dbo.MapperProductCategory mpc ON so.Id = mpc.Value 
+INNER JOIN dbo.Products p ON mpc.ProductId = p.Id
+WHERE so.IsConf = 0;
+
 
                 SELECT 
-                    so.Id AS OptionId,
-                    so.Value AS OptionValue,
-                    p.Id AS ProductId,
-                    p.Name AS ProductName,
-                    p.CreatedTime AS ProductCreatedTime,
-                    u.Id AS UserId,
-                    u.UserName AS UserName,
-                    c.Id AS CategoryId,
-                    c.Name AS CategoryName
-                FROM dbo.SelectOptions so
-                INNER JOIN dbo.MapperProductCategory mpc ON so.CategoryId = mpc.CategoryId AND so.Value = mpc.Value
-                INNER JOIN dbo.Products p ON mpc.ProductId = p.Id
-                INNER JOIN dbo.Users u ON p.UserId = u.Id
-                INNER JOIN dbo.Category c ON p.CategoryId = c.Id
-                WHERE so.IsConf = 0
-                ORDER BY p.CreatedTime DESC
-                OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;";
+    so.Id AS OptionId,
+    so.Value AS OptionValue,
+    so.ValueLV AS OptionValueLV,
+    so.ValueRU AS OptionValueRU,
+    p.Id AS ProductId,
+    p.Name AS ProductName,
+    p.CreatedTime AS ProductCreatedTime,
+    u.Id AS UserId,
+    u.UserName AS UserName,
+    c.Id AS CategoryId,
+    c.Name AS CategoryName,
+    c2.Name AS OptionCategory,
+    c.NameLV AS CategoryNameLV,
+    c2.NameLV AS OptionCategoryLV,
+    c.NameRU AS CategoryNameRU,
+    c2.NameRU AS OptionCategoryRU
+FROM dbo.SelectOptions so
+INNER JOIN dbo.MapperProductCategory mpc ON so.Id = mpc.Value 
+INNER JOIN dbo.Products p ON mpc.ProductId = p.Id
+INNER JOIN dbo.Users u ON p.UserId = u.Id
+INNER JOIN dbo.Category c ON p.CategoryId = c.Id
+INNER JOIN dbo.Category c2 ON so.CategoryId = c2.Id
+WHERE so.IsConf = 0;";
 
             await using var cmd = new SqlCommand(sql, conn);
-            cmd.Parameters.AddWithValue("@Offset", offset);
-            cmd.Parameters.AddWithValue("@PageSize", pageSize);
 
             await using var r = await cmd.ExecuteReaderAsync();
 
@@ -820,19 +814,25 @@ namespace Linkora.Repositories
                 {
                     OptionId = r.GetInt32(0),
                     OptionValue = r.IsDBNull(1) ? "" : r.GetString(1),
-                    ProductId = r.GetInt32(2),
-                    ProductName = r.IsDBNull(3) ? "" : r.GetString(3),
-                    ProductCreatedTime = r.IsDBNull(4) ? null : r.GetDateTime(4),
-                    UserId = r.GetInt32(5),
-                    UserName = r.IsDBNull(6) ? "" : r.GetString(6),
-                    CategoryId = r.GetInt32(7),
-                    CategoryName = r.IsDBNull(8) ? "" : r.GetString(8)
+                    OptionValueLV = r.IsDBNull(1) ? "" : r.GetString(2),
+                    OptionValueRU = r.IsDBNull(1) ? "" : r.GetString(3),
+                    ProductId = r.GetInt32(4),
+                    ProductName = r.IsDBNull(5) ? "" : r.GetString(5),
+                    ProductCreatedTime = r.IsDBNull(4) ? null : r.GetDateTime(6),
+                    UserId = r.GetInt32(7),
+                    UserName = r.IsDBNull(8) ? "" : r.GetString(8),
+                    CategoryId = r.GetInt32(9),
+                    CategoryName = r.IsDBNull(10) ? "" : r.GetString(10),
+                    ParameterName = r.IsDBNull(11) ? "" : r.GetString(11),
+                    CategoryNameLV = r.IsDBNull(12) ? "" : r.GetString(12),
+                    ParameterNameLV = r.IsDBNull(13) ? "" : r.GetString(13),
+                    CategoryNameRU = r.IsDBNull(14) ? "" : r.GetString(14),
+                    ParameterNameRU = r.IsDBNull(15) ? "" : r.GetString(15)
                 });
             }
 
             return (items, totalCount);
         }
-
         public async Task<bool> ApproveSelectOptionAsync(int optionId)
         {
             await using var conn = new SqlConnection(_connectionString);
@@ -846,7 +846,6 @@ namespace Linkora.Repositories
             var rowsAffected = await cmd.ExecuteNonQueryAsync();
             return rowsAffected > 0;
         }
-
         public async Task<bool> RejectProductAndOptionAsync(int optionId, int productId)
         {
             await using var conn = new SqlConnection(_connectionString);

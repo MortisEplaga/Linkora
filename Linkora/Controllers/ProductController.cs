@@ -65,7 +65,7 @@ namespace Linkora.Controllers
             await using var insCmd = new SqlCommand(@"
                 INSERT INTO SelectOptions (CategoryId, Value, ValueLV, ValueRU, IsConf)
                 OUTPUT INSERTED.Id
-                VALUES (@ParamId, @Text, @Text, @Text, false)", conn);
+                VALUES (@ParamId, @Text, @Text, @Text, 0)", conn);
             insCmd.Parameters.AddWithValue("@ParamId", dto.ParamId);
             insCmd.Parameters.AddWithValue("@Text", trimmed);
             var newId = (int)(await insCmd.ExecuteScalarAsync())!;

@@ -1,6 +1,35 @@
 /* ============================================================
    Category page
    ============================================================ */
+.floating-filter-actions {
+    position: sticky;
+    bottom: 20px;
+    z-index: 1000;
+    display: inline-flex;
+    gap: 12px;
+    background: #fff;
+    padding: 12px 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+    .floating-filter-actions {
+        bottom: 10px;
+        padding: 10px 16px;
+        gap: 8px;
+        white-space: normal;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+        .floating-filter-actions .param-apply-btn,
+        .floating-filter-actions .param-reset-btn {
+            font-size: 14px;
+            padding: 8px 16px;
+        }
+}
 
 .listing-region-btn {
     display: flex;
@@ -29,7 +58,7 @@
     filter: brightness(100);
 }
 /* ── Хлебные крошки ── */
-.breadcrumb-nav {
+    .breadcrumb-nav {
     margin: 16px 0 8px;
     font-size: 14px;
     color: #666;

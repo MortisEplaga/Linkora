@@ -1,5 +1,4 @@
 ﻿(function (window) {
-    // Кэш для хранения списков (чтобы не запрашивать условную Audi по 100 раз)
     var optionsCache = {};
 
     function buildFreeTextSelectHtml(paramId, initialText, initialId, options) {
@@ -21,31 +20,25 @@
         return inputEl.closest('.free-text-select');
     }
 
-    // Загрузка опций: сначала смотрим в HTML, потом в кэш, если пусто — берем с сервера
     async function loadOptionsForWrap(wrap) {
         var paramId = wrap.dataset.param;
 
-        // 1. Если данные изначально зашиты в HTML, берем их
         if (wrap.dataset.options && wrap.dataset.options !== '[]') {
             try { return JSON.parse(wrap.dataset.options); } catch (e) { }
         }
 
-        // 2. Если уже скачивали этот ID ранее — берем из памяти
         if (optionsCache[paramId]) {
             return optionsCache[paramId];
         }
 
-        // 3. Иначе стучимся в контроллер
         try {
-            console.log("🌐 [FreeTextSelect] Запрос опций для CategoryId:", paramId);
             var res = await fetch('/Product/GetSelectOptions?paramId=' + paramId);
             if (!res.ok) throw new Error('Ошибка сервера: ' + res.status);
 
-            var data = await res.json(); // Ждем массив [{ id: 2463, text: 'Audi' }]
-            optionsCache[paramId] = data; // Сохраняем в кэш
+            var data = await res.json(); 
+            optionsCache[paramId] = data; 
             return data;
         } catch (e) {
-            console.error("❌ Не удалось загрузить опции с сервера:", e);
             return [];
         }
     }
@@ -139,7 +132,6 @@
             var data = await res.json();
             return data.id;
         } catch (e) {
-            console.error('Failed to resolve select option', e);
             return null;
         }
     }

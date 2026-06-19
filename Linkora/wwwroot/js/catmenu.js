@@ -49,7 +49,6 @@ function renderCol(colIndex, parentId) {
     if (!items.length) return;
 
     const isTopLevel = (parentId === 3711);
-
     const col = document.createElement('div');
     col.className = 'catmenu-col';
 
@@ -67,13 +66,19 @@ function renderCol(colIndex, parentId) {
             ${hasChildren ? '<span class="catmenu-arrow">›</span>' : ''}
         `;
 
-        if (hasChildren) {
-            el.addEventListener('mouseenter', () => {
-                col.querySelectorAll('.catmenu-item').forEach(i => i.classList.remove('catmenu-item-active'));
-                el.classList.add('catmenu-item-active');
+        el.addEventListener('mouseenter', () => {
+            col.querySelectorAll('.catmenu-item').forEach(i => i.classList.remove('catmenu-item-active'));
+
+            el.classList.add('catmenu-item-active');
+
+            if (hasChildren) {
                 renderCol(colIndex + 1, item.id);
-            });
-        }
+            } else {
+                while (container.children.length > colIndex + 1) {
+                    container.removeChild(container.lastChild);
+                }
+            }
+        });
 
         el.querySelector('.catmenu-link').addEventListener('click', closeCatMenu);
         col.appendChild(el);

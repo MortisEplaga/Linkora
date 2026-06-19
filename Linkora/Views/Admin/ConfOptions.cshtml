@@ -1,10 +1,21 @@
 ﻿@using Linkora.Models
+@using System.Globalization
 @{
     var options = (List<AdminConfOptionRow>)ViewBag.Options;
-    var page = (int)ViewBag.Page;
-    var totalPages = (int)ViewBag.TotalPages;
     var total = (int)ViewBag.Total;
     ViewData["Title"] = "Admin — Parameter Confirmation";
+
+    var currentCulture = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName.ToLowerInvariant();
+
+    string Localized(string defaultVal, string? lvVal = null, string? ruVal = null)
+    {
+        return currentCulture switch
+        {
+            "lv" => lvVal ?? defaultVal,
+            "ru" => ruVal ?? defaultVal,
+            _ => defaultVal
+        };
+    }
 }
 
 @section Styles {
@@ -32,8 +43,7 @@
                         <tr>
                             <th data-i18n="admin_listing_col">Listing</th>
                             <th data-i18n="admin_author_col">Author</th>
-                            <th data-i18n="admin_category_col">Category</th>
-                            <th data-i18n="admin_parameter_col">Parameter Value</th>
+                            <th data-i18n="admin_category_param_col">Category / Parameter</th>
                             <th data-i18n="admin_date_col">Date</th>
                             <th data-i18n="admin_actions_col">Actions</th>
                         </tr>
@@ -44,20 +54,23 @@
                             <tr id="row-@o.OptionId">
                                 <td>
                                     <div>
-                                        <a class="admin-table-product-name" href="/Product/Details/@o.ProductId" target="_blank">@o.ProductName</a>
+                                        <a class="admin-table-product-name" href="/Product/Details/@o.ProductId" target="_blank">
+                                            @Localized(o.ProductName)
+                                        </a>
                                         <div class="admin-table-product-meta">#@o.ProductId</div>
                                     </div>
                                 </td>
                                 <td>
                                     <a href="/Seller/Index/@o.UserId" target="_blank" style="color:#333;text-decoration:none;font-size:13px">
-                                        @o.UserName
+                                        @Localized(o.UserName)
                                     </a>
                                 </td>
                                 <td>
-                                    <span style="font-size:13px; color:#555;">@o.CategoryName</span>
-                                </td>
-                                <td style="font-weight:600; color:#2e7d32;">
-                                    @o.OptionValue
+                                    <span style="font-size:13px; color:#555;">
+                                        @Localized(o.CategoryName, o.CategoryNameLV, o.CategoryNameRU)
+                                        /
+                                        @Localized(o.ParameterName, o.ParameterNameLV, o.ParameterNameRU)
+                                    </span>
                                 </td>
                                 <td style="color:#aaa;font-size:12px;white-space:nowrap">
                                     @(o.ProductCreatedTime?.ToString("dd MMM yyyy"))
@@ -76,24 +89,6 @@
                         }
                     </tbody>
                 </table>
-
-                @if (totalPages > 1)
-                {
-                    <div class="admin-pagination">
-                        @if (page > 1)
-                        {
-                            <a class="admin-page-btn" href="/Admin/ConfOptions?page=@(page - 1)">‹</a>
-                        }
-                        @for (int i = Math.Max(1, page - 2); i <= Math.Min(totalPages, page + 2); i++)
-                        {
-                            <a class="admin-page-btn @(i == page ? "active" : "")" href="/Admin/ConfOptions?page=@i">@i</a>
-                        }
-                        @if (page < totalPages)
-                        {
-                            <a class="admin-page-btn" href="/Admin/ConfOptions?page=@(page + 1)">›</a>
-                        }
-                    </div>
-                }
             }
         </div>
     </main>
@@ -103,30 +98,41 @@
 
 @section Scripts {
     <script>
-        const afToken = document.getElementById('afToken')?.value ?? '';
+        (function extendTranslations() {
+            const extra = {
+                en: {
+                    'approved': 'Option approved successfully',
+                    'rejected': 'Product blocked and option removed',
+                    'err_action': 'Error processing request',
+                    'confirm_reject': 'Are you sure you want to block this listing?'
+                },
+                lv: {
+                    'approved': 'Apstiprināts veiksmīgi',
+                    'rejected': 'Sludinājums bloķēts',
+                    'err_action': 'Kļūda, izpildot pieprasījumu',
+                    'confirm_reject': 'Vai tiešām vēlaties bloķēt šo sludinājumu?'
+                },
+                ru: {
+                    'approved': 'Параметр успешно подтвержден',
+                    'rejected': 'Объявление заблокировано',
+                    'err_action': 'Ошибка выполнения операции',
+                    'confirm_reject': 'Вы уверены, что хотите заблокировать это объявление?'
+                }
+            };
 
-        const jsLangs = {
-            en: {
-                approved: 'Option approved successfully',
-                rejected: 'Product blocked and option removed',
-                err_action: 'Error processing request'
-            },
-            lv: {
-                approved: 'Apstiprināts veiksmīgi',
-                rejected: 'Sludinājums bloķēts',
-                err_action: 'Kļūda, izpildot pieprasījumu'
-            },
-            ru: {
-                approved: 'Параметр успешно подтвержден',
-                rejected: 'Объявление заблокировано',
-                err_action: 'Ошибка выполнения операции'
+            if (typeof TRANSLATIONS !== 'undefined') {
+                for (const lang in extra) {
+                    if (!TRANSLATIONS[lang]) TRANSLATIONS[lang] = {};
+                    for (const key in extra[lang]) {
+                        if (!TRANSLATIONS[lang][key]) {
+                            TRANSLATIONS[lang][key] = extra[lang][key];
+                        }
+                    }
+                }
             }
-        };
+        })();
 
-        function getJsText(key) {
-            const currentLang = localStorage.getItem('lang') || 'en';
-            return jsLangs[currentLang]?.[key] || jsLangs['en'][key];
-        }
+        const afToken = document.getElementById('afToken')?.value ?? '';
 
         async function approveOption(optionId, btn) {
             btn.disabled = true;
@@ -136,15 +142,15 @@
             });
             if (res.ok) {
                 document.getElementById('row-' + optionId)?.remove();
-                showToast(getJsText('approved'), 'success');
+                showToast(t('approved'), 'success');
             } else {
-                showToast(getJsText('err_action'), 'error');
+                showToast(t('err_action'), 'error');
                 btn.disabled = false;
             }
         }
 
         async function rejectProduct(optionId, productId, btn) {
-            if (!confirm("Вы уверены, что хотите заблокировать это объявление?")) {
+            if (!confirm(t('confirm_reject'))) {
                 return;
             }
             btn.disabled = true;
@@ -154,18 +160,29 @@
             });
             if (res.ok) {
                 document.getElementById('row-' + optionId)?.remove();
-                showToast(getJsText('rejected'), 'success');
+                showToast(t('rejected'), 'success');
             } else {
-                showToast(getJsText('err_action'), 'error');
+                showToast(t('err_action'), 'error');
                 btn.disabled = false;
             }
         }
 
         function showToast(msg, type = 'success') {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.className = `admin-toast ${type} show`;
-            setTimeout(() => t.className = 'admin-toast', 2500);
+            const tEl = document.getElementById('toast');
+            tEl.textContent = msg;
+            tEl.className = `admin-toast ${type} show`;
+            setTimeout(() => tEl.className = 'admin-toast', 2500);
+        }
+
+        window.approveOption = approveOption;
+        window.rejectProduct = rejectProduct;
+
+        if (typeof applyTranslations === 'function') {
+            if (document.readyState === 'complete') {
+                applyTranslations();
+            } else {
+                document.addEventListener('DOMContentLoaded', applyTranslations);
+            }
         }
     </script>
 }

@@ -108,10 +108,12 @@
                                        value="@(activeFilters.TryGetValue(vm.Param.Id, out var pv) ? pv.FirstOrDefault() : "")" />
                                 @if (vm.Options.Count > 5)
                                 {
-                                    <button type="button" class="param-show-more" onclick="toggleOptions(this)">
-                                        More @(vm.Options.Count - 5)
-                                    </button>
-                                }
+                                <button type="button" class="param-show-more"
+                                        data-count="@(vm.Options.Count - 5)"
+                                        onclick="toggleOptions(this)">
+                                    More @(vm.Options.Count - 5)
+                                </button>
+                            }
                         }
                         @if (vm.Param.Type == 8)
                         {
@@ -167,7 +169,9 @@
                             </div>
                             @if (vm.Options.Count > 5)
                             {
-                                <button type="button" class="param-show-more" onclick="toggleOptions(this)">
+                                <button type="button" class="param-show-more"
+                                        data-count="@(vm.Options.Count - 5)"
+                                        onclick="toggleOptions(this)">
                                     More @(vm.Options.Count - 5)
                                 </button>
                             }
@@ -193,11 +197,13 @@
                         }
                     </div>
                 }
-
-                <div class="filter-actions">
-                    <button type="submit" class="param-apply-btn" data-i18n="apply_filters">Apply filters</button>
-                    <button type="button" class="param-reset-btn" data-i18n="reset_filters" onclick="resetFilters(@category.Id)">Reset</button>
-                </div>
+                @if (parameters.Count > 0)
+                {
+                    <div id="floatingFilterActions" class="floating-filter-actions">
+                        <button type="submit" class="param-apply-btn" data-i18n="apply_filters">Apply filters</button>
+                        <button type="button" class="param-reset-btn" data-i18n="reset_filters" onclick="resetFilters(@category.Id)">Reset</button>
+                    </div>
+                }
             </form>
         }
     </div>
@@ -341,7 +347,16 @@
         document.addEventListener('DOMContentLoaded', async () => {
             setView(localStorage.getItem('listingView') || 'grid');
             setSortLabel();
-
+                if (typeof TRANSLATIONS === 'undefined') {
+            const checkTranslations = setInterval(() => {
+                if (typeof TRANSLATIONS !== 'undefined') {
+                    clearInterval(checkTranslations);
+                    initMoreButtons();
+                }
+            }, 50);
+        } else {
+            initMoreButtons();
+        }
             const url = new URL(window.location.href);
             const city = url.searchParams.get('city');
             if (city) {
@@ -368,7 +383,7 @@
             for (const wrap of freeTextWraps) {
                 const input = wrap.querySelector('.free-text-select-input');
                 const text = input.value.trim();
-                if (!text) continue; // Если в инпуте пусто, пропускаем (чипсы отправятся сами)
+                if (!text) continue;
 
                 const paramId = wrap.dataset.param;
                 try {
@@ -383,7 +398,6 @@
                     if (res.ok) {
                         const data = await res.json();
                         if (data && data.id) {
-                            // Добавляем как чипс прямо перед отправкой, чтобы сгенерировался hidden input
                             addType8Chip(paramId, data.id, text);
                         }
                     }
@@ -392,7 +406,6 @@
                 }
             }
 
-            // Деактивируем пустые инпуты, чтобы не засорять URL
             const inputs = form.querySelectorAll('input, select');
             inputs.forEach(input => {
                 if (input.type === 'checkbox' && !input.checked) {
@@ -406,6 +419,18 @@
         });
 
         });
+                function initMoreButtons() {
+            const lang = localStorage.getItem('lang') || 'en';
+            const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
+
+            document.querySelectorAll('.param-show-more').forEach(btn => {
+                const block = btn.parentElement;
+                const hidden = block.querySelectorAll('.param-option-hidden');
+                const count = hidden.length;
+                btn.dataset.count = count; 
+                btn.textContent = (dict.more_btn || 'More') + ' ' + count;
+            });
+        }
     </script>
 </div>
 
@@ -445,9 +470,12 @@
 
         const lang = localStorage.getItem('lang') || 'en';
         const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
-        btn.textContent = isHidden ? (dict.hide_btn || 'Hide') : (dict.more_btn || 'More') + ' ' + hidden.length;
-    }
 
+        const count = btn.dataset.count || hidden.length;
+        btn.textContent = isHidden
+            ? (dict.hide_btn || 'Hide')
+            : (dict.more_btn || 'More') + ' ' + count;
+    }
     function selectPill(pill, paramId) {
         const pills = pill.closest('.param-pills');
         const wasActive = pill.classList.contains('param-pill-active');
@@ -495,7 +523,7 @@
 
         cards.forEach(c => container.appendChild(c));
     }
-        // Функция для удаления чипса
+
     function removeType8Chip(link) {
         const chip = link.closest('.search-chip');
         if (chip) {
@@ -503,12 +531,10 @@
         }
     }
 
-    // Функция для динамического добавления чипса
     function addType8Chip(paramId, id, text) {
         const chipsContainer = document.getElementById('chips_' + paramId);
         if (!chipsContainer) return;
 
-        // Проверяем, чтобы такой чипс не был добавлен повторно
         const exists = chipsContainer.querySelector(`[data-id="${id}"]`);
         if (exists) return;
 
@@ -524,10 +550,9 @@
         chipsContainer.appendChild(chip);
     }
 
-    // Обработка нажатия Enter в поле ввода, чтобы превратить текст в чипс сразу
     async function handleType8Keydown(e, paramId) {
         if (e.key === 'Enter') {
-            e.preventDefault(); // Запрещаем преждевременную отправку формы
+            e.preventDefault(); 
             const input = e.target;
             const text = input.value.trim();
             if (!text) return;
@@ -545,7 +570,7 @@
                     const data = await res.json();
                     if (data && data.id) {
                         addType8Chip(paramId, data.id, text);
-                        input.value = ''; // Очищаем поле ввода
+                        input.value = ''; 
                     }
                 }
             } catch (err) {
@@ -553,4 +578,10 @@
             }
         }
     }
-</script>
+        function submitFilterForm() {
+        const form = document.getElementById('filterForm');
+        if (form) {
+            form.submit();
+        }
+    }
+        </script>

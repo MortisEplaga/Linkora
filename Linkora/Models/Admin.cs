@@ -54,10 +54,13 @@
         public string ReporterName { get; set; } = "";
         public string ReasonText { get; set; } = "";
     }
+
     public class AdminConfOptionRow
     {
         public int OptionId { get; set; }
-        public string OptionValue { get; set; } 
+        public string OptionValue { get; set; }
+        public string OptionValueLV { get; set; }
+        public string OptionValueRU { get; set; }
         public int ProductId { get; set; }
         public string ProductName { get; set; }
         public DateTime? ProductCreatedTime { get; set; }
@@ -65,5 +68,10 @@
         public string UserName { get; set; }
         public int CategoryId { get; set; }
         public string CategoryName { get; set; }
+        public string ParameterName { get; set; } = "";
+        public string CategoryNameLV { get; set; }
+        public string ParameterNameLV { get; set; } = "";
+        public string CategoryNameRU { get; set; }
+        public string ParameterNameRU { get; set; } = "";
     }
 }

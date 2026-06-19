@@ -25,6 +25,18 @@ namespace Linkora.Controllers
 
         private bool IsAdmin() => User.FindFirst(ClaimTypes.Role)?.Value == "admin";
 
+        private async Task SetSidebarBadgesAsync(SqlConnection conn)
+        {
+            await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Products WHERE Status = 'Moderation'", conn))
+                ViewBag.PendingModeration = (int)(await cmd.ExecuteScalarAsync())!;
+
+            await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Reports WHERE Status = 'Pending'", conn))
+                ViewBag.PendingReports = (int)(await cmd.ExecuteScalarAsync())!;
+
+            await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM SelectOptions WHERE IsConf = 0", conn))
+                ViewBag.PendingOptions = (int)(await cmd.ExecuteScalarAsync())!;
+        }
+
         public async Task<IActionResult> Index()
         {
             if (!IsAdmin()) return Forbid();
@@ -47,7 +59,7 @@ namespace Linkora.Controllers
                 stats.PendingReports = (int)(await cmd.ExecuteScalarAsync())!;
 
             await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM SelectOptions WHERE IsConf = 0", conn))
-                stats.PendingReports = (int)(await cmd.ExecuteScalarAsync())!;
+                stats.PendingOptions = (int)(await cmd.ExecuteScalarAsync())!;
 
             await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Users WHERE CAST(CreatedAt AS DATE) = CAST(GETDATE() AS DATE)", conn))
                 stats.NewUsersToday = (int)(await cmd.ExecuteScalarAsync())!;
@@ -84,6 +96,9 @@ namespace Linkora.Controllers
                     });
             }
 
+            ViewBag.PendingModeration = stats.PendingModeration;
+            ViewBag.PendingReports = stats.PendingReports;
+            ViewBag.PendingOptions = stats.PendingOptions;
             ViewBag.Stats = stats;
             return View();
         }
@@ -96,6 +111,8 @@ namespace Linkora.Controllers
 
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
+
+            await SetSidebarBadgesAsync(conn);
 
             var searchClause = string.IsNullOrEmpty(search) ? "" : "AND p.Name LIKE '%' + @Search + '%'";
 
@@ -175,6 +192,8 @@ namespace Linkora.Controllers
 
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
+
+            await SetSidebarBadgesAsync(conn);
 
             var roleClause = role == "all" ? "" : "AND Role = @Role";
             var searchClause = string.IsNullOrEmpty(search) ? "" : "AND (UserName LIKE '%' + @Search + '%' OR Email LIKE '%' + @Search + '%')";
@@ -287,6 +306,8 @@ namespace Linkora.Controllers
 
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
+
+            await SetSidebarBadgesAsync(conn);
 
             await using var countCmd = new SqlCommand(
                 "SELECT COUNT(*) FROM Reports WHERE Status = @Status", conn);
@@ -403,18 +424,18 @@ namespace Linkora.Controllers
             return Json(new { registrations = regData, products = prodData });
         }
         [HttpGet]
-        public async Task<IActionResult> ConfOptions(int page = 1)
+        public async Task<IActionResult> ConfOptions()
         {
-            if (!IsAdmin()) return Forbid(); 
+            if (!IsAdmin()) return Forbid();
 
-            int pageSize = 20;
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await SetSidebarBadgesAsync(conn);
 
-            var (items, totalCount) = await _productRepository.GetUnconfirmedOptionsAsync(page, pageSize);
+            var (items, totalCount) = await _productRepository.GetUnconfirmedOptionsAsync();
 
             ViewBag.Options = items;
-            ViewBag.Page = page;
             ViewBag.Total = totalCount;
-            ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
             return View();
         }
@@ -423,7 +444,7 @@ namespace Linkora.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ApproveOption(int id)
         {
-            if (!IsAdmin()) return Forbid(); 
+            if (!IsAdmin()) return Forbid();
 
             bool success = await _productRepository.ApproveSelectOptionAsync(id);
             if (success) return Ok();
@@ -434,7 +455,7 @@ namespace Linkora.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RejectProductByOption(int optionId, int productId)
         {
-            if (!IsAdmin()) return Forbid(); 
+            if (!IsAdmin()) return Forbid();
 
             bool success = await _productRepository.RejectProductAndOptionAsync(optionId, productId);
             if (success) return Ok();

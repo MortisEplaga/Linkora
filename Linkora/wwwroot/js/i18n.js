@@ -10,6 +10,8 @@
 
 const TRANSLATIONS = {
     en: {
+        'admin_conf_options': 'Option Confirmation',
+        'admin_category_param_col': 'Category / Parameter',
         'auth_email_invalid': 'Invalid email format (expected: xxxxx@domen.dm)',
         'yes': 'Yes',
         'profile_ad_duration': 'Preferred ad duration (days)',
@@ -307,6 +309,8 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'admin_conf_options': 'Opciju apstiprināšana',
+        'admin_category_param_col': 'Kategorija / Parametrs',
         'auth_email_invalid': 'Nepareizs e-pasta formāts (sagaidāms: xxxxx@domen.dm)',
         'yes': 'Jā',
         'profile_ad_duration': 'Vēlamais sludinājuma ilgums (dienas)',
@@ -614,6 +618,8 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'admin_conf_options': 'Подтверждение параметров',
+        'admin_category_param_col': 'Категория / Параметр',
         'auth_email_invalid': 'Неверный формат email (ожидается: xxxxx@domen.dm)',
         'yes': 'Да',
         'profile_ad_duration': 'Предпочитаемый срок показа (дней)',
