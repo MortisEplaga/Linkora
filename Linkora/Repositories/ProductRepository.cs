@@ -768,12 +768,12 @@ namespace Linkora.Repositories
 
             var sql = @"
 SELECT COUNT(*) FROM dbo.SelectOptions so
-INNER JOIN dbo.MapperProductCategory mpc ON so.Id = mpc.Value 
+INNER JOIN dbo.MapperProductCategory mpc 
+    ON ',' + mpc.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%'
 INNER JOIN dbo.Products p ON mpc.ProductId = p.Id
 WHERE so.IsConf = 0;
 
-
-                SELECT 
+SELECT 
     so.Id AS OptionId,
     so.Value AS OptionValue,
     so.ValueLV AS OptionValueLV,
@@ -791,7 +791,8 @@ WHERE so.IsConf = 0;
     c.NameRU AS CategoryNameRU,
     c2.NameRU AS OptionCategoryRU
 FROM dbo.SelectOptions so
-INNER JOIN dbo.MapperProductCategory mpc ON so.Id = mpc.Value 
+INNER JOIN dbo.MapperProductCategory mpc 
+    ON ',' + mpc.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%'
 INNER JOIN dbo.Products p ON mpc.ProductId = p.Id
 INNER JOIN dbo.Users u ON p.UserId = u.Id
 INNER JOIN dbo.Category c ON p.CategoryId = c.Id
@@ -814,11 +815,11 @@ WHERE so.IsConf = 0;";
                 {
                     OptionId = r.GetInt32(0),
                     OptionValue = r.IsDBNull(1) ? "" : r.GetString(1),
-                    OptionValueLV = r.IsDBNull(1) ? "" : r.GetString(2),
-                    OptionValueRU = r.IsDBNull(1) ? "" : r.GetString(3),
+                    OptionValueLV = r.IsDBNull(2) ? "" : r.GetString(2),  
+                    OptionValueRU = r.IsDBNull(3) ? "" : r.GetString(3), 
                     ProductId = r.GetInt32(4),
                     ProductName = r.IsDBNull(5) ? "" : r.GetString(5),
-                    ProductCreatedTime = r.IsDBNull(4) ? null : r.GetDateTime(6),
+                    ProductCreatedTime = r.IsDBNull(6) ? null : r.GetDateTime(6),
                     UserId = r.GetInt32(7),
                     UserName = r.IsDBNull(8) ? "" : r.GetString(8),
                     CategoryId = r.GetInt32(9),

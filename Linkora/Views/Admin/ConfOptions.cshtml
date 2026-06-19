@@ -44,6 +44,7 @@
                             <th data-i18n="admin_listing_col">Listing</th>
                             <th data-i18n="admin_author_col">Author</th>
                             <th data-i18n="admin_category_param_col">Category / Parameter</th>
+                            <th data-i18n="admin_option_value_col">Option Value</th>
                             <th data-i18n="admin_date_col">Date</th>
                             <th data-i18n="admin_actions_col">Actions</th>
                         </tr>
@@ -70,6 +71,11 @@
                                         @Localized(o.CategoryName, o.CategoryNameLV, o.CategoryNameRU)
                                         /
                                         @Localized(o.ParameterName, o.ParameterNameLV, o.ParameterNameRU)
+                                    </span>
+                                </td>
+                                <td>
+                                    <span style="font-size:13px; color:#333;">
+                                        @Localized(o.OptionValue, o.OptionValueLV, o.OptionValueRU)
                                     </span>
                                 </td>
                                 <td style="color:#aaa;font-size:12px;white-space:nowrap">
@@ -101,18 +107,21 @@
         (function extendTranslations() {
             const extra = {
                 en: {
+                    'admin_option_value_col': 'Option Value',
                     'approved': 'Option approved successfully',
                     'rejected': 'Product blocked and option removed',
                     'err_action': 'Error processing request',
                     'confirm_reject': 'Are you sure you want to block this listing?'
                 },
                 lv: {
+                    'admin_option_value_col': 'Opcijas vērtība',
                     'approved': 'Apstiprināts veiksmīgi',
                     'rejected': 'Sludinājums bloķēts',
                     'err_action': 'Kļūda, izpildot pieprasījumu',
                     'confirm_reject': 'Vai tiešām vēlaties bloķēt šo sludinājumu?'
                 },
                 ru: {
+                    'admin_option_value_col': 'Значение опции',
                     'approved': 'Параметр успешно подтвержден',
                     'rejected': 'Объявление заблокировано',
                     'err_action': 'Ошибка выполнения операции',
