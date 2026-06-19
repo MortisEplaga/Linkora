@@ -46,6 +46,9 @@ namespace Linkora.Controllers
             await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Reports WHERE Status = 'Pending'", conn))
                 stats.PendingReports = (int)(await cmd.ExecuteScalarAsync())!;
 
+            await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM SelectOptions WHERE IsConf = 0", conn))
+                stats.PendingReports = (int)(await cmd.ExecuteScalarAsync())!;
+
             await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Users WHERE CAST(CreatedAt AS DATE) = CAST(GETDATE() AS DATE)", conn))
                 stats.NewUsersToday = (int)(await cmd.ExecuteScalarAsync())!;
 
@@ -398,6 +401,44 @@ namespace Linkora.Controllers
                     prodData.Add(new { day = r2.GetDateTime(0).ToString("dd MMM"), count = r2.GetInt32(1) });
 
             return Json(new { registrations = regData, products = prodData });
+        }
+        [HttpGet]
+        public async Task<IActionResult> ConfOptions(int page = 1)
+        {
+            if (!IsAdmin()) return Forbid(); 
+
+            int pageSize = 20;
+
+            var (items, totalCount) = await _productRepository.GetUnconfirmedOptionsAsync(page, pageSize);
+
+            ViewBag.Options = items;
+            ViewBag.Page = page;
+            ViewBag.Total = totalCount;
+            ViewBag.TotalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ApproveOption(int id)
+        {
+            if (!IsAdmin()) return Forbid(); 
+
+            bool success = await _productRepository.ApproveSelectOptionAsync(id);
+            if (success) return Ok();
+            return BadRequest();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RejectProductByOption(int optionId, int productId)
+        {
+            if (!IsAdmin()) return Forbid(); 
+
+            bool success = await _productRepository.RejectProductAndOptionAsync(optionId, productId);
+            if (success) return Ok();
+            return BadRequest();
         }
     }
 }

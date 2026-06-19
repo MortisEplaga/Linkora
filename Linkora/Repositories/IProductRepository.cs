@@ -31,7 +31,9 @@ namespace Linkora.Repositories
         Task DeleteAsync(int productId);
         Task<Dictionary<int, string>> GetParamDisplayValuesAsync(int productId, string lang);
         Task<CategoryRulesDto> GetCategoryRulesAsync(IEnumerable<int> categoryIds);
-
+        Task<(List<AdminConfOptionRow> Items, int TotalCount)> GetUnconfirmedOptionsAsync(int page, int pageSize);
+        Task<bool> ApproveSelectOptionAsync(int optionId);
+        Task<bool> RejectProductAndOptionAsync(int optionId, int productId);
 
     }
 }

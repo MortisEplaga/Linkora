@@ -765,5 +765,115 @@ namespace Linkora.Repositories
                 await cmd.ExecuteNonQueryAsync();
             }
         }
+        public async Task<(List<AdminConfOptionRow> Items, int TotalCount)> GetUnconfirmedOptionsAsync(int page, int pageSize)
+        {
+            var items = new List<AdminConfOptionRow>();
+            int totalCount = 0;
+            var offset = (page - 1) * pageSize;
+
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            var sql = @"
+                SELECT COUNT(*)
+                FROM dbo.SelectOptions so
+                INNER JOIN dbo.MapperProductCategory mpc ON so.CategoryId = mpc.CategoryId AND so.Value = mpc.Value
+                INNER JOIN dbo.Products p ON mpc.ProductId = p.Id
+                INNER JOIN dbo.Users u ON p.UserId = u.Id
+                INNER JOIN dbo.Category c ON p.CategoryId = c.Id
+                WHERE so.IsConf = 0;
+
+                SELECT 
+                    so.Id AS OptionId,
+                    so.Value AS OptionValue,
+                    p.Id AS ProductId,
+                    p.Name AS ProductName,
+                    p.CreatedTime AS ProductCreatedTime,
+                    u.Id AS UserId,
+                    u.UserName AS UserName,
+                    c.Id AS CategoryId,
+                    c.Name AS CategoryName
+                FROM dbo.SelectOptions so
+                INNER JOIN dbo.MapperProductCategory mpc ON so.CategoryId = mpc.CategoryId AND so.Value = mpc.Value
+                INNER JOIN dbo.Products p ON mpc.ProductId = p.Id
+                INNER JOIN dbo.Users u ON p.UserId = u.Id
+                INNER JOIN dbo.Category c ON p.CategoryId = c.Id
+                WHERE so.IsConf = 0
+                ORDER BY p.CreatedTime DESC
+                OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;";
+
+            await using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@Offset", offset);
+            cmd.Parameters.AddWithValue("@PageSize", pageSize);
+
+            await using var r = await cmd.ExecuteReaderAsync();
+
+            if (await r.ReadAsync())
+            {
+                totalCount = r.GetInt32(0);
+            }
+
+            await r.NextResultAsync();
+            while (await r.ReadAsync())
+            {
+                items.Add(new AdminConfOptionRow
+                {
+                    OptionId = r.GetInt32(0),
+                    OptionValue = r.IsDBNull(1) ? "" : r.GetString(1),
+                    ProductId = r.GetInt32(2),
+                    ProductName = r.IsDBNull(3) ? "" : r.GetString(3),
+                    ProductCreatedTime = r.IsDBNull(4) ? null : r.GetDateTime(4),
+                    UserId = r.GetInt32(5),
+                    UserName = r.IsDBNull(6) ? "" : r.GetString(6),
+                    CategoryId = r.GetInt32(7),
+                    CategoryName = r.IsDBNull(8) ? "" : r.GetString(8)
+                });
+            }
+
+            return (items, totalCount);
+        }
+
+        public async Task<bool> ApproveSelectOptionAsync(int optionId)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            var sql = "UPDATE SelectOptions SET IsConf = 1 WHERE Id = @Id";
+
+            await using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@Id", optionId);
+
+            var rowsAffected = await cmd.ExecuteNonQueryAsync();
+            return rowsAffected > 0;
+        }
+
+        public async Task<bool> RejectProductAndOptionAsync(int optionId, int productId)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            await using var transaction = conn.BeginTransaction();
+
+            try
+            {
+                var productSql = "UPDATE Products SET Status = 'Rejected' WHERE Id = @ProductId";
+                await using var productCmd = new SqlCommand(productSql, conn, transaction);
+                productCmd.Parameters.AddWithValue("@ProductId", productId);
+                await productCmd.ExecuteNonQueryAsync();
+
+                var optionSql = "DELETE FROM SelectOptions WHERE Id = @OptionId";
+                await using var optionCmd = new SqlCommand(optionSql, conn, transaction);
+                optionCmd.Parameters.AddWithValue("@OptionId", optionId);
+                await optionCmd.ExecuteNonQueryAsync();
+
+                await transaction.CommitAsync();
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                return false;
+            }
+        }
     }
 }

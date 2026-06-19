@@ -1,14 +1,21 @@
-/* ============================================================
-   Admin Panel — Linkora
-   ============================================================ */
+.admin-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; 
+    margin-bottom: 16px;
+}
 
+.admin-table {
+    min-width: 1000px; 
+    width: 100%;
+    border-collapse: collapse;
+}
 .admin-layout {
     display: flex;
     min-height: calc(100vh - 104px);
     gap: 0;
 }
 
-/* ── Sidebar ── */
 .admin-sidebar {
     width: 220px;
     flex-shrink: 0;

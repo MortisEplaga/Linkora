@@ -1,0 +1,171 @@
+﻿@using Linkora.Models
+@{
+    var options = (List<AdminConfOptionRow>)ViewBag.Options;
+    var page = (int)ViewBag.Page;
+    var totalPages = (int)ViewBag.TotalPages;
+    var total = (int)ViewBag.Total;
+    ViewData["Title"] = "Admin — Parameter Confirmation";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin.css" />
+}
+
+<div class="admin-layout">
+    @await Html.PartialAsync("Sidebar", "conf-options")
+
+    <main class="admin-main">
+        <h1 class="admin-page-title">
+            <span data-i18n="admin_conf_options">Option Confirmation</span>
+            <span class="admin-page-subtitle">@total <span data-i18n="admin_results">results</span></span>
+        </h1>
+
+        <div class="admin-card">
+            @if (!options.Any())
+            {
+                <div class="admin-empty" data-i18n="admin_no_options">No unconfirmed options found</div>
+            }
+            else
+            {
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th data-i18n="admin_listing_col">Listing</th>
+                            <th data-i18n="admin_author_col">Author</th>
+                            <th data-i18n="admin_category_col">Category</th>
+                            <th data-i18n="admin_parameter_col">Parameter Value</th>
+                            <th data-i18n="admin_date_col">Date</th>
+                            <th data-i18n="admin_actions_col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var o in options)
+                        {
+                            <tr id="row-@o.OptionId">
+                                <td>
+                                    <div>
+                                        <a class="admin-table-product-name" href="/Product/Details/@o.ProductId" target="_blank">@o.ProductName</a>
+                                        <div class="admin-table-product-meta">#@o.ProductId</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="/Seller/Index/@o.UserId" target="_blank" style="color:#333;text-decoration:none;font-size:13px">
+                                        @o.UserName
+                                    </a>
+                                </td>
+                                <td>
+                                    <span style="font-size:13px; color:#555;">@o.CategoryName</span>
+                                </td>
+                                <td style="font-weight:600; color:#2e7d32;">
+                                    @o.OptionValue
+                                </td>
+                                <td style="color:#aaa;font-size:12px;white-space:nowrap">
+                                    @(o.ProductCreatedTime?.ToString("dd MMM yyyy"))
+                                </td>
+                                <td>
+                                    <div class="admin-actions">
+                                        <button class="admin-btn admin-btn-approve" onclick="approveOption(@o.OptionId, this)">
+                                            <span data-i18n="admin_approve">Approve</span>
+                                        </button>
+                                        <button class="admin-btn admin-btn-danger" onclick="rejectProduct(@o.OptionId, @o.ProductId, this)">
+                                            <span data-i18n="admin_reject">Reject Ad</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                @if (totalPages > 1)
+                {
+                    <div class="admin-pagination">
+                        @if (page > 1)
+                        {
+                            <a class="admin-page-btn" href="/Admin/ConfOptions?page=@(page - 1)">‹</a>
+                        }
+                        @for (int i = Math.Max(1, page - 2); i <= Math.Min(totalPages, page + 2); i++)
+                        {
+                            <a class="admin-page-btn @(i == page ? "active" : "")" href="/Admin/ConfOptions?page=@i">@i</a>
+                        }
+                        @if (page < totalPages)
+                        {
+                            <a class="admin-page-btn" href="/Admin/ConfOptions?page=@(page + 1)">›</a>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </main>
+</div>
+
+<div class="admin-toast" id="toast"></div>
+
+@section Scripts {
+    <script>
+        const afToken = document.getElementById('afToken')?.value ?? '';
+
+        const jsLangs = {
+            en: {
+                approved: 'Option approved successfully',
+                rejected: 'Product blocked and option removed',
+                err_action: 'Error processing request'
+            },
+            lv: {
+                approved: 'Apstiprināts veiksmīgi',
+                rejected: 'Sludinājums bloķēts',
+                err_action: 'Kļūda, izpildot pieprasījumu'
+            },
+            ru: {
+                approved: 'Параметр успешно подтвержден',
+                rejected: 'Объявление заблокировано',
+                err_action: 'Ошибка выполнения операции'
+            }
+        };
+
+        function getJsText(key) {
+            const currentLang = localStorage.getItem('lang') || 'en';
+            return jsLangs[currentLang]?.[key] || jsLangs['en'][key];
+        }
+
+        async function approveOption(optionId, btn) {
+            btn.disabled = true;
+            const res = await fetch(`/Admin/ApproveOption?id=${optionId}`, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': afToken }
+            });
+            if (res.ok) {
+                document.getElementById('row-' + optionId)?.remove();
+                showToast(getJsText('approved'), 'success');
+            } else {
+                showToast(getJsText('err_action'), 'error');
+                btn.disabled = false;
+            }
+        }
+
+        async function rejectProduct(optionId, productId, btn) {
+            if (!confirm("Вы уверены, что хотите заблокировать это объявление?")) {
+                return;
+            }
+            btn.disabled = true;
+            const res = await fetch(`/Admin/RejectProductByOption?optionId=${optionId}&productId=${productId}`, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': afToken }
+            });
+            if (res.ok) {
+                document.getElementById('row-' + optionId)?.remove();
+                showToast(getJsText('rejected'), 'success');
+            } else {
+                showToast(getJsText('err_action'), 'error');
+                btn.disabled = false;
+            }
+        }
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `admin-toast ${type} show`;
+            setTimeout(() => t.className = 'admin-toast', 2500);
+        }
+    </script>
+}

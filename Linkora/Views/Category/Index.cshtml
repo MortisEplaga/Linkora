@@ -115,21 +115,34 @@
                         }
                         @if (vm.Param.Type == 8)
                         {
-                            var activeId = activeFilters.TryGetValue(vm.Param.Id, out var fv) ? fv.FirstOrDefault() : null;
-                            var activeOpt = activeId != null ? vm.Options.FirstOrDefault(o => o.Id.ToString() == activeId) : null;
+                            var activeIds = activeFilters.TryGetValue(vm.Param.Id, out var fv) ? fv : new List<string>();
                             var optionsJson = System.Text.Json.JsonSerializer.Serialize(
                             vm.Options.Select(o => new { id = o.Id, text = o.Text }));
 
-                            <div class="free-text-select" data-param="@vm.Param.Id"
-                                 data-options='@Html.Raw(System.Text.Json.JsonSerializer.Serialize(vm.Options.Select(o => new { id = o.Id, text = o.Text })))'
-                                 style="position:relative">
+                            <div class="free-text-select" data-param="@vm.Param.Id" style="position:relative">
+
+                                <div class="free-text-chips" id="chips_@vm.Param.Id" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+                                    @foreach (var activeId in activeIds)
+                                    {
+                                        var opt = vm.Options.FirstOrDefault(o => o.Id.ToString() == activeId);
+                                        var displayText = opt?.Text ?? activeId; 
+
+                                        <span class="search-chip" data-id="@activeId" style="margin: 0;">
+                                            @displayText
+                                            <a class="search-chip-remove" href="#" onclick="removeType8Chip(this); return false;">✕</a>
+                                            <input type="hidden" name="p_@vm.Param.Id" value="@activeId" />
+                                        </span>
+                                    }
+                                </div>
+
                                 <input type="text" class="param-range-input free-text-select-input"
                                        data-param="@vm.Param.Id"
-                                       value="@(activeOpt?.Text ?? "")" autocomplete="off"
+                                       value="" autocomplete="off"
+                                       placeholder="Введите или выберите..."
                                        oninput="FreeTextSelect.onInput(this)"
-                                       onfocus="FreeTextSelect.onFocus(this)" />
-                                <input type="hidden" name="p_@vm.Param.Id" class="free-text-select-id"
-                                       value="@(activeOpt?.Id.ToString() ?? "")" />
+                                       onfocus="FreeTextSelect.onFocus(this)"
+                                       onkeydown="handleType8Keydown(event, '@vm.Param.Id')" />
+
                                 <div class="create-dropdown free-text-select-drop"></div>
                             </div>
                         }
@@ -347,16 +360,15 @@
                 if (!isFav && cart.includes(prodId)) btn.classList.add('product-card-action-active');
             });
 
-            document.getElementById('filterForm')?.addEventListener('submit', async function (e) {
+        document.getElementById('filterForm')?.addEventListener('submit', async function (e) {
             e.preventDefault();
             const form = this;
 
             const freeTextWraps = form.querySelectorAll('.free-text-select');
             for (const wrap of freeTextWraps) {
                 const input = wrap.querySelector('.free-text-select-input');
-                const hidden = wrap.querySelector('.free-text-select-id');
                 const text = input.value.trim();
-                if (!text) { hidden.value = ''; continue; }
+                if (!text) continue; // Если в инпуте пусто, пропускаем (чипсы отправятся сами)
 
                 const paramId = wrap.dataset.param;
                 try {
@@ -366,21 +378,21 @@
                             'Content-Type': 'application/json',
                             'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
                         },
-                        body: JSON.stringify({
-                    paramId: paramId,
-                    text: text,
-                    createIfNotFound: false   
-                })
+                        body: JSON.stringify({ paramId: paramId, text: text, createIfNotFound: false })
                     });
                     if (res.ok) {
                         const data = await res.json();
-                        hidden.value = data.id;
+                        if (data && data.id) {
+                            // Добавляем как чипс прямо перед отправкой, чтобы сгенерировался hidden input
+                            addType8Chip(paramId, data.id, text);
+                        }
                     }
                 } catch (err) {
                     console.error('Failed to resolve filter option', err);
                 }
             }
 
+            // Деактивируем пустые инпуты, чтобы не засорять URL
             const inputs = form.querySelectorAll('input, select');
             inputs.forEach(input => {
                 if (input.type === 'checkbox' && !input.checked) {
@@ -389,6 +401,7 @@
                     input.disabled = true;
                 }
             });
+
             form.submit();
         });
 
@@ -481,5 +494,63 @@
         });
 
         cards.forEach(c => container.appendChild(c));
+    }
+        // Функция для удаления чипса
+    function removeType8Chip(link) {
+        const chip = link.closest('.search-chip');
+        if (chip) {
+            chip.remove();
+        }
+    }
+
+    // Функция для динамического добавления чипса
+    function addType8Chip(paramId, id, text) {
+        const chipsContainer = document.getElementById('chips_' + paramId);
+        if (!chipsContainer) return;
+
+        // Проверяем, чтобы такой чипс не был добавлен повторно
+        const exists = chipsContainer.querySelector(`[data-id="${id}"]`);
+        if (exists) return;
+
+        const chip = document.createElement('span');
+        chip.className = 'search-chip';
+        chip.style.margin = '0';
+        chip.setAttribute('data-id', id);
+        chip.innerHTML = `
+            ${text}
+            <a class="search-chip-remove" href="#" onclick="removeType8Chip(this); return false;">✕</a>
+            <input type="hidden" name="p_${paramId}" value="${id}" />
+        `;
+        chipsContainer.appendChild(chip);
+    }
+
+    // Обработка нажатия Enter в поле ввода, чтобы превратить текст в чипс сразу
+    async function handleType8Keydown(e, paramId) {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Запрещаем преждевременную отправку формы
+            const input = e.target;
+            const text = input.value.trim();
+            if (!text) return;
+
+            try {
+                const res = await fetch('/Product/ResolveSelectOption', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
+                    },
+                    body: JSON.stringify({ paramId: paramId, text: text, createIfNotFound: false })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.id) {
+                        addType8Chip(paramId, data.id, text);
+                        input.value = ''; // Очищаем поле ввода
+                    }
+                }
+            } catch (err) {
+                console.error('Error resolving option:', err);
+            }
+        }
     }
 </script>

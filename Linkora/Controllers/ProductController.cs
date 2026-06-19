@@ -63,14 +63,48 @@ namespace Linkora.Controllers
             if (!dto.CreateIfNotFound)
                 return Json(new { id = 0, created = false });
             await using var insCmd = new SqlCommand(@"
-                INSERT INTO SelectOptions (CategoryId, Value, ValueLV, ValueRU)
+                INSERT INTO SelectOptions (CategoryId, Value, ValueLV, ValueRU, IsConf)
                 OUTPUT INSERTED.Id
-                VALUES (@ParamId, @Text, @Text, @Text)", conn);
+                VALUES (@ParamId, @Text, @Text, @Text, false)", conn);
             insCmd.Parameters.AddWithValue("@ParamId", dto.ParamId);
             insCmd.Parameters.AddWithValue("@Text", trimmed);
             var newId = (int)(await insCmd.ExecuteScalarAsync())!;
 
             return Json(new { id = newId, created = true });
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetSelectOptions([FromQuery] int paramId)
+        {
+            var lang = Request.Cookies["lang"] ?? "en";
+            var col = lang switch
+            {
+                "lv" => "ValueLV",
+                "ru" => "ValueRU",
+                _ => "Value"
+            };
+
+            await using var conn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
+            await conn.OpenAsync();
+
+            await using var cmd = new SqlCommand($@"
+        SELECT Id, {col} 
+        FROM SelectOptions 
+        WHERE CategoryId = @ParamId and IsConf = 1", conn);
+            cmd.Parameters.AddWithValue("@ParamId", paramId);
+
+            var options = new List<object>();
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                options.Add(new
+                {
+                    id = reader.GetInt32(0),
+                    text = reader.IsDBNull(1) ? string.Empty : reader.GetString(1)
+                });
+            }
+
+            return Json(options);
         }
         [HttpPost]
         [IgnoreAntiforgeryToken]

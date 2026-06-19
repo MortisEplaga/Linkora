@@ -1,4 +1,6 @@
 ﻿(function (window) {
+    // Кэш для хранения списков (чтобы не запрашивать условную Audi по 100 раз)
+    var optionsCache = {};
 
     function buildFreeTextSelectHtml(paramId, initialText, initialId, options) {
         var safeText = initialText ? String(initialText).replace(/"/g, '&quot;') : '';
@@ -19,25 +21,48 @@
         return inputEl.closest('.free-text-select');
     }
 
-    function getOptionsFromWrap(wrap) {
+    // Загрузка опций: сначала смотрим в HTML, потом в кэш, если пусто — берем с сервера
+    async function loadOptionsForWrap(wrap) {
+        var paramId = wrap.dataset.param;
+
+        // 1. Если данные изначально зашиты в HTML, берем их
+        if (wrap.dataset.options && wrap.dataset.options !== '[]') {
+            try { return JSON.parse(wrap.dataset.options); } catch (e) { }
+        }
+
+        // 2. Если уже скачивали этот ID ранее — берем из памяти
+        if (optionsCache[paramId]) {
+            return optionsCache[paramId];
+        }
+
+        // 3. Иначе стучимся в контроллер
         try {
-            return JSON.parse(wrap.dataset.options || '[]');
+            console.log("🌐 [FreeTextSelect] Запрос опций для CategoryId:", paramId);
+            var res = await fetch('/Product/GetSelectOptions?paramId=' + paramId);
+            if (!res.ok) throw new Error('Ошибка сервера: ' + res.status);
+
+            var data = await res.json(); // Ждем массив [{ id: 2463, text: 'Audi' }]
+            optionsCache[paramId] = data; // Сохраняем в кэш
+            return data;
         } catch (e) {
+            console.error("❌ Не удалось загрузить опции с сервера:", e);
             return [];
         }
     }
 
-    function onFocus(inputEl) {
+    async function onFocus(inputEl) {
         var wrap = getWrap(inputEl);
-        renderDrop(wrap, getOptionsFromWrap(wrap), inputEl.value);
+        var options = await loadOptionsForWrap(wrap);
+        renderDrop(wrap, options, inputEl.value);
     }
 
-    function onInput(inputEl) {
+    async function onInput(inputEl) {
         var wrap = getWrap(inputEl);
-
         var hidden = wrap.querySelector('.free-text-select-id');
         if (hidden) hidden.value = '';
-        renderDrop(wrap, getOptionsFromWrap(wrap), inputEl.value);
+
+        var options = await loadOptionsForWrap(wrap);
+        renderDrop(wrap, options, inputEl.value);
     }
 
     function renderDrop(wrap, options, filterText) {
@@ -48,7 +73,10 @@
             : options;
 
         drop.innerHTML = '';
-        if (!filtered.length) { drop.style.display = 'none'; return; }
+        if (!filtered.length) {
+            drop.style.display = 'none';
+            return;
+        }
 
         filtered.slice(0, 15).forEach(function (opt) {
             var item = document.createElement('div');
@@ -63,9 +91,22 @@
     function selectOption(wrap, opt) {
         var input = wrap.querySelector('.free-text-select-input');
         var hidden = wrap.querySelector('.free-text-select-id');
-        input.value = opt.text;
-        hidden.value = opt.id;
-        hideDrop(wrap);
+        var paramId = wrap.dataset.param;
+
+        if (paramId && typeof window.addType8Chip === 'function') {
+            window.addType8Chip(paramId, opt.id, opt.text);
+            input.value = '';
+            if (hidden) hidden.value = '';
+
+            input.focus();
+            loadOptionsForWrap(wrap).then(function (options) {
+                renderDrop(wrap, options, '');
+            });
+        } else {
+            input.value = opt.text;
+            hidden.value = opt.id;
+            hideDrop(wrap);
+        }
     }
 
     function hideDrop(wrap) {

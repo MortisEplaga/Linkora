@@ -6,6 +6,7 @@
         public int TotalProducts { get; set; }
         public int PendingModeration { get; set; }
         public int PendingReports { get; set; }
+        public int PendingOptions { get; set; }
         public int NewUsersToday { get; set; }
         public int NewProductsToday { get; set; }
         public int ActiveProducts { get; set; }
@@ -52,5 +53,17 @@
         public string ProductStatus { get; set; } = "";
         public string ReporterName { get; set; } = "";
         public string ReasonText { get; set; } = "";
+    }
+    public class AdminConfOptionRow
+    {
+        public int OptionId { get; set; }
+        public string OptionValue { get; set; } 
+        public int ProductId { get; set; }
+        public string ProductName { get; set; }
+        public DateTime? ProductCreatedTime { get; set; }
+        public int UserId { get; set; }
+        public string UserName { get; set; }
+        public int CategoryId { get; set; }
+        public string CategoryName { get; set; }
     }
 }

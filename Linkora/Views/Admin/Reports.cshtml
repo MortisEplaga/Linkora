@@ -7,9 +7,8 @@
     ViewData["Title"] = "Admin — Reports";
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/admin.css" />
-}
+
+<link rel="stylesheet" href="~/css/admin.css" />
 
 <div class="admin-layout">
     @await Html.PartialAsync("Sidebar", "reports")
@@ -43,101 +42,103 @@
             }
             else
             {
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th data-i18n="admin_listing_col">Listing</th>
-                            <th data-i18n="admin_reason_col">Reason</th>
-                            <th data-i18n="admin_reporter_col">Reporter</th>
-                            <th data-i18n="admin_comment_col">Comment</th>
-                            <th data-i18n="admin_listing_status_col">Listing status</th>
-                            <th data-i18n="admin_date_col">Date</th>
-                            <th data-i18n="admin_actions_col">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var r in reports)
-                        {
-                            <tr id="rrow-@r.Id">
-                                <td>
-                                    <div class="admin-report-product">
-                                        @if (r.ProductImage != null)
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="admin_listing_col">Listing</th>
+                                <th data-i18n="admin_reason_col">Reason</th>
+                                <th data-i18n="admin_reporter_col">Reporter</th>
+                                <th data-i18n="admin_comment_col">Comment</th>
+                                <th data-i18n="admin_listing_status_col">Listing status</th>
+                                <th data-i18n="admin_date_col">Date</th>
+                                <th data-i18n="admin_actions_col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var r in reports)
+                            {
+                                <tr id="rrow-@r.Id">
+                                    <td>
+                                        <div class="admin-report-product">
+                                            @if (r.ProductImage != null)
+                                            {
+                                                <img class="admin-report-img" src="@r.ProductImage"
+                                                     onerror="this.src='/img/no-photo.svg'" />
+                                            }
+                                            else
+                                            {
+                                                <div class="admin-report-img" style="display:flex;align-items:center;justify-content:center">
+                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
+                                                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                                                    </svg>
+                                                </div>
+                                            }
+                                            <div>
+                                                <a class="admin-table-product-name"
+                                                   href="/Product/Details/@r.ProductId" target="_blank"
+                                                   style="max-width:160px">@r.ProductName</a>
+                                                <div class="admin-table-product-meta">#@r.ProductId</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span style="font-size:12px;font-weight:600;color:#555">@r.ReasonText</span>
+                                    </td>
+                                    <td style="font-size:13px;color:#555">@r.ReporterName</td>
+                                    <td style="max-width:180px">
+                                        @if (!string.IsNullOrEmpty(r.Comment))
                                         {
-                                            <img class="admin-report-img" src="@r.ProductImage"
-                                                 onerror="this.src='/img/no-photo.svg'" />
+                                            <span style="font-size:12px;color:#666;
+                                                                     display:-webkit-box;-webkit-line-clamp:2;
+                                                                     -webkit-box-orient:vertical;overflow:hidden">
+                                                @r.Comment
+                                            </span>
                                         }
                                         else
                                         {
-                                            <div class="admin-report-img" style="display:flex;align-items:center;justify-content:center">
-                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
-                                                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                                                </svg>
-                                            </div>
+                                            <span style="color:#ccc;font-size:12px">—</span>
                                         }
-                                        <div>
-                                            <a class="admin-table-product-name"
-                                               href="/Product/Details/@r.ProductId" target="_blank"
-                                               style="max-width:160px">@r.ProductName</a>
-                                            <div class="admin-table-product-meta">#@r.ProductId</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <span style="font-size:12px;font-weight:600;color:#555">@r.ReasonText</span>
-                                </td>
-                                <td style="font-size:13px;color:#555">@r.ReporterName</td>
-                                <td style="max-width:180px">
-                                    @if (!string.IsNullOrEmpty(r.Comment))
-                                    {
-                                        <span style="font-size:12px;color:#666;
-                                                                 display:-webkit-box;-webkit-line-clamp:2;
-                                                                 -webkit-box-orient:vertical;overflow:hidden">
-                                            @r.Comment
+                                    </td>
+                                    <td>
+                                        <span class="admin-badge admin-badge-@r.ProductStatus.ToLower()">
+                                            @r.ProductStatus
                                         </span>
-                                    }
-                                    else
-                                    {
-                                        <span style="color:#ccc;font-size:12px">—</span>
-                                    }
-                                </td>
-                                <td>
-                                    <span class="admin-badge admin-badge-@r.ProductStatus.ToLower()">
-                                        @r.ProductStatus
-                                    </span>
-                                </td>
-                                <td style="color:#aaa;font-size:12px;white-space:nowrap">
-                                    @r.CreatedAt.ToString("dd MMM, HH:mm")
-                                </td>
-                                <td>
-                                    <div class="admin-actions">
-                                        @if (status == "Pending" || status == "Reviewed")
-                                        {
-                                            <button class="admin-btn admin-btn-approve"
-                                                    onclick="resolveReport(@r.Id, 'resolve', this)"
-                                                    title="Confirm report — keep listing blocked">
-                                                <span data-i18n="admin_report_confirm">Confirm</span>
-                                            </button>
-                                            <button class="admin-btn admin-btn-reject"
-                                                    onclick="resolveReport(@r.Id, 'reject_report', this)"
-                                                    title="Dismiss report — restore listing">
-                                                <span data-i18n="admin_report_dismiss">Dismiss</span>
-                                            </button>
-                                            <button class="admin-btn admin-btn-view"
-                                                    onclick="approveProduct(@r.ProductId, @r.Id, this)"
-                                                    title="Approve listing and close report">
-                                                <span data-i18n="admin_approve_listing">Approve listing</span>
-                                            </button>
-                                        }
-                                        <a class="admin-btn admin-btn-view"
-                                           href="/Product/Details/@r.ProductId" target="_blank" data-i18n="admin_view">
-                                            View
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                                    </td>
+                                    <td style="color:#aaa;font-size:12px;white-space:nowrap">
+                                        @r.CreatedAt.ToString("dd MMM, HH:mm")
+                                    </td>
+                                    <td>
+                                        <div class="admin-actions">
+                                            @if (status == "Pending" || status == "Reviewed")
+                                            {
+                                                <button class="admin-btn admin-btn-approve"
+                                                        onclick="resolveReport(@r.Id, 'resolve', this)"
+                                                        title="Confirm report — keep listing blocked">
+                                                    <span data-i18n="admin_report_confirm">Confirm</span>
+                                                </button>
+                                                <button class="admin-btn admin-btn-reject"
+                                                        onclick="resolveReport(@r.Id, 'reject_report', this)"
+                                                        title="Dismiss report — restore listing">
+                                                    <span data-i18n="admin_report_dismiss">Dismiss</span>
+                                                </button>
+                                                <button class="admin-btn admin-btn-view"
+                                                        onclick="approveProduct(@r.ProductId, @r.Id, this)"
+                                                        title="Approve listing and close report">
+                                                    <span data-i18n="admin_approve_listing">Approve listing</span>
+                                                </button>
+                                            }
+                                            <a class="admin-btn admin-btn-view"
+                                               href="/Product/Details/@r.ProductId" target="_blank" data-i18n="admin_view">
+                                                View
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
 
                 @if (totalPages > 1)
                 {
