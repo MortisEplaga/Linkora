@@ -299,6 +299,7 @@ namespace Linkora.Controllers
                 await using var cmd = new SqlCommand(@"
             UPDATE Products
             SET PublishDurationDays = @D,
+                Status = 'Moderation',
                 ExpiresAt = DATEADD(DAY, @D, GETDATE())
             WHERE Id = @Id AND UserId = @UserId", conn);
                 cmd.Parameters.AddWithValue("@D", publishDays.Value);
