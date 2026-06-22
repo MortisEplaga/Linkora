@@ -755,5 +755,50 @@
                 return template.replace("{0}", author).replace("{1}", product);
             }
             return message;
-        }    </script>
+        }
+                @if (User.Identity!.IsAuthenticated)
+        {
+                <text>
+                (function () {
+                    const notifConnection = new signalR.HubConnectionBuilder()
+                        .withUrl("/hubs/messages")
+                        .withAutomaticReconnect()
+                        .build();
+
+                    notifConnection.on("NotificationReceived", function (notif) {
+                        notifAllData.unshift({
+                            id: notif.id,
+                            message: notif.message,
+                            isRead: false,
+                            createdAt: notif.createdAt,
+                            fromUserId: notif.fromUserId,
+                            fromUserName: notif.fromUserName || null,
+                            fromUserAvatar: notif.fromUserAvatar || null,
+                            productId: notif.productId || null,
+                            productName: notif.productName || null,
+                            productImage: notif.productImage || null,
+                        });
+
+                        const unread = notifAllData.filter(function (n) { return !n.isRead; }).length;
+                        updateNotifBadge(unread);
+
+                        if (notifModalOpen) {
+                            renderNotifList();
+                        }
+                    });
+
+                    notifConnection.on("UnreadCountChanged", function () {
+                        fetch('/Notifications/Count')
+                            .then(function (r) { return r.json(); })
+                            .then(function (data) { updateNotifBadge(data.count); })
+                            .catch(function () {});
+                    });
+
+                    notifConnection.start().catch(function (err) {
+                        console.warn("SignalR (notifications) failed to start:", err);
+                    });
+                })();
+                </text>
+        }
+</script>
 </header>

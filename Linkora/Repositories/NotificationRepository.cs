@@ -1,4 +1,6 @@
 ﻿using Linkora.Models;
+using Linkora.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Data.SqlClient;
 
 namespace Linkora.Repositories
@@ -6,10 +8,12 @@ namespace Linkora.Repositories
     public class NotificationRepository : INotificationRepository
     {
         private readonly string _connectionString;
+        private readonly IHubContext<MessageHub> _hubContext;
 
-        public NotificationRepository(IConfiguration configuration)
+        public NotificationRepository(IConfiguration configuration, IHubContext<MessageHub> hubContext)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection")!;
+            _hubContext = hubContext;
         }
 
         public async Task<int> CreateAsync(int userId, int? fromUserId, int? productId, string message)
@@ -24,7 +28,22 @@ namespace Linkora.Repositories
             cmd.Parameters.AddWithValue("@FromUserId", (object?)fromUserId ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@ProductId", (object?)productId ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@Message", message);
-            return (int)(await cmd.ExecuteScalarAsync())!;
+            var id = (int)(await cmd.ExecuteScalarAsync())!;
+
+            await _hubContext.Clients.Group($"user_{userId}").SendAsync("NotificationReceived", new
+            {
+                id,
+                message,
+                fromUserId,
+                productId,
+                createdAt = DateTime.UtcNow.ToString("dd MMM, HH:mm"),
+                isRead = false,
+                fromUserAvatar = (string?)null,
+                productName = (string?)null,
+                productImage = (string?)null,
+            });
+
+            return id;
         }
 
         public async Task<List<NotificationViewModel>> GetByUserAsync(int userId, int count = 20)
@@ -104,7 +123,7 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
 
             await using var followersCmd = new SqlCommand(
-                "SELECT FollowerId FROM Subscriptions WHERE FollowingId = @AuthorId", conn); 
+                "SELECT FollowerId FROM Subscriptions WHERE FollowingId = @AuthorId", conn);
             followersCmd.Parameters.AddWithValue("@AuthorId", authorId);
             await using var r = await followersCmd.ExecuteReaderAsync();
             var followerIds = new List<int>();
@@ -118,13 +137,27 @@ namespace Linkora.Repositories
             foreach (var followerId in followerIds)
             {
                 await using var insertCmd = new SqlCommand(@"
-            INSERT INTO Notifications (UserId, FromUserId, ProductId, Message, IsRead, CreatedAt)
-            VALUES (@UserId, @FromUserId, @ProductId, @Message, 0, GETDATE())", conn);
+                    INSERT INTO Notifications (UserId, FromUserId, ProductId, Message, IsRead, CreatedAt)
+                    OUTPUT INSERTED.Id
+                    VALUES (@UserId, @FromUserId, @ProductId, @Message, 0, GETDATE())", conn);
                 insertCmd.Parameters.AddWithValue("@UserId", followerId);
                 insertCmd.Parameters.AddWithValue("@FromUserId", authorId);
                 insertCmd.Parameters.AddWithValue("@ProductId", productId);
                 insertCmd.Parameters.AddWithValue("@Message", message);
-                await insertCmd.ExecuteNonQueryAsync();
+                var id = (int)(await insertCmd.ExecuteScalarAsync())!;
+
+                await _hubContext.Clients.Group($"user_{followerId}").SendAsync("NotificationReceived", new
+                {
+                    id,
+                    message,
+                    fromUserId = authorId,
+                    productId,
+                    createdAt = DateTime.UtcNow.ToString("dd MMM, HH:mm"),
+                    isRead = false,
+                    fromUserAvatar = (string?)null,
+                    productName,
+                    productImage = (string?)null,
+                });
             }
         }
     }

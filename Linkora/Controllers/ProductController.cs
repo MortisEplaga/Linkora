@@ -191,17 +191,75 @@ namespace Linkora.Controllers
             return View();
         }
         [Authorize]
-        public async Task<IActionResult> My(string tab = "active")
+        public async Task<IActionResult> My(string tab = "Active")
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var counts = await _productRepository.GetCountsByStatusAsync(userId);
+
+            if (tab == "Purchased")
+            {
+                var connectionString = _configuration.GetConnectionString("DefaultConnection")!;
+                var purchased = new List<Linkora.Models.Product>();
+                await using var conn = new SqlConnection(connectionString);
+                await conn.OpenAsync();
+
+                const string sql = @"
+       SELECT p.Id, p.Name, p.Address, p.CreatedTime,
+       COALESCE(
+           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm 
+            WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+           p.AvatarImagePath
+       ) AS AvatarImagePath,
+       p.Status,
+       o.Cost AS Price
+FROM Products p
+INNER JOIN (
+    SELECT ProductId, Cost, CreatedTime,
+           ROW_NUMBER() OVER (PARTITION BY ProductId ORDER BY CreatedTime DESC) AS rn
+    FROM Orders
+    WHERE UserId = @UserId AND OrderStatus = 1
+) o ON o.ProductId = p.Id AND o.rn = 1
+ORDER BY o.CreatedTime DESC";
+
+                await using var cmd = new SqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@UserId", userId);
+                await using var r = await cmd.ExecuteReaderAsync();
+                while (await r.ReadAsync())
+                    purchased.Add(new Linkora.Models.Product
+                    {
+                        Id = r.GetInt32(0),
+                        Name = r.IsDBNull(1) ? "" : r.GetString(1),
+                        Address = r.IsDBNull(2) ? null : r.GetString(2),
+                        CreatedTime = r.IsDBNull(3) ? null : r.GetDateTime(3),
+                        AvatarImagePath = r.IsDBNull(4) ? null : r.GetString(4),
+                        Status = Linkora.Models.ProductStatus.Succeeded,
+                        Price = r.IsDBNull(6) ? null : r.GetDecimal(6),
+                    });
+
+                await r.CloseAsync();
+                await using var countCmd = new Microsoft.Data.SqlClient.SqlCommand(@"
+            SELECT COUNT(DISTINCT p.Id)
+            FROM Products p
+            JOIN Conversations conv ON conv.ProductId = p.Id
+                AND conv.IsSystem = 1
+                AND conv.BuyerId = @UserId
+            WHERE p.Status = 'Succeeded'", conn);
+                countCmd.Parameters.AddWithValue("@UserId", userId);
+                var purchasedCount = (int)(await countCmd.ExecuteScalarAsync())!;
+                counts["Purchased"] = purchasedCount;
+
+                ViewBag.Products = purchased;
+                ViewBag.Tab = tab;
+                ViewBag.StatusCounts = counts;
+                return View();
+            }
+
             var products = await _productRepository.GetByUserAsync(userId, tab);
-            var counts = await _productRepository.GetCountsByStatusAsync(userId); 
             ViewBag.Products = products;
             ViewBag.Tab = tab;
-            ViewBag.StatusCounts = counts; 
+            ViewBag.StatusCounts = counts;
             return View();
         }
-
         [Authorize]
         public async Task<IActionResult> Edit(int id)
         {
@@ -346,7 +404,7 @@ namespace Linkora.Controllers
             if (product.Status != ProductStatus.Active)
                 return BadRequest("Только активные объявления можно завершить");
 
-            var success = await _productRepository.CompleteDealAsync(id, userId);
+            var success = await _productRepository.CompleteDealAsync(id, userId, otherUserId);
             if (!success) return BadRequest("Не удалось завершить сделку");
 
             return Ok();

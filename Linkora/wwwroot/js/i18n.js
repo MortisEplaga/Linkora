@@ -10,6 +10,9 @@
 
 const TRANSLATIONS = {
     en: {
+        'tab_purchased': 'Purchased',
+        'grid_view': 'Grid',
+        'list_view': 'List',
         'admin_reject_modal_title': 'Reject listing',
         'admin_conf_options': 'Option Confirmation',
         'admin_category_param_col': 'Category / Parameter',
@@ -310,6 +313,9 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'tab_purchased': 'Iegādātie',
+        'grid_view': 'Režģis',
+        'list_view': 'Saraksts',
         'admin_reject_modal_title': 'Noraidīt sludinājumu',
         'admin_conf_options': 'Opciju apstiprināšana',
         'admin_category_param_col': 'Kategorija / Parametrs',
@@ -620,6 +626,9 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'tab_purchased': 'Куплено',
+        'grid_view': 'Сетка',
+        'list_view': 'Список',
         'admin_reject_modal_title': 'Отклонить объявление',
         'admin_conf_options': 'Подтверждение параметров',
         'admin_category_param_col': 'Категория / Параметр',

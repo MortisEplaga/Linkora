@@ -495,40 +495,103 @@ namespace Linkora.Repositories
                 result[r.GetInt32(0)] = r.IsDBNull(1) ? "" : r.GetString(1);
             return result;
         }
-        public async Task<bool> CompleteDealAsync(int productId, int userId)
+        public async Task<bool> CompleteDealAsync(int productId, int sellerId, int buyerId)
         {
             using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync();
 
-            var getImageSql = "SELECT AvatarImagePath FROM Products WHERE Id = @Id AND UserId = @UserId";
-            using var getCommand = new SqlCommand(getImageSql, connection);
-            getCommand.Parameters.AddWithValue("@Id", productId);
-            getCommand.Parameters.AddWithValue("@UserId", userId);
+            using var transaction = connection.BeginTransaction();
 
-            var imagePath = await getCommand.ExecuteScalarAsync() as string;
-
-            if (!string.IsNullOrEmpty(imagePath))
+            try
             {
-                var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", imagePath.TrimStart('/'));
-                if (File.Exists(fullPath))
+                var selectSql = @"
+            SELECT 
+                p.AvatarImagePath,
+                p.Qty,
+                (SELECT mpc.Value 
+                 FROM MapperProductCategory mpc
+                 INNER JOIN Category c ON mpc.CategoryId = c.Id
+                 WHERE mpc.ProductId = p.Id AND c.Name = 'Price, €') AS Cost,
+                (SELECT mpc.Value 
+                 FROM MapperProductCategory mpc
+                 INNER JOIN Category c ON mpc.CategoryId = c.Id
+                 WHERE mpc.ProductId = p.Id AND c.Name = 'With delivery') AS Delivery
+            FROM Products p
+            WHERE p.Id = @ProductId AND p.UserId = @SellerId AND p.Status = 'Active'";
+
+                using var selectCmd = new SqlCommand(selectSql, connection, transaction);
+                selectCmd.Parameters.AddWithValue("@ProductId", productId);
+                selectCmd.Parameters.AddWithValue("@SellerId", sellerId);
+
+                string imagePath = null;
+                int qty = 0;
+                decimal? cost = 0;
+                string delivery = "";
+
+                using (var reader = await selectCmd.ExecuteReaderAsync())
                 {
-                    File.Delete(fullPath);
+                    if (!await reader.ReadAsync())
+                    {
+                        await transaction.RollbackAsync();
+                        return false;
+                    }
+
+                    imagePath = reader.IsDBNull(0) ? null : reader.GetString(0);
+                    qty = reader.GetInt32(1);
+                    cost = reader.IsDBNull(2) ? 0 : reader.GetDecimal(2);
+                    delivery = reader.IsDBNull(3) ? "" : reader.GetString(3);
                 }
+
+
+                if (!string.IsNullOrEmpty(imagePath))
+                {
+                    var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", imagePath.TrimStart('/'));
+                    if (File.Exists(fullPath))
+                    {
+                        File.Delete(fullPath);
+                    }
+                }
+
+                var updateSql = @"
+            UPDATE Products 
+            SET Status = 'Succeeded', 
+                AvatarImagePath = NULL,
+                ArchivedAt = GETDATE()
+            WHERE Id = @ProductId AND UserId = @SellerId AND Status = 'Active'";
+
+                using var updateCmd = new SqlCommand(updateSql, connection, transaction);
+                updateCmd.Parameters.AddWithValue("@ProductId", productId);
+                updateCmd.Parameters.AddWithValue("@SellerId", sellerId);
+
+                var rowsAffected = await updateCmd.ExecuteNonQueryAsync();
+                if (rowsAffected == 0)
+                {
+                    await transaction.RollbackAsync();
+                    return false;
+                }
+
+                var insertSql = @"
+            INSERT INTO Orders (OrderStatus, CreatedTime, Delivery, Qty, Cost, ProductId, UserId)
+            VALUES (@OrderStatus, GETDATE(), @Delivery, @Qty, @Cost, @ProductId, @BuyerId)";
+
+                using var insertCmd = new SqlCommand(insertSql, connection, transaction);
+                insertCmd.Parameters.AddWithValue("@OrderStatus", 1);
+                insertCmd.Parameters.AddWithValue("@Delivery", delivery);
+                insertCmd.Parameters.AddWithValue("@Qty", qty);
+                insertCmd.Parameters.AddWithValue("@Cost", cost.Value);
+                insertCmd.Parameters.AddWithValue("@ProductId", productId);
+                insertCmd.Parameters.AddWithValue("@BuyerId", buyerId);
+
+                await insertCmd.ExecuteNonQueryAsync();
+
+                await transaction.CommitAsync();
+                return true;
             }
-
-            var sql = @"
-        UPDATE Products 
-        SET Status = 'Succeeded', 
-            AvatarImagePath = NULL,
-            ArchivedAt = GETDATE()
-        WHERE Id = @Id AND UserId = @UserId AND Status = 'Active'";
-
-            using var command = new SqlCommand(sql, connection);
-            command.Parameters.AddWithValue("@Id", productId);
-            command.Parameters.AddWithValue("@UserId", userId);
-
-            var rowsAffected = await command.ExecuteNonQueryAsync();
-            return rowsAffected > 0;
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw; 
+            }
         }
         public async Task<bool> ReactivateProductAsync(int productId, int userId)
         {

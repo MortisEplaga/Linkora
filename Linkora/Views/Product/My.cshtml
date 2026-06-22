@@ -12,6 +12,7 @@
         ("Rejected",    "Rejected"),
         ("Archived",    "Archived"),
         ("Succeeded",   "Succeeded"),
+        ("Purchased",   "Purchased"),
     };
 }
 
@@ -99,10 +100,13 @@
                                 </svg>
                             </button>
                         }
-                        <a class="myads-action-btn" asp-controller="Product" asp-action="Edit" asp-route-id="@p.Id" data-i18n="edit_btn">Edit</a>
-                        <button class="myads-action-btn myads-action-danger" onclick="deleteAd(@p.Id)" data-i18n="delete_btn">
-                            Delete
-                        </button>
+                        @if (tab != "Purchased")
+                        {
+                            <a class="myads-action-btn" asp-controller="Product" asp-action="Edit" asp-route-id="@p.Id" data-i18n="edit_btn">Edit</a>
+                            <button class="myads-action-btn myads-action-danger" onclick="deleteAd(@p.Id)" data-i18n="delete_btn">
+                                Delete
+                            </button>
+                        }
                     </div>
                 </div>
             }

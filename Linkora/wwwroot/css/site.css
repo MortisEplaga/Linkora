@@ -1,4 +1,8 @@
-﻿.free-text-select {
+﻿[onclick] {
+    cursor: pointer;
+}
+
+.free-text-select {
     position: relative;
 }
 
