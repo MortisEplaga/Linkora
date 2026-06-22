@@ -254,7 +254,8 @@
                         <span class="details-param-value">
                             @if (vm.Param.Type == 3)
                             {
-                                @(val == "true" ? "Yes" : "No")
+                                var key = val == "true" ? "yes" : "no";
+                                <span data-i18n="@key">@(val == "true" ? "Yes" : "No")</span>
                             }
                             else
                             {
