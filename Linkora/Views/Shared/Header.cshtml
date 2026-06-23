@@ -327,6 +327,25 @@
         }
         const translations = {
             en: {
+                notif_fav_qty_changed: "Quantity: {0} → {1}",
+                notif_fav_title_changed: "Title changed",
+                notif_fav_address_changed: "Address: {0} → {1}",
+                notif_fav_description_updated: "Description updated",
+                notif_fav_price_changed: "Price: {0}€ → {1}€",
+                notif_fav_characteristics_updated: "Characteristics updated",
+                notif_subscription_seller_banned: "Seller {0} has been suspended",
+                notif_favourite_archived_ban: "A listing in your favorites was archived due to seller suspension",
+                notif_favourite_updated: 'Updated: {0}',
+                notif_deal_sold: '{0} purchased your listing',
+                notif_deal_bought: 'You purchased a listing from {0}',
+                notif_review_received: '{0} left you a {1}★ review',
+                notif_user_banned: 'Your account has been suspended',
+                notif_user_unbanned: 'Your account suspension has been lifted',
+                notif_report_on_product: 'A report was filed on your listing. Reason: {0}',
+                notif_product_approved: 'Your listing was approved',
+                notif_parameter_approved: 'Parameter "{0}" was approved',
+                notif_parameter_rejected: 'Parameter "{0}" was rejected and listing blocked',
+                notif_subscription_sold: '{0} sold their listing',
                 notif_rejected_reason: "Your listing was rejected. Reason: {0}",
                 notif_new_listing: "{0} posted a new listing: {1}",
                 all_regions: "All regions",
@@ -359,6 +378,25 @@
                 settings_language: "Language"
             },
             lv: {
+                notif_fav_qty_changed: "Daudzums: {0} → {1}",
+                notif_fav_title_changed: "Nosaukums mainīts",
+                notif_fav_address_changed: "Adrese: {0} → {1}",
+                notif_fav_description_updated: "Apraksts atjaunināts",
+                notif_fav_price_changed: "Cena: {0}€ → {1}€",
+                notif_fav_characteristics_updated: "Raksturlielumi atjaunināti",
+                notif_subscription_seller_banned: "Pārdevējs {0} ir apturēts",
+                notif_favourite_archived_ban: "Sludinājums no jūsu izlases ir arhivēts pārdevēja apturēšanas dēļ",
+                notif_favourite_updated: "Atjaunināts: {0}",
+                notif_deal_sold: "{0} iegādājās jūsu sludinājumu",
+                notif_deal_bought: "Jūs iegādājāties sludinājumu no {0}",
+                notif_review_received: "{0} atstāja jums {1}★ atsauksmi",
+                notif_user_banned: "Jūsu konts ir apturēts",
+                notif_user_unbanned: "Jūsu konta apturēšana ir atcelta",
+                notif_report_on_product: "Par jūsu sludinājumu tika iesniegta sūdzība. Iemesls: {0}",
+                notif_product_approved: "Jūsu sludinājums ir apstiprināts",
+                notif_parameter_approved: "Parametrs \"{0}\" ir apstiprināts",
+                notif_parameter_rejected: "Parametrs \"{0}\" tika noraidīts un sludinājums bloķēts",
+                notif_subscription_sold: "{0} pārdeva savu sludinājumu",
                 notif_rejected_reason: "Jūsu sludinājums tika noraidīts. Iemesls: {0}",
                 notif_new_listing: "{0} publicēja jaunu sludinājumu: {1}",
                 all_regions: "Visi reģioni",
@@ -391,6 +429,25 @@
                 settings_language: "Valoda"
             },
             ru: {
+                notif_fav_qty_changed: "Количество: {0} → {1}",
+                notif_fav_title_changed: "Название изменено",
+                notif_fav_address_changed: "Адрес: {0} → {1}",
+                notif_fav_description_updated: "Описание обновлено",
+                notif_fav_price_changed: "Цена: {0}€ → {1}€",
+                notif_fav_characteristics_updated: "Характеристики обновлены",
+                notif_subscription_seller_banned: "Продавец {0} был заблокирован",
+                notif_favourite_archived_ban: "Объявление из вашего избранного перенесено в архив из-за блокировки продавца",
+                notif_favourite_updated: "Обновлено: {0}",
+                notif_deal_sold: "{0} приобрёл ваше объявление",
+                notif_deal_bought: "Вы приобрели объявление у {0}",
+                notif_review_received: "{0} оставил вам отзыв {1}★",
+                notif_user_banned: "Ваш аккаунт был заблокирован",
+                notif_user_unbanned: "Блокировка вашего аккаунта снята",
+                notif_report_on_product: "На ваше объявление поступила жалоба. Причина: {0}",
+                notif_product_approved: "Ваше объявление одобрено",
+                notif_parameter_approved: "Параметр \"{0}\" одобрен",
+                notif_parameter_rejected: "Параметр \"{0}\" отклонён, объявление заблокировано",
+                notif_subscription_sold: "{0} продал своё объявление",
                 notif_rejected_reason: "Ваше объявление было отклонено. Причина: {0}",
                 notif_new_listing: "{0} опубликовал новое объявление: {1}",
                 all_regions: "Все регионы",
@@ -445,33 +502,34 @@
             document.getElementById('notifModal').classList.add('open');
             await loadAllNotifications();
         }
-                function translateNotificationMessage(message) {
-            const lang = localStorage.getItem('lang') || 'en';
+        
+        // function translateNotificationMessage(message) {
+        //     const lang = localStorage.getItem('lang') || 'en';
 
-            if (message.startsWith('REJECTED_REASON::')) {
-                const parts = message.split('::');
-                const reasonEn = parts[1] || '';
-                const reasonLv = parts[2] || reasonEn;
-                const reasonRu = parts[3] || reasonEn;
-                const comment = parts[4] || '';
-                const reasonText = lang === 'lv' ? reasonLv : (lang === 'ru' ? reasonRu : reasonEn);
-                const template = (translations[lang] && translations[lang].notif_rejected_reason)
-                    || translations.en.notif_rejected_reason;
-                let result = template.replace('{0}', reasonText);
-                if (comment) result += ' (' + comment + ')';
-                return result;
-            }
+        //     if (message.startsWith('REJECTED_REASON::')) {
+        //         const parts = message.split('::');
+        //         const reasonEn = parts[1] || '';
+        //         const reasonLv = parts[2] || reasonEn;
+        //         const reasonRu = parts[3] || reasonEn;
+        //         const comment = parts[4] || '';
+        //         const reasonText = lang === 'lv' ? reasonLv : (lang === 'ru' ? reasonRu : reasonEn);
+        //         const template = (translations[lang] && translations[lang].notif_rejected_reason)
+        //             || translations.en.notif_rejected_reason;
+        //         let result = template.replace('{0}', reasonText);
+        //         if (comment) result += ' (' + comment + ')';
+        //         return result;
+        //     }
 
-            const pattern = /^(.+?) posted a new listing: (.+)$/;
-            const match = message.match(pattern);
-            if (match && translations[lang] && translations[lang]["notif_new_listing"]) {
-                const author = match[1];
-                const product = match[2];
-                const template = translations[lang]["notif_new_listing"];
-                return template.replace("{0}", author).replace("{1}", product);
-            }
-            return message;
-        }
+        //     const pattern = /^(.+?) posted a new listing: (.+)$/;
+        //     const match = message.match(pattern);
+        //     if (match && translations[lang] && translations[lang]["notif_new_listing"]) {
+        //         const author = match[1];
+        //         const product = match[2];
+        //         const template = translations[lang]["notif_new_listing"];
+        //         return template.replace("{0}", author).replace("{1}", product);
+        //     }
+        //     return message;
+        // }
 
         function closeNotifModal() {
             if (!document.getElementById('notifOverlay')) return;
@@ -535,7 +593,7 @@
                          src="${n.fromUserAvatar || '/img/no-photo.svg'}"
                          onerror="this.src='/img/no-photo.svg'" />
                     <div class="notif-item-body">
-                        <div class="notif-item-msg">${escapeHtml(translateNotificationMessage(n.message))}</div>
+                        <div class="notif-item-msg">${escapeHtml(translateNotificationMessage(n.message, n))}</div>
                         <div class="notif-item-time">${n.createdAt}</div>
                         ${n.productId && n.productName ? `
                             <div class="notif-item-product">
@@ -728,35 +786,93 @@
 
         document.addEventListener('DOMContentLoaded', applyTranslations);
 
-        function translateNotificationMessage(message) {
+        function translateNotificationMessage(message, notif) {
             const lang = localStorage.getItem('lang') || 'en';
+            const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
+            const localDict = translations[lang] || translations['en'];
+
+            function tl(key) { return dict[key] || localDict[key] || key; }
+            function fmt(template) {
+                let s = template;
+                for (let i = 1; i < arguments.length; i++)
+                    s = s.replace('{' + (i - 1) + '}', arguments[i] ?? '');
+                return s;
+            }
 
             try {
                 const parsed = JSON.parse(message);
-                if (parsed && parsed.type === 'rejected_reason') {
-                    const reasonText = lang === 'lv' ? parsed.reasonLv
-                        : lang === 'ru' ? parsed.reasonRu
-                        : parsed.reasonEn;
-                    const template = (translations[lang] && translations[lang].notif_rejected_reason)
-                        || translations.en.notif_rejected_reason;
-                    let result = template.replace('{0}', reasonText);
-                    if (parsed.comment) result += ' (' + parsed.comment + ')';
-                    return result;
+                if (parsed && parsed.type) {
+                    const from = notif?.fromUserName || '';
+                    switch (parsed.type) {
+                        case 'rejected_reason': {
+                            const reason = lang === 'lv' ? parsed.reasonLv
+                                : lang === 'ru' ? parsed.reasonRu : parsed.reasonEn;
+                            let r = fmt(tl('notif_rejected_reason'), reason || '');
+                            if (parsed.comment) r += ' (' + parsed.comment + ')';
+                            return r;
+                        }
+                        case 'deal_sold':           return fmt(tl('notif_deal_sold'), from);
+                        case 'deal_bought':         return fmt(tl('notif_deal_bought'), from);
+                        case 'review_received':     return fmt(tl('notif_review_received'), from, parsed.rating || '');
+                        case 'user_banned':         return tl('notif_user_banned');
+                        case 'user_unbanned':       return tl('notif_user_unbanned');
+                        case 'subscription_seller_banned': return fmt(tl('notif_subscription_seller_banned'), from);
+                        case 'favourite_archived_ban':    return tl('notif_favourite_archived_ban');
+                        case 'report_on_product': {
+                            const reason = lang === 'lv' ? parsed.reasonLv
+                                : lang === 'ru' ? parsed.reasonRu : parsed.reasonEn;
+                            return fmt(tl('notif_report_on_product'), reason || '');
+                        }
+                        case 'product_approved':    return tl('notif_product_approved');
+                        case 'parameter_approved': {
+                            const pName = lang === 'lv' ? parsed.paramNameLv
+                                : lang === 'ru' ? parsed.paramNameRu : parsed.paramName;
+                            return fmt(tl('notif_parameter_approved'), pName || '');
+                        }
+                        case 'parameter_rejected': {
+                            const pName = lang === 'lv' ? parsed.paramNameLv
+                                : lang === 'ru' ? parsed.paramNameRu : parsed.paramName;
+                            return fmt(tl('notif_parameter_rejected'), pName || '');
+                        } 
+                        case 'subscription_sold':   return fmt(tl('notif_subscription_sold'), from);
+                        case 'favourite_updated': {
+                            const changeItems = parsed.changes || [];
+                            const translated = changeItems.map(item => {
+                                switch (item.type) {
+                                    case 'title_changed':
+                                        return tl('notif_fav_title_changed');
+                                    case 'address_changed':
+                                        return fmt(tl('notif_fav_address_changed'), item.oldAddress, item.newAddress);
+                                    case 'description_updated':
+                                        return tl('notif_fav_description_updated');
+                                    case 'price_changed':
+                                        return fmt(tl('notif_fav_price_changed'), item.oldPrice, item.newPrice);
+                                    case 'characteristics_updated':
+                                        return tl('notif_fav_characteristics_updated');
+                                    case 'qty_changed':                                
+                                        return fmt(tl('notif_fav_qty_changed'), item.oldQty, item.newQty);
+                                    default:
+                                        return item; 
+                                }
+                            });
+                            if (translated.every(t => typeof t === 'string') && parsed.changes && parsed.changes.length > 0 && typeof parsed.changes[0] === 'string') {
+                                return fmt(tl('notif_favourite_updated'), parsed.changes.join(', '));
+                            }
+                            return fmt(tl('notif_favourite_updated'), translated.join(', '));
+                        }
+                    }
                 }
-            } catch {
-            }
+            } catch {}
 
-            const pattern = /^(.+?) posted a new listing: (.+)$/;
-            const match = message.match(pattern);
-            if (match && translations[lang] && translations[lang]["notif_new_listing"]) {
-                const author = match[1];
-                const product = match[2];
-                const template = translations[lang]["notif_new_listing"];
-                return template.replace("{0}", author).replace("{1}", product);
+            const match = message.match(/^(.+?) posted a new listing: (.+)$/);
+            if (match) {
+                const template = localDict['notif_new_listing'] || translations.en['notif_new_listing'];
+                if (template) return template.replace('{0}', match[1]).replace('{1}', match[2]);
             }
             return message;
         }
-                @if (User.Identity!.IsAuthenticated)
+
+        @if (User.Identity!.IsAuthenticated)
         {
                 <text>
                 (function () {

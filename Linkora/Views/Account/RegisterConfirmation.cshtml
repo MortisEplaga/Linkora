@@ -5,20 +5,25 @@
 <div class="auth-page">
     <div class="auth-card" style="text-align:center">
         <div style="font-size:48px;margin-bottom:16px">✉️</div>
-        <h2 class="auth-title" style="text-align:center">Check your email</h2>
+        <h2 class="auth-title" style="text-align:center" data-i18n="check_email_title">Check your email</h2>
         <p style="color:#555;font-size:15px;line-height:1.6;margin-bottom:24px">
-            We sent a confirmation link to<br />
+            <span data-i18n="check_email_sent_text">We sent a confirmation link to</span><br />
             <strong>@ViewBag.Email</strong>
         </p>
-        <p style="color:#aaa;font-size:13px">
+        <p style="color:#aaa;font-size:13px" data-i18n="check_email_instructions">
             Click the link in the email to complete registration.
             If you don't see it, check your spam folder.
         </p>
         <div style="margin-top:24px;border-top:1px solid #f0f0f0;padding-top:20px">
             <a asp-controller="Account" asp-action="Login"
-               style="color:#00b0a3;font-size:14px;text-decoration:none;font-weight:600">
-                Back to sign in
-            </a>
+               style="color:#00b0a3;font-size:14px;text-decoration:none;font-weight:600"
+               data-i18n="check_email_back_link">Back to sign in</a>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', applyTranslations);
+    </script>
+}

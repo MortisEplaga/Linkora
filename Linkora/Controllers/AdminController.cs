@@ -183,6 +183,20 @@ namespace Linkora.Controllers
             cmd.Parameters.AddWithValue("@S", status);
             cmd.Parameters.AddWithValue("@Id", id);
             await cmd.ExecuteNonQueryAsync();
+
+            if (status == "Active")
+            {
+                await using var ownerCmd = new SqlCommand(
+                    "SELECT UserId FROM Products WHERE Id = @Id", conn);
+                ownerCmd.Parameters.AddWithValue("@Id", id);
+                var ownerObj = await ownerCmd.ExecuteScalarAsync();
+                if (ownerObj != null && ownerObj != DBNull.Value)
+                {
+                    var msg = System.Text.Json.JsonSerializer.Serialize(new { type = "product_approved" });
+                    await _notificationRepository.CreateAsync((int)ownerObj, null, id, msg);
+                }
+            }
+
             return Ok();
         }
         public async Task<IActionResult> Users(int page = 1, string? search = null, string role = "all")
@@ -252,13 +266,72 @@ namespace Linkora.Controllers
 
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
+
+            string? oldRole;
+            await using (var getRoleCmd = new SqlCommand("SELECT Role FROM Users WHERE Id = @Id", conn))
+            {
+                getRoleCmd.Parameters.AddWithValue("@Id", id);
+                oldRole = (await getRoleCmd.ExecuteScalarAsync()) as string;
+            }
+
             await using var cmd = new SqlCommand("UPDATE Users SET Role = @R WHERE Id = @Id", conn);
             cmd.Parameters.AddWithValue("@R", role);
             cmd.Parameters.AddWithValue("@Id", id);
             await cmd.ExecuteNonQueryAsync();
+
+            if (role == "banned" && oldRole != "banned")
+            {
+                await _productRepository.ArchiveProductsByUserAsync(id);
+
+                var msg = System.Text.Json.JsonSerializer.Serialize(new { type = "user_banned" });
+                await _notificationRepository.CreateAsync(id, null, null, msg);
+
+                await using var subsCmd = new SqlCommand(
+                    "SELECT FollowerId FROM Subscriptions WHERE FollowingId = @Id", conn);
+                subsCmd.Parameters.AddWithValue("@Id", id);
+                await using var subsR = await subsCmd.ExecuteReaderAsync();
+                var subIds = new List<int>();
+                while (await subsR.ReadAsync()) subIds.Add(subsR.GetInt32(0));
+                await subsR.CloseAsync();
+
+                if (subIds.Any())
+                {
+                    var subBanMsg = System.Text.Json.JsonSerializer.Serialize(new { type = "subscription_seller_banned" });
+                    foreach (var subId in subIds)
+                        await _notificationRepository.CreateAsync(subId, id, null, subBanMsg);
+                }
+
+                await using var favCmd = new SqlCommand(@"
+        SELECT DISTINCT f.UserId, f.ProductId 
+        FROM Favourites f 
+        JOIN Products p ON f.ProductId = p.Id 
+        WHERE p.UserId = @Id AND f.Can = 1", conn);
+                favCmd.Parameters.AddWithValue("@Id", id);
+                await using var favR = await favCmd.ExecuteReaderAsync();
+                var favUsers = new List<(int UserId, int ProductId)>();
+                while (await favR.ReadAsync())
+                {
+                    favUsers.Add((favR.GetInt32(0), favR.GetInt32(1)));
+                }
+                await favR.CloseAsync();
+
+                if (favUsers.Any())
+                {
+                    var favBanMsg = System.Text.Json.JsonSerializer.Serialize(new { type = "favourite_archived_ban" });
+                    foreach (var fav in favUsers.Where(f => f.UserId != id)) 
+                    {
+                        await _notificationRepository.CreateAsync(fav.UserId, null, fav.ProductId, favBanMsg);
+                    }
+                }
+            }
+            else if (role != "banned" && oldRole == "banned")
+            {
+                var msg = System.Text.Json.JsonSerializer.Serialize(new { type = "user_unbanned" });
+                await _notificationRepository.CreateAsync(id, null, null, msg);
+            }
+
             return Ok();
         }
-
         [HttpPost, IgnoreAntiforgeryToken]
         public async Task<IActionResult> DeleteUser(int id)
         {
@@ -448,18 +521,94 @@ namespace Linkora.Controllers
         {
             if (!IsAdmin()) return Forbid();
 
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            await using var infoCmd = new SqlCommand(@"
+        SELECT TOP 1 p.Id, p.UserId, c.Name, c.NameRU, c.NameLV
+        FROM SelectOptions so
+        JOIN MapperProductCategory mpc
+            ON ',' + mpc.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%'
+        JOIN Products p ON mpc.ProductId = p.Id
+        JOIN Category c ON so.CategoryId = c.Id
+        WHERE so.Id = @OptionId", conn);
+            infoCmd.Parameters.AddWithValue("@OptionId", id);
+
+            int? productId = null, ownerId = null;
+            string? paramName = null, paramNameRu = null, paramNameLv = null;
+            await using (var r = await infoCmd.ExecuteReaderAsync())
+            {
+                if (await r.ReadAsync())
+                {
+                    productId = r.GetInt32(0);
+                    ownerId = r.IsDBNull(1) ? null : r.GetInt32(1);
+                    paramName = r.IsDBNull(2) ? null : r.GetString(2);
+                    paramNameRu = r.IsDBNull(3) ? paramName : r.GetString(3);
+                    paramNameLv = r.IsDBNull(4) ? paramName : r.GetString(4);
+                }
+            }
+
             bool success = await _productRepository.ApproveSelectOptionAsync(id);
+
+            if (success && ownerId.HasValue)
+            {
+                var msg = System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    type = "parameter_approved",
+                    paramName = paramName ?? "",
+                    paramNameRu = paramNameRu ?? "",
+                    paramNameLv = paramNameLv ?? ""
+                });
+                await _notificationRepository.CreateAsync(ownerId.Value, null, productId, msg);
+            }
+
             if (success) return Ok();
             return BadRequest();
         }
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RejectProductByOption(int optionId, int productId)
         {
             if (!IsAdmin()) return Forbid();
 
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var infoCmd = new SqlCommand(@"
+        SELECT p.UserId, c.Name, c.NameRU, c.NameLV
+        FROM SelectOptions so
+        JOIN Category c ON so.CategoryId = c.Id
+        JOIN Products p ON p.Id = @ProductId
+        WHERE so.Id = @OptionId", conn);
+            infoCmd.Parameters.AddWithValue("@OptionId", optionId);
+            infoCmd.Parameters.AddWithValue("@ProductId", productId);
+
+            int? ownerId = null;
+            string? paramName = null, paramNameRu = null, paramNameLv = null;
+            await using (var r = await infoCmd.ExecuteReaderAsync())
+            {
+                if (await r.ReadAsync())
+                {
+                    ownerId = r.IsDBNull(0) ? null : r.GetInt32(0);
+                    paramName = r.IsDBNull(1) ? null : r.GetString(1);
+                    paramNameRu = r.IsDBNull(2) ? paramName : r.GetString(2);
+                    paramNameLv = r.IsDBNull(3) ? paramName : r.GetString(3);
+                }
+            }
+
             bool success = await _productRepository.RejectProductAndOptionAsync(optionId, productId);
+
+            if (success && ownerId.HasValue)
+            {
+                var msg = System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    type = "parameter_rejected",
+                    paramName = paramName ?? "",
+                    paramNameRu = paramNameRu ?? "",
+                    paramNameLv = paramNameLv ?? ""
+                });
+                await _notificationRepository.CreateAsync(ownerId.Value, null, productId, msg);
+            }
+
             if (success) return Ok();
             return BadRequest();
         }

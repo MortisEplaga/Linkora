@@ -294,7 +294,7 @@ namespace Linkora.Repositories
             WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
            p.AvatarImagePath
        ) AS AvatarImagePath, p.CategoryId,
-               p.Status,
+               p.Status, p.Qty,
                u.UserName, u.AvatarImagePath, u.IsCompany, u.PhoneNumber, u.Id,
                p.UserId, u.Email, u.CreatedAt
         FROM Products p
@@ -314,18 +314,19 @@ namespace Linkora.Repositories
                 AvatarImagePath = r.IsDBNull(5) ? null : r.GetString(5),
                 CategoryId = r.IsDBNull(6) ? null : r.GetInt32(6),
                 Status = r.IsDBNull(7)
-           ? ProductStatus.Active
-           : Enum.Parse<ProductStatus>(r.GetString(7), true),
-                UserId = r.IsDBNull(13) ? null : r.GetInt32(13),
+                        ? ProductStatus.Active
+                        : Enum.Parse<ProductStatus>(r.GetString(7), true),
+                Qty = r.IsDBNull(8) ? null : r.GetInt32(8),           
+                UserId = r.IsDBNull(14) ? null : r.GetInt32(14),      
                 Seller = new SellerViewModel
                 {
-                    Id = r.IsDBNull(12) ? 0 : r.GetInt32(12),
-                    UserName = r.IsDBNull(8) ? null : r.GetString(8),
-                    AvatarPath = r.IsDBNull(9) ? null : r.GetString(9),
-                    IsCompany = !r.IsDBNull(10) && r.GetBoolean(10),
-                    PhoneNumber = r.IsDBNull(11) ? null : r.GetString(11),
-                    Email = r.IsDBNull(14) ? null : r.GetString(14),
-                    CreatedAt = r.IsDBNull(15) ? null : r.GetDateTime(15),
+                    Id = r.IsDBNull(13) ? 0 : r.GetInt32(13),        
+                    UserName = r.IsDBNull(9) ? null : r.GetString(9),
+                    AvatarPath = r.IsDBNull(10) ? null : r.GetString(10),
+                    IsCompany = !r.IsDBNull(11) && r.GetBoolean(11),
+                    PhoneNumber = r.IsDBNull(12) ? null : r.GetString(12),
+                    Email = r.IsDBNull(15) ? null : r.GetString(15),
+                    CreatedAt = r.IsDBNull(16) ? null : r.GetDateTime(16),
                 },
             };
             await r.CloseAsync();
@@ -601,7 +602,7 @@ namespace Linkora.Repositories
             var sql = @"
         UPDATE Products 
         SET Status = 'Active', 
-            ArchivedAt = NULL
+            ArchivedAt = GETUTCDATE() 
         WHERE Id = @Id AND UserId = @UserId AND Status = 'Archived'";
 
             using var command = new SqlCommand(sql, connection);
@@ -610,6 +611,21 @@ namespace Linkora.Repositories
 
             var rowsAffected = await command.ExecuteNonQueryAsync();
             return rowsAffected > 0;
+        }
+        public async Task ArchiveProductsByUserAsync(int userId)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var sql = @"
+        UPDATE Products 
+        SET Status = 'Archived', 
+            ArchivedAt = GETUTCDATE() 
+        WHERE UserId = @UserId AND Status != 'Archived'";
+
+            using var command = new SqlCommand(sql, connection);
+            command.Parameters.AddWithValue("@UserId", userId);
+            await command.ExecuteNonQueryAsync();
         }
         public async Task<IEnumerable<Product>> GetUserProductsByStatusAsync(int userId, string status)
         {
@@ -682,7 +698,7 @@ namespace Linkora.Repositories
                                       CreatedTime, Status, PublishDurationDays, ExpiresAt)
                 OUTPUT INSERTED.Id
                 VALUES (@Name, @Description, @Qty, @Address, @CategoryId, @UserId, @AvatarImagePath,
-                        GETDATE(), 'Moderation', @Duration, DATEADD(DAY, @Duration, GETDATE()))", conn);
+                        GETDATE(), 'Active', @Duration, DATEADD(DAY, @Duration, GETDATE()))", conn);
 
             cmd.Parameters.AddWithValue("@Name", product.Name);
             cmd.Parameters.AddWithValue("@Description", (object?)product.Description ?? DBNull.Value);

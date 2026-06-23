@@ -13,19 +13,21 @@ namespace Linkora.Controllers
     {
         private readonly IReportRepository _reportRepository;
         private readonly IProductRepository _productRepository;
-
+        private readonly INotificationRepository _notificationRepository;
         private readonly string _connectionString;
-        private readonly IConfiguration _configuration;
+
         public ReportController(
             IReportRepository reportRepository,
             IProductRepository productRepository,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            INotificationRepository notificationRepository)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection")!;
-
             _reportRepository = reportRepository;
             _productRepository = productRepository;
+            _notificationRepository = notificationRepository;
         }
+
         [HttpGet("reasons")]
         public async Task<IActionResult> GetReportReasons()
         {
@@ -67,6 +69,32 @@ namespace Linkora.Controllers
                 userId,
                 request.ReportReasonId,
                 request.Comment);
+
+            if (product.UserId.HasValue && product.UserId.Value != userId)
+            {
+                string reasonEn = "", reasonLv = "", reasonRu = "";
+                await using var rConn = new SqlConnection(_connectionString);
+                await rConn.OpenAsync();
+                await using var rCmd = new SqlCommand(
+                    "SELECT ReasonText, ReasonTextLV, ReasonTextRU FROM ReportReasons WHERE Id = @Id", rConn);
+                rCmd.Parameters.AddWithValue("@Id", request.ReportReasonId);
+                await using var rR = await rCmd.ExecuteReaderAsync();
+                if (await rR.ReadAsync())
+                {
+                    reasonEn = rR.IsDBNull(0) ? "" : rR.GetString(0);
+                    reasonLv = rR.IsDBNull(1) ? reasonEn : rR.GetString(1);
+                    reasonRu = rR.IsDBNull(2) ? reasonEn : rR.GetString(2);
+                }
+
+                var msg = System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    type = "report_on_product",
+                    reasonEn,
+                    reasonLv,
+                    reasonRu
+                });
+                await _notificationRepository.CreateAsync(product.UserId.Value, null, request.ProductId, msg);
+            }
 
             return Ok(new { success = true, reportId = report.Id });
         }

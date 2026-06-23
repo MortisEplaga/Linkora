@@ -8,26 +8,34 @@
         @if (success)
         {
             <div style="font-size:48px;margin-bottom:16px">✅</div>
-            <h2 class="auth-title" style="text-align:center">Email confirmed!</h2>
-            <p style="color:#555;font-size:15px;line-height:1.6;margin-bottom:24px">
+            <h2 class="auth-title" style="text-align:center" data-i18n="email_confirmed_title">Email confirmed!</h2>
+            <p style="color:#555;font-size:15px;line-height:1.6;margin-bottom:24px" data-i18n="email_confirmed_message">
                 Your account is ready. You are now signed in.
             </p>
             <a asp-controller="Home" asp-action="Index" class="auth-submit"
-               style="display:inline-block;text-decoration:none;padding:12px 32px">
+               style="display:inline-block;text-decoration:none;padding:12px 32px"
+               data-i18n="email_confirmed_go_home">
                 Go to home page
             </a>
         }
         else
         {
             <div style="font-size:48px;margin-bottom:16px">❌</div>
-            <h2 class="auth-title" style="text-align:center">Invalid or expired link</h2>
-            <p style="color:#555;font-size:15px;line-height:1.6;margin-bottom:24px">
+            <h2 class="auth-title" style="text-align:center" data-i18n="email_invalid_title">Invalid or expired link</h2>
+            <p style="color:#555;font-size:15px;line-height:1.6;margin-bottom:24px" data-i18n="email_invalid_message">
                 The confirmation link is invalid or has already been used.
             </p>
             <a asp-controller="Account" asp-action="Register"
-               style="color:#00b0a3;font-size:14px;text-decoration:none;font-weight:600">
+               style="color:#00b0a3;font-size:14px;text-decoration:none;font-weight:600"
+               data-i18n="email_invalid_register_again">
                 Register again
             </a>
         }
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', applyTranslations);
+    </script>
+}

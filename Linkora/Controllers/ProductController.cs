@@ -306,6 +306,20 @@ ORDER BY o.CreatedTime DESC";
                 return BadRequest("Total media size exceeds 50 MB");
 
             var paramValues = ParseParamsJson(paramsJson);
+            var oldParamValues = await _productRepository.GetParamValuesAsync(id);
+            int? priceParamId = null;
+            {
+                await using var pConn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
+                await pConn.OpenAsync();
+                await using var pCmd = new SqlCommand(@"
+        SELECT TOP 1 mpc.CategoryId
+        FROM MapperProductCategory mpc
+        JOIN Category c ON c.Id = mpc.CategoryId AND c.Name = 'Price, €'
+        WHERE mpc.ProductId = @Id", pConn);
+                pCmd.Parameters.AddWithValue("@Id", id);
+                var pRes = await pCmd.ExecuteScalarAsync();
+                if (pRes != null && pRes != DBNull.Value) priceParamId = (int)pRes;
+            }
             bool wasArchived = existing.Status == ProductStatus.Archived;
 
             var keepPaths = string.IsNullOrEmpty(keepMediaJson)
@@ -349,7 +363,71 @@ ORDER BY o.CreatedTime DESC";
                 CategoryId = categoryId,
                 AvatarImagePath = newAvatar,
             }, paramValues);
+            var changes = new List<object>();
+            if (!string.Equals(existing.Name, title, StringComparison.Ordinal))
+                changes.Add(new { type = "title_changed" });
 
+            if (!string.Equals(existing.Address ?? "", address ?? "", StringComparison.Ordinal))
+                changes.Add(new
+                {
+                    type = "address_changed",
+                    oldAddress = existing.Address ?? "—",
+                    newAddress = address ?? "—"
+                });
+            if (existing.Qty != qty)
+                changes.Add(new
+                {
+                    type = "qty_changed",
+                    oldQty = existing.Qty?.ToString() ?? "—",
+                    newQty = qty?.ToString() ?? "—"
+                });
+            if (!string.Equals(existing.Description ?? "", description ?? "", StringComparison.Ordinal))
+                changes.Add(new { type = "description_updated" });
+            if (priceParamId.HasValue)
+            {
+                paramValues.TryGetValue(priceParamId.Value, out var newPriceStr);
+                decimal? newPrice = decimal.TryParse(newPriceStr,
+                    System.Globalization.NumberStyles.Any,
+                    System.Globalization.CultureInfo.InvariantCulture, out var np) ? np : null;
+                if (existing.Price != newPrice)
+                    changes.Add(new
+                    {
+                        type = "price_changed",
+                        oldPrice = existing.Price?.ToString("N2") ?? "—",
+                        newPrice = newPrice?.ToString("N2") ?? "—"
+                    });
+            }
+            var otherChanged = paramValues
+                .Where(kv => kv.Key != priceParamId &&
+                             (!oldParamValues.TryGetValue(kv.Key, out var ov) || ov != kv.Value))
+                .Count()
+                + oldParamValues
+                .Where(kv => kv.Key != priceParamId && !paramValues.ContainsKey(kv.Key))
+                .Count();
+            if (otherChanged > 0) changes.Add(new { type = "characteristics_updated" });
+
+            if (changes.Any())
+            {
+                await using var favConn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
+                await favConn.OpenAsync();
+                await using var favCmd = new SqlCommand(
+                    "SELECT DISTINCT UserId FROM Favourites WHERE ProductId = @ProductId AND Can = 1", favConn);
+                favCmd.Parameters.AddWithValue("@ProductId", id);
+                await using var favR = await favCmd.ExecuteReaderAsync();
+                var favUserIds = new List<int>();
+                while (await favR.ReadAsync()) favUserIds.Add(favR.GetInt32(0));
+
+                if (favUserIds.Any())
+                {
+                    var payload = new
+                    {
+                        type = "favourite_updated",
+                        changes = changes.Take(3).ToList()
+                    };
+                    foreach (var favUid in favUserIds.Where(uid => uid != userId))
+                        await _notificationRepository.CreateAsync(favUid, null, id, System.Text.Json.JsonSerializer.Serialize(payload));
+                }
+            }
             if (publishDays.HasValue && new[] { 7, 14, 30, 60, 90 }.Contains(publishDays.Value))
             {
                 await using var conn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
@@ -406,6 +484,32 @@ ORDER BY o.CreatedTime DESC";
 
             var success = await _productRepository.CompleteDealAsync(id, userId, otherUserId);
             if (!success) return BadRequest("Не удалось завершить сделку");
+
+            await using var dealConn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
+            await dealConn.OpenAsync();
+
+            var soldMsg = System.Text.Json.JsonSerializer.Serialize(new { type = "deal_sold" });
+            await _notificationRepository.CreateAsync(userId, otherUserId, id, soldMsg);
+
+            var boughtMsg = System.Text.Json.JsonSerializer.Serialize(new { type = "deal_bought" });
+            await _notificationRepository.CreateAsync(otherUserId, userId, id, boughtMsg);
+
+            await using var subsCmd = new SqlCommand(
+                "SELECT FollowerId FROM Subscriptions WHERE FollowingId = @SellerId AND FollowerId != @BuyerId",
+                dealConn);
+            subsCmd.Parameters.AddWithValue("@SellerId", userId);
+            subsCmd.Parameters.AddWithValue("@BuyerId", otherUserId);
+            await using var subsR = await subsCmd.ExecuteReaderAsync();
+            var subIds = new List<int>();
+            while (await subsR.ReadAsync()) subIds.Add(subsR.GetInt32(0));
+            await subsR.CloseAsync();
+
+            if (subIds.Any())
+            {
+                var subSoldMsg = System.Text.Json.JsonSerializer.Serialize(new { type = "subscription_sold" });
+                foreach (var subId in subIds)
+                    await _notificationRepository.CreateAsync(subId, userId, id, subSoldMsg);
+            }
 
             return Ok();
         }

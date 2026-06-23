@@ -11,12 +11,15 @@ namespace Linkora.Controllers
     public class ReviewsController : ControllerBase
     {
         private readonly IMessageRepository _messageRepository;
+        private readonly INotificationRepository _notificationRepository;
         private readonly string _connectionString;
 
-        public ReviewsController(IMessageRepository messageRepository, IConfiguration configuration)
+        public ReviewsController(IMessageRepository messageRepository, IConfiguration configuration,
+            INotificationRepository notificationRepository)
         {
             _messageRepository = messageRepository;
             _connectionString = configuration.GetConnectionString("DefaultConnection")!;
+            _notificationRepository = notificationRepository;
         }
 
         [HttpPost("Create")]
@@ -30,6 +33,9 @@ namespace Linkora.Controllers
                 rating: dto.Rating,
                 comment: dto.Comment
             );
+            var msg = System.Text.Json.JsonSerializer.Serialize(new { type = "review_received", rating = dto.Rating });
+            await _notificationRepository.CreateAsync(dto.TargetUserId, userId, dto.ProductId, msg);
+
             return Ok(new { reviewId });
         }
         [HttpGet("My")]

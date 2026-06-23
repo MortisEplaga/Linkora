@@ -21,6 +21,7 @@ namespace Linkora.Repositories
                                                 string? search = null);
         Task<bool> CompleteDealAsync(int productId, int sellerId, int buyerId);
         Task<bool> ReactivateProductAsync(int productId, int userId);
+        Task ArchiveProductsByUserAsync(int userId);
         Task<IEnumerable<Product>> GetUserProductsByStatusAsync(int userId, string status);
         Task<bool> UpdateProductStatusAsync(int productId, ProductStatus status);
         Task<int> CreateAsync(Product product, Dictionary<int, string> paramValues, int publishDurationDays = 30);

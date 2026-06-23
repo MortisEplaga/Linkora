@@ -5,8 +5,8 @@
 <div class="auth-page">
     <div class="auth-card">
         <div class="auth-tabs">
-            <a class="auth-tab" asp-controller="Account" asp-action="Login">Sign in</a>
-            <a class="auth-tab auth-tab-active" asp-controller="Account" asp-action="Register">Register</a>
+            <a class="auth-tab" asp-controller="Account" asp-action="Login" data-i18n="sign_in_tab">Sign in</a>
+            <a class="auth-tab auth-tab-active" asp-controller="Account" asp-action="Register" data-i18n="register_tab">Register</a>
         </div>
 
         @if (ViewBag.Error != null)
@@ -34,22 +34,22 @@
                 </svg>
             </a>
         </div>
-        <div class="auth-divider"><span>or</span></div>
+        <div class="auth-divider"><span data-i18n="or_text">or</span></div>
 
         <form method="post" asp-controller="Account" asp-action="Register">
             <div class="auth-type-row">
                 <label class="auth-type-option">
                     <input type="radio" name="isCompany" value="false" checked />
                     <span class="auth-type-circle"></span>
-                    Private
+                    <span data-i18n="account_type_private">Private</span>
                 </label>
                 <label class="auth-type-option">
                     <input type="radio" name="isCompany" value="true" />
                     <span class="auth-type-circle"></span>
-                    Business
+                    <span data-i18n="account_type_business">Business</span>
                 </label>
             </div>
-            <div class="auth-type-hint">You won't be able to change this later.</div>
+            <div class="auth-type-hint" data-i18n="account_type_hint">You won't be able to change this later.</div>
 
             <div class="auth-field">
                 <input type="text"
@@ -57,7 +57,8 @@
                        name="username"
                        placeholder="Username"
                        autocomplete="username"
-                       required />
+                       required
+                       data-i18n-placeholder="username_placeholder" />
             </div>
 
             <div class="auth-field">
@@ -66,14 +67,16 @@
                        name="email"
                        placeholder="Email"
                        autocomplete="email"
-                       required />
+                       required
+                       data-i18n-placeholder="email_placeholder" />
             </div>
             <div class="auth-field">
                 <input type="tel"
                        class="auth-input"
                        name="phone"
                        placeholder="Phone (optional)"
-                       autocomplete="tel" />
+                       autocomplete="tel"
+                       data-i18n-placeholder="phone_placeholder" />
             </div>
             <div class="auth-field auth-field-password">
                 <input type="password"
@@ -84,15 +87,16 @@
                        autocomplete="new-password"
                        oninput="checkStrength(this)"
                        minlength="8"
-                       required />
+                       required
+                       data-i18n-placeholder="password_placeholder" />
                 <button type="button" class="auth-eye" onclick="togglePass('regPwd', this)">👁</button>
             </div>
 
             <ul class="auth-rules" id="passRules">
-                <li id="rule-len">At least 8 characters</li>
-                <li id="rule-upper">Uppercase letter</li>
-                <li id="rule-lower">Lowercase letter</li>
-                <li id="rule-digit">Digit</li>
+                <li id="rule-len" data-i18n="rule_length">At least 8 characters</li>
+                <li id="rule-upper" data-i18n="rule_upper">Uppercase letter</li>
+                <li id="rule-lower" data-i18n="rule_lower">Lowercase letter</li>
+                <li id="rule-digit" data-i18n="rule_digit">Digit</li>
             </ul>
 
             <div class="auth-field auth-field-password">
@@ -102,21 +106,23 @@
                        id="regConfirm"
                        placeholder="Confirm password"
                        autocomplete="new-password"
-                       required />
+                       required
+                       data-i18n-placeholder="confirm_placeholder" />
                 <button type="button" class="auth-eye" onclick="togglePass('regConfirm', this)">👁</button>
             </div>
 
             <label class="auth-check-row">
                 <input type="checkbox" id="chkTerms" required />
-                <span>I accept the <a href="#" onclick="openTermsModal(); return false;">Terms of Service</a></span>
+                <span data-i18n="accept_terms_prefix">I accept the </span>
+                <a href="#" onclick="openTermsModal(); return false;" data-i18n="terms_link">Terms of Service</a>
             </label>
 
-            <button type="submit" class="auth-submit">Register</button>
+            <button type="submit" class="auth-submit" data-i18n="register_button">Register</button>
         </form>
 
         <div class="auth-footer">
-            Already have an account?
-            <a asp-controller="Account" asp-action="Login">Sign in</a>
+            <span data-i18n="have_account_text">Already have an account?</span>
+            <a asp-controller="Account" asp-action="Login" data-i18n="sign_in_link">Sign in</a>
         </div>
     </div>
 </div>
@@ -192,4 +198,6 @@
             }
         }, { scope: 'public_profile,email' });
     }
+
+    document.addEventListener('DOMContentLoaded', applyTranslations);
 </script>
