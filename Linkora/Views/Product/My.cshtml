@@ -46,9 +46,12 @@
                 <line x1="16" y1="17" x2="8" y2="17" />
             </svg>
             <p data-i18n="no_ads_yet">You have no @(tab == "active" ? "active" : "") ads yet.</p>
-            <a class="myads-create-btn" asp-controller="Product" asp-action="Create" data-i18n="post_ad_btn">
-                + Post an ad
-            </a>
+            @if (User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value != "banned")
+            {
+                <a asp-controller="Product" asp-action="Create" class="header-post-btn">
+                    <span data-i18n="post_ad_btn">+ Post an ad</span>
+                </a>
+            }
         </div>
     }
     else
@@ -100,7 +103,7 @@
                                 </svg>
                             </button>
                         }
-                        @if (tab != "Purchased")
+                        @if (tab != "Purchased" && User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value != "banned")
                         {
                             <a class="myads-action-btn" asp-controller="Product" asp-action="Edit" asp-route-id="@p.Id" data-i18n="edit_btn">Edit</a>
                             <button class="myads-action-btn myads-action-danger" onclick="deleteAd(@p.Id)" data-i18n="delete_btn">

@@ -32,6 +32,15 @@ namespace Linkora.Controllers
             return result;
         }
         [HttpPost]
+        private async Task<bool> IsUserBannedAsync(int userId)
+        {
+            await using var conn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand("SELECT Role FROM Users WHERE Id = @Id", conn);
+            cmd.Parameters.AddWithValue("@Id", userId);
+            var role = await cmd.ExecuteScalarAsync() as string;
+            return role == "banned";
+        }
         public async Task<IActionResult> ResolveSelectOption([FromBody] ResolveSelectOptionDto dto)
         {
             if (dto == null || string.IsNullOrWhiteSpace(dto.Text))
@@ -267,7 +276,7 @@ ORDER BY o.CreatedTime DESC";
             if (product == null) return NotFound();
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             if (product.UserId != userId) return Forbid();
-
+            if (await IsUserBannedAsync(userId)) return Forbid();
             string? categoryName = null;
             if (product.CategoryId.HasValue)
             {
@@ -277,6 +286,7 @@ ORDER BY o.CreatedTime DESC";
 
             ViewBag.Product = product;
             ViewBag.CategoryName = categoryName;
+
             return View();
         }
 
@@ -297,6 +307,7 @@ ORDER BY o.CreatedTime DESC";
     string? keepMediaJson = null, bool replaceMedia = false, int? publishDays = null)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            if (await IsUserBannedAsync(userId)) return Forbid();
             var existing = await _productRepository.GetByIdAsync(id);
             if (existing == null) return NotFound();
             if (existing.UserId != userId) return Forbid();
@@ -454,6 +465,7 @@ ORDER BY o.CreatedTime DESC";
         public async Task<IActionResult> Delete(int id)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            if (await IsUserBannedAsync(userId)) return Forbid();
             var isAdmin = User.IsInRole("admin");
 
             var product = await _productRepository.GetByIdAsync(id);
@@ -476,6 +488,7 @@ ORDER BY o.CreatedTime DESC";
         public async Task<IActionResult> CompleteDeal(int id, int otherUserId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            if (await IsUserBannedAsync(userId)) return Forbid();
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null) return NotFound();
             if (product.UserId != userId) return Forbid();
@@ -539,7 +552,7 @@ ORDER BY o.CreatedTime DESC";
                 return BadRequest("Total media size exceeds 50 MB");
 
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-
+            if (await IsUserBannedAsync(userId)) return Forbid();
             int duration = 30;
             if (publishDays.HasValue && new[] { 7, 14, 30, 60, 90 }.Contains(publishDays.Value))
             {

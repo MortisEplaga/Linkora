@@ -194,9 +194,26 @@
 
             @if (User.Identity?.IsAuthenticated == true)
             {
-                <a asp-controller="Product" asp-action="Create" class="header-post-btn">
-                    <span data-i18n="post_ad_btn">+ Post an ad</span>
-                </a>
+                var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+                if (role != "banned")
+                {
+                    <a asp-controller="Product" asp-action="Create" class="header-post-btn">
+                        <span data-i18n="post_ad_btn">+ Post an ad</span>
+                    </a>
+                }
+                else
+                {
+                    <button type="button" class="header-post-btn" id="banned-btn" onclick="flashRed(this)">
+                        <span data-i18n="post_ad_btn">+ Post an ad</span>
+                    </button>
+
+                    <script>
+                        function flashRed(btn) {
+                            btn.classList.add('flash-red');
+                            setTimeout(() => btn.classList.remove('flash-red'), 500);
+                        }
+                    </script>
+                }
             }
             else
             {

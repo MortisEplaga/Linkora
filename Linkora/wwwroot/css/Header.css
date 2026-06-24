@@ -6,7 +6,13 @@
     --search-h: 60px;
     --radius: 10px;
 }
-
+.flash-red {
+    background-color: red !important;
+    color: white !important;
+    transition: background-color 0.1s;
+    border-radius: 20px;
+    background: var(--background-color, red);
+}
 .site-header {
     width: 100%;
     font-family: inherit;
