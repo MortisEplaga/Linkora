@@ -10,6 +10,10 @@
 
 const TRANSLATIONS = {
     en: {
+        'tech_support': "Tech Support",
+        'ban_label': "BAN",
+        'support_chat': "Support Chat",
+        'banned_chat_notice': "Your account is restricted. You can only chat with Support.",
         'email_confirmed_page_title': 'Email confirmed',
         'email_invalid_page_title': 'Invalid link',
         'email_confirmed_title': 'Email confirmed!',
@@ -369,6 +373,10 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'tech_support': "Tehniskā atbalsta",
+        'ban_label': "BAN",
+        'support_chat': "Čats ar atbalstu",
+        'banned_chat_notice': "Jūsu konts ir ierobežots. Jūs varat sazināties tikai ar atbalstu.",
         'email_confirmed_page_title': 'E-pasts apstiprināts',
         'email_invalid_page_title': 'Nederīga saite',
         'email_confirmed_title': 'E-pasts apstiprināts!',
@@ -738,6 +746,10 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'tech_support': "Техподдержка",
+        'ban_label': "BAN",
+        'support_chat': "Чат с поддержкой",
+        'banned_chat_notice': "Ваш аккаунт ограничен. Вы можете общаться только с Поддержкой.",
         'email_confirmed_page_title': 'Email подтверждён',
         'email_invalid_page_title': 'Недействительная ссылка',
         'email_confirmed_title': 'Email подтверждён!',

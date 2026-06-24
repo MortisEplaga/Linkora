@@ -1,5 +1,7 @@
-﻿using Linkora.Models;
+﻿using Humanizer;
+using Linkora.Models;
 using Microsoft.Data.SqlClient;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Linkora.Repositories
 {
@@ -19,6 +21,9 @@ namespace Linkora.Repositories
         Task<int?> GetReviewTargetIdAsync(int conversationId, int userId);
         Task<bool> HasUserReviewedAsync(int conversationId, int userId);
         Task<int> CreateReviewAsync(int authorId, int targetUserId, int productId, int rating, string? comment);
+        Task<string> GetUserStatusAsync(int userId);
+        Task<int> GetOrCreateSupportConversationAsync(int userId);
+
     }
 
     public class MessageRepository : IMessageRepository
@@ -29,6 +34,45 @@ namespace Linkora.Repositories
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection")!;
         }
+        public async Task<int> GetOrCreateSupportConversationAsync(int userId)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            const int systemAccountId = 3; 
+
+            await using var findCmd = new SqlCommand(@"
+                SELECT Id FROM Conversations 
+                WHERE BuyerId = @UserId AND IsSupport = 1", conn);
+            findCmd.Parameters.AddWithValue("@UserId", userId);
+
+            var existing = await findCmd.ExecuteScalarAsync();
+            if (existing != null) return (int)existing;
+
+            await using var createCmd = new SqlCommand(@"
+                INSERT INTO Conversations (ProductId, BuyerId, SellerId, CreatedAt, IsSystem, IsSupport)
+                OUTPUT INSERTED.Id
+                VALUES (NULL, @UserId, @SystemId, GETDATE(), 0, 1)", conn);
+            createCmd.Parameters.AddWithValue("@UserId", userId);
+            createCmd.Parameters.AddWithValue("@SystemId", systemAccountId);
+
+            return (int)(await createCmd.ExecuteScalarAsync())!;
+        }
+        public async Task<string> GetUserStatusAsync(int userId)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand("SELECT Role FROM Users WHERE Id = @Id", conn);
+            cmd.Parameters.AddWithValue("@Id", userId);
+            await using var r = await cmd.ExecuteReaderAsync();
+            if (await r.ReadAsync())
+            {
+                string role = r.IsDBNull(0) ? null : r.GetString(0);
+                return role;
+            }
+            return "user";
+        }
+
         public async Task<bool> CanReviewAsync(int conversationId, int userId)
         {
             await using var conn = new SqlConnection(_connectionString);
@@ -165,28 +209,51 @@ namespace Linkora.Repositories
             var result = new List<Conversation>();
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
+
             await using var cmd = new SqlCommand(@"
-                SELECT c.Id, c.ProductId, c.BuyerId, c.SellerId, c.IsSystem, c.CreatedAt,
-                       p.Name, COALESCE(
-           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
-            WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+        WITH user_role AS (
+    SELECT Role FROM Users WHERE Id = @UserId
+)
+SELECT c.Id, c.ProductId, c.BuyerId, c.SellerId, c.IsSystem, c.IsSupport, c.CreatedAt,
+       p.Name,
+       COALESCE(
+           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
            p.AvatarImagePath
        ) AS AvatarImagePath,
-                       CASE WHEN c.BuyerId = @UserId THEN su.UserName ELSE bu.UserName END,
-                       CASE WHEN c.BuyerId = @UserId THEN su.AvatarImagePath ELSE bu.AvatarImagePath END,
-                       CASE WHEN c.BuyerId = @UserId THEN c.SellerId ELSE c.BuyerId END,
-                       (SELECT TOP 1 Text FROM Messages WHERE ConversationId = c.Id ORDER BY SentAt DESC),
-                       (SELECT TOP 1 SentAt FROM Messages WHERE ConversationId = c.Id ORDER BY SentAt DESC),
-                       (SELECT COUNT(*) FROM Messages WHERE ConversationId = c.Id AND IsRead = 0 AND SenderId != @UserId)
-                FROM Conversations c
-                LEFT JOIN Products p ON p.Id = c.ProductId
-                LEFT JOIN Users bu ON bu.Id = c.BuyerId
-                LEFT JOIN Users su ON su.Id = c.SellerId
-                WHERE c.BuyerId = @UserId OR c.SellerId = @UserId
-                ORDER BY (SELECT TOP 1 SentAt FROM Messages WHERE ConversationId = c.Id ORDER BY SentAt DESC) DESC", conn);
+       CASE 
+           WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN bu.UserName
+           WHEN c.IsSupport = 1 AND ur.Role != 'admin' THEN 'Tech Support'
+           WHEN c.BuyerId = @UserId THEN su.UserName ELSE bu.UserName 
+       END AS OtherUserName,
+       CASE 
+           WHEN c.IsSupport = 1 AND ur.Role != 'admin' THEN NULL
+           WHEN c.BuyerId = @UserId THEN su.AvatarImagePath ELSE bu.AvatarImagePath 
+       END AS OtherUserAvatar,
+       CASE 
+           WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN c.BuyerId
+           WHEN c.BuyerId = @UserId THEN c.SellerId ELSE c.BuyerId 
+       END AS OtherUserId,
+       CASE 
+            WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN CAST(0 AS BIT)
+            WHEN c.BuyerId = @UserId THEN CAST(IIF(su.Role = 'banned', 1, 0) AS BIT)
+            ELSE CAST(IIF(bu.Role = 'banned', 1, 0) AS BIT)
+        END AS OtherUserIsBanned,
+       (SELECT TOP 1 Text FROM Messages WHERE ConversationId = c.Id ORDER BY SentAt DESC) AS LastMessage,
+       (SELECT TOP 1 SentAt FROM Messages WHERE ConversationId = c.Id ORDER BY SentAt DESC) AS LastMessageAt,
+       (SELECT COUNT(*) FROM Messages WHERE ConversationId = c.Id AND IsRead = 0 AND SenderId != @UserId AND IsAdmin = 0) AS UnreadCount
+FROM Conversations c
+CROSS JOIN user_role ur
+LEFT JOIN Products p ON p.Id = c.ProductId
+LEFT JOIN Users bu ON bu.Id = c.BuyerId
+LEFT JOIN Users su ON su.Id = c.SellerId
+WHERE (c.BuyerId = @UserId OR c.SellerId = @UserId OR (c.IsSupport = 1 AND ur.Role = 'admin'))
+ORDER BY LastMessageAt DESC", conn);
+
             cmd.Parameters.AddWithValue("@UserId", userId);
+
             await using var r = await cmd.ExecuteReaderAsync();
             while (await r.ReadAsync())
+            {
                 result.Add(new Conversation
                 {
                     Id = r.GetInt32(0),
@@ -194,46 +261,70 @@ namespace Linkora.Repositories
                     BuyerId = r.GetInt32(2),
                     SellerId = r.GetInt32(3),
                     IsSystem = r.GetBoolean(4),
-                    CreatedAt = r.GetDateTime(5),
-                    ProductName = r.IsDBNull(6) ? null : r.GetString(6),
-                    ProductImage = r.IsDBNull(7) ? null : r.GetString(7),
-                    OtherUserName = r.IsDBNull(8) ? null : r.GetString(8),
-                    OtherUserAvatar = r.IsDBNull(9) ? null : r.GetString(9),
-                    OtherUserId = r.IsDBNull(10) ? 0 : r.GetInt32(10),
-                    LastMessage = r.IsDBNull(11) ? null : r.GetString(11),
-                    LastMessageAt = r.IsDBNull(12) ? null : r.GetDateTime(12),
-                    UnreadCount = r.IsDBNull(13) ? 0 : r.GetInt32(13),
+                    IsSupport = r.GetBoolean(5),
+                    CreatedAt = r.GetDateTime(6),
+                    ProductName = r.IsDBNull(7) ? null : r.GetString(7),
+                    ProductImage = r.IsDBNull(8) ? null : r.GetString(8),
+                    OtherUserName = r.IsDBNull(9) ? null : r.GetString(9),
+                    OtherUserAvatar = r.IsDBNull(10) ? null : r.GetString(10),
+                    OtherUserId = r.IsDBNull(11) ? 0 : r.GetInt32(11),
+                    OtherUserIsBanned = r.IsDBNull(12) ? false : r.GetBoolean(12),
+                    LastMessage = r.IsDBNull(13) ? null : r.GetString(13),
+                    LastMessageAt = r.IsDBNull(14) ? null : r.GetDateTime(14),
+                    UnreadCount = r.IsDBNull(15) ? 0 : r.GetInt32(15),
                 });
+            }
             return result;
         }
-
         public async Task<Conversation?> GetConversationAsync(int conversationId, int userId)
         {
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
             await using var cmd = new SqlCommand(@"
-        SELECT c.Id, c.ProductId, c.BuyerId, c.SellerId, c.IsSystem, c.CreatedAt,
-               p.Name, COALESCE(
-           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
-            WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+        WITH user_role AS (
+    SELECT Role FROM Users WHERE Id = @UserId
+)
+SELECT c.Id, c.ProductId, c.BuyerId, c.SellerId, c.IsSystem, c.IsSupport, c.CreatedAt,
+       p.Name,
+       COALESCE(
+           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
            p.AvatarImagePath
-       ) AS AvatarImagePath, p.Status,
-               CASE WHEN c.BuyerId = @UserId THEN su.UserName ELSE bu.UserName END,
-               CASE WHEN c.BuyerId = @UserId THEN su.AvatarImagePath ELSE bu.AvatarImagePath END,
-               CASE WHEN c.BuyerId = @UserId THEN c.SellerId ELSE c.BuyerId END
-        FROM Conversations c
-        LEFT JOIN Products p ON p.Id = c.ProductId
-        LEFT JOIN Users bu ON bu.Id = c.BuyerId
-        LEFT JOIN Users su ON su.Id = c.SellerId
-        WHERE c.Id = @Id AND (c.BuyerId = @UserId OR c.SellerId = @UserId)", conn);
+       ) AS AvatarImagePath,
+       p.Status,
+       CASE 
+           WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN bu.UserName
+           WHEN c.IsSupport = 1 AND ur.Role != 'admin' THEN 'Tech Support'
+           WHEN c.BuyerId = @UserId THEN su.UserName ELSE bu.UserName 
+       END AS OtherUserName,
+       CASE 
+           WHEN c.IsSupport = 1 AND ur.Role != 'admin' THEN NULL
+           WHEN c.BuyerId = @UserId THEN su.AvatarImagePath ELSE bu.AvatarImagePath 
+       END AS OtherUserAvatar,
+       CASE 
+           WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN c.BuyerId
+           WHEN c.BuyerId = @UserId THEN c.SellerId ELSE c.BuyerId 
+       END AS OtherUserId,
+       CASE 
+            WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN CAST(0 AS BIT)
+            WHEN c.BuyerId = @UserId THEN CAST(IIF(su.Role = 'banned', 1, 0) AS BIT)
+            ELSE CAST(IIF(bu.Role = 'banned', 1, 0) AS BIT)
+        END AS OtherUserIsBanned
+FROM Conversations c
+CROSS JOIN user_role ur
+LEFT JOIN Products p ON p.Id = c.ProductId
+LEFT JOIN Users bu ON bu.Id = c.BuyerId
+LEFT JOIN Users su ON su.Id = c.SellerId
+WHERE c.Id = @Id 
+  AND (c.BuyerId = @UserId OR c.SellerId = @UserId OR (c.IsSupport = 1 AND ur.Role = 'admin'))", conn);
+
             cmd.Parameters.AddWithValue("@Id", conversationId);
             cmd.Parameters.AddWithValue("@UserId", userId);
 
             await using var r = await cmd.ExecuteReaderAsync();
             if (!await r.ReadAsync()) return null;
 
-            string? productStatus = r.IsDBNull(8) ? null : r.GetString(8);
+            string? productStatus = r.IsDBNull(9) ? null : r.GetString(9);
 
             var conv = new Conversation
             {
@@ -242,12 +333,14 @@ namespace Linkora.Repositories
                 BuyerId = r.GetInt32(2),
                 SellerId = r.GetInt32(3),
                 IsSystem = r.GetBoolean(4),
-                CreatedAt = r.GetDateTime(5),
-                ProductName = r.IsDBNull(6) ? null : r.GetString(6),
-                ProductImage = r.IsDBNull(7) ? null : r.GetString(7),
-                OtherUserName = r.IsDBNull(9) ? null : r.GetString(9),
-                OtherUserAvatar = r.IsDBNull(10) ? null : r.GetString(10),
-                OtherUserId = r.IsDBNull(11) ? 0 : r.GetInt32(11),
+                IsSupport = r.GetBoolean(5),
+                CreatedAt = r.GetDateTime(6),
+                ProductName = r.IsDBNull(7) ? null : r.GetString(7),
+                ProductImage = r.IsDBNull(8) ? null : r.GetString(8),
+                OtherUserName = r.IsDBNull(10) ? null : r.GetString(10),
+                OtherUserAvatar = r.IsDBNull(11) ? null : r.GetString(11),
+                OtherUserId = r.IsDBNull(12) ? 0 : r.GetInt32(12),
+                OtherUserIsBanned = r.IsDBNull(13) ? false : r.GetBoolean(13) 
             };
 
             await r.CloseAsync();
@@ -273,7 +366,10 @@ namespace Linkora.Repositories
                     }
                 }
             }
-            else { conv.CanReview = false; }
+            else
+            {
+                conv.CanReview = false;
+            }
 
             return conv;
         }
@@ -307,7 +403,7 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(@"
-                SELECT m.Id, m.ConversationId, m.SenderId, m.Text, m.SentAt, m.IsRead,
+                SELECT m.Id, m.ConversationId, m.SenderId, m.Text, m.SentAt, m.IsRead, m.IsAdmin,
                        u.UserName, u.AvatarImagePath
                 FROM Messages m
                 LEFT JOIN Users u ON u.Id = m.SenderId
@@ -324,8 +420,9 @@ namespace Linkora.Repositories
                     Text = r.GetString(3),
                     SentAt = r.GetDateTime(4),
                     IsRead = r.GetBoolean(5),
-                    SenderName = r.IsDBNull(6) ? null : r.GetString(6),
-                    SenderAvatar = r.IsDBNull(7) ? null : r.GetString(7),
+                    IsAdmin = r.IsDBNull(6) ? false : r.GetBoolean(6),
+                    SenderName = r.IsDBNull(7) ? null : r.GetString(7),
+                    SenderAvatar = r.IsDBNull(8) ? null : r.GetString(8),
                 });
             return result;
         }
@@ -343,7 +440,6 @@ namespace Linkora.Repositories
             cmd.Parameters.AddWithValue("@Text", text);
             return (int)(await cmd.ExecuteScalarAsync())!;
         }
-
         public async Task MarkReadAsync(int conversationId, int userId)
         {
             await using var conn = new SqlConnection(_connectionString);

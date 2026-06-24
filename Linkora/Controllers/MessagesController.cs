@@ -20,10 +20,18 @@ namespace Linkora.Controllers
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var conversations = await _messageRepository.GetConversationsAsync(userId);
 
+            string userRole = await _messageRepository.GetUserStatusAsync(userId);
+
             ViewBag.Conversations = conversations;
             ViewBag.ActiveId = id;
             ViewBag.ActiveConv = null;
             ViewBag.Messages = null;
+            ViewBag.CurrentUserIsBanned = userRole == "banned";
+            ViewBag.IsCurrentUserAdmin = userRole == "admin";
+            if (ViewBag.CurrentUserIsBanned == true)
+            {
+                conversations = conversations.Where(c => c.IsSupport).ToList();
+            }
 
             if (id.HasValue)
             {
@@ -39,7 +47,14 @@ namespace Linkora.Controllers
 
             return View();
         }
-
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> StartSupportChat()
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var convId = await _messageRepository.GetOrCreateSupportConversationAsync(userId);
+            return Ok(new { conversationId = convId });
+        }
         [HttpPost]
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> Start([FromBody] StartMessageDto dto)

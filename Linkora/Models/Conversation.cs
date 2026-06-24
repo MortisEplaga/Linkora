@@ -14,7 +14,8 @@ namespace Linkora.Models
         public int SellerId { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool IsSystem { get; set; }
-
+        public bool IsSupport { get; set; }
+        public bool OtherUserIsBanned { get; set; }
         [NotMapped] public string? ProductName { get; set; }
         [NotMapped] public string? ProductImage { get; set; }
         [NotMapped] public string? OtherUserName { get; set; }
@@ -41,7 +42,7 @@ namespace Linkora.Models
         public string Text { get; set; } = "";
         public DateTime SentAt { get; set; }
         public bool IsRead { get; set; }
-
+        public bool IsAdmin { get; set; }
         [NotMapped] public string? SenderName { get; set; }
         [NotMapped] public string? SenderAvatar { get; set; }
     }
