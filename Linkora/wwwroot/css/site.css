@@ -15,7 +15,36 @@
     z-index: 9999;
     animation: modalFadeIn 0.2s ease;
 }
+.scroll-top-btn {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: none;
+    background: #00b0a3;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+    transition: all 0.25s ease;
+    opacity: 0;
+    visibility: hidden;
+    z-index: 9999;
+}
 
+    .scroll-top-btn:hover {
+        background: #00968c;
+        transform: translateY(-3px);
+    }
+
+    .scroll-top-btn.show {
+        opacity: 1;
+        visibility: visible;
+    }
 
 /* Анимация появления */
 @keyframes modalFadeIn {
