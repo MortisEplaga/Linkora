@@ -1,7 +1,7 @@
 ﻿[onclick] {
     cursor: pointer;
 }
-.modal-overlay {
+.msg-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -16,64 +16,6 @@
     animation: modalFadeIn 0.2s ease;
 }
 
-.modal-box {
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 32px 40px;
-    max-width: 420px;
-    width: 90%;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-    text-align: center;
-    border: 1px solid #f0f0f0;
-    transition: background 0.2s, border-color 0.2s;
-}
-
-.modal-message {
-    font-size: 17px;
-    line-height: 1.6;
-    color: #1a1a1a;
-    margin: 0 0 24px 0;
-    font-weight: 500;
-}
-
-.modal-ok-btn {
-    background: #00b0a3;
-    color: #fff;
-    border: none;
-    padding: 10px 32px;
-    border-radius: 30px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
-    min-width: 100px;
-}
-
-    .modal-ok-btn:hover {
-        background: #009b8f;
-    }
-
-    .modal-ok-btn:active {
-        transform: scale(0.96);
-    }
-
-.dark-theme .modal-box {
-    background: #1e1e1e;
-    border-color: #333;
-}
-
-.dark-theme .modal-message {
-    color: #e8e8e8;
-}
-
-.dark-theme .modal-ok-btn {
-    background: #00b0a3;
-    color: #1a1a1a;
-}
-
-    .dark-theme .modal-ok-btn:hover {
-        background: #00c4b5;
-    }
 
 /* Анимация появления */
 @keyframes modalFadeIn {

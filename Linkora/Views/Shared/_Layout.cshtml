@@ -29,6 +29,10 @@
 
     <script src="~/js/i18n.js"></script>
     <script src="~/js/free-text-select.js"></script>
+    @if (User.Identity!.IsAuthenticated)
+    {
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+    }
 </head>
 <body>
 
@@ -1173,6 +1177,44 @@
         }
     </script>
     <script>
+        function showModal(messageKeyOrText) {
+            const overlay = document.getElementById('notificationOverlay');
+            const modal = document.getElementById('notificationModal');
+            const messageEl = document.getElementById('notifMessage');
+            const titleEl = document.getElementById('notifTitle');
+
+            if (!overlay || !modal || !messageEl) return;
+
+            const text = (typeof t === 'function') ? (t(messageKeyOrText) || messageKeyOrText) : messageKeyOrText;
+            messageEl.textContent = text;
+
+            if (titleEl) titleEl.style.display = 'none';
+
+            overlay.style.display = 'block';
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden'; 
+        }
+
+        function closeNotificationModal(event) {
+            if (event && event.target && event.target !== event.currentTarget) return;
+
+            const overlay = document.getElementById('notificationOverlay');
+            const modal = document.getElementById('notificationModal');
+
+            if (overlay) overlay.style.display = 'none';
+            if (modal) modal.style.display = 'none';
+            document.body.style.overflow = ''; 
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const okBtn = document.getElementById('notifOkBtn');
+            if (okBtn) {
+                okBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    closeNotificationModal();
+                });
+            }
+        });
         applyTranslations();
 
         function openAuthModal(tab) {
