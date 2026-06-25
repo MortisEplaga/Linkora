@@ -474,7 +474,7 @@
         }
 
         if (res.ok) {
-            alert('Report submitted. Thank you.');
+            showModal('report_submitted');
             closeReportModal();
         } else {
             const err = await res.text();
@@ -494,7 +494,30 @@
             }
         }
     }
+    function showNotification(messageKey, okKey) {
+        const overlay = document.getElementById('notificationOverlay');
+        const msgEl = document.getElementById('notifMessage');
+        const okBtn = document.getElementById('notifOkBtn');
+        if (!overlay || !msgEl || !okBtn) return;
 
+        msgEl.textContent = t(messageKey);
+
+        const btnKey = okKey || 'modal_ok';
+        okBtn.textContent = t(btnKey);
+
+        overlay.style.display = 'flex';
+
+        okBtn.onclick = function() {
+            overlay.style.display = 'none';
+        };
+    }
+
+    function closeNotificationModal(event) {
+        const overlay = document.getElementById('notificationOverlay');
+        if (event && event.target !== overlay) return; 
+        if (overlay) overlay.style.display = 'none';
+    } 
+    
     let pendingPhone = null;
     let recaptchaWidgetId = null;
 

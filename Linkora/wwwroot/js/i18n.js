@@ -10,6 +10,8 @@
 
 const TRANSLATIONS = {
     en: {
+        'report_submitted': 'Report submitted. Thank you!',
+        'modal_ok': 'OK',
         'tech_support': "Tech Support",
         'ban_label': "BAN",
         'support_chat': "Support Chat",
@@ -373,6 +375,8 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'report_submitted': 'Ziņojums nosūtīts. Paldies!',
+        'modal_ok': 'Labi',
         'tech_support': "Tehniskā atbalsta",
         'ban_label': "BAN",
         'support_chat': "Čats ar atbalstu",
@@ -746,6 +750,8 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'report_submitted': 'Отчёт отправлен. Спасибо!',
+        'modal_ok': 'ОК',
         'tech_support': "Техподдержка",
         'ban_label': "BAN",
         'support_chat': "Чат с поддержкой",

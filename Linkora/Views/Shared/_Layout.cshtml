@@ -1064,6 +1064,24 @@
             </div>
         </div>
     </div>
+    <div class="msg-modal-overlay" id="notificationOverlay" style="display:none;" onclick="closeNotificationModal(event)">
+        <div class="msg-modal" id="notificationModal">
+            <div class="msg-modal-header">
+                <div class="msg-modal-seller" style="justify-content:center; width:100%;">
+                    <div style="font-weight:600; font-size:18px; color: #1a1a1a;">
+                        <span id="notifTitle" style="display:none;"></span>
+                    </div>
+                </div>
+                <button class="msg-modal-close" onclick="closeNotificationModal()">✕</button>
+            </div>
+            <div class="msg-modal-body" style="padding: 20px 24px 24px; text-align: center;">
+                <p id="notifMessage" style="font-size:16px; line-height:1.5; color:#333; margin:0 0 20px 0;"></p>
+                <button id="notifOkBtn" class="msg-modal-send-btn" style="background:#00b0a3; color:#fff; border:none; padding:10px 36px; border-radius:30px; font-size:16px; font-weight:600; cursor:pointer; transition:0.15s;">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
     <!-- Support Modal -->
     <div class="modal-overlay" id="supportOverlay" onclick="closeSupportModal()"></div>
     <div class="modal info-modal" id="supportModal">
