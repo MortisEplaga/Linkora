@@ -132,7 +132,7 @@
                                     </div>
                                 </div>
                                 <div class="notif-tabs">
-                                    <button class="notif-tab notif-tab-active" id="tabAll" onclick="switchNotifTab('all')">All</button>
+                                    <button class="notif-tab notif-tab-active" id="tabAll" onclick="switchNotifTab('all')" data-i18n="notif_tab_all">All</button>
                                     <button class="notif-tab" id="tabUnread" onclick="switchNotifTab('unread')" data-i18n="notif_no_unread">
                                         Unread <span class="notif-tab-count" id="tabUnreadCount" style="display:none"></span>
                                     </button>
@@ -626,34 +626,32 @@
             const item = notifAllData.find(n => n.id === id);
             if (!item) return;
 
-            if (!item.isRead) {
-                item.isRead = true;
-                await fetch(`/Notifications/MarkRead?id=${id}`, { method: 'POST' });
-                const unreadLeft = notifAllData.filter(n => !n.isRead).length;
-                updateNotifBadge(unreadLeft);
+        if (!item.isRead) {
+            item.isRead = true;
+            await fetch(`/Notifications/MarkRead?id=${id}`, { method: 'POST' });
+            const unreadLeft = notifAllData.filter(n => !n.isRead).length;
+            updateNotifBadge(unreadLeft);
 
-                const el = document.getElementById('notif-item-' + id);
-                if (el) {
-                    el.classList.remove('unread');
-                    if (notifCurrentTab === 'unread') {
-                        el.style.transition = 'opacity 0.3s, max-height 0.3s';
-                        el.style.opacity = '0';
-                        el.style.overflow = 'hidden';
-                        setTimeout(() => {
-                            el.style.maxHeight = el.offsetHeight + 'px';
-                            el.style.maxHeight = '0';
-                            el.style.padding = '0';
-                            setTimeout(() => renderNotifList(), 300);
-                        }, 50);
-                    } else {
-                        const tabCount = document.getElementById('tabUnreadCount');
-                        if (unreadLeft > 0) tabCount.textContent = unreadLeft;
-                        else tabCount.style.display = 'none';
-                        const markAllBtn = document.getElementById('markAllBtn');
-                        if (markAllBtn) markAllBtn.style.display = unreadLeft > 0 ? '' : 'none';
+            const el = document.getElementById('notif-item-' + id);
+            if (el) {
+                el.classList.remove('unread');
+                if (notifCurrentTab === 'unread') {
+                } else {
+                    const tabCount = document.getElementById('tabUnreadCount');
+                    if (tabCount) {
+                        if (unreadLeft > 0) {
+                            tabCount.textContent = unreadLeft;
+                        } else {
+                            tabCount.style.display = 'none';
+                        }
+                    }
+                    const markAllBtn = document.getElementById('markAllBtn');
+                    if (markAllBtn) {
+                        markAllBtn.style.display = unreadLeft > 0 ? '' : 'none';
                     }
                 }
             }
+        }
 
             if (url) {
                 closeNotifModal();
