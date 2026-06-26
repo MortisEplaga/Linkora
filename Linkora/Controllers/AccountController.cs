@@ -384,13 +384,16 @@ namespace Linkora.Controllers
         [HttpGet]
         public IActionResult ForgotPassword() => View();
         [HttpPost]
-        public async Task<IActionResult> ForgotPassword(string email)
+        public async Task<IActionResult> ForgotPassword(string email, string? lang = null)
         {
             if (string.IsNullOrWhiteSpace(email))
             {
                 ViewBag.Error = "Please enter your email address";
                 return View();
             }
+
+            var resolvedLang = lang ?? Request.Cookies["lang"] ?? "en";
+            if (resolvedLang != "lv" && resolvedLang != "ru") resolvedLang = "en";
 
             var user = await _userRepository.GetByEmailAsync(email.Trim());
             if (user != null)
@@ -400,8 +403,8 @@ namespace Linkora.Controllers
                 await _userRepository.SetPasswordResetTokenAsync(user.Id, token, expiry);
 
                 var resetUrl = Url.Action("ResetPassword", "Account", new { token }, Request.Scheme)!;
-                try { await _emailService.SendPasswordResetEmailAsync(user.Email!, user.UserName, resetUrl); }
-                catch (Exception ex) {  }
+                try { await _emailService.SendPasswordResetEmailAsync(user.Email!, user.UserName, resetUrl, resolvedLang); }
+                catch { }
             }
 
             ViewBag.Sent = true;
