@@ -213,22 +213,22 @@ namespace Linkora.Controllers
                 await conn.OpenAsync();
 
                 const string sql = @"
-       SELECT p.Id, p.Name, p.Address, p.CreatedTime,
-       COALESCE(
-           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm 
-            WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-           p.AvatarImagePath
-       ) AS AvatarImagePath,
-       p.Status,
-       o.Cost AS Price
-FROM Products p
-INNER JOIN (
-    SELECT ProductId, Cost, CreatedTime,
-           ROW_NUMBER() OVER (PARTITION BY ProductId ORDER BY CreatedTime DESC) AS rn
-    FROM Orders
-    WHERE UserId = @UserId AND OrderStatus = 1
-) o ON o.ProductId = p.Id AND o.rn = 1
-ORDER BY o.CreatedTime DESC";
+                           SELECT p.Id, p.Name, p.Address, p.CreatedTime,
+                           COALESCE(
+                               (SELECT TOP 1 pm.FilePath FROM ProductMedia pm 
+                                WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+                               p.AvatarImagePath
+                           ) AS AvatarImagePath,
+                           p.Status,
+                           o.Cost AS Price
+                            FROM Products p
+                            INNER JOIN (
+                                SELECT ProductId, Cost, CreatedTime,
+                                       ROW_NUMBER() OVER (PARTITION BY ProductId ORDER BY CreatedTime DESC) AS rn
+                                FROM Orders
+                                WHERE UserId = @UserId AND OrderStatus = 1
+                            ) o ON o.ProductId = p.Id AND o.rn = 1
+                            ORDER BY o.CreatedTime DESC";
 
                 await using var cmd = new SqlCommand(sql, conn);
                 cmd.Parameters.AddWithValue("@UserId", userId);
@@ -247,12 +247,12 @@ ORDER BY o.CreatedTime DESC";
 
                 await r.CloseAsync();
                 await using var countCmd = new Microsoft.Data.SqlClient.SqlCommand(@"
-            SELECT COUNT(DISTINCT p.Id)
-            FROM Products p
-            JOIN Conversations conv ON conv.ProductId = p.Id
-                AND conv.IsSystem = 1
-                AND conv.BuyerId = @UserId
-            WHERE p.Status = 'Succeeded'", conn);
+                        SELECT COUNT(DISTINCT p.Id)
+                        FROM Products p
+                        JOIN Conversations conv ON conv.ProductId = p.Id
+                            AND conv.IsSystem = 1
+                            AND conv.BuyerId = @UserId
+                        WHERE p.Status = 'Succeeded'", conn);
                 countCmd.Parameters.AddWithValue("@UserId", userId);
                 var purchasedCount = (int)(await countCmd.ExecuteScalarAsync())!;
                 counts["Purchased"] = purchasedCount;
@@ -302,9 +302,9 @@ ORDER BY o.CreatedTime DESC";
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> Edit(int id, string title, string? description,
-    int? qty, string? address, int? categoryId,
-    string? paramsJson, List<IFormFile>? photos,
-    string? keepMediaJson = null, bool replaceMedia = false, int? publishDays = null)
+                                                int? qty, string? address, int? categoryId,
+                                                string? paramsJson, List<IFormFile>? photos,
+                                                string? keepMediaJson = null, bool replaceMedia = false, int? publishDays = null)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             if (await IsUserBannedAsync(userId)) return Forbid();
@@ -323,10 +323,10 @@ ORDER BY o.CreatedTime DESC";
                 await using var pConn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
                 await pConn.OpenAsync();
                 await using var pCmd = new SqlCommand(@"
-        SELECT TOP 1 mpc.CategoryId
-        FROM MapperProductCategory mpc
-        JOIN Category c ON c.Id = mpc.CategoryId AND c.Name = 'Price, €'
-        WHERE mpc.ProductId = @Id", pConn);
+                    SELECT TOP 1 mpc.CategoryId
+                    FROM MapperProductCategory mpc
+                    JOIN Category c ON c.Id = mpc.CategoryId AND c.Name = 'Price, €'
+                    WHERE mpc.ProductId = @Id", pConn);
                 pCmd.Parameters.AddWithValue("@Id", id);
                 var pRes = await pCmd.ExecuteScalarAsync();
                 if (pRes != null && pRes != DBNull.Value) priceParamId = (int)pRes;
@@ -374,7 +374,26 @@ ORDER BY o.CreatedTime DESC";
                 CategoryId = categoryId,
                 AvatarImagePath = newAvatar,
             }, paramValues);
+
+            await using var confConn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
+            await confConn.OpenAsync();
+            await using var confCmd = new SqlCommand(@"
+                SELECT COUNT(*) FROM MapperProductCategory mpc
+                JOIN SelectOptions so ON TRY_CAST(mpc.Value AS int) = so.Id
+                JOIN Category c ON c.Id = mpc.CategoryId AND c.Type IN (2, 4, 8)
+                WHERE mpc.ProductId = @Id AND so.IsConf = 0", confConn);
+            confCmd.Parameters.AddWithValue("@Id", id);
+            var unconfCount = (int)(await confCmd.ExecuteScalarAsync())!;
+
+            await using var scoreUpdateCmd = new SqlCommand(@"
+                UPDATE Products SET ModerationScore = @Score,
+                    Status = CASE WHEN @Score >= 5 THEN 'Moderation' ELSE Status END
+                WHERE Id = @Id", confConn);
+            scoreUpdateCmd.Parameters.AddWithValue("@Score", unconfCount);
+            scoreUpdateCmd.Parameters.AddWithValue("@Id", id);
+            await scoreUpdateCmd.ExecuteNonQueryAsync();
             var changes = new List<object>();
+
             if (!string.Equals(existing.Name, title, StringComparison.Ordinal))
                 changes.Add(new { type = "title_changed" });
 
@@ -539,11 +558,10 @@ ORDER BY o.CreatedTime DESC";
         [Authorize, HttpPost]
         [Authorize]
         [HttpPost]
-        public async Task<IActionResult> Create(
-    string title, string? description, int? qty,
-    string? address, int? categoryId,
-    List<IFormFile>? photos, string? paramsJson,
-    int? publishDays = null)
+        public async Task<IActionResult> Create(string title, string? description, int? qty,
+                                                string? address, int? categoryId,
+                                                List<IFormFile>? photos, string? paramsJson,
+                                                int? publishDays = null)
         {
             if (string.IsNullOrWhiteSpace(title)) return BadRequest("Title is required");
 
@@ -587,6 +605,27 @@ ORDER BY o.CreatedTime DESC";
 
             if (media.Count > 0)
                 await _productRepository.SaveMediaAsync(newId, media);
+
+            await using var scoreConn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
+            await scoreConn.OpenAsync();
+            await using var scoreCheckCmd = new SqlCommand(@"
+                SELECT COUNT(*) FROM MapperProductCategory mpc
+                JOIN SelectOptions so ON TRY_CAST(mpc.Value AS int) = so.Id
+                JOIN Category c ON c.Id = mpc.CategoryId AND c.Type IN (2, 4, 8)
+                WHERE mpc.ProductId = @Id AND so.IsConf = 0", scoreConn);
+            scoreCheckCmd.Parameters.AddWithValue("@Id", newId);
+            var unconfCount = (int)(await scoreCheckCmd.ExecuteScalarAsync())!;
+
+            if (unconfCount > 0)
+            {
+                await using var scoreSetCmd = new SqlCommand(@"
+                    UPDATE Products SET ModerationScore = @Score,
+                        Status = CASE WHEN @Score >= 5 THEN 'Moderation' ELSE Status END
+                    WHERE Id = @Id", scoreConn);
+                scoreSetCmd.Parameters.AddWithValue("@Score", unconfCount);
+                scoreSetCmd.Parameters.AddWithValue("@Id", newId);
+                await scoreSetCmd.ExecuteNonQueryAsync();
+            }
 
             var userName = User.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
             await _notificationRepository.NotifySubscribersAsync(userId, newId, title, userName);

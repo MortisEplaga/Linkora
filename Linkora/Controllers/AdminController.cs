@@ -15,9 +15,9 @@ namespace Linkora.Controllers
         private readonly IReportRepository _reportRepository;
         private readonly INotificationRepository _notificationRepository;
         public AdminController(IConfiguration configuration,
-            IProductRepository productRepository,
-            IReportRepository reportRepository,
-    INotificationRepository notificationRepository)
+                               IProductRepository productRepository,
+                               IReportRepository reportRepository,
+                               INotificationRepository notificationRepository)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection")!;
             _productRepository = productRepository;
@@ -256,7 +256,6 @@ namespace Linkora.Controllers
             ViewBag.Role = role;
             return View();
         }
-
         [HttpPost, IgnoreAntiforgeryToken]
         public async Task<IActionResult> SetUserRole(int id, string role)
         {
@@ -302,10 +301,10 @@ namespace Linkora.Controllers
                 }
 
                 await using var favCmd = new SqlCommand(@"
-        SELECT DISTINCT f.UserId, f.ProductId 
-        FROM Favourites f 
-        JOIN Products p ON f.ProductId = p.Id 
-        WHERE p.UserId = @Id AND f.Can = 1", conn);
+                            SELECT DISTINCT f.UserId, f.ProductId 
+                            FROM Favourites f 
+                            JOIN Products p ON f.ProductId = p.Id 
+                            WHERE p.UserId = @Id AND f.Can = 1", conn);
                 favCmd.Parameters.AddWithValue("@Id", id);
                 await using var favR = await favCmd.ExecuteReaderAsync();
                 var favUsers = new List<(int UserId, int ProductId)>();
@@ -362,7 +361,6 @@ namespace Linkora.Controllers
 
             return Ok();
         }
-
         [HttpPost, IgnoreAntiforgeryToken]
         public async Task<IActionResult> DeleteProduct(int id)
         {
@@ -371,7 +369,6 @@ namespace Linkora.Controllers
             await _productRepository.DeleteAsync(id);
             return Ok();
         }
-
         public async Task<IActionResult> Reports(string status = "Pending", int page = 1)
         {
             if (!IsAdmin()) return Forbid();
@@ -435,7 +432,6 @@ namespace Linkora.Controllers
             ViewBag.Total = total;
             return View();
         }
-
         [HttpPost, IgnoreAntiforgeryToken]
         public async Task<IActionResult> ResolveReport(int id, string action)
         {
@@ -454,16 +450,20 @@ namespace Linkora.Controllers
             if (action == "reject_report")
             {
                 await using var pCmd = new SqlCommand(@"
-                    UPDATE Products SET Status = 'Active'
+                    UPDATE Products 
+                    SET ModerationScore = CASE WHEN ModerationScore > 0 THEN ModerationScore - 1 ELSE 0 END,
+                        Status = CASE 
+                            WHEN Status = 'Moderation' AND (CASE WHEN ModerationScore > 0 THEN ModerationScore - 1 ELSE 0 END) < 5 
+                            THEN 'Active' 
+                            ELSE Status 
+                        END
                     WHERE Id = (SELECT ProductId FROM Reports WHERE Id = @Id)
-                      AND Status = 'Moderation'", conn);
+                      AND Status IN ('Active', 'Moderation')", conn);
                 pCmd.Parameters.AddWithValue("@Id", id);
                 await pCmd.ExecuteNonQueryAsync();
             }
-
             return Ok(new { status = newStatus });
         }
-
         [HttpGet]
         public async Task<IActionResult> StatsApi()
         {
@@ -514,7 +514,6 @@ namespace Linkora.Controllers
 
             return View();
         }
-
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ApproveOption(int id)
@@ -525,13 +524,13 @@ namespace Linkora.Controllers
             await conn.OpenAsync();
 
             await using var infoCmd = new SqlCommand(@"
-        SELECT TOP 1 p.Id, p.UserId, c.Name, c.NameRU, c.NameLV
-        FROM SelectOptions so
-        JOIN MapperProductCategory mpc
-            ON ',' + mpc.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%'
-        JOIN Products p ON mpc.ProductId = p.Id
-        JOIN Category c ON so.CategoryId = c.Id
-        WHERE so.Id = @OptionId", conn);
+                SELECT TOP 1 p.Id, p.UserId, c.Name, c.NameRU, c.NameLV
+                FROM SelectOptions so
+                JOIN MapperProductCategory mpc
+                    ON ',' + mpc.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%'
+                JOIN Products p ON mpc.ProductId = p.Id
+                JOIN Category c ON so.CategoryId = c.Id
+                WHERE so.Id = @OptionId", conn);
             infoCmd.Parameters.AddWithValue("@OptionId", id);
 
             int? productId = null, ownerId = null;
@@ -552,6 +551,18 @@ namespace Linkora.Controllers
 
             if (success && ownerId.HasValue)
             {
+                await using var scoreCmd = new SqlCommand(@"
+                    UPDATE Products 
+                    SET ModerationScore = CASE WHEN ModerationScore > 0 THEN ModerationScore - 1 ELSE 0 END,
+                        Status = CASE 
+                            WHEN Status = 'Moderation' AND (CASE WHEN ModerationScore > 0 THEN ModerationScore - 1 ELSE 0 END) < 5 
+                            THEN 'Active' 
+                            ELSE Status 
+                        END
+                    WHERE Id = @ProductId", conn);
+                scoreCmd.Parameters.AddWithValue("@ProductId", productId.Value);
+                await scoreCmd.ExecuteNonQueryAsync();
+
                 var msg = System.Text.Json.JsonSerializer.Serialize(new
                 {
                     type = "parameter_approved",

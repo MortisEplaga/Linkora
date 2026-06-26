@@ -1,5 +1,4 @@
 ﻿using Linkora.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
 
 namespace Linkora.Repositories
@@ -9,12 +8,10 @@ namespace Linkora.Repositories
         private readonly string _connectionString;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-
         public ReportRepository(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection");
             _httpContextAccessor = httpContextAccessor;
-
         }
         private string GetLang() => _httpContextAccessor.HttpContext?.Request.Cookies["lang"] ?? "en";
 
@@ -47,10 +44,9 @@ namespace Linkora.Repositories
             await using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync();
 
-            var sql = @"
-        INSERT INTO Reports (ProductId, UserId, ReportReasonId, Comment, CreatedAt, Status)
-        OUTPUT INSERTED.Id
-        VALUES (@ProductId, @UserId, @ReportReasonId, @Comment, @CreatedAt, @Status)";
+            var sql = @"INSERT INTO Reports (ProductId, UserId, ReportReasonId, Comment, CreatedAt, Status)
+                        OUTPUT INSERTED.Id
+                        VALUES (@ProductId, @UserId, @ReportReasonId, @Comment, @CreatedAt, @Status)";
 
             await using var command = new SqlCommand(sql, connection);
             command.Parameters.AddWithValue("@ProductId", productId);
@@ -63,9 +59,10 @@ namespace Linkora.Repositories
             var id = (int)await command.ExecuteScalarAsync();
 
             var updateProductSql = @"
-        UPDATE Products 
-        SET Status = 'Moderation' 
-        WHERE Id = @ProductId AND Status != 'Moderation'";
+                UPDATE Products 
+                SET ModerationScore = ModerationScore + 1,
+                    Status = CASE WHEN ModerationScore + 1 >= 5 THEN 'Moderation' ELSE Status END
+                WHERE Id = @ProductId AND Status NOT IN ('Moderation', 'Rejected', 'Archived', 'Succeeded')";
 
             await using var updateCommand = new SqlCommand(updateProductSql, connection);
             updateCommand.Parameters.AddWithValue("@ProductId", productId);

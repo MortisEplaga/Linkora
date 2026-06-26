@@ -428,13 +428,13 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
 
             await using var cmd = new SqlCommand(@"
-        UPDATE Products SET
-            Name        = @Name,
-            Description = @Description,
-            Qty         = @Qty,
-            Address     = @Address,
-            CategoryId  = @CategoryId
-        WHERE Id = @Id AND UserId = @UserId", conn);
+                    UPDATE Products SET
+                        Name        = @Name,
+                        Description = @Description,
+                        Qty         = @Qty,
+                        Address     = @Address,
+                        CategoryId  = @CategoryId
+                    WHERE Id = @Id AND UserId = @UserId", conn);
 
             cmd.Parameters.AddWithValue("@Name", product.Name);
             cmd.Parameters.AddWithValue("@Description", (object?)product.Description ?? DBNull.Value);
@@ -454,8 +454,8 @@ namespace Linkora.Repositories
             {
                 if (string.IsNullOrWhiteSpace(value)) continue;
                 await using var ins = new SqlCommand(@"
-            INSERT INTO MapperProductCategory (ProductId, CategoryId, Value)
-            VALUES (@ProductId, @CategoryId, @Value)", conn);
+                    INSERT INTO MapperProductCategory (ProductId, CategoryId, Value)
+                    VALUES (@ProductId, @CategoryId, @Value)", conn);
                 ins.Parameters.AddWithValue("@ProductId", product.Id);
                 ins.Parameters.AddWithValue("@CategoryId", paramId);
                 ins.Parameters.AddWithValue("@Value", value);
@@ -846,37 +846,37 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
 
             var sql = @"
-SELECT COUNT(*) FROM dbo.SelectOptions so
-INNER JOIN dbo.MapperProductCategory mpc 
-    ON ',' + mpc.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%'
-INNER JOIN dbo.Products p ON mpc.ProductId = p.Id
-WHERE so.IsConf = 0;
+                        SELECT COUNT(*) FROM dbo.SelectOptions so
+                        INNER JOIN dbo.MapperProductCategory mpc 
+                            ON ',' + mpc.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%'
+                        INNER JOIN dbo.Products p ON mpc.ProductId = p.Id
+                        WHERE so.IsConf = 0;
 
-SELECT 
-    so.Id AS OptionId,
-    so.Value AS OptionValue,
-    so.ValueLV AS OptionValueLV,
-    so.ValueRU AS OptionValueRU,
-    p.Id AS ProductId,
-    p.Name AS ProductName,
-    p.CreatedTime AS ProductCreatedTime,
-    u.Id AS UserId,
-    u.UserName AS UserName,
-    c.Id AS CategoryId,
-    c.Name AS CategoryName,
-    c2.Name AS OptionCategory,
-    c.NameLV AS CategoryNameLV,
-    c2.NameLV AS OptionCategoryLV,
-    c.NameRU AS CategoryNameRU,
-    c2.NameRU AS OptionCategoryRU
-FROM dbo.SelectOptions so
-INNER JOIN dbo.MapperProductCategory mpc 
-    ON ',' + mpc.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%'
-INNER JOIN dbo.Products p ON mpc.ProductId = p.Id
-INNER JOIN dbo.Users u ON p.UserId = u.Id
-INNER JOIN dbo.Category c ON p.CategoryId = c.Id
-INNER JOIN dbo.Category c2 ON so.CategoryId = c2.Id
-WHERE so.IsConf = 0;";
+                        SELECT 
+                            so.Id AS OptionId,
+                            so.Value AS OptionValue,
+                            so.ValueLV AS OptionValueLV,
+                            so.ValueRU AS OptionValueRU,
+                            p.Id AS ProductId,
+                            p.Name AS ProductName,
+                            p.CreatedTime AS ProductCreatedTime,
+                            u.Id AS UserId,
+                            u.UserName AS UserName,
+                            c.Id AS CategoryId,
+                            c.Name AS CategoryName,
+                            c2.Name AS OptionCategory,
+                            c.NameLV AS CategoryNameLV,
+                            c2.NameLV AS OptionCategoryLV,
+                            c.NameRU AS CategoryNameRU,
+                            c2.NameRU AS OptionCategoryRU
+                        FROM dbo.SelectOptions so
+                        INNER JOIN dbo.MapperProductCategory mpc 
+                            ON ',' + mpc.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%'
+                        INNER JOIN dbo.Products p ON mpc.ProductId = p.Id
+                        INNER JOIN dbo.Users u ON p.UserId = u.Id
+                        INNER JOIN dbo.Category c ON p.CategoryId = c.Id
+                        INNER JOIN dbo.Category c2 ON so.CategoryId = c2.Id
+                        WHERE so.IsConf = 0;";
 
             await using var cmd = new SqlCommand(sql, conn);
 

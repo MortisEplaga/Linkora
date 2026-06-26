@@ -19,5 +19,9 @@ namespace Linkora.Repositories
         Task MarkForDeletionAsync(int userId, string deletionRequestCode);
         Task<User?> GetByDeletionCodeAsync(string code);
         Task<User?> GetByPhoneAsync(string phone);
+        Task SetPasswordResetTokenAsync(int userId, string token, DateTime expiry);
+        Task<User?> GetByPasswordResetTokenAsync(string token);
+        Task ClearPasswordResetTokenAsync(int userId);
+        Task UpdatePasswordHashAsync(int userId, string passwordHash);
     }
 }

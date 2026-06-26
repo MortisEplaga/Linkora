@@ -44,7 +44,6 @@ namespace Linkora.Repositories
             await using var r = await cmd.ExecuteReaderAsync();
             return await r.ReadAsync() ? MapRow(r) : null;
         }
-
         public async Task<User?> GetByIdAsync(int id)
         {
             await using var conn = new SqlConnection(_connectionString);
@@ -55,7 +54,6 @@ namespace Linkora.Repositories
             await using var r = await cmd.ExecuteReaderAsync();
             return await r.ReadAsync() ? MapRow(r) : null;
         }
-
         public async Task<int> CreateAsync(User user, string passwordHash)
         {
             await using var conn = new SqlConnection(_connectionString);
@@ -133,7 +131,6 @@ namespace Linkora.Repositories
             await using var r = await cmd.ExecuteReaderAsync();
             return await r.ReadAsync() ? MapRow(r) : null;
         }
-
         public async Task ConfirmEmailAsync(string token)
         {
             await using var conn = new SqlConnection(_connectionString);
@@ -148,9 +145,9 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(@"
-        INSERT INTO Users (UserName, Email, Role, PasswordHash, AvatarImagePath, EmailConfirmed, IsCompany, ConfirmationToken)
-        OUTPUT INSERTED.Id
-        VALUES (@U, @E, 'user', NULL, @A, @EC, @IC, NULL)", conn);
+                INSERT INTO Users (UserName, Email, Role, PasswordHash, AvatarImagePath, EmailConfirmed, IsCompany, ConfirmationToken)
+                OUTPUT INSERTED.Id
+                VALUES (@U, @E, 'user', NULL, @A, @EC, @IC, NULL)", conn);
             cmd.Parameters.AddWithValue("@U", user.UserName);
             cmd.Parameters.AddWithValue("@E", (object?)user.Email ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@A", (object?)user.AvatarImagePath ?? DBNull.Value);
@@ -168,7 +165,6 @@ namespace Linkora.Repositories
             await using var r = await cmd.ExecuteReaderAsync();
             return await r.ReadAsync() ? MapRow(r) : null;
         }
-
         public async Task UpdateFacebookIdAsync(int userId, string facebookId)
         {
             await using var conn = new SqlConnection(_connectionString);
@@ -179,7 +175,6 @@ namespace Linkora.Repositories
             cmd.Parameters.AddWithValue("@Id", userId);
             await cmd.ExecuteNonQueryAsync();
         }
-
         public async Task MarkForDeletionAsync(int userId, string deletionRequestCode)
         {
             await using var conn = new SqlConnection(_connectionString);
@@ -190,7 +185,6 @@ namespace Linkora.Repositories
             cmd.Parameters.AddWithValue("@Id", userId);
             await cmd.ExecuteNonQueryAsync();
         }
-
         public async Task<User?> GetByDeletionCodeAsync(string code)
         {
             await using var conn = new SqlConnection(_connectionString);
@@ -200,6 +194,46 @@ namespace Linkora.Repositories
             cmd.Parameters.AddWithValue("@Code", code);
             await using var r = await cmd.ExecuteReaderAsync();
             return await r.ReadAsync() ? MapRow(r) : null;
+        }
+        public async Task SetPasswordResetTokenAsync(int userId, string token, DateTime expiry)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(
+                "UPDATE Users SET PasswordResetToken = @T, PasswordResetExpiry = @E WHERE Id = @Id", conn);
+            cmd.Parameters.AddWithValue("@T", token);
+            cmd.Parameters.AddWithValue("@E", expiry);
+            cmd.Parameters.AddWithValue("@Id", userId);
+            await cmd.ExecuteNonQueryAsync();
+        }
+        public async Task<User?> GetByPasswordResetTokenAsync(string token)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(
+                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed, PreferredAdDuration FROM Users WHERE PasswordResetToken = @T AND PasswordResetExpiry > GETUTCDATE()", conn);
+            cmd.Parameters.AddWithValue("@T", token);
+            await using var r = await cmd.ExecuteReaderAsync();
+            return await r.ReadAsync() ? MapRow(r) : null;
+        }
+        public async Task ClearPasswordResetTokenAsync(int userId)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(
+                "UPDATE Users SET PasswordResetToken = NULL, PasswordResetExpiry = NULL WHERE Id = @Id", conn);
+            cmd.Parameters.AddWithValue("@Id", userId);
+            await cmd.ExecuteNonQueryAsync();
+        }
+        public async Task UpdatePasswordHashAsync(int userId, string passwordHash)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(
+                "UPDATE Users SET PasswordHash = @H WHERE Id = @Id", conn);
+            cmd.Parameters.AddWithValue("@H", passwordHash);
+            cmd.Parameters.AddWithValue("@Id", userId);
+            await cmd.ExecuteNonQueryAsync();
         }
     }
 }

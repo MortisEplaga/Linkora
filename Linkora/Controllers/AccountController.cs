@@ -55,13 +55,12 @@ namespace Linkora.Controllers
         public IActionResult Register() => View();
 
         [HttpPost]
-        public async Task<IActionResult> Register(
-            string username,
-            string email,
-            string password,
-            string confirm,
-            string? phone = null,
-            bool isCompany = false)
+        public async Task<IActionResult> Register(string username,
+                                                  string email,
+                                                  string password,
+                                                  string confirm,
+                                                  string? phone = null,
+                                                  bool isCompany = false)
         {
             if (string.IsNullOrWhiteSpace(username))
             {
@@ -207,15 +206,11 @@ namespace Linkora.Controllers
 
             return Redirect(returnUrl ?? "/");
         }
-
-        // ── Logout ──
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync("Cookies");
             return RedirectToAction("Index", "Home");
         }
-
-        // ── Helpers ──
         private async Task SignInAsync(User user)
         {
             var claims = new List<Claim>
@@ -231,13 +226,11 @@ namespace Linkora.Controllers
             var principal = new ClaimsPrincipal(identity);
             await HttpContext.SignInAsync("Cookies", principal);
         }
-
         private static string Hash(string input)
         {
             var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
             return Convert.ToHexString(bytes).ToLower();
         }
-
         private static string SanitizeUsername(string raw)
         {
             var sb = new StringBuilder();
@@ -344,7 +337,6 @@ namespace Linkora.Controllers
 
             return Ok(new { url = statusUrl, confirmation_code = confirmationCode });
         }
-
         private string DecodeSignedRequest(string signedRequest)
         {
             try
@@ -365,7 +357,6 @@ namespace Linkora.Controllers
             catch { }
             return null;
         }
-
         [HttpGet]
         [Route("Account/DeletionStatus")]
         public async Task<IActionResult> DeletionStatus(string code)
@@ -388,6 +379,81 @@ namespace Linkora.Controllers
 
             ViewBag.Message = $"Your data deletion request for user '{user.UserName}' has been received and will be processed within 30 days.";
 
+            return View();
+        }
+        [HttpGet]
+        public IActionResult ForgotPassword() => View();
+        [HttpPost]
+        public async Task<IActionResult> ForgotPassword(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                ViewBag.Error = "Please enter your email address";
+                return View();
+            }
+
+            var user = await _userRepository.GetByEmailAsync(email.Trim());
+            if (user != null)
+            {
+                var token = Guid.NewGuid().ToString("N");
+                var expiry = DateTime.UtcNow.AddHours(1);
+                await _userRepository.SetPasswordResetTokenAsync(user.Id, token, expiry);
+
+                var resetUrl = Url.Action("ResetPassword", "Account", new { token }, Request.Scheme)!;
+                try { await _emailService.SendPasswordResetEmailAsync(user.Email!, user.UserName, resetUrl); }
+                catch (Exception ex) {  }
+            }
+
+            ViewBag.Sent = true;
+            return View();
+        }
+        [HttpGet]
+        public async Task<IActionResult> ResetPassword(string token)
+        {
+            if (string.IsNullOrWhiteSpace(token))
+                return RedirectToAction(nameof(Login));
+
+            var user = await _userRepository.GetByPasswordResetTokenAsync(token);
+            if (user == null)
+            {
+                ViewBag.Invalid = true;
+                return View();
+            }
+
+            ViewBag.Token = token;
+            return View();
+        }
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword(string token, string password, string confirm)
+        {
+            ViewBag.Token = token;
+
+            var user = await _userRepository.GetByPasswordResetTokenAsync(token);
+            if (user == null)
+            {
+                ViewBag.Invalid = true;
+                return View();
+            }
+
+            if (string.IsNullOrWhiteSpace(password) || password != confirm)
+            {
+                ViewBag.Error = "Passwords do not match";
+                return View();
+            }
+
+            if (password.Length < 8 ||
+                !password.Any(char.IsUpper) ||
+                !password.Any(char.IsLower) ||
+                !password.Any(char.IsDigit))
+            {
+                ViewBag.Error = "Password must be at least 8 characters with uppercase, lowercase and digit";
+                return View();
+            }
+
+            await _userRepository.UpdatePasswordHashAsync(user.Id, Hash(password));
+            await _userRepository.ClearPasswordResetTokenAsync(user.Id);
+
+            ViewBag.Success = true;
             return View();
         }
     }
