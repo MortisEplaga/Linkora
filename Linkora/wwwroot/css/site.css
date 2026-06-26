@@ -12,7 +12,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9999;
+    z-index: 9000;
     animation: modalFadeIn 0.2s ease;
 }
 .scroll-top-btn {
@@ -44,9 +44,9 @@
     .scroll-top-btn.show {
         opacity: 1;
         visibility: visible;
+        display: flex !important;
     }
 
-/* Анимация появления */
 @keyframes modalFadeIn {
     from {
         opacity: 0;

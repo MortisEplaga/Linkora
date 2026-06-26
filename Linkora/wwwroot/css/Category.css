@@ -4,7 +4,7 @@
 .floating-filter-actions {
     position: sticky;
     bottom: 20px;
-    z-index: 1000;
+    z-index: 0;
     display: inline-flex;
     gap: 12px;
     background: #fff;
