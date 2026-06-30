@@ -65,7 +65,7 @@
 
             <div class="create-section">
                 <h2 class="create-section-title" data-i18n="category_section">Category</h2>
-                <div class="create-cat-selector" id="catSelector" onclick="openCreateCatMenu()">
+                <div class="create-cat-selector" id="catSelector" onclick="openCatMenuForEdit()">
                     <span id="catSelectorText" data-i18n="select_category">Select category</span>
                     <span class="create-cat-arrow">›</span>
                 </div>
@@ -124,80 +124,18 @@
     </div>
 </div>
 
-<div class="catmenu-overlay" id="createCatOverlay" onclick="closeCreateCatMenu()"></div>
-<div class="catmenu" id="createCatMenu">
-    <div class="catmenu-columns" id="createCatColumns">
-        <div class="catmenu-col" id="createCatCol0"></div>
-    </div>
-</div>
 <script src="~/js/param-rules-engine.js"></script>
 <script>
-    let createAllCategories = [];
-    let createSelectedCatId = null;
     const MAX_BYTES = 52_428_800; // 50 MB
     let selectedFiles = [];
 
-    async function openCreateCatMenu() {
-        if (!createAllCategories.length) {
-            const res = await fetch('/Category/All');
-            createAllCategories = await res.json();
-        }
-        renderCreateCol(0, 3711);
-        document.getElementById('createCatMenu').classList.add('catmenu-open');
-        document.getElementById('createCatOverlay').classList.add('catmenu-overlay-open');
-    }
-
-    function closeCreateCatMenu() {
-        document.getElementById('createCatMenu').classList.remove('catmenu-open');
-        document.getElementById('createCatOverlay').classList.remove('catmenu-overlay-open');
-    }
-
-    function renderCreateCol(colIndex, parentId) {
-        const container = document.getElementById('createCatColumns');
-        while (container.children.length > colIndex)
-            container.removeChild(container.lastChild);
-
-        const items = createAllCategories.filter(c => c.parentId === parentId);
-        if (!items.length) return;
-
-        const col = document.createElement('div');
-        col.className = 'catmenu-col';
-
-        items.forEach(item => {
-            const hasChildren = createAllCategories.some(c => c.parentId === item.id);
-            const el = document.createElement('div');
-            el.className = 'catmenu-item';
-            el.innerHTML = `
-                <span class="catmenu-link">${item.name}</span>
-                ${hasChildren ? '<span class="catmenu-arrow">›</span>' : ''}
-            `;
-            if (hasChildren) {
-                el.addEventListener('mouseenter', () => {
-                    col.querySelectorAll('.catmenu-item').forEach(i => i.classList.remove('catmenu-item-active'));
-                    el.classList.add('catmenu-item-active');
-                    renderCreateCol(colIndex + 1, item.id);
-                });
-            }
-            el.addEventListener('click', () => selectCategory(item.id, item.name));
-            col.appendChild(el);
+    function openCatMenuForEdit() {
+        openCatMenu('select', function(category) {
+            document.getElementById('selectedCategoryId').value = category.id;
+            document.getElementById('catSelectorText').textContent = category.name;
+            loadParams(category.id);
         });
-
-        container.appendChild(col);
     }
-
-    async function selectCategory(id, name) {
-        createSelectedCatId = id;
-        document.getElementById('selectedCategoryId').value = id;
-        document.getElementById('catSelectorText').textContent = name;
-        closeCreateCatMenu();
-        await loadParams(id, {});
-        if (window.ParamRulesEngine) {
-            await ParamRulesEngine.loadRules(id);
-        } else {
-            console.error("ParamRulesEngine is not loaded!");
-        }
-    }
-
     async function loadParams(categoryId, existingValues = {}) {
         const res = await fetch(`/Product/Parameters?categoryId=${categoryId}`);
         const params = await res.json();

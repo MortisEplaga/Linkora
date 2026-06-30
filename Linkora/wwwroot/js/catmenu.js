@@ -1,4 +1,6 @@
 ﻿let allCategories = [];
+let categoryMenuMode = 'navigate';
+let categoryMenuCallback = null;
 
 const CATEGORY_ICONS = {
     'transport': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-car-front-icon lucide-car-front"><path d="m21 8-2 2-1.5-3.7A2 2 0 0 0 15.646 5H8.4a2 2 0 0 0-1.903 1.257L5 10 3 8"/><path d="M7 14h.01"/><path d="M17 14h.01"/><rect width="18" height="8" x="3" y="10" rx="2"/><path d="M5 18v2"/><path d="M19 18v2"/></svg>`,
@@ -23,12 +25,25 @@ function getIcon(nameEn) {
     return null;
 }
 
-async function openCatMenu() {
+function openCatMenu(mode = 'navigate', callback = null) {
+    categoryMenuMode = mode;
+    categoryMenuCallback = callback;
+
     if (!allCategories.length) {
-        const res = await fetch('/Category/All');
-        allCategories = await res.json();
+        fetch('/Category/All')
+            .then(r => r.json())
+            .then(data => {
+                allCategories = data;
+                renderCol(0, 3711);
+                showMenu();
+            });
+    } else {
+        renderCol(0, 3711);
+        showMenu();
     }
-    renderCol(0, 3711);
+}
+
+function showMenu() {
     document.getElementById('catMenu').classList.add('catmenu-open');
     document.getElementById('catMenuOverlay').classList.add('catmenu-overlay-open');
 }
@@ -58,17 +73,47 @@ function renderCol(colIndex, parentId) {
 
         const el = document.createElement('div');
         el.className = 'catmenu-item';
-        el.innerHTML = `
-            <a href="/Category/Index/${item.id}" class="catmenu-link">
-                ${icon ? `<span class="catmenu-icon">${icon}</span>` : ''}
-                <span class="catmenu-label">${item.name}</span>
-            </a>
-            ${hasChildren ? '<span class="catmenu-arrow">›</span>' : ''}
-        `;
+
+        const link = document.createElement('a');
+        link.className = 'catmenu-link';
+        link.href = 'javascript:void(0)';
+
+        if (icon) {
+            const iconSpan = document.createElement('span');
+            iconSpan.className = 'catmenu-icon';
+            iconSpan.innerHTML = icon;
+            link.appendChild(iconSpan);
+        }
+
+        const labelSpan = document.createElement('span');
+        labelSpan.className = 'catmenu-label';
+        labelSpan.textContent = item.name;
+        link.appendChild(labelSpan);
+
+        link.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (categoryMenuMode === 'navigate') {
+                window.location.href = '/Category/Index/' + item.id;
+                closeCatMenu(); 
+            } else if (categoryMenuMode === 'select') {
+                if (typeof categoryMenuCallback === 'function') {
+                    categoryMenuCallback({ id: item.id, name: item.name });
+                }
+                closeCatMenu();
+            }
+        });
+
+        el.appendChild(link);
+
+        if (hasChildren) {
+            const arrowSpan = document.createElement('span');
+            arrowSpan.className = 'catmenu-arrow';
+            arrowSpan.textContent = '›';
+            el.appendChild(arrowSpan);
+        }
 
         el.addEventListener('mouseenter', () => {
             col.querySelectorAll('.catmenu-item').forEach(i => i.classList.remove('catmenu-item-active'));
-
             el.classList.add('catmenu-item-active');
 
             if (hasChildren) {
@@ -80,7 +125,6 @@ function renderCol(colIndex, parentId) {
             }
         });
 
-        el.querySelector('.catmenu-link').addEventListener('click', closeCatMenu);
         col.appendChild(el);
     });
 

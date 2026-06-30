@@ -62,7 +62,7 @@
 
             <div class="create-section">
                 <h2 class="create-section-title" data-i18n="category_section">Category</h2>
-                <div class="create-cat-selector" id="catSelector" onclick="openCreateCatMenu()">
+                <div class="create-cat-selector" id="catSelector" onclick="openCatMenuForEdit()">
                     <span id="catSelectorText" data-i18n="select_category">@(p.CategoryId.HasValue ? "Change category" : "Select category")</span>
                     <span class="create-cat-arrow">›</span>
                 </div>
@@ -111,13 +111,8 @@
     </div>
 </div>
 
-<div class="catmenu-overlay" id="createCatOverlay" onclick="closeCreateCatMenu()"></div>
-<div class="catmenu" id="createCatMenu">
-    <div class="catmenu-columns" id="createCatColumns"></div>
-</div>
 <script src="~/js/param-rules-engine.js"></script>
 <script>
-    let createAllCategories = [];
 
     window.addEventListener('DOMContentLoaded', async () => {
         const catId = document.getElementById('selectedCategoryId').value;
@@ -180,52 +175,13 @@
         wrap.remove();
     }
 
-    async function openCreateCatMenu() {
-        if (!createAllCategories.length) {
-            const res = await fetch('/Category/All');
-            createAllCategories = await res.json();
-        }
-        renderCreateCol(0, 3711);
-        document.getElementById('createCatMenu').classList.add('catmenu-open');
-        document.getElementById('createCatOverlay').classList.add('catmenu-overlay-open');
-    }
-
-    function closeCreateCatMenu() {
-        document.getElementById('createCatMenu').classList.remove('catmenu-open');
-        document.getElementById('createCatOverlay').classList.remove('catmenu-overlay-open');
-    }
-
-    function renderCreateCol(colIndex, parentId) {
-        const container = document.getElementById('createCatColumns');
-        while (container.children.length > colIndex)
-            container.removeChild(container.lastChild);
-        const items = createAllCategories.filter(c => c.parentId === parentId);
-        if (!items.length) return;
-        const col = document.createElement('div');
-        col.className = 'catmenu-col';
-        items.forEach(item => {
-            const hasChildren = createAllCategories.some(c => c.parentId === item.id);
-            const el = document.createElement('div');
-            el.className = 'catmenu-item';
-            el.innerHTML = `<span class="catmenu-link">${item.name}</span>${hasChildren ? '<span class="catmenu-arrow">›</span>' : ''}`;
-            if (hasChildren) {
-                el.addEventListener('mouseenter', () => {
-                    col.querySelectorAll('.catmenu-item').forEach(i => i.classList.remove('catmenu-item-active'));
-                    el.classList.add('catmenu-item-active');
-                    renderCreateCol(colIndex + 1, item.id);
-                });
-            }
-            el.addEventListener('click', async () => {
-                document.getElementById('selectedCategoryId').value = item.id;
-                document.getElementById('catSelectorText').textContent = item.name;
-                closeCreateCatMenu();
-                await loadParams(item.id, {});
-            });
-            col.appendChild(el);
+    function openCatMenuForEdit() {
+        openCatMenu('select', function(category) {
+            document.getElementById('selectedCategoryId').value = category.id;
+            document.getElementById('catSelectorText').textContent = category.name;
+            loadParams(category.id);
         });
-        container.appendChild(col);
     }
-
     async function loadParams(categoryId, existingValues = {}) {
         const res = await fetch(`/Product/Parameters?categoryId=${categoryId}`);
         const params = await res.json();
@@ -310,11 +266,11 @@
                 <div class="param-check-row">
                     <span>${yesText}</span>
                     <input type="checkbox" class="param-check-input" data-param="${p.id}"
-                           ${val === 'true' ? 'checked' : ''} />
+                           ${val && val.toLowerCase() === 'true' ? 'checked' : ''} />
                 </div>`;
         } else if (p.type === 2) {
             const pills = p.options.map(opt =>
-                `<label class="param-pill ${val == opt.id ? 'param-pill-active' : ''}"
+                `<label class="param-pill ${val == opt.text ? 'param-pill-active' : ''}"
                         data-id="${opt.id}"
                         onclick="pillClick(this)">${opt.text}</label>`
             ).join('');
@@ -327,12 +283,12 @@
             }
             block.innerHTML += FreeTextSelect.buildHtml(p.id, initialText, val || '', p.options || []);
         } else if (p.type === 4) {
-            const selected = val ? val.split(',') : [];
+            const selected = val ? val.split(',').map(s => s.trim()) : [];
             const LIMIT = 5;
             const checksHtml = p.options.map((opt, i) =>
                 `<label class="param-option" ${i >= LIMIT ? 'style="display:none"' : ''}>
                     <input type="checkbox" data-param="${p.id}" data-id="${opt.id}"
-                           ${selected.includes(String(opt.id)) ? 'checked' : ''} /> ${opt.text}
+                           ${selected.includes(opt.text) ? 'checked' : ''} /> ${opt.text}
                 </label>`
             ).join('');
             block.innerHTML += `<div class="param-options" data-param="${p.id}">${checksHtml}</div>`;
@@ -368,7 +324,9 @@
         const pills = pill.closest('.param-pills');
         pills.querySelectorAll('.param-pill').forEach(p => p.classList.remove('param-pill-active'));
         pill.classList.add('param-pill-active');
-        if (typeof ParamRulesEngine !== 'undefined') ParamRulesEngine.applyAllVisibility();
+        if (typeof ParamRulesEngine !== 'undefined' && typeof ParamRulesEngine.triggerUpdate === 'function') {
+            ParamRulesEngine.triggerUpdate();
+        }    
     }
 
     function previewPhotos(input) {

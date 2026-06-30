@@ -264,7 +264,7 @@
                     </div>
                     <div class="product-card-body">
                         <div class="product-card-name">@p.Name</div>
-                        <div class="product-card-price">@(p.Price.HasValue? p.Price.Value.ToString("N2") + " €" : "Price on request")</div>
+                        <div class="product-card-price" data-i18n="price_on_request">@(p.Price.HasValue? p.Price.Value.ToString("N2") + " €" : "Price on request")</div>
                         <div class="product-card-address">@p.Address</div>
                         <div class="product-card-date">@(p.CreatedTime.HasValue? p.CreatedTime.Value.ToString("dd MMM, HH:mm") : "")</div>
                         <div class="product-card-desc">@p.Description</div>
