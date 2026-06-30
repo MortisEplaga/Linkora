@@ -82,7 +82,7 @@ namespace Linkora.Controllers
     JOIN Category c ON c.Id = mpc.CategoryId
     LEFT JOIN SelectOptions so ON c.Type IN (2,4) AND TRY_CAST(mpc.Value AS int) = so.Id
     WHERE mpc.ProductId IN ({productIds})
-      AND c.Name != 'Price'
+      AND c.Name != 'Price, €'
     ORDER BY c.Name", conn);
 
             var paramMatrix = new Dictionary<string, Dictionary<int, string>>();

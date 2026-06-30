@@ -7,6 +7,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Content Remove="wwwroot\img\DMiniLogo.svg" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="MailKit" Version="4.17.0" />
 		<PackageReference Include="Microsoft.AspNetCore.Server.Kestrel" Version="2.3.10" />
 		<PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />

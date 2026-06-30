@@ -297,24 +297,24 @@
     </div>
 
     <script>
-        async function toggleFav(btn, productId, can) {
-            const res = await fetch('/Favourite/Toggle', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
-                },
-                body: JSON.stringify({ productId, can })
-            });
+        // async function toggleFav(btn, productId, can) {
+        //     const res = await fetch('/Favourite/Toggle', {
+        //         method: 'POST',
+        //         headers: {
+        //             'Content-Type': 'application/json',
+        //             'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
+        //         },
+        //         body: JSON.stringify({ productId, can })
+        //     });
 
-            if (res.status === 401) {
-                openAuthModal('login');
-                return;
-            }
+        //     if (res.status === 401) {
+        //         openAuthModal('login');
+        //         return;
+        //     }
 
-            const data = await res.json();
-            btn.classList.toggle('product-card-action-active', data.active);
-        }
+        //     const data = await res.json();
+        //     btn.classList.toggle('product-card-action-active', data.active);
+        // }
     </script>
     <script>
         function setView(v) {
