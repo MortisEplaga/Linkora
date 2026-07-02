@@ -677,13 +677,35 @@ namespace Linkora.Repositories
             using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync();
 
-            var sql = "UPDATE Products SET Status = @Status WHERE Id = @Id";
-            using var command = new SqlCommand(sql, connection);
-            command.Parameters.AddWithValue("@Status", status.ToString());
-            command.Parameters.AddWithValue("@Id", productId);
+            using var transaction = (SqlTransaction)await connection.BeginTransactionAsync();
 
-            var rowsAffected = await command.ExecuteNonQueryAsync();
-            return rowsAffected > 0;
+            try
+            {
+                var updateSql = "UPDATE Products SET Status = @Status WHERE Id = @Id";
+                using (var updateCommand = new SqlCommand(updateSql, connection, transaction))
+                {
+                    updateCommand.Parameters.AddWithValue("@Status", status.ToString());
+                    updateCommand.Parameters.AddWithValue("@Id", productId);
+
+                    var rowsAffected = await updateCommand.ExecuteNonQueryAsync();
+
+                    var deleteSql = "DELETE FROM Favourites WHERE ProductId = @Id AND Can = 1";
+                    using (var deleteCommand = new SqlCommand(deleteSql, connection, transaction))
+                    {
+                        deleteCommand.Parameters.AddWithValue("@Id", productId);
+                        await deleteCommand.ExecuteNonQueryAsync();
+                    }
+
+                    await transaction.CommitAsync();
+
+                    return rowsAffected > 0;
+                }
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw; 
+            }
         }
         public async Task<int> CreateAsync(Product product, Dictionary<int, string> paramValues, int publishDurationDays = 30)
         {
