@@ -37,18 +37,32 @@
 
     var getParamValue = function (paramId) {
         var activePill = document.querySelector('[data-param="' + paramId + '"] .param-pill-active, .param-pills[data-param="' + paramId + '"] .param-pill-active');
+
+        if (!activePill) {
+            var pillInput = document.querySelector('input[type="hidden"]#pill_' + paramId + ', input[type="hidden"][name="p_' + paramId + '"]');
+            if (pillInput && pillInput.value) return pillInput.value;
+        }
         if (activePill) return activePill.dataset.id || activePill.getAttribute('data-id');
 
         var cb = document.querySelector('input[type="checkbox"][data-param="' + paramId + '"]');
         if (cb) return cb.checked ? 'true' : '';
 
-        var input = document.querySelector('input[data-param="' + paramId + '"], textarea[data-param="' + paramId + '"]');
+        var input = document.querySelector('input[data-param="' + paramId + '"], textarea[data-param="' + paramId + '"], select[data-param="' + paramId + '"]');
         if (input) return input.value.trim();
+
+        var namedInput = document.querySelector('input[name="p_' + paramId + '"], textarea[name="p_' + paramId + '"], select[name="p_' + paramId + '"]');
+        if (namedInput) return namedInput.value.trim();
+
         return '';
     };
 
     var findParamBlock = function (paramId) {
         var el = document.querySelector('[data-param="' + paramId + '"]');
+
+        if (!el) {
+            el = document.querySelector('input#pill_' + paramId + ', input[name="p_' + paramId + '"], textarea[name="p_' + paramId + '"], select[name="p_' + paramId + '"]');
+        }
+
         if (!el) return null;
         return el.closest('.create-param-block, .param-block, .create-field, .create-section');
     };
@@ -136,7 +150,7 @@
                 _visibilityRules = data.visibilityRules || [];
                 _validationRules = data.validationRules || [];
 
-                var container = document.getElementById('createParams');
+                var container = document.getElementById('filterForm');
                 if (container) {
                     var handler = function (e) {
                         applyAllVisibility();

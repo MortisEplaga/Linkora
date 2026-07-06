@@ -29,6 +29,7 @@
     @await RenderSectionAsync("Styles", required: false)
 
     <script src="~/js/i18n.js"></script>
+    <script src="~/js/param-rules-engine.js"></script>
     <script src="~/js/free-text-select.js"></script>
     @if (User.Identity!.IsAuthenticated)
     {
@@ -1355,9 +1356,8 @@
             }
             const data = await res.json();
             btn.classList.toggle('product-card-action-active', data.active);
-            if (window.location.pathname.startsWith('/Favourite')) {
-                location.reload();
-            }
+            if (window.location.pathname.startsWith('/Favourite')) { location.reload(); }
+            if (res.ok) { await updateFavAndCartBadges(); }
         }
 
         function openSellerModal(name, avatar, phone, isCompany, email, date, sellerId) {

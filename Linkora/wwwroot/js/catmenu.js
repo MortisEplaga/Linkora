@@ -25,6 +25,30 @@ function getIcon(nameEn) {
     return null;
 }
 
+function updateColumnsVisibility() {
+    const container = document.getElementById('catMenuColumns');
+    if (!container) return;
+
+    const columns = Array.from(container.children);
+
+    const availableWidth = window.innerWidth;
+    let totalWidth = 0;
+
+    for (let i = columns.length - 1; i >= 0; i--) {
+        const colWidth = 240; 
+        totalWidth += colWidth;
+
+        if (totalWidth > availableWidth && i < columns.length - 1) {
+            columns[i].classList.add('catmenu-col-hidden');
+        } else {
+            columns[i].classList.remove('catmenu-col-hidden');
+        }
+    }
+}
+window.addEventListener('resize', () => {
+    updateColumnsVisibility();
+});
+
 function openCatMenu(mode = 'navigate', callback = null) {
     categoryMenuMode = mode;
     categoryMenuCallback = callback;
@@ -46,6 +70,7 @@ function openCatMenu(mode = 'navigate', callback = null) {
 function showMenu() {
     document.getElementById('catMenu').classList.add('catmenu-open');
     document.getElementById('catMenuOverlay').classList.add('catmenu-overlay-open');
+    setTimeout(updateColumnsVisibility, 50);
 }
 
 function closeCatMenu() {
@@ -61,11 +86,43 @@ function renderCol(colIndex, parentId) {
     }
 
     const items = allCategories.filter(c => c.parentId === parentId);
-    if (!items.length) return;
+    if (!items.length) {
+        updateColumnsVisibility();
+        return;
+    }
 
     const isTopLevel = (parentId === 3711);
     const col = document.createElement('div');
     col.className = 'catmenu-col';
+
+    if (colIndex > 0) {
+        const backItem = document.createElement('div');
+        backItem.className = 'catmenu-item catmenu-back-row';
+
+        const backLink = document.createElement('a');
+        backLink.className = 'catmenu-link';
+        backLink.href = 'javascript:void(0)';
+
+        const backIcon = document.createElement('span');
+        backIcon.className = 'catmenu-icon';
+        backIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>`;
+
+        const backLabel = document.createElement('span');
+        backLabel.className = 'catmenu-label';
+        backLabel.textContent = 'Назад';
+
+        backLink.appendChild(backIcon);
+        backLink.appendChild(backLabel);
+        backItem.appendChild(backLink);
+
+        backItem.addEventListener('click', (e) => {
+            e.stopPropagation();
+            container.removeChild(col);
+            updateColumnsVisibility();
+        });
+
+        col.appendChild(backItem);
+    }
 
     items.forEach(item => {
         const hasChildren = allCategories.some(c => c.parentId === item.id);
@@ -90,19 +147,6 @@ function renderCol(colIndex, parentId) {
         labelSpan.textContent = item.name;
         link.appendChild(labelSpan);
 
-        link.addEventListener('click', function (e) {
-            e.stopPropagation();
-            if (categoryMenuMode === 'navigate') {
-                window.location.href = '/Category/Index/' + item.id;
-                closeCatMenu(); 
-            } else if (categoryMenuMode === 'select') {
-                if (typeof categoryMenuCallback === 'function') {
-                    categoryMenuCallback({ id: item.id, name: item.name });
-                }
-                closeCatMenu();
-            }
-        });
-
         el.appendChild(link);
 
         if (hasChildren) {
@@ -112,15 +156,32 @@ function renderCol(colIndex, parentId) {
             el.appendChild(arrowSpan);
         }
 
-        el.addEventListener('mouseenter', () => {
-            col.querySelectorAll('.catmenu-item').forEach(i => i.classList.remove('catmenu-item-active'));
-            el.classList.add('catmenu-item-active');
+        el.addEventListener('click', function (e) {
+            e.stopPropagation();
 
-            if (hasChildren) {
-                renderCol(colIndex + 1, item.id);
+            const isAlreadyActive = el.classList.contains('catmenu-item-active');
+
+            if (isAlreadyActive) {
+                if (categoryMenuMode === 'navigate') {
+                    window.location.href = '/Category/Index/' + item.id;
+                    closeCatMenu();
+                } else if (categoryMenuMode === 'select') {
+                    if (typeof categoryMenuCallback === 'function') {
+                        categoryMenuCallback({ id: item.id, name: item.name });
+                    }
+                    closeCatMenu();
+                }
             } else {
-                while (container.children.length > colIndex + 1) {
-                    container.removeChild(container.lastChild);
+                col.querySelectorAll('.catmenu-item').forEach(i => i.classList.remove('catmenu-item-active'));
+                el.classList.add('catmenu-item-active');
+
+                if (hasChildren) {
+                    renderCol(colIndex + 1, item.id);
+                } else {
+                    while (container.children.length > colIndex + 1) {
+                        container.removeChild(container.lastChild);
+                    }
+                    updateColumnsVisibility();
                 }
             }
         });
@@ -129,4 +190,5 @@ function renderCol(colIndex, parentId) {
     });
 
     container.appendChild(col);
+    updateColumnsVisibility();
 }

@@ -689,6 +689,36 @@
             badge.style.display = count > 0 ? 'flex' : 'none';
         }
 
+        async function updateFavAndCartBadges() {
+            try {
+                const res = await fetch('/Favourite/UserItems');
+                if (!res.ok) return;
+                const { favs, cart } = await res.json();
+
+                const favBadge = document.getElementById('favsNavBadge');
+                if (favBadge) {
+                    if (favs && favs.length > 0) {
+                        favBadge.textContent = favs.length;
+                        favBadge.style.display = 'inline-flex';
+                    } else {
+                        favBadge.style.display = 'none';
+                    }
+                }
+
+                const cartBadge = document.getElementById('cartNavBadge');
+                if (cartBadge) {
+                    if (cart && cart.length > 0) {
+                        cartBadge.textContent = cart.length;
+                        cartBadge.style.display = 'inline-flex';
+                    } else {
+                        cartBadge.style.display = 'none';
+                    }
+                }
+            } catch (e) {
+                console.warn("Failed to update fav/cart badges", e);
+            }
+        }
+        
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -706,6 +736,10 @@
                     const { count } = await res.json();
                     updateNotifBadge(count);
                 } catch {}
+            }
+            
+            if (document.getElementById('cartNavBadge') || document.getElementById('favsNavBadge')) {
+                await updateFavAndCartBadges();
             }
         })();
 

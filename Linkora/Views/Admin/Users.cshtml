@@ -10,6 +10,21 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/admin.css" />
+    <style>
+        .admin-table-wrapper {
+            max-height: 65vh;
+            overflow: auto;
+            border-radius: 8px;
+        }
+
+        .admin-table thead th {
+            position: sticky;
+            top: 0;
+            background: #fff;
+            z-index: 10;
+            border-bottom: 1px solid #e8e8e8;
+        }
+    </style>
 }
 
 <div class="admin-layout">
@@ -59,111 +74,111 @@
             else
             {
                 <div class="admin-table-wrapper">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th data-i18n="admin_user_col">User</th>
-                            <th data-i18n="admin_contact_col">Contact</th>
-                            <th data-i18n="admin_type_col">Type</th>
-                            <th data-i18n="admin_role_col">Role</th>
-                            <th data-i18n="admin_listings_col">Listings</th>
-                            <th data-i18n="admin_joined_col">Joined</th>
-                            <th data-i18n="admin_actions_col">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var u in users)
-                        {
-                            <tr id="urow-@u.Id">
-                                <td>
-                                    <div class="admin-user-cell">
-                                        <div class="admin-user-avatar">
-                                            @if (u.AvatarPath != null)
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="admin_user_col">User</th>
+                                <th data-i18n="admin_contact_col">Contact</th>
+                                <th data-i18n="admin_type_col">Type</th>
+                                <th data-i18n="admin_role_col">Role</th>
+                                <th data-i18n="admin_listings_col">Listings</th>
+                                <th data-i18n="admin_joined_col">Joined</th>
+                                <th data-i18n="admin_actions_col">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var u in users)
+                            {
+                                <tr id="urow-@u.Id">
+                                    <td>
+                                        <div class="admin-user-cell">
+                                            <div class="admin-user-avatar">
+                                                @if (u.AvatarPath != null)
+                                                {
+                                                    <img src="@u.AvatarPath" style="width:36px;height:36px;border-radius:50%;object-fit:cover"
+                                                         onerror="this.style.display='none'" />
+                                                }
+                                                else
+                                                {
+                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
+                                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                                        <circle cx="12" cy="7" r="4" />
+                                                    </svg>
+                                                }
+                                            </div>
+                                            <div>
+                                                <div class="admin-user-name">
+                                                    <a href="/Seller/Index/@u.Id" target="_blank"
+                                                       style="color:inherit;text-decoration:none">@u.UserName</a>
+                                                </div>
+                                                <div class="admin-user-email">#@u.Id</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div style="font-size:12px;color:#555">@(u.Email ?? "—")</div>
+                                        @if (u.Phone != null)
+                                        {
+                                            <div style="font-size:12px;color:#aaa">@u.Phone</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (u.IsCompany)
+                                        {
+                                            <span class="admin-badge" style="background:#e3f2fd;color:#1565c0" data-i18n="admin_company">Company</span>
+                                        }
+                                        else
+                                        {
+                                            <span style="color:#aaa;font-size:12px" data-i18n="admin_private">Private</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="admin-badge admin-badge-@u.Role" id="role-badge-@u.Id">@u.Role</span>
+                                    </td>
+                                    <td style="font-weight:600;color:#333">@u.ProductCount</td>
+                                    <td style="color:#aaa;font-size:12px;white-space:nowrap">
+                                        @(u.CreatedAt?.ToString("dd MMM yyyy") ?? "—")
+                                    </td>
+                                    <td>
+                                        <div class="admin-actions">
+                                            @if (u.Role != "admin")
                                             {
-                                                <img src="@u.AvatarPath" style="width:36px;height:36px;border-radius:50%;object-fit:cover"
-                                                     onerror="this.style.display='none'" />
+                                                <button class="admin-btn admin-btn-admin"
+                                                        onclick="setRole(@u.Id, 'admin', this)">
+                                                    <span data-i18n="admin_make_admin">Make admin</span>
+                                                </button>
                                             }
                                             else
                                             {
-                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
-                                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                                                    <circle cx="12" cy="7" r="4" />
-                                                </svg>
+                                                <button class="admin-btn admin-btn-view"
+                                                        onclick="setRole(@u.Id, 'user', this)">
+                                                    <span data-i18n="admin_revoke_admin">Revoke admin</span>
+                                                </button>
                                             }
+                                            @if (u.Role == "banned")
+                                            {
+                                                <button class="admin-btn admin-btn-unban"
+                                                        onclick="setRole(@u.Id, 'user', this)">
+                                                    <span data-i18n="admin_unban">Unban</span>
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button class="admin-btn admin-btn-ban"
+                                                        onclick="setRole(@u.Id, 'banned', this)">
+                                                    <span data-i18n="admin_ban">Ban</span>
+                                                </button>
+                                            }
+                                            <button class="admin-btn admin-btn-danger"
+                                                    onclick="confirmDeleteUser(@u.Id, '@u.UserName.Replace("'", "\\'")')">
+                                                <span data-i18n="admin_delete">Delete</span>
+                                            </button>
                                         </div>
-                                        <div>
-                                            <div class="admin-user-name">
-                                                <a href="/Seller/Index/@u.Id" target="_blank"
-                                                   style="color:inherit;text-decoration:none">@u.UserName</a>
-                                            </div>
-                                            <div class="admin-user-email">#@u.Id</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div style="font-size:12px;color:#555">@(u.Email ?? "—")</div>
-                                    @if (u.Phone != null)
-                                    {
-                                        <div style="font-size:12px;color:#aaa">@u.Phone</div>
-                                    }
-                                </td>
-                                <td>
-                                    @if (u.IsCompany)
-                                    {
-                                        <span class="admin-badge" style="background:#e3f2fd;color:#1565c0" data-i18n="admin_company">Company</span>
-                                    }
-                                    else
-                                    {
-                                        <span style="color:#aaa;font-size:12px" data-i18n="admin_private">Private</span>
-                                    }
-                                </td>
-                                <td>
-                                    <span class="admin-badge admin-badge-@u.Role" id="role-badge-@u.Id">@u.Role</span>
-                                </td>
-                                <td style="font-weight:600;color:#333">@u.ProductCount</td>
-                                <td style="color:#aaa;font-size:12px;white-space:nowrap">
-                                    @(u.CreatedAt?.ToString("dd MMM yyyy") ?? "—")
-                                </td>
-                                <td>
-                                    <div class="admin-actions">
-                                        @if (u.Role != "admin")
-                                        {
-                                            <button class="admin-btn admin-btn-admin"
-                                                    onclick="setRole(@u.Id, 'admin', this)">
-                                                <span data-i18n="admin_make_admin">Make admin</span>
-                                            </button>
-                                        }
-                                        else
-                                        {
-                                            <button class="admin-btn admin-btn-view"
-                                                    onclick="setRole(@u.Id, 'user', this)">
-                                                <span data-i18n="admin_revoke_admin">Revoke admin</span>
-                                            </button>
-                                        }
-                                        @if (u.Role == "banned")
-                                        {
-                                            <button class="admin-btn admin-btn-unban"
-                                                    onclick="setRole(@u.Id, 'user', this)">
-                                                <span data-i18n="admin_unban">Unban</span>
-                                            </button>
-                                        }
-                                        else
-                                        {
-                                            <button class="admin-btn admin-btn-ban"
-                                                    onclick="setRole(@u.Id, 'banned', this)">
-                                                <span data-i18n="admin_ban">Ban</span>
-                                            </button>
-                                        }
-                                        <button class="admin-btn admin-btn-danger"
-                                                onclick="confirmDeleteUser(@u.Id, '@u.UserName.Replace("'", "\\'")')">
-                                            <span data-i18n="admin_delete">Delete</span>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
                 </div>
                 @if (totalPages > 1)
                 {

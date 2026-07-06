@@ -1,4 +1,27 @@
-﻿:root {
+﻿.cart-btn {
+    position: relative;
+}
+
+.header-actions .cart-btn .msg-nav-badge {
+    position: absolute;
+    top: 2px;
+    right: 0px;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    border-radius: 9px;
+    background: #e53935;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    margin-left: 0 !important;
+}
+
+:root {
     --accent: #00b0a3;
     --accent-dark: #009488;
     --nav-bg: #1a1a1a;
