@@ -539,7 +539,7 @@ namespace Linkora.Repositories
 
                     imagePath = reader.IsDBNull(0) ? null : reader.GetString(0);
                     qty = reader.GetInt32(1);
-                    cost = reader.IsDBNull(2) ? 0 : reader.GetDecimal(2);
+                    cost = reader.IsDBNull(2) ? 0 : Convert.ToInt32(reader[2]);
                     delivery = reader.IsDBNull(3) ? "" : reader.GetString(3);
                 }
 

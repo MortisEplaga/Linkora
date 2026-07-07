@@ -1065,3 +1065,23 @@
         flex: 1 1 100%;
     }
 }
+.user-info-wrapper .msg-btn,
+.user-info-wrapper .cart-btn {
+    padding: 4px 8px;
+}
+
+.header-actions .msg-btn .msg-nav-badge {
+    margin-left: 0 !important;
+}
+.settings-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px; 
+}
+
+.settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}

@@ -134,6 +134,66 @@
                                        onblur="rangeSync(this,'to')" />
                             </div>
                         }
+                        @if (vm.Param.Type == 4)
+                        {
+                            <div class="param-options">
+                                @for (int i = 0; i < vm.Options.Count; i++)
+                                {
+                                    var opt = vm.Options[i];
+                                    var isChecked = activeFilters.TryGetValue(vm.Param.Id, out var cv)
+                                    && cv.Contains(opt.Id.ToString());
+                                    <label class="param-option @(i >= 5 ? "param-option-hidden" : "")"
+                                           style="@(i >= 5 ? "display:none" : "")">
+                                        <input type="checkbox" name="p_@vm.Param.Id"
+                                               value="@opt.Id"
+                                               @(isChecked ? "checked" : "") />
+                                        @opt.Text
+                                    </label>
+                                }
+                            </div>
+                            @if (vm.Options.Count > 5)
+                            {
+                                <button type="button" class="param-show-more"
+                                        data-count="@(vm.Options.Count - 5)"
+                                        onclick="toggleOptions(this)">
+                                    More @(vm.Options.Count - 5)
+                                </button>
+                            }
+                        }
+
+                        @if (vm.Param.Type == 8)
+                        {
+                            var activeIds = activeFilters.TryGetValue(vm.Param.Id, out var fv) ? fv : new List<string>();
+                            var optionsJson = System.Text.Json.JsonSerializer.Serialize(
+                            vm.Options.Select(o => new { id = o.Id, text = o.Text }));
+
+                            <div class="free-text-select" data-param="@vm.Param.Id" style="position:relative">
+
+                                <div class="free-text-chips" id="chips_@vm.Param.Id" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+                                    @foreach (var activeId in activeIds)
+                                    {
+                                        var opt = vm.Options.FirstOrDefault(o => o.Id.ToString() == activeId);
+                                        var displayText = opt?.Text ?? activeId;
+
+                                        <span class="search-chip" data-id="@activeId" style="margin: 0;">
+                                            @displayText
+                                            <a class="search-chip-remove" href="#" onclick="removeType8Chip(this); return false;">✕</a>
+                                            <input type="hidden" name="p_@vm.Param.Id" value="@activeId" />
+                                        </span>
+                                    }
+                                </div>
+
+                                <input type="text" class="param-range-input free-text-select-input"
+                                       data-param="@vm.Param.Id"
+                                       value="" autocomplete="off"
+                                       placeholder="Введите или выберите..."
+                                       oninput="FreeTextSelect.onInput(this)"
+                                       onfocus="FreeTextSelect.onFocus(this)"
+                                       onkeydown="handleType8Keydown(event, '@vm.Param.Id')" />
+
+                                <div class="create-dropdown free-text-select-drop"></div>
+                            </div>
+                        }
                     </div>
                 }
                 @if (parameters.Count > 0)

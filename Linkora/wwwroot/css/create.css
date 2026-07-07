@@ -78,7 +78,37 @@
     border-color: #444 !important;
     color: #888 !important;
 }
+.dark-theme .create-section-title {
+    color: #e0e0e0 !important;
+}
 
+.dark-theme .auth-label {
+    color: #e0e0e0;
+}
+
+.dark-theme .create-cat-selector {
+    background: #2a2a2a;
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+    .dark-theme .create-cat-selector:hover {
+        border-color: #666;
+    }
+
+.dark-theme .create-cat-arrow {
+    color: #aaa;
+}
+
+.dark-theme .create-footer-sticky {
+    background: #1e1e1e;
+    border-top-color: #333;
+    box-shadow: 0 -5px 10px rgba(0,0,0,0.3);
+}
+
+.dark-theme .duration-hint {
+    color: #888;
+}
     .dark-theme .duration-pill.active {
         background: #e8e8e8 !important;
         border-color: #e8e8e8 !important;

@@ -53,6 +53,12 @@
                                         <span class="notif-badge" id="notifBadge" style="display:none"></span>
                                     </button>
                                 </div>
+                                <a href="/Messages/Index" class="login-btn msg-btn" title="Messages">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                    </svg>
+                                    <span class="msg-nav-badge" id="msgNavBadge" style="display:none;margin-left:auto"></span>
+                                </a>
                                 <a asp-controller="Favourite" asp-action="Index" asp-route-tab="cart" class="login-btn cart-btn" title="Cart">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <circle cx="9" cy="21" r="1" />
@@ -77,13 +83,6 @@
                                 <a class="user-dropdown-item" asp-controller="Product" asp-action="My">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></svg>
                                     <span data-i18n="my_ads">My ads</span>
-                                </a>
-                                <a class="user-dropdown-item" href="/Messages/Index">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                                    </svg>
-                                    <span data-i18n="messages">Messages</span>
-                                    <span class="msg-nav-badge" id="msgNavBadge" style="display:none;margin-left:auto"></span>
                                 </a>
                                 <a class="user-dropdown-item" asp-controller="Favourite" asp-action="Index" asp-route-tab="favs">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
@@ -230,16 +229,19 @@
             <h2 class="auth-title" data-i18n="settings_title">Settings</h2>
 
             <div class="settings-section">
-                <div class="settings-label">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                    </svg>
-                    <span data-i18n="settings_dark">Dark mode</span>
+                <div class="settings-row">
+                    <div class="settings-label">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                        </svg>
+                        <span data-i18n="settings_dark">Dark mode</span>
+                    </div>
+                    <button class="settings-toggle" id="themeToggle" onclick="toggleTheme()">
+                        <span class="settings-toggle-knob"></span>
+                    </button>
                 </div>
-                <button class="settings-toggle" id="themeToggle" onclick="toggleTheme()">
-                    <span class="settings-toggle-knob"></span>
-                </button>
-                <div class="settings-section">
+
+                <div class="settings-row">
                     <div class="settings-label">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -277,6 +279,26 @@
             <div class="reviews-list" id="myReviewsList">
                 <div class="reviews-empty" data-i18n="loading_text">Loading...</div>
             </div>
+        </div>
+        <div class="modal-overlay" id="dealReviewOverlay" onclick="closeDealReviewModal()"></div>
+        <div class="modal" id="dealReviewModal" style="max-width:400px">
+            <button class="modal-close" onclick="closeDealReviewModal()">✕</button>
+            <h2 class="auth-title" data-i18n="how_rate">How would you rate this user?</h2>
+            <div class="review-stars" id="dealReviewStars">
+                @for (int i = 1; i <= 5; i++)
+                {
+                    <svg class="star" data-rating="@i" width="24" height="24" viewBox="0 0 24 24"
+                         fill="none" stroke="#f5a623" stroke-width="2" onclick="rateDealUser(@i)">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                    </svg>
+                }
+            </div>
+            <textarea class="review-comment" id="dealReviewComment" placeholder="Optional comment"
+                  rows="2" data-i18n-placeholder="optional_comment"></textarea>
+            <button class="review-submit" id="dealReviewSubmitBtn"
+                    onclick="submitDealReview()" data-i18n="submit_review_btn">
+                Submit review
+            </button>
         </div>
     }
 
@@ -508,6 +530,7 @@
         let notifAllData = [];
         let notifCurrentTab = 'all';
         let notifModalOpen = false;
+        const currentUserId = @User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value;
 
         function toggleNotifModal(e) {
             if (!document.getElementById('notifOverlay')) return;
@@ -526,34 +549,6 @@
             document.getElementById('notifModal').classList.add('open');
             await loadAllNotifications();
         }
-        
-        // function translateNotificationMessage(message) {
-        //     const lang = localStorage.getItem('lang') || 'en';
-
-        //     if (message.startsWith('REJECTED_REASON::')) {
-        //         const parts = message.split('::');
-        //         const reasonEn = parts[1] || '';
-        //         const reasonLv = parts[2] || reasonEn;
-        //         const reasonRu = parts[3] || reasonEn;
-        //         const comment = parts[4] || '';
-        //         const reasonText = lang === 'lv' ? reasonLv : (lang === 'ru' ? reasonRu : reasonEn);
-        //         const template = (translations[lang] && translations[lang].notif_rejected_reason)
-        //             || translations.en.notif_rejected_reason;
-        //         let result = template.replace('{0}', reasonText);
-        //         if (comment) result += ' (' + comment + ')';
-        //         return result;
-        //     }
-
-        //     const pattern = /^(.+?) posted a new listing: (.+)$/;
-        //     const match = message.match(pattern);
-        //     if (match && translations[lang] && translations[lang]["notif_new_listing"]) {
-        //         const author = match[1];
-        //         const product = match[2];
-        //         const template = translations[lang]["notif_new_listing"];
-        //         return template.replace("{0}", author).replace("{1}", product);
-        //     }
-        //     return message;
-        // }
 
         function closeNotifModal() {
             if (!document.getElementById('notifOverlay')) return;
@@ -633,37 +628,112 @@
             const item = notifAllData.find(n => n.id === id);
             if (!item) return;
 
-        if (!item.isRead) {
-            item.isRead = true;
-            await fetch(`/Notifications/MarkRead?id=${id}`, { method: 'POST' });
-            const unreadLeft = notifAllData.filter(n => !n.isRead).length;
-            updateNotifBadge(unreadLeft);
+            if (!item.isRead) {
+                item.isRead = true;
+                await fetch(`/Notifications/MarkRead?id=${id}`, { method: 'POST' });
+                const unreadLeft = notifAllData.filter(n => !n.isRead).length;
+                updateNotifBadge(unreadLeft);
 
-            const el = document.getElementById('notif-item-' + id);
-            if (el) {
-                el.classList.remove('unread');
-                if (notifCurrentTab === 'unread') {
-                } else {
-                    const tabCount = document.getElementById('tabUnreadCount');
-                    if (tabCount) {
-                        if (unreadLeft > 0) {
-                            tabCount.textContent = unreadLeft;
-                        } else {
-                            tabCount.style.display = 'none';
+                const el = document.getElementById('notif-item-' + id);
+                if (el) {
+                    el.classList.remove('unread');
+                    if (notifCurrentTab !== 'unread') {
+                        const tabCount = document.getElementById('tabUnreadCount');
+                        if (tabCount) {
+                            if (unreadLeft > 0) tabCount.textContent = unreadLeft;
+                            else tabCount.style.display = 'none';
                         }
-                    }
-                    const markAllBtn = document.getElementById('markAllBtn');
-                    if (markAllBtn) {
-                        markAllBtn.style.display = unreadLeft > 0 ? '' : 'none';
+                        const markAllBtn = document.getElementById('markAllBtn');
+                        if (markAllBtn) markAllBtn.style.display = unreadLeft > 0 ? '' : 'none';
                     }
                 }
             }
-        }
+
+            let notifType = null;
+            let reviewId = null;
+            try {
+                const parsed = JSON.parse(item.message);
+                notifType = parsed?.type;
+                reviewId = parsed?.reviewId;
+            } catch {}
+
+            if (notifType === 'review_received' && reviewId) {
+                closeNotifModal();
+                window.location.href = `/Seller/Index/${currentUserId}?reviewId=${reviewId}`;
+                return;
+            }
+
+            if (notifType === 'deal_sold' || notifType === 'deal_bought') {
+                closeNotifModal();
+                await handleDealNotifClick(item);
+                return;
+            }
 
             if (url) {
                 closeNotifModal();
                 window.location.href = url;
             }
+        }
+
+        let dealReviewTargetId = null;
+        let dealReviewProductId = null;
+        let dealReviewRating = 0;
+
+        async function handleDealNotifClick(notif) {
+            if (!notif.productId || !notif.fromUserId) return;
+            try {
+                const res = await fetch(`/Reviews/CanReview?targetUserId=${notif.fromUserId}&productId=${notif.productId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.canReview) {
+                        openDealReviewModal(notif.fromUserId, notif.productId);
+                        return;
+                    }
+                }
+            } catch {}
+            window.location.href = '/Product/Details/' + notif.productId;
+        }
+
+        function openDealReviewModal(targetUserId, productId) {
+            dealReviewTargetId = targetUserId;
+            dealReviewProductId = productId;
+            dealReviewRating = 0;
+            document.getElementById('dealReviewComment').value = '';
+            document.querySelectorAll('#dealReviewStars .star').forEach(s => s.setAttribute('fill', 'none'));
+            document.getElementById('dealReviewOverlay').classList.add('open');
+            document.getElementById('dealReviewModal').classList.add('open');
+            applyTranslations();
+        }
+
+        function closeDealReviewModal() {
+            document.getElementById('dealReviewOverlay').classList.remove('open');
+            document.getElementById('dealReviewModal').classList.remove('open');
+        }
+
+        function rateDealUser(rating) {
+            dealReviewRating = rating;
+            document.querySelectorAll('#dealReviewStars .star').forEach((s, idx) => {
+                s.setAttribute('fill', idx < rating ? '#f5a623' : 'none');
+            });
+        }
+
+        async function submitDealReview() {
+            if (!dealReviewRating) return;
+            const comment = document.getElementById('dealReviewComment').value.trim();
+            const res = await fetch('/Reviews/Create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
+                },
+                body: JSON.stringify({
+                    targetUserId: dealReviewTargetId,
+                    productId: dealReviewProductId,
+                    rating: dealReviewRating,
+                    comment: comment || null
+                })
+            });
+            if (res.ok) closeDealReviewModal();
         }
 
         function switchNotifTab(tab) {
@@ -718,7 +788,7 @@
                 console.warn("Failed to update fav/cart badges", e);
             }
         }
-        
+
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -737,7 +807,7 @@
                     updateNotifBadge(count);
                 } catch {}
             }
-            
+
             if (document.getElementById('cartNavBadge') || document.getElementById('favsNavBadge')) {
                 await updateFavAndCartBadges();
             }
@@ -889,7 +959,7 @@
                             const pName = lang === 'lv' ? parsed.paramNameLv
                                 : lang === 'ru' ? parsed.paramNameRu : parsed.paramName;
                             return fmt(tl('notif_parameter_rejected'), pName || '');
-                        } 
+                        }
                         case 'subscription_sold':   return fmt(tl('notif_subscription_sold'), from);
                         case 'favourite_updated': {
                             const changeItems = parsed.changes || [];
@@ -905,10 +975,10 @@
                                         return fmt(tl('notif_fav_price_changed'), item.oldPrice, item.newPrice);
                                     case 'characteristics_updated':
                                         return tl('notif_fav_characteristics_updated');
-                                    case 'qty_changed':                                
+                                    case 'qty_changed':
                                         return fmt(tl('notif_fav_qty_changed'), item.oldQty, item.newQty);
                                     default:
-                                        return item; 
+                                        return item;
                                 }
                             });
                             if (translated.every(t => typeof t === 'string') && parsed.changes && parsed.changes.length > 0 && typeof parsed.changes[0] === 'string') {
@@ -930,47 +1000,47 @@
 
         @if (User.Identity!.IsAuthenticated)
         {
-                <text>
-                (function () {
-                    const notifConnection = new signalR.HubConnectionBuilder()
-                        .withUrl("/hubs/messages")
-                        .withAutomaticReconnect()
-                        .build();
+                    <text>
+                    (function () {
+                        const notifConnection = new signalR.HubConnectionBuilder()
+                            .withUrl("/hubs/messages")
+                            .withAutomaticReconnect()
+                            .build();
 
-                    notifConnection.on("NotificationReceived", function (notif) {
-                        notifAllData.unshift({
-                            id: notif.id,
-                            message: notif.message,
-                            isRead: false,
-                            createdAt: notif.createdAt,
-                            fromUserId: notif.fromUserId,
-                            fromUserName: notif.fromUserName || null,
-                            fromUserAvatar: notif.fromUserAvatar || null,
-                            productId: notif.productId || null,
-                            productName: notif.productName || null,
-                            productImage: notif.productImage || null,
+                        notifConnection.on("NotificationReceived", function (notif) {
+                            notifAllData.unshift({
+                                id: notif.id,
+                                message: notif.message,
+                                isRead: false,
+                                createdAt: notif.createdAt,
+                                fromUserId: notif.fromUserId,
+                                fromUserName: notif.fromUserName || null,
+                                fromUserAvatar: notif.fromUserAvatar || null,
+                                productId: notif.productId || null,
+                                productName: notif.productName || null,
+                                productImage: notif.productImage || null,
+                            });
+
+                            const unread = notifAllData.filter(function (n) { return !n.isRead; }).length;
+                            updateNotifBadge(unread);
+
+                            if (notifModalOpen) {
+                                renderNotifList();
+                            }
                         });
 
-                        const unread = notifAllData.filter(function (n) { return !n.isRead; }).length;
-                        updateNotifBadge(unread);
+                        notifConnection.on("UnreadCountChanged", function () {
+                            fetch('/Notifications/Count')
+                                .then(function (r) { return r.json(); })
+                                .then(function (data) { updateNotifBadge(data.count); })
+                                .catch(function () {});
+                        });
 
-                        if (notifModalOpen) {
-                            renderNotifList();
-                        }
-                    });
-
-                    notifConnection.on("UnreadCountChanged", function () {
-                        fetch('/Notifications/Count')
-                            .then(function (r) { return r.json(); })
-                            .then(function (data) { updateNotifBadge(data.count); })
-                            .catch(function () {});
-                    });
-
-                    notifConnection.start().catch(function (err) {
-                        console.warn("SignalR (notifications) failed to start:", err);
-                    });
-                })();
-                </text>
+                        notifConnection.start().catch(function (err) {
+                            console.warn("SignalR (notifications) failed to start:", err);
+                        });
+                    })();
+                    </text>
         }
-</script>
+    </script>
 </header>

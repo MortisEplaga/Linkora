@@ -204,7 +204,7 @@
     <div class="reviews-list">
         @foreach (var r in (IEnumerable<dynamic>)ViewBag.Reviews)
         {
-            <div class="review-item">
+            <div class="review-item" data-review-id="@r.Id">
                 <div class="review-author">
                     @if (r.AuthorAvatar != null)
                     {
@@ -380,5 +380,25 @@
         setView(localStorage.getItem('listingView') || 'grid');
         loadSubscriptionState(@seller.Id);
         translatePage();
+        openReviewFromQuery();
     });
-</script>
+
+    function openReviewFromQuery() {
+        const params = new URLSearchParams(window.location.search);
+        const reviewId = params.get('reviewId');
+        if (!reviewId) return;
+
+        openReviews();
+
+        const attemptScroll = () => {
+            const el = document.querySelector(`.review-item[data-review-id="${reviewId}"]`);
+            if (!el) return;
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.style.transition = 'background-color 0.3s';
+            el.style.backgroundColor = '#fff7e0';
+            setTimeout(() => { el.style.backgroundColor = ''; }, 2000);
+        };
+
+        setTimeout(attemptScroll, 100);
+    }
+    </script>

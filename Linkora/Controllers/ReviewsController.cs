@@ -1,6 +1,7 @@
 ﻿using Linkora.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using System.Security.Claims;
 
 namespace Linkora.Controllers
@@ -33,10 +34,32 @@ namespace Linkora.Controllers
                 rating: dto.Rating,
                 comment: dto.Comment
             );
-            var msg = System.Text.Json.JsonSerializer.Serialize(new { type = "review_received", rating = dto.Rating });
+            var msg = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                type = "review_received",
+                rating = dto.Rating,
+                reviewId
+            });
             await _notificationRepository.CreateAsync(dto.TargetUserId, userId, dto.ProductId, msg);
 
             return Ok(new { reviewId });
+        }
+        [HttpGet("CanReview")]
+        public async Task<IActionResult> CanReview(int targetUserId, int productId)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(@"
+                SELECT COUNT(*) FROM Reviews
+                WHERE AuthorId = @AuthorId AND TargetUserId = @TargetId AND ProductId = @ProductId", conn);
+            cmd.Parameters.AddWithValue("@AuthorId", userId);
+            cmd.Parameters.AddWithValue("@TargetId", targetUserId);
+            cmd.Parameters.AddWithValue("@ProductId", productId);
+            var count = (int)(await cmd.ExecuteScalarAsync())!;
+
+            return Ok(new { canReview = count == 0 });
         }
         [HttpGet("My")]
         public async Task<IActionResult> My(string tab = "about")
