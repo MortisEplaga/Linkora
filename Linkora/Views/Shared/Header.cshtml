@@ -1,6 +1,5 @@
 ﻿<header class="site-header">
 
-    @* ── Top navigation bar ── *@
     <div class="header-nav sticky-top" id="header-nav">
         <nav class="navbar">
             <div class="navbar-inner">
@@ -115,7 +114,7 @@
                                     <span data-i18n="logout">Logout</span>
                                 </a>
                             </div>
-                            <!-- Notification Modal -->
+
                             <div class="notif-overlay" id="notifOverlay" onclick="closeNotifModal()"></div>
                             <div class="notif-modal" id="notifModal">
                                 <div class="notif-modal-header">
@@ -164,7 +163,6 @@
         </nav>
     </div>
 
-    @* ── Search bar ── *@
     <div class="header-search-bar">
         <div class="header-search-inner">
 
@@ -222,7 +220,6 @@
 
     @if (User.Identity!.IsAuthenticated)
     {
-        <!-- Settings Modal (language section removed) -->
         <div class="modal-overlay" id="settingsOverlay" onclick="closeSettingsModal()"></div>
         <div class="modal" id="settingsModal" style="max-width:360px;width:360px;height:auto;min-height:unset;padding-bottom:24px">
             <button class="modal-close" onclick="closeSettingsModal()">✕</button>
@@ -257,7 +254,6 @@
             </div>
         </div>
 
-        <!-- Reviews Modal -->
         <div class="reviews-overlay" id="myReviewsOverlay" onclick="closeMyReviewsModal()"></div>
         <div class="reviews-modal" id="myReviewsModal">
             <div class="reviews-modal-header">
@@ -300,77 +296,436 @@
                 Submit review
             </button>
         </div>
-    }
 
-    <script>
-        function applyTranslations() {
-            const lang = localStorage.getItem('lang') || 'en';
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                const translation = translations[lang]?.[key];
-                if (translation) {
-                    if (el.tagName === 'INPUT' && el.getAttribute('data-i18n-placeholder') !== null) {
-                        el.placeholder = translation;
+        <script>
+            const currentUserId = @User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value;
+
+            let notifAllData = [];
+            let notifCurrentTab = 'all';
+            let notifModalOpen = false;
+
+            function toggleNotifModal(e) {
+                if (!document.getElementById('notifOverlay')) return;
+                e.stopPropagation();
+                if (notifModalOpen) {
+                    closeNotifModal();
+                } else {
+                    openNotifModal();
+                }
+            }
+
+            async function openNotifModal() {
+                if (!document.getElementById('notifOverlay')) return;
+                notifModalOpen = true;
+                document.getElementById('notifOverlay').classList.add('open');
+                document.getElementById('notifModal').classList.add('open');
+                await loadAllNotifications();
+            }
+
+            function closeNotifModal() {
+                if (!document.getElementById('notifOverlay')) return;
+                notifModalOpen = false;
+                document.getElementById('notifOverlay').classList.remove('open');
+                document.getElementById('notifModal').classList.remove('open');
+            }
+
+            async function loadAllNotifications() {
+                const list = document.getElementById('notifModalList');
+                if (!list) return;
+                list.innerHTML = '<div class="notif-modal-empty"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Loading...</div>';
+                try {
+                    const res  = await fetch('/Notifications/List');
+                    notifAllData = await res.json();
+                    renderNotifList();
+                    updateNotifBadge(notifAllData.filter(n => !n.isRead).length);
+                } catch {
+                    list.innerHTML = '<div class="notif-modal-empty">Failed to load</div>';
+                }
+            }
+
+            function renderNotifList() {
+                const list = document.getElementById('notifModalList');
+                if (!list) return;
+                const unreadCount = notifAllData.filter(n => !n.isRead).length;
+
+                const tabCount = document.getElementById('tabUnreadCount');
+                if (tabCount) {
+                    if (unreadCount > 0) {
+                        tabCount.textContent = unreadCount;
+                        tabCount.style.display = 'inline-block';
                     } else {
-                        el.innerText = translation;
+                        tabCount.style.display = 'none';
                     }
                 }
-            });
-        }
+                const markAllBtn = document.getElementById('markAllBtn');
+                if (markAllBtn) markAllBtn.style.display = unreadCount > 0 ? '' : 'none';
 
-        function setLang(lang) {
-            localStorage.setItem('lang', lang);
-            document.cookie = `lang=${lang};path=/;max-age=31536000`;
-            applyTranslations();
+                const data = notifCurrentTab === 'unread'
+                    ? notifAllData.filter(n => !n.isRead)
+                    : notifAllData;
 
-            document.querySelectorAll('.lang-pill').forEach(btn => btn.classList.remove('active'));
-            if (lang === 'en') document.getElementById('headerLangEN')?.classList.add('active');
-            if (lang === 'lv') document.getElementById('headerLangLV')?.classList.add('active');
-            if (lang === 'ru') document.getElementById('headerLangRU')?.classList.add('active');
+                if (!data.length) {
+                    list.innerHTML = `
+                        <div class="notif-modal-empty">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                            </svg>
+                            ${notifCurrentTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}
+                        </div>`;
+                    return;
+                }
 
-            const regionBtnLabel = document.getElementById('regionBtnLabel');
-            if (regionBtnLabel && (regionBtnLabel.textContent === 'All regions' || regionBtnLabel.textContent === 'Visi reģioni' || regionBtnLabel.textContent === 'Все регионы')) {
-                regionBtnLabel.textContent = t('all_regions');
+                list.innerHTML = data.map(n => `
+                    <div class="notif-item ${n.isRead ? '' : 'unread'}"
+                         id="notif-item-${n.id}"
+                         onclick="handleNotifClick(${n.id}, '${n.productId ? '/Product/Details/' + n.productId : ''}')">
+                        <img class="notif-item-avatar"
+                             src="${n.fromUserAvatar || '/img/no-photo.svg'}"
+                             onerror="this.src='/img/no-photo.svg'" />
+                        <div class="notif-item-body">
+                            <div class="notif-item-msg">${escapeHtml(translateNotificationMessage(n.message, n))}</div>
+                            <div class="notif-item-time">${n.createdAt}</div>
+                            ${n.productId && n.productName ? `
+                                <div class="notif-item-product">
+                                    ${n.productImage ? `<img src="${n.productImage}" onerror="this.src='/img/no-photo.svg'" />` : ''}
+                                    <span>${escapeHtml(n.productName)}</span>
+                                </div>` : ''}
+                        </div>
+                    </div>`
+                ).join('');
             }
-            location.reload();
-        }
 
-        function toggleTheme() {
-            const isDark = document.documentElement.classList.toggle('dark-theme');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            const themeToggleBtn = document.getElementById('themeToggle');
-            if (themeToggleBtn) themeToggleBtn.classList.toggle('settings-toggle-on', isDark);
+            async function handleNotifClick(id, url) {
+                const item = notifAllData.find(n => n.id === id);
+                if (!item) return;
 
-            const logo = document.getElementById('siteLogo');
-            if (logo)
-                logo.src = isDark ? '/img/DLogo.svg' : '/img/Logo.svg';
-        }
+                if (!item.isRead) {
+                    item.isRead = true;
+                    await fetch(`/Notifications/MarkRead?id=${id}`, { method: 'POST' });
+                    const unreadLeft = notifAllData.filter(n => !n.isRead).length;
+                    updateNotifBadge(unreadLeft);
 
-        (function() {
-            const isDark = localStorage.getItem('theme') === 'dark';
-            const logo = document.getElementById('siteLogo');
+                    const el = document.getElementById('notif-item-' + id);
+                    if (el) {
+                        el.classList.remove('unread');
+                        if (notifCurrentTab !== 'unread') {
+                            const tabCount = document.getElementById('tabUnreadCount');
+                            if (tabCount) {
+                                if (unreadLeft > 0) tabCount.textContent = unreadLeft;
+                                else tabCount.style.display = 'none';
+                            }
+                            const markAllBtn = document.getElementById('markAllBtn');
+                            if (markAllBtn) markAllBtn.style.display = unreadLeft > 0 ? '' : 'none';
+                        }
+                    }
+                }
 
-            if (isDark) {
-                document.documentElement.classList.add('dark-theme');
-                if (logo) logo.src = '/img/DLogo.svg';
-            } else
-                if (logo) logo.src = '/img/Logo.svg';
+                let notifType = null;
+                let reviewId = null;
+                try {
+                    const parsed = JSON.parse(item.message);
+                    notifType = parsed?.type;
+                    reviewId = parsed?.reviewId;
+                } catch {}
 
-            const currentLang = localStorage.getItem('lang') || 'en';
-            if (currentLang === 'en') document.getElementById('headerLangEN')?.classList.add('active');
-            if (currentLang === 'lv') document.getElementById('headerLangLV')?.classList.add('active');
-            if (currentLang === 'ru') document.getElementById('headerLangRU')?.classList.add('active');
-        })();
+                if (notifType === 'review_received' && reviewId) {
+                    closeNotifModal();
+                    window.location.href = `/Seller/Index/${currentUserId}?reviewId=${reviewId}`;
+                    return;
+                }
 
-        function t(key) {
-            const lang = localStorage.getItem('lang') || 'en';
-            const local = translations[lang]?.[key];
-            if (local) return local;
-            if (typeof TRANSLATIONS !== 'undefined') {
-                return TRANSLATIONS[lang]?.[key] || TRANSLATIONS.en?.[key] || key;
+                if (notifType === 'deal_sold' || notifType === 'deal_bought') {
+                    closeNotifModal();
+                    await handleDealNotifClick(item);
+                    return;
+                }
+
+                if (url) {
+                    closeNotifModal();
+                    window.location.href = url;
+                }
             }
-            return key;
-        }
+
+            let dealReviewTargetId = null;
+            let dealReviewProductId = null;
+            let dealReviewRating = 0;
+
+            async function handleDealNotifClick(notif) {
+                if (!notif.productId || !notif.fromUserId) return;
+                try {
+                    const res = await fetch(`/Reviews/CanReview?targetUserId=${notif.fromUserId}&productId=${notif.productId}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.canReview) {
+                            openDealReviewModal(notif.fromUserId, notif.productId);
+                            return;
+                        }
+                    }
+                } catch {}
+                window.location.href = '/Product/Details/' + notif.productId;
+            }
+
+            function openDealReviewModal(targetUserId, productId) {
+                dealReviewTargetId = targetUserId;
+                dealReviewProductId = productId;
+                dealReviewRating = 0;
+                document.getElementById('dealReviewComment').value = '';
+                document.querySelectorAll('#dealReviewStars .star').forEach(s => s.setAttribute('fill', 'none'));
+                document.getElementById('dealReviewOverlay').classList.add('open');
+                document.getElementById('dealReviewModal').classList.add('open');
+                applyTranslations();
+            }
+
+            function closeDealReviewModal() {
+                document.getElementById('dealReviewOverlay').classList.remove('open');
+                document.getElementById('dealReviewModal').classList.remove('open');
+            }
+
+            function rateDealUser(rating) {
+                dealReviewRating = rating;
+                document.querySelectorAll('#dealReviewStars .star').forEach((s, idx) => {
+                    s.setAttribute('fill', idx < rating ? '#f5a623' : 'none');
+                });
+            }
+
+            async function submitDealReview() {
+                if (!dealReviewRating) return;
+                const comment = document.getElementById('dealReviewComment').value.trim();
+                const res = await fetch('/Reviews/Create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
+                    },
+                    body: JSON.stringify({
+                        targetUserId: dealReviewTargetId,
+                        productId: dealReviewProductId,
+                        rating: dealReviewRating,
+                        comment: comment || null
+                    })
+                });
+                if (res.ok) closeDealReviewModal();
+            }
+
+            function switchNotifTab(tab) {
+                notifCurrentTab = tab;
+                const tabAll = document.getElementById('tabAll');
+                const tabUnread = document.getElementById('tabUnread');
+                if (tabAll) tabAll.classList.toggle('notif-tab-active', tab === 'all');
+                if (tabUnread) tabUnread.classList.toggle('notif-tab-active', tab === 'unread');
+                renderNotifList();
+            }
+
+            async function markAllReadModal() {
+                await fetch('/Notifications/MarkAllRead', { method: 'POST' });
+                notifAllData.forEach(n => n.isRead = true);
+                updateNotifBadge(0);
+                renderNotifList();
+            }
+
+            function updateNotifBadge(count) {
+                const badge = document.getElementById('notifBadge');
+                if (!badge) return;
+                badge.textContent = count;
+                badge.style.display = count > 0 ? 'flex' : 'none';
+            }
+
+            async function updateFavAndCartBadges() {
+                try {
+                    const res = await fetch('/Favourite/UserItems');
+                    if (!res.ok) return;
+                    const { favs, cart } = await res.json();
+
+                    const favBadge = document.getElementById('favsNavBadge');
+                    if (favBadge) {
+                        if (favs && favs.length > 0) {
+                            favBadge.textContent = favs.length;
+                            favBadge.style.display = 'inline-flex';
+                        } else {
+                            favBadge.style.display = 'none';
+                        }
+                    }
+
+                    const cartBadge = document.getElementById('cartNavBadge');
+                    if (cartBadge) {
+                        if (cart && cart.length > 0) {
+                            cartBadge.textContent = cart.length;
+                            cartBadge.style.display = 'inline-flex';
+                        } else {
+                            cartBadge.style.display = 'none';
+                        }
+                    }
+                } catch (e) {
+                    console.warn("Failed to update fav/cart badges", e);
+                }
+            }
+
+            async function updateMsgBadge() {
+                try {
+                    const res = await fetch('/Messages/UnreadCount');
+                    if (!res.ok) return;
+                    const { count } = await res.json();
+                    const badge = document.getElementById('msgNavBadge');
+                    if (badge) {
+                        badge.textContent = count;
+                        badge.style.display = count > 0 ? 'inline-flex' : 'none';
+                    }
+                } catch (e) {
+                    console.warn('Failed to update message badge', e);
+                }
+            }
+
+            // ---- Инициализация для авторизованных ----
+            (async () => {
+                if (document.getElementById('notifBadge')) {
+                    try {
+                        const res = await fetch('/Notifications/Count');
+                        if (!res.ok) return;
+                        const { count } = await res.json();
+                        updateNotifBadge(count);
+                    } catch {}
+                }
+
+                if (document.getElementById('cartNavBadge') || document.getElementById('favsNavBadge')) {
+                    await updateFavAndCartBadges();
+                }
+                await updateMsgBadge();
+            })();
+
+            // SignalR для уведомлений и сообщений
+            (function () {
+                const notifConnection = new signalR.HubConnectionBuilder()
+                    .withUrl("/hubs/messages")
+                    .withAutomaticReconnect()
+                    .build();
+
+                notifConnection.on("NotificationReceived", function (notif) {
+                    notifAllData.unshift({
+                        id: notif.id,
+                        message: notif.message,
+                        isRead: false,
+                        createdAt: notif.createdAt,
+                        fromUserId: notif.fromUserId,
+                        fromUserName: notif.fromUserName || null,
+                        fromUserAvatar: notif.fromUserAvatar || null,
+                        productId: notif.productId || null,
+                        productName: notif.productName || null,
+                        productImage: notif.productImage || null,
+                    });
+
+                    const unread = notifAllData.filter(function (n) { return !n.isRead; }).length;
+                    updateNotifBadge(unread);
+
+                    if (notifModalOpen) {
+                        renderNotifList();
+                    }
+                });
+
+                notifConnection.on("UnreadCountChanged", function () {
+                    fetch('/Notifications/Count')
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) { updateNotifBadge(data.count); })
+                        .catch(function () {});
+                });
+
+                notifConnection.on("ReceiveMessage", function () {
+                    updateMsgBadge();
+                });
+
+                notifConnection.start().catch(function (err) {
+                    console.warn("SignalR (notifications) failed to start:", err);
+                });
+            })();
+
+            // ---- Функции для открытия/закрытия модалок (используются только авторизованными) ----
+            function openSettingsModal() {
+                if (!document.getElementById('settingsOverlay')) return;
+                document.getElementById('userDropdown')?.classList.remove('open');
+                applySettingsUI();
+                document.getElementById('settingsOverlay').classList.add('modal-open');
+                document.getElementById('settingsModal').classList.add('modal-open');
+                applyTranslations();
+            }
+            function closeSettingsModal() {
+                if (!document.getElementById('settingsOverlay')) return;
+                document.getElementById('settingsOverlay').classList.remove('modal-open');
+                document.getElementById('settingsModal').classList.remove('modal-open');
+            }
+            function applySettingsUI() {
+                const dark = localStorage.getItem('theme') === 'dark';
+                const themeToggle = document.getElementById('themeToggle');
+                if (themeToggle) themeToggle.classList.toggle('settings-toggle-on', dark);
+            }
+
+            async function openMyReviewsModal() {
+                if (!document.getElementById('myReviewsOverlay')) return;
+                document.getElementById('userDropdown')?.classList.remove('open');
+                document.getElementById('myReviewsOverlay').classList.add('open');
+                document.getElementById('myReviewsModal').classList.add('open');
+                applyTranslations();
+                await loadReviewTab('about');
+            }
+            function closeMyReviewsModal() {
+                if (!document.getElementById('myReviewsOverlay')) return;
+                document.getElementById('myReviewsOverlay').classList.remove('open');
+                document.getElementById('myReviewsModal').classList.remove('open');
+            }
+            async function switchReviewTab(tab) {
+                const tabAbout = document.getElementById('tabAboutMe');
+                const tabFrom = document.getElementById('tabFromMe');
+                if (tabAbout) tabAbout.classList.toggle('reviews-tab-active', tab === 'about');
+                if (tabFrom) tabFrom.classList.toggle('reviews-tab-active', tab === 'from');
+                await loadReviewTab(tab);
+            }
+            async function loadReviewTab(tab) {
+                const list = document.getElementById('myReviewsList');
+                if (!list) return;
+                list.innerHTML = `<div class="reviews-empty">${t('loading_text')}</div>`;
+                try {
+                    const res  = await fetch(`/Reviews/My?tab=${tab}`);
+                    const data = await res.json();
+                    if (!data.length) {
+                        list.innerHTML = `<div class="reviews-empty">${t('no_reviews_yet')}</div>`;
+                        return;
+                    }
+                    list.innerHTML = data.map(r => `
+                        <div class="review-item">
+                            <div class="review-author">
+                                <img src="${r.avatarPath || '/img/no-photo.svg'}"
+                                     class="review-author-avatar"
+                                     onerror="this.src='/img/no-photo.svg'" />
+                                <div>
+                                    <a class="review-author-name" href="/Seller/Index/${r.userId}"
+                                       onclick="closeMyReviewsModal()">
+                                        ${r.userName}
+                                    </a>
+                                    <div class="review-date">${r.createdAt}</div>
+                                </div>
+                            </div>
+                            <div class="review-stars">
+                                ${[1,2,3,4,5,7,8].map(i =>
+                                    `<svg width="14" height="14" viewBox="0 0 24 24"
+                                          fill="${i <= r.rating ? '#f5a623' : 'none'}"
+                                          stroke="#f5a623" stroke-width="2">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                                     </svg>`
+                                ).join('')}
+                            </div>
+                            ${r.comment ? `<div class="review-comment">${r.comment}</div>` : ''}
+                        </div>`
+                    ).join('');
+                } catch {
+                    list.innerHTML = `<div class="reviews-empty">${t('failed_load')}</div>`;
+                }
+            }
+        </script>
+    }
+ @* конец @if (User.Identity!.IsAuthenticated) *@
+
+    <!-- ========== ОБЩИЕ СКРИПТЫ (не зависят от аутентификации) ========== -->
+    <script>
+        // ---- Переводы ----
         const translations = {
             en: {
                 notif_fav_qty_changed: "Quantity: {0} → {1}",
@@ -527,404 +882,79 @@
             }
         };
 
-        let notifAllData = [];
-        let notifCurrentTab = 'all';
-        let notifModalOpen = false;
-        const currentUserId = @User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value;
-
-        function toggleNotifModal(e) {
-            if (!document.getElementById('notifOverlay')) return;
-            e.stopPropagation();
-            if (notifModalOpen) {
-                closeNotifModal();
-            } else {
-                openNotifModal();
-            }
-        }
-
-        async function openNotifModal() {
-            if (!document.getElementById('notifOverlay')) return;
-            notifModalOpen = true;
-            document.getElementById('notifOverlay').classList.add('open');
-            document.getElementById('notifModal').classList.add('open');
-            await loadAllNotifications();
-        }
-
-        function closeNotifModal() {
-            if (!document.getElementById('notifOverlay')) return;
-            notifModalOpen = false;
-            document.getElementById('notifOverlay').classList.remove('open');
-            document.getElementById('notifModal').classList.remove('open');
-        }
-
-        async function loadAllNotifications() {
-            const list = document.getElementById('notifModalList');
-            if (!list) return;
-            list.innerHTML = '<div class="notif-modal-empty"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Loading...</div>';
-            try {
-                const res  = await fetch('/Notifications/List');
-                notifAllData = await res.json();
-                renderNotifList();
-                updateNotifBadge(notifAllData.filter(n => !n.isRead).length);
-            } catch {
-                list.innerHTML = '<div class="notif-modal-empty">Failed to load</div>';
-            }
-        }
-
-        function renderNotifList() {
-            const list = document.getElementById('notifModalList');
-            if (!list) return;
-            const unreadCount = notifAllData.filter(n => !n.isRead).length;
-
-            const tabCount = document.getElementById('tabUnreadCount');
-            if (tabCount) {
-                if (unreadCount > 0) {
-                    tabCount.textContent = unreadCount;
-                    tabCount.style.display = 'inline-block';
-                } else {
-                    tabCount.style.display = 'none';
-                }
-            }
-            const markAllBtn = document.getElementById('markAllBtn');
-            if (markAllBtn) markAllBtn.style.display = unreadCount > 0 ? '' : 'none';
-
-            const data = notifCurrentTab === 'unread'
-                ? notifAllData.filter(n => !n.isRead)
-                : notifAllData;
-
-            if (!data.length) {
-                list.innerHTML = `
-                    <div class="notif-modal-empty">
-                        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5">
-                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                        </svg>
-                        ${notifCurrentTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}
-                    </div>`;
-                return;
-            }
-
-            list.innerHTML = data.map(n => `
-                <div class="notif-item ${n.isRead ? '' : 'unread'}"
-                     id="notif-item-${n.id}"
-                     onclick="handleNotifClick(${n.id}, '${n.productId ? '/Product/Details/' + n.productId : ''}')">
-                    <img class="notif-item-avatar"
-                         src="${n.fromUserAvatar || '/img/no-photo.svg'}"
-                         onerror="this.src='/img/no-photo.svg'" />
-                    <div class="notif-item-body">
-                        <div class="notif-item-msg">${escapeHtml(translateNotificationMessage(n.message, n))}</div>
-                        <div class="notif-item-time">${n.createdAt}</div>
-                        ${n.productId && n.productName ? `
-                            <div class="notif-item-product">
-                                ${n.productImage ? `<img src="${n.productImage}" onerror="this.src='/img/no-photo.svg'" />` : ''}
-                                <span>${escapeHtml(n.productName)}</span>
-                            </div>` : ''}
-                    </div>
-                </div>`
-            ).join('');
-        }
-
-        async function handleNotifClick(id, url) {
-            const item = notifAllData.find(n => n.id === id);
-            if (!item) return;
-
-            if (!item.isRead) {
-                item.isRead = true;
-                await fetch(`/Notifications/MarkRead?id=${id}`, { method: 'POST' });
-                const unreadLeft = notifAllData.filter(n => !n.isRead).length;
-                updateNotifBadge(unreadLeft);
-
-                const el = document.getElementById('notif-item-' + id);
-                if (el) {
-                    el.classList.remove('unread');
-                    if (notifCurrentTab !== 'unread') {
-                        const tabCount = document.getElementById('tabUnreadCount');
-                        if (tabCount) {
-                            if (unreadLeft > 0) tabCount.textContent = unreadLeft;
-                            else tabCount.style.display = 'none';
-                        }
-                        const markAllBtn = document.getElementById('markAllBtn');
-                        if (markAllBtn) markAllBtn.style.display = unreadLeft > 0 ? '' : 'none';
+        function applyTranslations() {
+            const lang = localStorage.getItem('lang') || 'en';
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                const translation = translations[lang]?.[key];
+                if (translation) {
+                    if (el.tagName === 'INPUT' && el.getAttribute('data-i18n-placeholder') !== null) {
+                        el.placeholder = translation;
+                    } else {
+                        el.innerText = translation;
                     }
                 }
-            }
-
-            let notifType = null;
-            let reviewId = null;
-            try {
-                const parsed = JSON.parse(item.message);
-                notifType = parsed?.type;
-                reviewId = parsed?.reviewId;
-            } catch {}
-
-            if (notifType === 'review_received' && reviewId) {
-                closeNotifModal();
-                window.location.href = `/Seller/Index/${currentUserId}?reviewId=${reviewId}`;
-                return;
-            }
-
-            if (notifType === 'deal_sold' || notifType === 'deal_bought') {
-                closeNotifModal();
-                await handleDealNotifClick(item);
-                return;
-            }
-
-            if (url) {
-                closeNotifModal();
-                window.location.href = url;
-            }
+            });
         }
 
-        let dealReviewTargetId = null;
-        let dealReviewProductId = null;
-        let dealReviewRating = 0;
-
-        async function handleDealNotifClick(notif) {
-            if (!notif.productId || !notif.fromUserId) return;
-            try {
-                const res = await fetch(`/Reviews/CanReview?targetUserId=${notif.fromUserId}&productId=${notif.productId}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.canReview) {
-                        openDealReviewModal(notif.fromUserId, notif.productId);
-                        return;
-                    }
-                }
-            } catch {}
-            window.location.href = '/Product/Details/' + notif.productId;
-        }
-
-        function openDealReviewModal(targetUserId, productId) {
-            dealReviewTargetId = targetUserId;
-            dealReviewProductId = productId;
-            dealReviewRating = 0;
-            document.getElementById('dealReviewComment').value = '';
-            document.querySelectorAll('#dealReviewStars .star').forEach(s => s.setAttribute('fill', 'none'));
-            document.getElementById('dealReviewOverlay').classList.add('open');
-            document.getElementById('dealReviewModal').classList.add('open');
+        function setLang(lang) {
+            localStorage.setItem('lang', lang);
+            document.cookie = `lang=${lang};path=/;max-age=31536000`;
             applyTranslations();
-        }
 
-        function closeDealReviewModal() {
-            document.getElementById('dealReviewOverlay').classList.remove('open');
-            document.getElementById('dealReviewModal').classList.remove('open');
-        }
+            document.querySelectorAll('.lang-pill').forEach(btn => btn.classList.remove('active'));
+            if (lang === 'en') document.getElementById('headerLangEN')?.classList.add('active');
+            if (lang === 'lv') document.getElementById('headerLangLV')?.classList.add('active');
+            if (lang === 'ru') document.getElementById('headerLangRU')?.classList.add('active');
 
-        function rateDealUser(rating) {
-            dealReviewRating = rating;
-            document.querySelectorAll('#dealReviewStars .star').forEach((s, idx) => {
-                s.setAttribute('fill', idx < rating ? '#f5a623' : 'none');
-            });
-        }
-
-        async function submitDealReview() {
-            if (!dealReviewRating) return;
-            const comment = document.getElementById('dealReviewComment').value.trim();
-            const res = await fetch('/Reviews/Create', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
-                },
-                body: JSON.stringify({
-                    targetUserId: dealReviewTargetId,
-                    productId: dealReviewProductId,
-                    rating: dealReviewRating,
-                    comment: comment || null
-                })
-            });
-            if (res.ok) closeDealReviewModal();
-        }
-
-        function switchNotifTab(tab) {
-            notifCurrentTab = tab;
-            const tabAll = document.getElementById('tabAll');
-            const tabUnread = document.getElementById('tabUnread');
-            if (tabAll) tabAll.classList.toggle('notif-tab-active', tab === 'all');
-            if (tabUnread) tabUnread.classList.toggle('notif-tab-active', tab === 'unread');
-            renderNotifList();
-        }
-
-        async function markAllReadModal() {
-            await fetch('/Notifications/MarkAllRead', { method: 'POST' });
-            notifAllData.forEach(n => n.isRead = true);
-            updateNotifBadge(0);
-            renderNotifList();
-        }
-
-        function updateNotifBadge(count) {
-            const badge = document.getElementById('notifBadge');
-            if (!badge) return;
-            badge.textContent = count;
-            badge.style.display = count > 0 ? 'flex' : 'none';
-        }
-
-        async function updateFavAndCartBadges() {
-            try {
-                const res = await fetch('/Favourite/UserItems');
-                if (!res.ok) return;
-                const { favs, cart } = await res.json();
-
-                const favBadge = document.getElementById('favsNavBadge');
-                if (favBadge) {
-                    if (favs && favs.length > 0) {
-                        favBadge.textContent = favs.length;
-                        favBadge.style.display = 'inline-flex';
-                    } else {
-                        favBadge.style.display = 'none';
-                    }
-                }
-
-                const cartBadge = document.getElementById('cartNavBadge');
-                if (cartBadge) {
-                    if (cart && cart.length > 0) {
-                        cartBadge.textContent = cart.length;
-                        cartBadge.style.display = 'inline-flex';
-                    } else {
-                        cartBadge.style.display = 'none';
-                    }
-                }
-            } catch (e) {
-                console.warn("Failed to update fav/cart badges", e);
+            const regionBtnLabel = document.getElementById('regionBtnLabel');
+            if (regionBtnLabel && (regionBtnLabel.textContent === 'All regions' || regionBtnLabel.textContent === 'Visi reģioni' || regionBtnLabel.textContent === 'Все регионы')) {
+                regionBtnLabel.textContent = t('all_regions');
             }
+            location.reload();
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark-theme');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            const themeToggleBtn = document.getElementById('themeToggle');
+            if (themeToggleBtn) themeToggleBtn.classList.toggle('settings-toggle-on', isDark);
+
+            const logo = document.getElementById('siteLogo');
+            if (logo)
+                logo.src = isDark ? '/img/DLogo.svg' : '/img/Logo.svg';
+        }
+
+        (function() {
+            const isDark = localStorage.getItem('theme') === 'dark';
+            const logo = document.getElementById('siteLogo');
+
+            if (isDark) {
+                document.documentElement.classList.add('dark-theme');
+                if (logo) logo.src = '/img/DLogo.svg';
+            } else
+                if (logo) logo.src = '/img/Logo.svg';
+
+            const currentLang = localStorage.getItem('lang') || 'en';
+            if (currentLang === 'en') document.getElementById('headerLangEN')?.classList.add('active');
+            if (currentLang === 'lv') document.getElementById('headerLangLV')?.classList.add('active');
+            if (currentLang === 'ru') document.getElementById('headerLangRU')?.classList.add('active');
+        })();
+
+        function t(key) {
+            const lang = localStorage.getItem('lang') || 'en';
+            const local = translations[lang]?.[key];
+            if (local) return local;
+            if (typeof TRANSLATIONS !== 'undefined') {
+                return TRANSLATIONS[lang]?.[key] || TRANSLATIONS.en?.[key] || key;
+            }
+            return key;
         }
 
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
         }
-
-        document.addEventListener('keydown', e => {
-            if (e.key === 'Escape' && notifModalOpen) closeNotifModal();
-        });
-
-        (async () => {
-            if (document.getElementById('notifBadge')) {
-                try {
-                    const res = await fetch('/Notifications/Count');
-                    if (!res.ok) return;
-                    const { count } = await res.json();
-                    updateNotifBadge(count);
-                } catch {}
-            }
-
-            if (document.getElementById('cartNavBadge') || document.getElementById('favsNavBadge')) {
-                await updateFavAndCartBadges();
-            }
-        })();
-
-        function openSettingsModal() {
-            if (!document.getElementById('settingsOverlay')) return;
-            document.getElementById('userDropdown')?.classList.remove('open');
-            applySettingsUI();
-            document.getElementById('settingsOverlay').classList.add('modal-open');
-            document.getElementById('settingsModal').classList.add('modal-open');
-            applyTranslations();
-        }
-        function closeSettingsModal() {
-            if (!document.getElementById('settingsOverlay')) return;
-            document.getElementById('settingsOverlay').classList.remove('modal-open');
-            document.getElementById('settingsModal').classList.remove('modal-open');
-        }
-        function applySettingsUI() {
-            const dark = localStorage.getItem('theme') === 'dark';
-            const themeToggle = document.getElementById('themeToggle');
-            if (themeToggle) themeToggle.classList.toggle('settings-toggle-on', dark);
-        }
-
-        async function openMyReviewsModal() {
-            if (!document.getElementById('myReviewsOverlay')) return;
-            document.getElementById('userDropdown')?.classList.remove('open');
-            document.getElementById('myReviewsOverlay').classList.add('open');
-            document.getElementById('myReviewsModal').classList.add('open');
-            applyTranslations();
-            await loadReviewTab('about');
-        }
-        function closeMyReviewsModal() {
-            if (!document.getElementById('myReviewsOverlay')) return;
-            document.getElementById('myReviewsOverlay').classList.remove('open');
-            document.getElementById('myReviewsModal').classList.remove('open');
-        }
-        async function switchReviewTab(tab) {
-            const tabAbout = document.getElementById('tabAboutMe');
-            const tabFrom = document.getElementById('tabFromMe');
-            if (tabAbout) tabAbout.classList.toggle('reviews-tab-active', tab === 'about');
-            if (tabFrom) tabFrom.classList.toggle('reviews-tab-active', tab === 'from');
-            await loadReviewTab(tab);
-        }
-        async function loadReviewTab(tab) {
-            const list = document.getElementById('myReviewsList');
-            if (!list) return;
-            list.innerHTML = `<div class="reviews-empty">${t('loading_text')}</div>`;
-            try {
-                const res  = await fetch(`/Reviews/My?tab=${tab}`);
-                const data = await res.json();
-                if (!data.length) {
-                    list.innerHTML = `<div class="reviews-empty">${t('no_reviews_yet')}</div>`;
-                    return;
-                }
-                list.innerHTML = data.map(r => `
-                    <div class="review-item">
-                        <div class="review-author">
-                            <img src="${r.avatarPath || '/img/no-photo.svg'}"
-                                 class="review-author-avatar"
-                                 onerror="this.src='/img/no-photo.svg'" />
-                            <div>
-                                <a class="review-author-name" href="/Seller/Index/${r.userId}"
-                                   onclick="closeMyReviewsModal()">
-                                    ${r.userName}
-                                </a>
-                                <div class="review-date">${r.createdAt}</div>
-                            </div>
-                        </div>
-                        <div class="review-stars">
-                            ${[1,2,3,4,5,7,8].map(i =>
-                                `<svg width="14" height="14" viewBox="0 0 24 24"
-                                      fill="${i <= r.rating ? '#f5a623' : 'none'}"
-                                      stroke="#f5a623" stroke-width="2">
-                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                                 </svg>`
-                            ).join('')}
-                        </div>
-                        ${r.comment ? `<div class="review-comment">${r.comment}</div>` : ''}
-                    </div>`
-                ).join('');
-            } catch {
-                list.innerHTML = `<div class="reviews-empty">${t('failed_load')}</div>`;
-            }
-        }
-
-        function handleGlobalSearch(e) {
-            e.preventDefault();
-            const input = e.target.querySelector('.search-input');
-            const q = input?.value.trim();
-            if (!q) return;
-
-            const match = window.location.pathname.match(/\/Category\/Index\/(\d+)/i);
-            if (match) {
-                const url = new URL(window.location.href);
-                url.searchParams.set('q', q);
-                window.location.href = url.toString();
-            } else {
-                window.location.href = '/Category/Index/3711?q=' + encodeURIComponent(q);
-            }
-        }
-        
-        async function updateMsgBadge() {
-            try {
-                const res = await fetch('/Messages/UnreadCount');
-                if (!res.ok) return;
-                const { count } = await res.json();
-                const badge = document.getElementById('msgNavBadge');
-                if (badge) {
-                    badge.textContent = count;
-                    badge.style.display = count > 0 ? 'inline-flex' : 'none';
-                }
-            } catch (e) {
-                console.warn('Failed to update message badge', e);
-            }
-        }
-        document.addEventListener('DOMContentLoaded', applyTranslations);
 
         function translateNotificationMessage(message, notif) {
             const lang = localStorage.getItem('lang') || 'en';
@@ -1012,53 +1042,49 @@
             return message;
         }
 
-        @if (User.Identity!.IsAuthenticated)
-        {
-                    <text>
-                    (function () {
-                        const notifConnection = new signalR.HubConnectionBuilder()
-                            .withUrl("/hubs/messages")
-                            .withAutomaticReconnect()
-                            .build();
+        function handleGlobalSearch(e) {
+            e.preventDefault();
+            const input = e.target.querySelector('.search-input');
+            const q = input?.value.trim();
+            if (!q) return;
 
-                        notifConnection.on("NotificationReceived", function (notif) {
-                            notifAllData.unshift({
-                                id: notif.id,
-                                message: notif.message,
-                                isRead: false,
-                                createdAt: notif.createdAt,
-                                fromUserId: notif.fromUserId,
-                                fromUserName: notif.fromUserName || null,
-                                fromUserAvatar: notif.fromUserAvatar || null,
-                                productId: notif.productId || null,
-                                productName: notif.productName || null,
-                                productImage: notif.productImage || null,
-                            });
-
-                            const unread = notifAllData.filter(function (n) { return !n.isRead; }).length;
-                            updateNotifBadge(unread);
-
-                            if (notifModalOpen) {
-                                renderNotifList();
-                            }
-                        });
-
-                        notifConnection.on("UnreadCountChanged", function () {
-                            fetch('/Notifications/Count')
-                                .then(function (r) { return r.json(); })
-                                .then(function (data) { updateNotifBadge(data.count); })
-                                .catch(function () {});
-                        });
-                        
-                        notifConnection.on("ReceiveMessage", function () {
-                            updateMsgBadge();
-                        });
-
-                        notifConnection.start().catch(function (err) {
-                            console.warn("SignalR (notifications) failed to start:", err);
-                        });
-                    })();
-                    </text>
+            const match = window.location.pathname.match(/\/Category\/Index\/(\d+)/i);
+            if (match) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('q', q);
+                window.location.href = url.toString();
+            } else {
+                window.location.href = '/Category/Index/3711?q=' + encodeURIComponent(q);
+            }
         }
+
+        document.addEventListener('DOMContentLoaded', applyTranslations);
+
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('userDropdown');
+            if (dropdown) dropdown.classList.toggle('open');
+        }
+
+        function openAuthModal(tab) {
+            if (typeof openAuthModalGlobal === 'function') {
+                openAuthModalGlobal(tab);
+            } else {
+                console.warn('openAuthModalGlobal not defined');
+            }
+        }
+
+        function openCatMenu() {
+            console.warn('openCatMenu not implemented');
+        }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                if (typeof closeNotifModal === 'function') closeNotifModal();
+                if (typeof closeSettingsModal === 'function') closeSettingsModal();
+                if (typeof closeMyReviewsModal === 'function') closeMyReviewsModal();
+                if (typeof closeDealReviewModal === 'function') closeDealReviewModal();
+            }
+        });
     </script>
+
 </header>

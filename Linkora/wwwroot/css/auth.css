@@ -147,6 +147,10 @@
     font-weight: 700;
     border-bottom: 2px solid #00b0a3;
 }
+.dark-theme .auth-tab-active {
+    color: #ffffff !important; 
+    border-bottom-color: #00b0a3; 
+}
 .auth-socials {
     display: flex;
     justify-content: center;
