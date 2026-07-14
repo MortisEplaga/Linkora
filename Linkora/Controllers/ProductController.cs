@@ -164,6 +164,7 @@ namespace Linkora.Controllers
                 name = p.Param.Name,
                 type = p.Param.Type,
                 options = p.Options.Select(o => new { id = o.Id, text = o.Text }),
+                colorOptions = p.ColorOptions.Select(c => new { id = c.Id, name = c.Name, hex = c.HexValue }),
                 min = p.Min,
                 max = p.Max,
                 step = p.Step

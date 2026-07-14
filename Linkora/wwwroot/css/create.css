@@ -1,4 +1,37 @@
-﻿.create-footer-sticky {
+﻿.param-swatches {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.param-swatch-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    padding: 4px 0;
+}
+
+.param-swatch-circle {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #e0e0e0;
+    flex-shrink: 0;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.param-swatch-row.param-swatch-active .param-swatch-circle {
+    border-color: #1a1a1a;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px #1a1a1a;
+}
+
+.param-swatch-name {
+    color: #333;
+}
+.create-footer-sticky {
     position: sticky;
     bottom: 0;
     background: #fff; 

@@ -9,6 +9,7 @@ namespace Linkora.Models
         [Required]
         public Category Param { get; set; } = null!;
         public List<SelectOption> Options { get; set; } = [];
+        public List<ColorOption> ColorOptions { get; set; } = [];
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal? Min { get; set; }
@@ -23,5 +24,11 @@ namespace Linkora.Models
     {
         public int Id { get; set; }
         public string Text { get; set; } = "";
+    }
+    public class ColorOption
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = "";
+        public string HexValue { get; set; } = "";
     }
 }

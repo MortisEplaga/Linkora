@@ -77,10 +77,12 @@ namespace Linkora.Controllers
             var productIds = string.Join(",", products.Select(p => p.Id));
             await using var paramCmd = new SqlCommand($@"
     SELECT mpc.ProductId, c.Id AS ParamId, c.Name, c.Type, mpc.Value,
-           so.Value AS OptText, so.ValueLV, so.ValueRU
+           so.Value AS OptText, so.ValueLV, so.ValueRU,
+           co.Name AS ColorName, co.NameLV AS ColorNameLV, co.NameRU AS ColorNameRU
     FROM MapperProductCategory mpc
     JOIN Category c ON c.Id = mpc.CategoryId
     LEFT JOIN SelectOptions so ON c.Type IN (2,4) AND TRY_CAST(mpc.Value AS int) = so.Id
+    LEFT JOIN ColorOptions co ON c.Type = 6 AND TRY_CAST(mpc.Value AS int) = co.Id
     WHERE mpc.ProductId IN ({productIds})
       AND c.Name != 'Price, €'
     ORDER BY c.Name", conn);
@@ -100,6 +102,10 @@ namespace Linkora.Controllers
                     if (paramType is 2 or 4)
                     {
                         value = ResolveOptionText(r, lang, rawValue);
+                    }
+                    else if (paramType == 6)
+                    {
+                        value = ResolveColorText(r, lang, rawValue);
                     }
                     else
                     {
@@ -140,6 +146,13 @@ namespace Linkora.Controllers
             if (lang == "lv" && !r.IsDBNull(6)) return r.GetString(6);
             if (lang == "ru" && !r.IsDBNull(7)) return r.GetString(7);
             return r.GetString(5);
+        }
+        private static string ResolveColorText(SqlDataReader r, string lang, string fallback)
+        {
+            if (r.IsDBNull(8)) return fallback; 
+            if (lang == "lv" && !r.IsDBNull(9)) return r.GetString(9);
+            if (lang == "ru" && !r.IsDBNull(10)) return r.GetString(10);
+            return r.GetString(8);
         }
     }
 }

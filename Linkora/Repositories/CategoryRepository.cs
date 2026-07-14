@@ -132,7 +132,7 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
 
             await using var cmdP = new SqlCommand(
-                           $"SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId IN ({ids}) AND Type IN (2,3,4,5,7,8)", conn);
+                           $"SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId IN ({ids}) AND Type IN (2,3,4,5,6,7,8)", conn);
             var parameters = new List<Category>();
             await using (var r = await cmdP.ExecuteReaderAsync())
                 while (await r.ReadAsync())
@@ -174,7 +174,27 @@ namespace Linkora.Repositories
                         vm.Step = rr.IsDBNull(2) ? null : rr.GetDecimal(2);
                     }
                 }
+                else if (p.Type == 6)
+                {
+                    await using var cmdC = new SqlCommand(
+                        "SELECT Id, Name, NameLV, NameRU, HexValue FROM ColorOptions WHERE CategoryId = @Id AND IsConf = 1", conn);
+                    cmdC.Parameters.AddWithValue("@Id", p.Id);
+                    await using var rc = await cmdC.ExecuteReaderAsync();
+                    while (await rc.ReadAsync())
+                    {
+                        string name;
+                        if (lang == "lv" && !rc.IsDBNull(2)) name = rc.GetString(2);
+                        else if (lang == "ru" && !rc.IsDBNull(3)) name = rc.GetString(3);
+                        else name = rc.GetString(1);
 
+                        vm.ColorOptions.Add(new ColorOption
+                        {
+                            Id = rc.GetInt32(0),
+                            Name = name,
+                            HexValue = rc.GetString(4)
+                        });
+                    }
+                }
                 result.Add(vm);
             }
 
@@ -188,7 +208,7 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
 
             await using var cmdP = new SqlCommand(
-                "SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId = @ParentId AND Type IN (2,3,4,5,7,8)", conn);
+                "SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId = @ParentId AND Type IN (2,3,4,5,6,7,8)", conn);
             cmdP.Parameters.AddWithValue("@ParentId", categoryId);
 
             var parameters = new List<Category>();
@@ -232,7 +252,27 @@ namespace Linkora.Repositories
                         vm.Step = rr.IsDBNull(2) ? null : rr.GetDecimal(2);
                     }
                 }
+                else if (p.Type == 6)
+                {
+                    await using var cmdC = new SqlCommand(
+                        "SELECT Id, Name, NameLV, NameRU, HexValue FROM ColorOptions WHERE CategoryId = @Id AND IsConf = 1", conn);
+                    cmdC.Parameters.AddWithValue("@Id", p.Id);
+                    await using var rc = await cmdC.ExecuteReaderAsync();
+                    while (await rc.ReadAsync())
+                    {
+                        string name;
+                        if (lang == "lv" && !rc.IsDBNull(2)) name = rc.GetString(2);
+                        else if (lang == "ru" && !rc.IsDBNull(3)) name = rc.GetString(3);
+                        else name = rc.GetString(1);
 
+                        vm.ColorOptions.Add(new ColorOption
+                        {
+                            Id = rc.GetInt32(0),
+                            Name = name,
+                            HexValue = rc.GetString(4)
+                        });
+                    }
+                }
                 result.Add(vm);
             }
 

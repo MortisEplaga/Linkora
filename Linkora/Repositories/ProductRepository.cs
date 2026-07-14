@@ -26,7 +26,7 @@ namespace Linkora.Repositories
         SELECT ParamId, RuleType, RuleValue, TriggerParamId, TriggerValue, ErrorMessageKey
         FROM ParameterValidationRules
         WHERE ParamId IN (
-            SELECT Id FROM Category WHERE ParentId IN ({ids}) AND Type IN (2,3,4,5,7,8)
+            SELECT Id FROM Category WHERE ParentId IN ({ids}) AND Type IN (2,3,4,5,6,7,8)
         );
 
         SELECT ScriptPath FROM ParameterCustomScripts WHERE CategoryId IN ({ids});
@@ -207,6 +207,7 @@ namespace Linkora.Repositories
         public async Task<Dictionary<int, string>> GetParamDisplayValuesAsync(int productId, string lang)
         {
             var options = await LoadSelectOptionsDictionaryAsync();
+            var colors = await LoadColorOptionsDictionaryAsync();
 
             var result = new Dictionary<int, string>();
             await using var conn = new SqlConnection(_connectionString);
@@ -241,6 +242,14 @@ namespace Linkora.Repositories
                         multiValues[paramId] = new List<string>();
                     multiValues[paramId].AddRange(texts);
                     continue; 
+                }
+                else if (type == 6)
+                {
+                    if (int.TryParse(rawValue, out int colorId) && colors.TryGetValue(colorId, out var c))
+                    {
+                        text = lang switch { "lv" => c.NameLV, "ru" => c.NameRU, _ => c.Name };
+                    }
+                    else text = rawValue;
                 }
                 else 
                 {
@@ -280,6 +289,24 @@ namespace Linkora.Repositories
                 var valueLv = r.IsDBNull(2) ? value : r.GetString(2);
                 var valueRu = r.IsDBNull(3) ? value : r.GetString(3);
                 dict[id] = (value, valueLv, valueRu);
+            }
+            return dict;
+        }
+        private async Task<Dictionary<int, (string Name, string NameLV, string NameRU, string Hex)>> LoadColorOptionsDictionaryAsync()
+        {
+            var dict = new Dictionary<int, (string, string, string, string)>();
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand("SELECT Id, Name, NameLV, NameRU, HexValue FROM ColorOptions WHERE IsConf = 1", conn);
+            await using var r = await cmd.ExecuteReaderAsync();
+            while (await r.ReadAsync())
+            {
+                var id = r.GetInt32(0);
+                var name = r.GetString(1);
+                var nameLv = r.IsDBNull(2) ? name : r.GetString(2);
+                var nameRu = r.IsDBNull(3) ? name : r.GetString(3);
+                var hex = r.GetString(4);
+                dict[id] = (name, nameLv, nameRu, hex);
             }
             return dict;
         }

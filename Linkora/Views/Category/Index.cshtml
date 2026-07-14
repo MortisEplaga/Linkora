@@ -87,7 +87,6 @@
                         {
                             <div class="param-title">@vm.Param.Name</div>
                         }
-
                         @if (vm.Param.Type == 2)
                         {
                             <div class="param-pills">
@@ -160,7 +159,23 @@
                                 </button>
                             }
                         }
-
+                        @if (vm.Param.Type == 6)
+                        {
+                            <div class="param-swatches">
+                                @foreach (var opt in vm.ColorOptions)
+                                {
+                                    var isActive = activeFilters.TryGetValue(vm.Param.Id, out var selVals)
+                                    && selVals.Contains(opt.Id.ToString());
+                                    <label class="param-swatch-row @(isActive ? "param-swatch-active" : "")"
+                                           data-id="@opt.Id" onclick="selectSwatch(this, '@vm.Param.Id')">
+                                        <span class="param-swatch-circle" style="background-color:@opt.HexValue"></span>
+                                        <span class="param-swatch-name">@opt.Name</span>
+                                    </label>
+                                }
+                            </div>
+                            <input type="hidden" name="p_@vm.Param.Id" id="swatch_@vm.Param.Id"
+                                   value="@(activeFilters.TryGetValue(vm.Param.Id, out var pv6) ? pv6.FirstOrDefault() : "")" />
+                        }
                         @if (vm.Param.Type == 8)
                         {
                             var activeIds = activeFilters.TryGetValue(vm.Param.Id, out var fv) ? fv : new List<string>();
@@ -319,6 +334,15 @@
         // }
     </script>
     <script>
+         function selectSwatch(row, paramId) {
+            const wrap = row.closest('.param-swatches');
+            const wasActive = row.classList.contains('param-swatch-active');
+            wrap.querySelectorAll('.param-swatch-row').forEach(r => r.classList.remove('param-swatch-active'));
+            const input = document.getElementById('swatch_' + paramId);
+            if (!wasActive) { row.classList.add('param-swatch-active'); input.value = row.dataset.id; }
+            else { input.value = ''; }
+        }
+
         function setView(v) {
             localStorage.setItem('listingView', v);
             const c = document.getElementById('listingContainer');

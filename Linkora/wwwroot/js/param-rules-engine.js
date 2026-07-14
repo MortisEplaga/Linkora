@@ -36,7 +36,8 @@
     };
 
     var getParamValue = function (paramId) {
-        var activePill = document.querySelector('[data-param="' + paramId + '"] .param-pill-active, .param-pills[data-param="' + paramId + '"] .param-pill-active');
+        var activePill = document.querySelector('[data-param="' + paramId + '"] .param-pill-active, .param-pills[data-param="' + paramId + '"] .param-pill-active'
+            + '.param-swatches[data-param="' + paramId + '"] .param-swatch-row.param-swatch-active');
 
         if (!activePill) {
             var pillInput = document.querySelector('input[type="hidden"]#pill_' + paramId + ', input[type="hidden"][name="p_' + paramId + '"]');
