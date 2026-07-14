@@ -10,6 +10,9 @@
 
 const TRANSLATIONS = {
     en: {
+        'compare_seller': 'Seller',
+        'compare_address': 'Address',
+        'compare_posted': 'Posted',
         'forgot_password_title': 'Forgot password',
         'forgot_password_desc': 'Enter your email address and we will send you a link to reset your password.',
         'forgot_password_send_btn': 'Send reset link',
@@ -388,6 +391,9 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'compare_seller': 'Pārdevējs',
+        'compare_address': 'Adrese',
+        'compare_posted': 'Publicēts',
         'forgot_password_title': 'Aizmirsāt paroli',
         'forgot_password_desc': 'Ievadiet savu e-pasta adresi un mēs nosūtīsim jums saiti paroles atiestatīšanai.',
         'forgot_password_send_btn': 'Nosūtīt saiti',
@@ -776,6 +782,9 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'compare_seller': 'Продавец',
+        'compare_address': 'Адрес',
+        'compare_posted': 'Опубликовано',
         'forgot_password_title': 'Забыли пароль',
         'forgot_password_desc': 'Введите адрес электронной почты, и мы отправим вам ссылку для сброса пароля.',
         'forgot_password_send_btn': 'Отправить ссылку',

@@ -62,7 +62,16 @@
                         </div>
                     </div>
                     <div class="product-card-body">
-                        <div class="product-card-price">@(p.Price.HasValue? p.Price.Value.ToString("N2") + " €" : "Price on request")</div>
+                        <div class="product-card-price">
+                            @if (p.Price.HasValue)
+                            {
+                                @(p.Price.Value.ToString("N2") + " €")
+                            }
+                            else
+                            {
+                                <span data-i18n="price_on_request">Price on request</span>
+                            }
+                        </div>
                         <div class="product-card-name">@p.Name</div>
                         <div class="product-card-address">@p.Address</div>
                         <div class="product-card-date">@(p.CreatedTime.HasValue? p.CreatedTime.Value.ToString("dd MMM, HH:mm") : "")</div>
@@ -102,7 +111,8 @@
                 @if (itemsWithPrice < cart.Count)
                 {
                     <div class="cart-summary-note">
-                        @(cart.Count - itemsWithPrice) item(s) without price not included
+                        <span id="withoutPriceCount">@(cart.Count - itemsWithPrice)</span>
+                        <span data-i18n="without_price_note">item(s) without price not included</span>
                     </div>
                 }
                 <div class="cart-summary-total">

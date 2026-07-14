@@ -1,8 +1,9 @@
 ﻿@using Linkora.Models
 @{
     var products = (List<CompareProduct>)ViewBag.Products;
-    var allParams = (List<string>)ViewBag.AllParams;
-    var paramMatrix = (Dictionary<string, Dictionary<int, string>>)ViewBag.ParamMatrix;
+    var allParamIds = (List<int>)ViewBag.AllParamIds;
+    var paramLabels = (Dictionary<int, string>)ViewBag.ParamLabels;
+    var paramMatrix = (Dictionary<int, Dictionary<int, string>>)ViewBag.ParamMatrix;
     ViewData["Title"] = "Compare listings";
 }
 
@@ -44,14 +45,14 @@
     }
     else
     {
-            var gridStyle = $"grid-template-columns: 200px {string.Join(" ", Enumerable.Repeat("220px", products.Count))}";
+        var gridStyle = $"grid-template-columns: 200px {string.Join(" ", Enumerable.Repeat("220px", products.Count))}";
 
-            var staticRows = new List<(string Label, string Key, Func<CompareProduct, string?> Get)>
-            {
-                ("Seller",  "seller",  p2 => p2.SellerName),
-                ("Address", "address", p2 => p2.Address),
-                ("Posted",  "date",    p2 => p2.CreatedTime?.ToString("dd MMM yyyy")),
-            };
+        var staticRows = new List<(string LabelKey, string DefaultLabel, string Key, Func<CompareProduct, string?> Get)>
+        {
+        ("compare_seller",  "Seller",  "seller",  p2 => p2.SellerName),
+        ("compare_address", "Address", "address", p2 => p2.Address),
+        ("compare_posted",  "Posted",  "date",    p2 => p2.CreatedTime?.ToString("dd MMM yyyy")),
+        };
 
         <div class="compare-group-label">
             <span data-i18n="compare_group_main">Listings</span>
@@ -101,7 +102,7 @@
                     var values = products.Select(p => row.Get(p) ?? "").ToList();
                     var allSame = values.Distinct().Count() <= 1;
 
-                    <div class="compare-cell-label" data-static="@row.Key">@row.Label</div>
+                    <div class="compare-cell-label" data-static="@row.Key" data-i18n="@row.LabelKey">@row.DefaultLabel</div>
                     @foreach (var p in products)
                     {
                         var val = row.Get(p);
@@ -118,33 +119,34 @@
                     }
                 }
 
-                @foreach (var paramName in allParams)
+                @foreach (var paramId in allParamIds)
                 {
+                    var label = paramLabels[paramId];
                     var values = products.Select(p =>
-                        paramMatrix.TryGetValue(paramName, out var d) && d.TryGetValue(p.Id, out var v) ? v : ""
+                    paramMatrix.TryGetValue(paramId, out var d) && d.TryGetValue(p.Id, out var v) ? v : ""
                     ).ToList();
                     var allSame = values.Distinct().Count() <= 1;
 
-                    <div class="compare-cell-label" data-param="@paramName">@paramName</div>
+                    <div class="compare-cell-label" data-param="@paramId">@label</div>
                     @foreach (var p in products)
                     {
-                        var hasVal = paramMatrix.TryGetValue(paramName, out var dict)
-                                     && dict.TryGetValue(p.Id, out var val2)
-                                     && !string.IsNullOrEmpty(val2);
-                        var val = hasVal ? paramMatrix[paramName][p.Id] : "";
+                        var hasVal = paramMatrix.TryGetValue(paramId, out var dict)
+                        && dict.TryGetValue(p.Id, out var val2)
+                        && !string.IsNullOrEmpty(val2);
+                        var val = hasVal ? paramMatrix[paramId][p.Id] : "";
 
-                        <div class="compare-cell @(!allSame ? "diff" : "")" data-param="@paramName">
+                        <div class="compare-cell @(!allSame ? "diff" : "")" data-param="@paramId">
                             @if (!hasVal)
                             {
                                 <span class="compare-val-empty">—</span>
                             }
                             else if (val == "true")
                             {
-                                <span style="color:#00b0a3;font-weight:600">✓ Yes</span>
+                                <span style="color:#00b0a3;font-weight:600">✓ <span data-i18n="yes">Yes</span></span>
                             }
                             else if (val == "false")
                             {
-                                <span class="compare-val-empty">✗ No</span>
+                                <span class="compare-val-empty">✗ <span data-i18n="no">No</span></span>
                             }
                             else
                             {
