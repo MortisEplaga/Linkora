@@ -86,22 +86,35 @@ namespace Linkora.Controllers
                 return View();
             }
 
+            var selectOptionsDict = new Dictionary<int, (string Value, string ValueLV, string ValueRU)>();
+            await using (var optCmd = new SqlCommand("SELECT Id, Value, ValueLV, ValueRU FROM SelectOptions WHERE IsConf = 1", conn))
+            await using (var optR = await optCmd.ExecuteReaderAsync())
+            {
+                while (await optR.ReadAsync())
+                {
+                    var id = optR.GetInt32(0);
+                    var value = optR.GetString(1);
+                    var valueLv = optR.IsDBNull(2) ? value : optR.GetString(2);
+                    var valueRu = optR.IsDBNull(3) ? value : optR.GetString(3);
+                    selectOptionsDict[id] = (value, valueLv, valueRu);
+                }
+            }
+
             var productIds = string.Join(",", products.Select(p => p.Id));
             await using var paramCmd = new SqlCommand($@"
     SELECT mpc.ProductId, c.Id AS ParamId, c.Name, c.NameLV, c.NameRU, c.Type, mpc.Value,
-           so.Value AS OptText, so.ValueLV, so.ValueRU,
            co.Name AS ColorName, co.NameLV AS ColorNameLV, co.NameRU AS ColorNameRU
     FROM MapperProductCategory mpc
     JOIN Category c ON c.Id = mpc.CategoryId
-    LEFT JOIN SelectOptions so ON c.Type IN (2,4) AND TRY_CAST(mpc.Value AS int) = so.Id
     LEFT JOIN ColorOptions co ON c.Type = 6 AND TRY_CAST(mpc.Value AS int) = co.Id
     WHERE mpc.ProductId IN ({productIds})
       AND c.Name != 'Price, €'
+      AND c.Type IN (2,3,4,5,6,7,8)
     ORDER BY c.Name", conn);
 
             var paramLabels = new Dictionary<int, string>();
             var paramMatrix = new Dictionary<int, Dictionary<int, string>>();
-            var multiParts = new Dictionary<(int ParamId, int ProductId), List<string>>();
+
             await using (var r = await paramCmd.ExecuteReaderAsync())
             {
                 while (await r.ReadAsync())
@@ -123,34 +136,68 @@ namespace Linkora.Controllers
                     var rawValue = r.IsDBNull(6) ? "" : r.GetString(6);
 
                     string value;
-                    if (paramType is 2 or 4)
-                        value = ResolveOptionText(r, lang, rawValue);
-                    else if (paramType == 6)
-                        value = ResolveColorText(r, lang, rawValue);
-                    else
-                        value = rawValue;
-
                     if (paramType == 4)
                     {
-                        var key = (paramId, productId);
-                        if (!multiParts.ContainsKey(key)) multiParts[key] = new();
-                        multiParts[key].Add(value);
+                        var ids = rawValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                        var texts = new List<string>();
+                        foreach (var idStr in ids)
+                        {
+                            if (int.TryParse(idStr.Trim(), out int optId) && selectOptionsDict.TryGetValue(optId, out var textsTuple))
+                            {
+                                texts.Add(lang switch
+                                {
+                                    "lv" => textsTuple.ValueLV,
+                                    "ru" => textsTuple.ValueRU,
+                                    _ => textsTuple.Value
+                                });
+                            }
+                            else
+                            {
+                                texts.Add(idStr);
+                            }
+                        }
+                        value = string.Join(", ", texts);
+                    }
+                    else if (paramType == 2 || paramType == 8)
+                    {
+                        if (int.TryParse(rawValue, out int optId) && selectOptionsDict.TryGetValue(optId, out var textsTuple))
+                        {
+                            value = lang switch
+                            {
+                                "lv" => textsTuple.ValueLV,
+                                "ru" => textsTuple.ValueRU,
+                                _ => textsTuple.Value
+                            };
+                        }
+                        else
+                        {
+                            value = rawValue;
+                        }
+                    }
+                    else if (paramType == 6)
+                    {
+                        if (r.IsDBNull(7))
+                        {
+                            value = rawValue;
+                        }
+                        else
+                        {
+                            if (lang == "lv" && !r.IsDBNull(8)) value = r.GetString(8);
+                            else if (lang == "ru" && !r.IsDBNull(9)) value = r.GetString(9);
+                            else value = r.GetString(7);
+                        }
                     }
                     else
                     {
-                        if (!paramMatrix.ContainsKey(paramId))
-                            paramMatrix[paramId] = new Dictionary<int, string>();
-                        paramMatrix[paramId][productId] = value;
+                        value = rawValue;
                     }
+
+                    if (!paramMatrix.ContainsKey(paramId))
+                        paramMatrix[paramId] = new Dictionary<int, string>();
+                    paramMatrix[paramId][productId] = value;
                 }
             }
 
-            foreach (var ((paramId, productId), parts) in multiParts)
-            {
-                if (!paramMatrix.ContainsKey(paramId))
-                    paramMatrix[paramId] = new Dictionary<int, string>();
-                paramMatrix[paramId][productId] = string.Join(", ", parts);
-            }
             var allParamIds = paramMatrix.Keys.OrderBy(id => paramLabels[id]).ToList();
 
             ViewBag.Products = products;
@@ -158,20 +205,6 @@ namespace Linkora.Controllers
             ViewBag.ParamLabels = paramLabels;
             ViewBag.ParamMatrix = paramMatrix;
             return View();
-        }
-        private static string ResolveOptionText(SqlDataReader r, string lang, string fallback)
-        {
-            if (r.IsDBNull(7)) return fallback;
-            if (lang == "lv" && !r.IsDBNull(8)) return r.GetString(8);
-            if (lang == "ru" && !r.IsDBNull(9)) return r.GetString(9);
-            return r.GetString(7);
-        }
-        private static string ResolveColorText(SqlDataReader r, string lang, string fallback)
-        {
-            if (r.IsDBNull(10)) return fallback; 
-            if (lang == "lv" && !r.IsDBNull(11)) return r.GetString(11);
-            if (lang == "ru" && !r.IsDBNull(12)) return r.GetString(12);
-            return r.GetString(10);
         }
     }
 }
