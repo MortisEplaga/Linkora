@@ -1454,4 +1454,62 @@ css.modal-overlay {
 .dark-theme #termsModal .info-modal-body::-webkit-scrollbar-thumb {
     background: #555;
 }
- 
+.dark-theme .info-modal-body {
+    background-color: #111 !important;
+    color: #ddd !important;
+}
+
+.dark-theme .terms-title {
+    color: #fff !important;
+    border-bottom-color: #444 !important;
+}
+
+.dark-theme .terms-section p b {
+    color: #f0f0f0 !important;
+}
+
+.dark-theme .terms-section p,
+.dark-theme .terms-intro {
+    color: #ccc !important;
+}
+
+.dark-theme .terms-section li {
+    color: #aaa !important;
+}
+
+.dark-theme .faq-q {
+    color: #f5f5f5 !important;
+}
+
+    .dark-theme .faq-q:hover {
+        color: #00b0a3 !important;
+    }
+
+.dark-theme .faq-a {
+    color: #bbb !important;
+}
+
+.dark-theme .terms-intro {
+    border-bottom-color: #333 !important;
+}
+
+.dark-theme .info-modal-body::-webkit-scrollbar-thumb {
+    background: #555 !important;
+}
+
+    .dark-theme .info-modal-body::-webkit-scrollbar-thumb:hover {
+        background: #777 !important;
+    }
+
+.dark-theme .info-modal-lang-tabs {
+    border-bottom-color: #333 !important;
+}
+
+.dark-theme .info-lang-btn {
+    color: #888 !important;
+}
+
+    .dark-theme .info-lang-btn.active {
+        color: #fff !important;
+        border-bottom-color: #00b0a3 !important;
+    }
