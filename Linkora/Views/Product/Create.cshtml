@@ -11,6 +11,15 @@
             <div class="create-section">
                 <h2 class="create-section-title" data-i18n="basic_info">Basic information</h2>
 
+                <div class="create-section">
+                    <h2 class="create-section-title" data-i18n="category_section">Category</h2>
+                    <div class="create-cat-selector" id="catSelector" onclick="openCatMenuForEdit()">
+                        <span id="catSelectorText" data-i18n="select_category">Select category</span>
+                        <span class="create-cat-arrow">›</span>
+                    </div>
+                    <input type="hidden" id="selectedCategoryId" />
+                </div>
+
                 <div class="create-field">
                     <label class="create-label" data-i18n="title_label">Title</label>
                     <input type="text" class="create-input" id="adTitle" placeholder="What are you selling?" data-i18n-placeholder="title_ph" />
@@ -63,14 +72,6 @@
                 </div>
             </div>
 
-            <div class="create-section">
-                <h2 class="create-section-title" data-i18n="category_section">Category</h2>
-                <div class="create-cat-selector" id="catSelector" onclick="openCatMenuForEdit()">
-                    <span id="catSelectorText" data-i18n="select_category">Select category</span>
-                    <span class="create-cat-arrow">›</span>
-                </div>
-                <input type="hidden" id="selectedCategoryId" />
-            </div>
 
             <div class="create-section" id="paramsSection" style="display:none">
                 <h2 class="create-section-title" data-i18n="params_section">Parameters</h2>

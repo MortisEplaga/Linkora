@@ -121,13 +121,13 @@
                             <div class="param-range" data-min="@vm.Min" data-max="@vm.Max" data-step="@vm.Step">
                                 <input type="number" class="param-range-input param-range-from"
                                        name="p_@(vm.Param.Id)_from"
-                                       placeholder="от @((double)(vm.Min ?? 0))"
+                                       placeholder="@((double)(vm.Min ?? 0))"
                                        min="@vm.Min" max="@vm.Max" step="@vm.Step"
                                        value="@fFrom"
                                        onblur="rangeSync(this,'from')" />
                                 <input type="number" class="param-range-input param-range-to"
                                        name="p_@(vm.Param.Id)_to"
-                                       placeholder="до @((double)(vm.Max ?? 0))"
+                                       placeholder="@((double)(vm.Max ?? 0))"
                                        min="@vm.Min" max="@vm.Max" step="@vm.Step"
                                        value="@fTo"
                                        onblur="rangeSync(this,'to')" />
