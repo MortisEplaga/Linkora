@@ -113,8 +113,9 @@
 </div>
 
 <script src="~/js/param-rules-engine.js"></script>
+<script src="~/js/param-rules-engine.js"></script>
 <script>
-        function collectParamValues() {
+    function collectParamValues() {
         const params = {};
 
         document.querySelectorAll('#createParams input[data-param], #createParams textarea[data-param]').forEach(el => {
@@ -153,20 +154,56 @@
 
         return params;
     }
-    window.addEventListener('DOMContentLoaded', async () => {
-        const productId = @p.Id;
-    const draftKey = 'linkora_edit_draft_' + productId;
-    const draftRaw = sessionStorage.getItem(draftKey);
 
-    if (draftRaw) {
-        sessionStorage.removeItem(draftKey);
-        await restoreEditDraft(JSON.parse(draftRaw));
-        await loadExistingMedia(productId);
-        return; 
+    async function restoreEditDraft(state) {
+        const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+
+        setVal('adTitle', state.title);
+        setVal('adDescription', state.description);
+        setVal('adQty', state.qty || '1');
+
+        setVal('adCity', state.city);
+        setVal('adCityId', state.cityId);
+        setVal('adStreet', state.street);
+        setVal('adStreetId', state.streetId);
+        setVal('adHouse', state.house);
+        setVal('adHouseId', state.houseId);
+
+        if (state.cityId) document.getElementById('streetField').style.display = 'block';
+        if (state.streetId) document.getElementById('houseField').style.display = 'block';
+
+        if (state.categoryId) {
+            document.getElementById('selectedCategoryId').value = state.categoryId;
+
+            const serverCatName = '@Html.Raw(ViewBag.CategoryName ?? "")';
+            if (String(state.categoryId) === String(@p.CategoryId) && serverCatName) {
+                document.getElementById('catSelectorText').textContent = serverCatName;
+            } else {
+                document.getElementById('catSelectorText').textContent = state.categoryText || '';
+            }
+
+            await loadParams(state.categoryId, state.params || {});
+        }
+
+        if (state.publishDays) {
+            setVal('pubDurationValue', state.publishDays);
+        }
     }
 
-        const catId = document.getElementById('selectedCategoryId').value;
+    window.addEventListener('DOMContentLoaded', async () => {
+        const productId = @p.Id;
+        const draftKey = 'linkora_edit_draft_' + productId;
+        const draftRaw = sessionStorage.getItem(draftKey);
 
+        if (draftRaw) {
+            sessionStorage.removeItem(draftKey);
+            window.draftRestored = true; 
+            await restoreEditDraft(JSON.parse(draftRaw));
+            await loadExistingMedia(productId);
+            return;
+        }
+
+        const catId = document.getElementById('selectedCategoryId').value;
         const catName = '@Html.Raw(ViewBag.CategoryName ?? "")';
         if (catName) {
             document.getElementById('catSelectorText').textContent = catName;
@@ -179,19 +216,26 @@
         }
 
         await loadExistingMedia(productId);
-
     });
-        window.beforeLangChange = function () {
+
+    window.beforeLangChange = function () {
         sessionStorage.setItem('linkora_edit_draft_' + @p.Id, JSON.stringify({
             title: document.getElementById('adTitle')?.value,
             description: document.getElementById('adDescription')?.value,
             qty: document.getElementById('adQty')?.value,
+            city: document.getElementById('adCity')?.value,
+            cityId: document.getElementById('adCityId')?.value,
+            street: document.getElementById('adStreet')?.value,
+            streetId: document.getElementById('adStreetId')?.value,
+            house: document.getElementById('adHouse')?.value,
+            houseId: document.getElementById('adHouseId')?.value,
             categoryId: document.getElementById('selectedCategoryId')?.value,
             categoryText: document.getElementById('catSelectorText')?.textContent,
             publishDays: document.getElementById('pubDurationValue')?.value,
             params: collectParamValues(),
         }));
     };
+
     async function loadExistingMedia(productId) {
         try {
             const res = await fetch(`/Product/MediaFiles?productId=${productId}`);
@@ -243,7 +287,7 @@
             loadParams(category.id, preservedValues);
         });
     }
-    
+
     async function loadParams(categoryId, existingValues = {}) {
         const res = await fetch(`/Product/Parameters?categoryId=${categoryId}`);
         const params = await res.json();
@@ -263,7 +307,7 @@
             priceInput.value = existingValues[priceParam.id] ?? '';
             priceInput.dataset.paramId = priceParam.id;
             priceWrap.style.display = '';
-            qtyWrap.style.gridColumn = ''; 
+            qtyWrap.style.gridColumn = '';
         } else {
             priceWrap.style.display = 'none';
             priceInput.value = '';
@@ -328,11 +372,11 @@
                 <div class="param-check-row">
                     <span>${yesText}</span>
                     <input type="checkbox" class="param-check-input" data-param="${p.id}"
-                           ${val && val.toLowerCase() === 'true' ? 'checked' : ''} />
+                           ${val && String(val).toLowerCase() === 'true' ? 'checked' : ''} />
                 </div>`;
         } else if (p.type === 2) {
             const pills = p.options.map(opt =>
-                `<label class="param-pill ${val == opt.text ? 'param-pill-active' : ''}"
+                `<label class="param-pill ${String(val) === String(opt.id) ? 'param-pill-active' : ''}"
                         data-id="${opt.id}"
                         onclick="pillClick(this)">${opt.text}</label>`
             ).join('');
@@ -344,21 +388,21 @@
                 if (found) initialText = found.text;
             }
             block.innerHTML += FreeTextSelect.buildHtml(p.id, initialText, val || '', p.options || []);
-            } else if (p.type === 6) {
-                const rows = p.colorOptions.map(opt =>
-                    `<label class="param-swatch-row ${val == opt.id ? 'param-swatch-active' : ''}" data-id="${opt.id}" onclick="swatchClick(this)">
-                        <span class="param-swatch-circle" style="background-color:${opt.hex}"></span>
-                        <span class="param-swatch-name">${opt.name}</span>
-                    </label>`
-                ).join('');
-                block.innerHTML += `<div class="param-swatches" data-param="${p.id}">${rows}</div>`;
-            } else if (p.type === 4) {
-            const selected = val ? val.split(',').map(s => s.trim()) : [];
+        } else if (p.type === 6) {
+            const rows = p.colorOptions.map(opt =>
+                `<label class="param-swatch-row ${String(val) === String(opt.id) ? 'param-swatch-active' : ''}" data-id="${opt.id}" onclick="swatchClick(this)">
+                    <span class="param-swatch-circle" style="background-color:${opt.hex}"></span>
+                    <span class="param-swatch-name">${opt.name}</span>
+                </label>`
+            ).join('');
+            block.innerHTML += `<div class="param-swatches" data-param="${p.id}">${rows}</div>`;
+        } else if (p.type === 4) {
+            const selected = val ? String(val).split(',').map(s => s.trim()) : [];
             const LIMIT = 5;
             const checksHtml = p.options.map((opt, i) =>
                 `<label class="param-option" ${i >= LIMIT ? 'style="display:none"' : ''}>
                     <input type="checkbox" data-param="${p.id}" data-id="${opt.id}"
-                           ${selected.includes(opt.text) ? 'checked' : ''} /> ${opt.text}
+                           ${selected.includes(String(opt.id)) ? 'checked' : ''} /> ${opt.text}
                 </label>`
             ).join('');
             block.innerHTML += `<div class="param-options" data-param="${p.id}">${checksHtml}</div>`;
@@ -385,18 +429,16 @@
                 <input type="text" class="create-input param-text-input"
                        data-param="${p.id}" value="${val}"
                        placeholder="" />`;
-            return block;
         }
         return block;
     }
-
     function pillClick(pill) {
         const pills = pill.closest('.param-pills');
         pills.querySelectorAll('.param-pill').forEach(p => p.classList.remove('param-pill-active'));
         pill.classList.add('param-pill-active');
         if (typeof ParamRulesEngine !== 'undefined' && typeof ParamRulesEngine.triggerUpdate === 'function') {
             ParamRulesEngine.triggerUpdate();
-        }    
+        }
     }
 
     function swatchClick(row) {
@@ -404,20 +446,6 @@
         wrap.querySelectorAll('.param-swatch-row').forEach(r => r.classList.remove('param-swatch-active'));
         row.classList.add('param-swatch-active');
         if (window.ParamRulesEngine) ParamRulesEngine.triggerUpdate();
-    }
-
-    function previewPhotos(input) {
-        const preview = document.getElementById('photosPreview');
-        Array.from(input.files).forEach(file => {
-            const reader = new FileReader();
-            reader.onload = e => {
-                const wrap = document.createElement('div');
-                wrap.className = 'create-photo-thumb';
-                wrap.innerHTML = `<img src="${e.target.result}" /><button type="button" onclick="this.parentElement.remove()">✕</button>`;
-                preview.appendChild(wrap);
-            };
-            reader.readAsDataURL(file);
-        });
     }
 
     let citiesCache = null;
@@ -559,7 +587,7 @@
                 const active = el.querySelector('.param-pill-active');
                 if (active) params[el.dataset.param] = active.dataset.id;
             });
-            
+
             document.querySelectorAll('.param-swatches[data-param]').forEach(el => {
                 const active = el.querySelector('.param-swatch-row.param-swatch-active');
                 if (active) params[el.dataset.param] = active.dataset.id;
@@ -592,7 +620,6 @@
     }
 
     const MAX_BYTES = 52_428_800; // 50 MB
-
     let selectedFiles = [];
 
     function previewPhotos(input) {
@@ -666,15 +693,20 @@
 
     async function initDurationUI() {
         let preferred = DEFAULT_DURATION;
-        try {
-            const res = await fetch('/Profile/AdDurationPref');
-            if (res.ok) {
-                const data = await res.json();
-                if (data.days && DURATION_OPTIONS.includes(data.days)) {
-                    preferred = data.days;
+
+        if (window.draftRestored) {
+            preferred = parseInt(document.getElementById('pubDurationValue').value) || DEFAULT_DURATION;
+        } else {
+            try {
+                const res = await fetch('/Profile/AdDurationPref');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.days && DURATION_OPTIONS.includes(data.days)) {
+                        preferred = data.days;
+                    }
                 }
-            }
-        } catch (e) { console.warn('Could not load duration preference', e); }
+            } catch (e) { console.warn('Could not load duration preference', e); }
+        }
 
         const hiddenInput = document.getElementById('pubDurationValue');
         if (hiddenInput) hiddenInput.value = preferred;
