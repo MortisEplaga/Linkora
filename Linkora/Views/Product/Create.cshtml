@@ -130,13 +130,107 @@
     const MAX_BYTES = 52_428_800; // 50 MB
     let selectedFiles = [];
 
+        function collectParamValues() {
+        const params = {};
+
+        document.querySelectorAll('#createParams input[data-param], #createParams textarea[data-param]').forEach(el => {
+            if (el.closest('.param-options')) return;
+            if (el.type === 'checkbox') {
+                if (el.checked) params[el.dataset.param] = "true";
+            } else if (el.value) {
+                params[el.dataset.param] = el.value;
+            }
+        });
+
+        document.querySelectorAll('.param-pills[data-param]').forEach(el => {
+            const active = el.querySelector('.param-pill-active');
+            if (active) params[el.dataset.param] = active.dataset.id;
+        });
+
+        document.querySelectorAll('.param-swatches[data-param]').forEach(el => {
+            const active = el.querySelector('.param-swatch-row.param-swatch-active');
+            if (active) params[el.dataset.param] = active.dataset.id;
+        });
+
+        document.querySelectorAll('.param-options[data-param]').forEach(el => {
+            const vals = [...el.querySelectorAll('input[type=checkbox]:checked')].map(cb => cb.dataset.id);
+            if (vals.length) params[el.dataset.param] = vals.join(',');
+        });
+
+        document.querySelectorAll('.free-text-select[data-param]').forEach(wrap => {
+            const hidden = wrap.querySelector('.free-text-select-id');
+            if (hidden && hidden.value) params[wrap.dataset.param] = hidden.value;
+        });
+
+        const priceInput = document.getElementById('adPrice');
+        if (priceInput?.dataset.paramId && priceInput.value) {
+            params[priceInput.dataset.paramId] = priceInput.value;
+        }
+
+        return params;
+    }
+        const DRAFT_KEY = 'linkora_create_draft';
+
+    function saveDraftState() {
+        const state = {
+            title: document.getElementById('adTitle')?.value || '',
+            description: document.getElementById('adDescription')?.value || '',
+            qty: document.getElementById('adQty')?.value || '',
+            city: document.getElementById('adCity')?.value || '',
+            cityId: document.getElementById('adCityId')?.value || '',
+            street: document.getElementById('adStreet')?.value || '',
+            streetId: document.getElementById('adStreetId')?.value || '',
+            house: document.getElementById('adHouse')?.value || '',
+            houseId: document.getElementById('adHouseId')?.value || '',
+            categoryId: document.getElementById('selectedCategoryId')?.value || '',
+            categoryText: document.getElementById('catSelectorText')?.textContent || '',
+            publishDays: document.getElementById('pubDurationValue')?.value || '',
+            params: collectParamValues(),
+        };
+        sessionStorage.setItem(DRAFT_KEY, JSON.stringify(state));
+    }
+    window.beforeLangChange = saveDraftState;
+
+    async function restoreDraftState() {
+        const raw = sessionStorage.getItem(DRAFT_KEY);
+        if (!raw) return;
+        sessionStorage.removeItem(DRAFT_KEY);
+
+        let state;
+        try { state = JSON.parse(raw); } catch { return; }
+
+        const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+
+        setVal('adTitle', state.title);
+        setVal('adDescription', state.description);
+        setVal('adQty', state.qty || '1');
+        setVal('adCity', state.city);
+        setVal('adCityId', state.cityId);
+        setVal('adStreet', state.street);
+        setVal('adStreetId', state.streetId);
+        setVal('adHouse', state.house);
+        setVal('adHouseId', state.houseId);
+        if (state.streetId) document.getElementById('streetField').style.display = 'block';
+        if (state.houseId) document.getElementById('houseField').style.display = 'block';
+        if (state.publishDays) setVal('pubDurationValue', state.publishDays);
+
+        if (state.categoryId) {
+            document.getElementById('selectedCategoryId').value = state.categoryId;
+            document.getElementById('catSelectorText').textContent = state.categoryText || '';
+            await loadParams(state.categoryId, state.params || {});
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', restoreDraftState);
     function openCatMenuForEdit() {
         openCatMenu('select', function(category) {
+            const preservedValues = collectParamValues();
             document.getElementById('selectedCategoryId').value = category.id;
             document.getElementById('catSelectorText').textContent = category.name;
-            loadParams(category.id);
+            loadParams(category.id, preservedValues);
         });
     }
+    
     async function loadParams(categoryId, existingValues = {}) {
         const res = await fetch(`/Product/Parameters?categoryId=${categoryId}`);
         const params = await res.json();

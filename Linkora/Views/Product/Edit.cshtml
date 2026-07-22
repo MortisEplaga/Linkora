@@ -114,10 +114,58 @@
 
 <script src="~/js/param-rules-engine.js"></script>
 <script>
+        function collectParamValues() {
+        const params = {};
 
+        document.querySelectorAll('#createParams input[data-param], #createParams textarea[data-param]').forEach(el => {
+            if (el.closest('.param-options')) return;
+            if (el.type === 'checkbox') {
+                if (el.checked) params[el.dataset.param] = "true";
+            } else if (el.value) {
+                params[el.dataset.param] = el.value;
+            }
+        });
+
+        document.querySelectorAll('.param-pills[data-param]').forEach(el => {
+            const active = el.querySelector('.param-pill-active');
+            if (active) params[el.dataset.param] = active.dataset.id;
+        });
+
+        document.querySelectorAll('.param-swatches[data-param]').forEach(el => {
+            const active = el.querySelector('.param-swatch-row.param-swatch-active');
+            if (active) params[el.dataset.param] = active.dataset.id;
+        });
+
+        document.querySelectorAll('.param-options[data-param]').forEach(el => {
+            const vals = [...el.querySelectorAll('input[type=checkbox]:checked')].map(cb => cb.dataset.id);
+            if (vals.length) params[el.dataset.param] = vals.join(',');
+        });
+
+        document.querySelectorAll('.free-text-select[data-param]').forEach(wrap => {
+            const hidden = wrap.querySelector('.free-text-select-id');
+            if (hidden && hidden.value) params[wrap.dataset.param] = hidden.value;
+        });
+
+        const priceInput = document.getElementById('adPrice');
+        if (priceInput?.dataset.paramId && priceInput.value) {
+            params[priceInput.dataset.paramId] = priceInput.value;
+        }
+
+        return params;
+    }
     window.addEventListener('DOMContentLoaded', async () => {
-        const catId = document.getElementById('selectedCategoryId').value;
         const productId = @p.Id;
+    const draftKey = 'linkora_edit_draft_' + productId;
+    const draftRaw = sessionStorage.getItem(draftKey);
+
+    if (draftRaw) {
+        sessionStorage.removeItem(draftKey);
+        await restoreEditDraft(JSON.parse(draftRaw));
+        await loadExistingMedia(productId);
+        return; 
+    }
+
+        const catId = document.getElementById('selectedCategoryId').value;
 
         const catName = '@Html.Raw(ViewBag.CategoryName ?? "")';
         if (catName) {
@@ -131,8 +179,19 @@
         }
 
         await loadExistingMedia(productId);
-    });
 
+    });
+        window.beforeLangChange = function () {
+        sessionStorage.setItem('linkora_edit_draft_' + @p.Id, JSON.stringify({
+            title: document.getElementById('adTitle')?.value,
+            description: document.getElementById('adDescription')?.value,
+            qty: document.getElementById('adQty')?.value,
+            categoryId: document.getElementById('selectedCategoryId')?.value,
+            categoryText: document.getElementById('catSelectorText')?.textContent,
+            publishDays: document.getElementById('pubDurationValue')?.value,
+            params: collectParamValues(),
+        }));
+    };
     async function loadExistingMedia(productId) {
         try {
             const res = await fetch(`/Product/MediaFiles?productId=${productId}`);
@@ -178,11 +237,13 @@
 
     function openCatMenuForEdit() {
         openCatMenu('select', function(category) {
+            const preservedValues = collectParamValues();
             document.getElementById('selectedCategoryId').value = category.id;
             document.getElementById('catSelectorText').textContent = category.name;
-            loadParams(category.id);
+            loadParams(category.id, preservedValues);
         });
     }
+    
     async function loadParams(categoryId, existingValues = {}) {
         const res = await fetch(`/Product/Parameters?categoryId=${categoryId}`);
         const params = await res.json();

@@ -911,6 +911,11 @@
             if (regionBtnLabel && (regionBtnLabel.textContent === 'All regions' || regionBtnLabel.textContent === 'Visi reģioni' || regionBtnLabel.textContent === 'Все регионы')) {
                 regionBtnLabel.textContent = t('all_regions');
             }
+
+            if (typeof window.beforeLangChange === 'function') {
+                window.beforeLangChange();
+            }
+
             location.reload();
         }
 
