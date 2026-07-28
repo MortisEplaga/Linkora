@@ -10,6 +10,15 @@
 
 const TRANSLATIONS = {
     en: {
+        'notif_prefs_link': 'Notification settings',
+        'notif_prefs_title': 'Notification settings',
+        'notif_cat_deals': 'Deals',
+        'notif_cat_reviews': 'Reviews',
+        'notif_cat_moderation': 'Listing moderation',
+        'notif_cat_account': 'Account status',
+        'notif_cat_favourites': 'Favourite listing changes',
+        'notif_cat_new_listings': 'New listings from followed sellers',
+        'edit_arrow': 'Edit →',
         'compare_seller': 'Seller',
         'compare_address': 'Address',
         'compare_posted': 'Posted',
@@ -391,6 +400,15 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'notif_prefs_link': 'Paziņojumu iestatījumi',
+        'notif_prefs_title': 'Paziņojumu iestatījumi',
+        'notif_cat_deals': 'Darījumi',
+        'notif_cat_reviews': 'Atsauksmes',
+        'notif_cat_moderation': 'Sludinājumu moderācija',
+        'notif_cat_account': 'Konta statuss',
+        'notif_cat_favourites': 'Izlases sludinājumu izmaiņas',
+        'notif_cat_new_listings': 'Jauni sludinājumi no sekotajiem pārdevējiem',
+        'edit_arrow': 'Rediģēt →',
         'compare_seller': 'Pārdevējs',
         'compare_address': 'Adrese',
         'compare_posted': 'Publicēts',
@@ -782,6 +800,15 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'notif_prefs_link': 'Настройки уведомлений',
+        'notif_prefs_title': 'Настройки уведомлений',
+        'notif_cat_deals': 'Сделки',
+        'notif_cat_reviews': 'Отзывы',
+        'notif_cat_moderation': 'Модерация объявлений',
+        'notif_cat_account': 'Статус аккаунта',
+        'notif_cat_favourites': 'Изменения в избранных объявлениях',
+        'notif_cat_new_listings': 'Новые объявления от отслеживаемых продавцов',
+        'edit_arrow': 'Редактировать →',
         'compare_seller': 'Продавец',
         'compare_address': 'Адрес',
         'compare_posted': 'Опубликовано',

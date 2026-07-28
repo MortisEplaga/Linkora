@@ -1,5 +1,6 @@
-﻿using Linkora.Models;
-using Linkora.Hubs;
+﻿using Linkora.Hubs;
+using Linkora.Models;
+using Linkora.Services;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Data.SqlClient;
 
@@ -9,11 +10,14 @@ namespace Linkora.Repositories
     {
         private readonly string _connectionString;
         private readonly IHubContext<MessageHub> _hubContext;
+        private readonly INotificationPreferencesRepository _preferencesRepository;
 
-        public NotificationRepository(IConfiguration configuration, IHubContext<MessageHub> hubContext)
+        public NotificationRepository(IConfiguration configuration, IHubContext<MessageHub> hubContext,
+            INotificationPreferencesRepository preferencesRepository)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection")!;
             _hubContext = hubContext;
+            _preferencesRepository = preferencesRepository;
         }
 
         public async Task<int> CreateAsync(int userId, int? fromUserId, int? productId, string message)
@@ -45,37 +49,54 @@ namespace Linkora.Repositories
 
             return id;
         }
-
+        private static bool IsAllowed(string message, NotificationPreferences prefs)
+        {
+            var category = NotificationCategorizer.Categorize(message);
+            return category switch
+            {
+                "Deals" => prefs.Deals,
+                "Reviews" => prefs.Reviews,
+                "Moderation" => prefs.Moderation,
+                "Account" => prefs.Account,
+                "Favourites" => prefs.Favourites,
+                _ => prefs.NewListings,
+            };
+        }
         public async Task<List<NotificationViewModel>> GetByUserAsync(int userId, int count = 20)
         {
+            var prefs = await _preferencesRepository.GetAsync(userId);
             var result = new List<NotificationViewModel>();
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
-            await using var cmd = new SqlCommand($@"
-                SELECT TOP {count}
-                    n.Id, n.UserId, n.FromUserId, n.ProductId, n.Message, n.IsRead, n.CreatedAt,
-                    u.UserName, u.AvatarImagePath,
-                    p.Name AS ProductName,
-                    COALESCE(
-                        (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
-                         WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-                        p.AvatarImagePath
-                    ) AS ProductImage
-                FROM Notifications n
-                LEFT JOIN Users u ON u.Id = n.FromUserId
-                LEFT JOIN Products p ON p.Id = n.ProductId
-                WHERE n.UserId = @UserId
-                ORDER BY n.CreatedAt DESC", conn);
+            await using var cmd = new SqlCommand(@"
+            SELECT
+                n.Id, n.UserId, n.FromUserId, n.ProductId, n.Message, n.IsRead, n.CreatedAt,
+                u.UserName, u.AvatarImagePath,
+                p.Name AS ProductName,
+                COALESCE(
+                    (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
+                     WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+                    p.AvatarImagePath
+                ) AS ProductImage
+            FROM Notifications n
+            LEFT JOIN Users u ON u.Id = n.FromUserId
+            LEFT JOIN Products p ON p.Id = n.ProductId
+            WHERE n.UserId = @UserId
+            ORDER BY n.CreatedAt DESC", conn);
             cmd.Parameters.AddWithValue("@UserId", userId);
             await using var r = await cmd.ExecuteReaderAsync();
             while (await r.ReadAsync())
+            {
+                var message = r.IsDBNull(4) ? "" : r.GetString(4);
+                if (!IsAllowed(message, prefs)) continue;
+
                 result.Add(new NotificationViewModel
                 {
                     Id = r.GetInt32(0),
                     UserId = r.GetInt32(1),
                     FromUserId = r.IsDBNull(2) ? null : r.GetInt32(2),
                     ProductId = r.IsDBNull(3) ? null : r.GetInt32(3),
-                    Message = r.IsDBNull(4) ? "" : r.GetString(4),
+                    Message = message,
                     IsRead = r.GetBoolean(5),
                     CreatedAt = r.GetDateTime(6),
                     FromUserName = r.IsDBNull(7) ? null : r.GetString(7),
@@ -83,17 +104,28 @@ namespace Linkora.Repositories
                     ProductName = r.IsDBNull(9) ? null : r.GetString(9),
                     ProductImage = r.IsDBNull(10) ? null : r.GetString(10),
                 });
+
+                if (result.Count >= count) break;
+            }
             return result;
         }
 
         public async Task<int> GetUnreadCountAsync(int userId)
         {
+            var prefs = await _preferencesRepository.GetAsync(userId);
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(
-                "SELECT COUNT(*) FROM Notifications WHERE UserId = @UserId AND IsRead = 0", conn);
+                "SELECT Message FROM Notifications WHERE UserId = @UserId AND IsRead = 0", conn);
             cmd.Parameters.AddWithValue("@UserId", userId);
-            return (int)(await cmd.ExecuteScalarAsync())!;
+            await using var r = await cmd.ExecuteReaderAsync();
+            int count = 0;
+            while (await r.ReadAsync())
+            {
+                var message = r.IsDBNull(0) ? "" : r.GetString(0);
+                if (IsAllowed(message, prefs)) count++;
+            }
+            return count;
         }
 
         public async Task MarkReadAsync(int notificationId, int userId)

@@ -17,6 +17,7 @@ builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IReportRepository, ReportRepository>();
 builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
+builder.Services.AddScoped<INotificationPreferencesRepository, NotificationPreferencesRepository>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 
 builder.Services.Configure<FormOptions>(o =>
