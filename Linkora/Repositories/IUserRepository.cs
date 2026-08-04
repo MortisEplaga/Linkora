@@ -23,5 +23,6 @@ namespace Linkora.Repositories
         Task<User?> GetByPasswordResetTokenAsync(string token);
         Task ClearPasswordResetTokenAsync(int userId);
         Task UpdatePasswordHashAsync(int userId, string passwordHash);
+        Task AdjustPromotionPointsAsync(int userId, int delta);
     }
 }

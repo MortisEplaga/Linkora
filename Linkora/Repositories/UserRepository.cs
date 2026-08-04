@@ -244,5 +244,16 @@ namespace Linkora.Repositories
             cmd.Parameters.AddWithValue("@Id", userId);
             await cmd.ExecuteNonQueryAsync();
         }
+        public async Task AdjustPromotionPointsAsync(int userId, int delta)
+        {
+            if (delta == 0) return;
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(
+                "UPDATE Users SET PromotionPoints = PromotionPoints + @Delta WHERE Id = @Id", conn);
+            cmd.Parameters.AddWithValue("@Delta", delta);
+            cmd.Parameters.AddWithValue("@Id", userId);
+            await cmd.ExecuteNonQueryAsync();
+        }
     }
 }

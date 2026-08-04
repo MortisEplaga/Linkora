@@ -84,13 +84,13 @@ namespace Linkora.Repositories
            FROM MapperProductCategory m
            JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
            WHERE m.ProductId = p.Id) as Price";
-            var order = sort switch
+            var baseOrder = sort switch
             {
                 "cheap" => priceParamId.HasValue ? "TRY_CAST(mpc.Value AS decimal(18,2)) ASC" : "p.CreatedTime DESC",
                 "expensive" => priceParamId.HasValue ? "TRY_CAST(mpc.Value AS decimal(18,2)) DESC" : "p.CreatedTime DESC",
                 _ => "p.CreatedTime DESC"
             };
-
+            var order = $"CASE WHEN p.PromotionType = 'Top' THEN 0 ELSE 1 END, {baseOrder}";
             var whereClauses = new List<string>();
             var sqlParams = new List<SqlParameter>();
             int pIdx = 0;
@@ -106,6 +106,7 @@ namespace Linkora.Repositories
                         WHERE m.ProductId = p.Id AND m.CategoryId = @fp{pIdx}
                         AND m.Value IN ({string.Join(",", inParams)})
                     )");
+
                     sqlParams.Add(new SqlParameter($"@fp{pIdx}", paramId));
                     for (int i = 0; i < values.Count; i++)
                         sqlParams.Add(new SqlParameter($"@fv{pIdx}_{i}", values[i]));
@@ -154,7 +155,7 @@ namespace Linkora.Repositories
                 sqlParams.Add(new SqlParameter("@SearchTerm", search));
             }
             var extraWhere = whereClauses.Count > 0
-                ? "AND " + string.Join(" AND ", whereClauses)
+                ? $"AND (({string.Join(" AND ", whereClauses)}) OR p.PromotionType = 'Vip')"
                 : "";
 
             var result = new List<Product>();
@@ -163,12 +164,12 @@ namespace Linkora.Repositories
             await using var cmd = new SqlCommand($@"
                 SELECT p.Id, p.Name, p.Description, p.Address,
                        p.CreatedTime, COALESCE(
-           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
-            WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-           p.AvatarImagePath
-       ) AS AvatarImagePath,
+                   (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
+                    WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+                   p.AvatarImagePath
+               ) AS AvatarImagePath,
                        u.UserName, u.AvatarImagePath, u.IsCompany,
-                       u.PhoneNumber, u.Email, u.CreatedAt, u.Id
+                       u.PhoneNumber, u.Email, u.CreatedAt, u.Id, p.PromotionType
                        {priceSelect}
                 FROM Products p
                 LEFT JOIN Users u ON u.Id = p.UserId
@@ -200,7 +201,8 @@ namespace Linkora.Repositories
                         Email = r.IsDBNull(10) ? null : r.GetString(10),
                         CreatedAt = r.IsDBNull(11) ? null : r.GetDateTime(11),
                     },
-                    Price = r.IsDBNull(13) ? null : r.GetDecimal(13),
+                    Price = r.IsDBNull(14) ? null : r.GetDecimal(14),
+                    PromotionType = r.IsDBNull(13) ? "None" : r.GetString(13),
                 });
             return result;
         }

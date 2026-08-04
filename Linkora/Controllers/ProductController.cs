@@ -12,14 +12,23 @@ namespace Linkora.Controllers
         IProductRepository productRepository,
         IConfiguration configuration,
         IMessageRepository messageRepository,
-        INotificationRepository notificationRepository) : Controller
+        INotificationRepository notificationRepository,
+        IUserRepository userRepository) : Controller
     {
         private readonly ICategoryRepository _categoryRepository = categoryRepository;
         private readonly IAddressRepository _addressRepository = addressRepository;
         private readonly IProductRepository _productRepository = productRepository;
         private readonly IMessageRepository _messageRepository = messageRepository;
         private readonly INotificationRepository _notificationRepository = notificationRepository;
+        private readonly IUserRepository _userRepository = userRepository;
         private readonly IConfiguration _configuration = configuration;
+        private static int PromotionPoints(string? promotionType) => promotionType switch
+        {
+            "Highlight" => 1,
+            "Top" => 2,
+            "Vip" => 3,
+            _ => 0
+        };
         private static Dictionary<int, string> ParseParamsJson(string? json)
         {
             var result = new Dictionary<int, string>();
@@ -364,6 +373,8 @@ namespace Linkora.Controllers
 
             var refreshedMedia = await _productRepository.GetMediaAsync(id);
             string? newAvatar = refreshedMedia.FirstOrDefault()?.FilePath ?? existing.AvatarImagePath;
+            var oldPoints = PromotionPoints(existing.PromotionType);
+            var newPoints = PromotionPoints(promotionType);
 
             await _productRepository.UpdateAsync(new Product
             {
@@ -395,7 +406,8 @@ namespace Linkora.Controllers
             scoreUpdateCmd.Parameters.AddWithValue("@Id", id);
             await scoreUpdateCmd.ExecuteNonQueryAsync();
             var changes = new List<object>();
-
+            if (newPoints != oldPoints)
+                await _userRepository.AdjustPromotionPointsAsync(userId, newPoints - oldPoints);
             if (!string.Equals(existing.Name, title, StringComparison.Ordinal))
                 changes.Add(new { type = "title_changed" });
 
@@ -429,6 +441,7 @@ namespace Linkora.Controllers
                         newPrice = newPrice?.ToString("N2") ?? "—"
                     });
             }
+
             var otherChanged = paramValues
                 .Where(kv => kv.Key != priceParamId &&
                              (!oldParamValues.TryGetValue(kv.Key, out var ov) || ov != kv.Value))
@@ -603,6 +616,10 @@ namespace Linkora.Controllers
                 CategoryId = categoryId,
                 AvatarImagePath = media.FirstOrDefault()?.FilePath,
             }, paramValues, duration, promotionType ?? "None");
+
+            var points = PromotionPoints(promotionType);
+            if (points > 0)
+                await _userRepository.AdjustPromotionPointsAsync(userId, points);
 
             if (media.Count > 0)
                 await _productRepository.SaveMediaAsync(newId, media);

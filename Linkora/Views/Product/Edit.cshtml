@@ -703,7 +703,12 @@
         btn.classList.add('active');
         document.getElementById('pubDurationValue').value = days;
     }
-
+    
+    function selectPromotion(type, btn) {
+        document.querySelectorAll('#promotionPills .duration-pill').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('promotionValue').value = type;
+    }
     async function initDurationUI() {
         let preferred = DEFAULT_DURATION;
 

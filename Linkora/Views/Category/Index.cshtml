@@ -261,7 +261,9 @@
         <div class="listing-grid" id="listingContainer">
             @foreach (var p in products)
             {
-                <a class="product-card" asp-controller="Product" asp-action="Details" asp-route-id="@p.Id">
+                <a class="product-card @(p.PromotionType != "None" ? "product-card-promoted" : "")"
+                   data-promo-top="@(p.PromotionType == "Top" ? "true" : "false")"
+                   asp-controller="Product" asp-action="Details" asp-route-id="@p.Id">
                     <div class="product-card-img">
                         <img src="@(p.AvatarImagePath ?? "/img/no-photo.svg")" alt="@p.Name"
                              onerror="this.src='/img/no-photo.svg'" />
@@ -540,6 +542,10 @@
         const cards = Array.from(container.children);
 
         cards.sort((a, b) => {
+            const aTop = a.dataset.promoTop === 'true';
+            const bTop = b.dataset.promoTop === 'true';
+            if (aTop !== bTop) return aTop ? -1 : 1;
+
             if (type === 'new') {
                 const da = a.querySelector('.product-card-date')?.textContent.trim() || '';
                 const db = b.querySelector('.product-card-date')?.textContent.trim() || '';

@@ -1,6 +1,17 @@
-/* ============================================================
-   Category page
-   ============================================================ */
+.product-card-promoted {
+    border-color: #00b0a3;
+    box-shadow: 0 0 0 1px rgba(0,176,163,0.25);
+}
+
+.product-card-promoted .product-card-name {
+    color: #00b0a3;
+}
+
+.dark-theme .product-card-promoted {
+    border-color: #00b0a3 !important;
+    box-shadow: 0 0 0 1px rgba(0,176,163,0.35);
+}
+
 .floating-filter-actions {
     position: sticky;
     bottom: 20px;
