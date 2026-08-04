@@ -109,15 +109,26 @@
             }
             <div class="create-section">
                 <div class="auth-field">
-                    <label class="auth-label" data-i18n="profile_ad_duration">Preferred ad duration</label>
-                    <div class="duration-pills" id="pubDurationPills">
+                    <label class="auth-label" data-i18n="promotion_label">Promote your listing</label>
+                    <div class="duration-pills" id="promotionPills">
+                        @foreach (var promo in new[] { "None", "Highlight", "Top", "Vip" })
+                        {
+                            <button type="button"
+                                    class="duration-pill @(promo == "None" ? "active" : "")"
+                                    data-type="@promo"
+                                    onclick="selectPromotion('@promo', this)"
+                                    data-i18n="promo_@(promo.ToLower())">
+                                @promo
+                            </button>
+                        }
                     </div>
-                    <div class="duration-hint" data-i18n="profile_ad_duration_hint">
-                        Applied by default when posting an ad. If not set, 30 days is used.
+                    <div class="duration-hint" data-i18n="promotion_hint">
+                        No paid promotion applied by default.
                     </div>
-                    <input type="hidden" id="pubDurationValue" value="30" />
+                    <input type="hidden" id="promotionValue" value="None" />
                 </div>
             </div>
+
             <div class="create-footer-sticky">
                 <button class="create-submit" onclick="submitAd()" data-i18n="publish_btn">Publish</button>
             </div>
@@ -170,7 +181,7 @@
         return params;
     }
         const DRAFT_KEY = 'linkora_create_draft';
-
+            
     function saveDraftState() {
         const state = {
             title: document.getElementById('adTitle')?.value || '',
@@ -414,6 +425,7 @@
             fd.append('qty', document.getElementById('adQty').value || '1');
             fd.append('categoryId', document.getElementById('selectedCategoryId').value);
             fd.append('publishDays', document.getElementById('pubDurationValue').value || '30');
+            fd.append('promotionType', document.getElementById('promotionValue').value || 'None');
 
             const adPriceInput = document.getElementById('adPrice');
             if (adPriceInput && adPriceInput.value) {
@@ -643,6 +655,12 @@
             .forEach(p => p.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById('pubDurationValue').value = days;
+    }
+    
+    function selectPromotion(type, btn) {
+        document.querySelectorAll('#promotionPills .duration-pill').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('promotionValue').value = type;
     }
 
     async function initDurationUI() {

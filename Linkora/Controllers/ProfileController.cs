@@ -16,6 +16,7 @@ namespace Linkora.Controllers
         private readonly string _connectionString;
 
         private static readonly int[] AllowedDurations = { 1, 3, 7, 14, 30 };
+        private static readonly string[] AllowedSubscriptionTypes = { "Free", "Standard", "Premium" };
 
         public ProfileController(IUserRepository userRepository, IConfiguration configuration)
         {
@@ -68,6 +69,15 @@ namespace Linkora.Controllers
                     duration = dto.PreferredAdDuration.Value;
             }
 
+            string? subscriptionType = null;
+            if (!string.IsNullOrWhiteSpace(dto.SubscriptionType))
+            {
+                if (!AllowedSubscriptionTypes.Contains(dto.SubscriptionType))
+                    errors.Add("Invalid subscription type");
+                else
+                    subscriptionType = dto.SubscriptionType;
+            }
+
             if (errors.Any())
                 return BadRequest(new { errors });
 
@@ -99,6 +109,7 @@ namespace Linkora.Controllers
                 "PreferredAdDuration = @D"
             };
             if (newHash != null) setParts.Add("PasswordHash = @H");
+            if (subscriptionType != null) setParts.Add("SubscriptionType = @S");
 
             var sql = $"UPDATE Users SET {string.Join(", ", setParts)} WHERE Id = @Id";
 
@@ -107,6 +118,7 @@ namespace Linkora.Controllers
             cmd.Parameters.AddWithValue("@P", (object?)dto.Phone ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@D", (object?)duration ?? DBNull.Value);
             if (newHash != null) cmd.Parameters.AddWithValue("@H", newHash);
+            if (subscriptionType != null) cmd.Parameters.AddWithValue("@S", subscriptionType);
             cmd.Parameters.AddWithValue("@Id", userId);
             await cmd.ExecuteNonQueryAsync();
 
@@ -139,5 +151,6 @@ namespace Linkora.Controllers
         public string? CurrentPassword { get; set; }
         public string? NewPassword { get; set; }
         public int? PreferredAdDuration { get; set; }
+        public string? SubscriptionType { get; set; }
     }
 }

@@ -11,7 +11,13 @@ namespace Linkora.Repositories
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection")!;
         }
-
+        private static bool HasColumn(SqlDataReader r, string name)
+        {
+            for (int i = 0; i < r.FieldCount; i++)
+                if (r.GetName(i).Equals(name, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            return false;
+        }
         private static User MapRow(SqlDataReader r) => new()
         {
             Id = r.GetInt32(r.GetOrdinal("Id")),
@@ -22,7 +28,10 @@ namespace Linkora.Repositories
             PasswordHash = r.IsDBNull(r.GetOrdinal("PasswordHash")) ? null : r.GetString(r.GetOrdinal("PasswordHash")),
             AvatarImagePath = r.IsDBNull(r.GetOrdinal("AvatarImagePath")) ? null : r.GetString(r.GetOrdinal("AvatarImagePath")),
             EmailConfirmed = !r.IsDBNull(r.GetOrdinal("EmailConfirmed")) && r.GetBoolean(r.GetOrdinal("EmailConfirmed")),
-            PreferredAdDuration = r.IsDBNull(r.GetOrdinal("PreferredAdDuration")) ? null : r.GetInt32(r.GetOrdinal("PreferredAdDuration"))
+            PreferredAdDuration = r.IsDBNull(r.GetOrdinal("PreferredAdDuration")) ? null : r.GetInt32(r.GetOrdinal("PreferredAdDuration")),
+            SubscriptionType = HasColumn(r, "SubscriptionType") && !r.IsDBNull(r.GetOrdinal("SubscriptionType"))
+        ? r.GetString(r.GetOrdinal("SubscriptionType"))
+        : "Free"
         };
         public async Task<User?> GetByPhoneAsync(string phone)
         {
@@ -49,7 +58,7 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(
-                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed, PreferredAdDuration FROM Users WHERE Id = @Id", conn);
+                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed, PreferredAdDuration, SubscriptionType FROM Users WHERE Id = @Id", conn);
             cmd.Parameters.AddWithValue("@Id", id);
             await using var r = await cmd.ExecuteReaderAsync();
             return await r.ReadAsync() ? MapRow(r) : null;

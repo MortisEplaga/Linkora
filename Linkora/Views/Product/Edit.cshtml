@@ -96,15 +96,27 @@
             </div>
             <div class="create-section">
                 <div class="auth-field">
-                    <label class="auth-label" data-i18n="profile_ad_duration">How many days will the ad be active?</label>
-                    <div class="duration-pills" id="pubDurationPills">
+                    <label class="auth-label" data-i18n="promotion_label">Promote your listing</label>
+                    <div class="duration-pills" id="promotionPills">
+                        @foreach (var promo in new[] { "None", "Highlight", "Top", "Vip" })
+                        {
+                            var isActive = p.PromotionType == promo;
+                            <button type="button"
+                                    class="duration-pill @(isActive ? "active" : "")"
+                                    data-type="@promo"
+                                    onclick="selectPromotion('@promo', this)"
+                                    data-i18n="promo_@(promo.ToLower())">
+                                @promo
+                            </button>
+                        }
                     </div>
-                    <div class="duration-hint" data-i18n="profile_ad_duration_hint">
-                        Applied by default when posting an ad. If not set, 30 days is used.
+                    <div class="duration-hint" data-i18n="promotion_hint">
+                        No paid promotion applied by default.
                     </div>
-                    <input type="hidden" id="pubDurationValue" value="30" />
+                    <input type="hidden" id="promotionValue" value="@p.PromotionType" />
                 </div>
             </div>
+
             <div class="create-footer-sticky">
                 <button class="create-submit" onclick="submitEdit(@p.Id)" data-i18n="save_btn">Save</button>
             </div>
@@ -565,6 +577,7 @@
             fd.append('categoryId', document.getElementById('selectedCategoryId').value);
             fd.append('keepMediaJson', JSON.stringify(window.existingMediaPaths || []));
             fd.append('publishDays', document.getElementById('pubDurationValue').value || '30');
+            fd.append('promotionType', document.getElementById('promotionValue').value || 'None');
 
             const params = {};
             const priceInput = document.getElementById('adPrice');

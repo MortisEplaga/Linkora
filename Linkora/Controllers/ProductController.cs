@@ -303,9 +303,10 @@ namespace Linkora.Controllers
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> Edit(int id, string title, string? description,
-                                                int? qty, string? address, int? categoryId,
-                                                string? paramsJson, List<IFormFile>? photos,
-                                                string? keepMediaJson = null, bool replaceMedia = false, int? publishDays = null)
+                                        int? qty, string? address, int? categoryId,
+                                        string? paramsJson, List<IFormFile>? photos,
+                                        string? keepMediaJson = null, bool replaceMedia = false,
+                                        int? publishDays = null, string? promotionType = null)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             if (await IsUserBannedAsync(userId)) return Forbid();
@@ -374,7 +375,7 @@ namespace Linkora.Controllers
                 Address = address,
                 CategoryId = categoryId,
                 AvatarImagePath = newAvatar,
-            }, paramValues);
+            }, paramValues, promotionType ?? "None");
 
             await using var confConn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
             await confConn.OpenAsync();
@@ -559,9 +560,9 @@ namespace Linkora.Controllers
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> Create(string title, string? description, int? qty,
-                                                string? address, int? categoryId,
-                                                List<IFormFile>? photos, string? paramsJson,
-                                                int? publishDays = null)
+                                        string? address, int? categoryId,
+                                        List<IFormFile>? photos, string? paramsJson,
+                                        int? publishDays = null, string? promotionType = null)
         {
             if (string.IsNullOrWhiteSpace(title)) return BadRequest("Title is required");
 
@@ -601,7 +602,7 @@ namespace Linkora.Controllers
                 Address = address,
                 CategoryId = categoryId,
                 AvatarImagePath = media.FirstOrDefault()?.FilePath,
-            }, paramValues, duration);
+            }, paramValues, duration, promotionType ?? "None");
 
             if (media.Count > 0)
                 await _productRepository.SaveMediaAsync(newId, media);

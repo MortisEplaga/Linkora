@@ -315,18 +315,18 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(@"
-        SELECT p.Id, p.Name, p.Description, p.Address,
-               p.CreatedTime, COALESCE(
-           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
-            WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-           p.AvatarImagePath
-       ) AS AvatarImagePath, p.CategoryId,
-               p.Status, p.Qty,
-               u.UserName, u.AvatarImagePath, u.IsCompany, u.PhoneNumber, u.Id,
-               p.UserId, u.Email, u.CreatedAt
-        FROM Products p
-        LEFT JOIN Users u ON u.Id = p.UserId
-        WHERE p.Id = @Id", conn);
+    SELECT p.Id, p.Name, p.Description, p.Address,
+           p.CreatedTime, COALESCE(
+       (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
+        WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+       p.AvatarImagePath
+   ) AS AvatarImagePath, p.CategoryId,
+           p.Status, p.Qty,
+           u.UserName, u.AvatarImagePath, u.IsCompany, u.PhoneNumber, u.Id,
+           p.UserId, u.Email, u.CreatedAt, p.PromotionType
+    FROM Products p
+    LEFT JOIN Users u ON u.Id = p.UserId
+    WHERE p.Id = @Id", conn);
             cmd.Parameters.AddWithValue("@Id", id);
             await using var r = await cmd.ExecuteReaderAsync();
             if (!await r.ReadAsync()) return null;
@@ -355,6 +355,7 @@ namespace Linkora.Repositories
                     Email = r.IsDBNull(15) ? null : r.GetString(15),
                     CreatedAt = r.IsDBNull(16) ? null : r.GetDateTime(16),
                 },
+                PromotionType = r.IsDBNull(17) ? "None" : r.GetString(17),
             };
             await r.CloseAsync();
 
@@ -449,25 +450,31 @@ namespace Linkora.Repositories
                 });
             return result;
         }
-        public async Task UpdateAsync(Product product, Dictionary<int, string> paramValues)
+        public async Task UpdateAsync(Product product, Dictionary<int, string> paramValues, string promotionType = "None")
         {
+            var allowedPromotions = new[] { "None", "Highlight", "Top", "Vip" };
+            if (!allowedPromotions.Contains(promotionType))
+                promotionType = "None";
+
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
             await using var cmd = new SqlCommand(@"
-                    UPDATE Products SET
-                        Name        = @Name,
-                        Description = @Description,
-                        Qty         = @Qty,
-                        Address     = @Address,
-                        CategoryId  = @CategoryId
-                    WHERE Id = @Id AND UserId = @UserId", conn);
+            UPDATE Products SET
+                Name        = @Name,
+                Description = @Description,
+                Qty         = @Qty,
+                Address     = @Address,
+                CategoryId  = @CategoryId,
+                PromotionType = @PromotionType
+            WHERE Id = @Id AND UserId = @UserId", conn);
 
             cmd.Parameters.AddWithValue("@Name", product.Name);
             cmd.Parameters.AddWithValue("@Description", (object?)product.Description ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@Qty", (object?)product.Qty ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@Address", (object?)product.Address ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@CategoryId", (object?)product.CategoryId ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@PromotionType", promotionType);
             cmd.Parameters.AddWithValue("@Id", product.Id);
             cmd.Parameters.AddWithValue("@UserId", product.UserId!);
             await cmd.ExecuteNonQueryAsync();
@@ -481,14 +488,14 @@ namespace Linkora.Repositories
             {
                 if (string.IsNullOrWhiteSpace(value)) continue;
                 await using var ins = new SqlCommand(@"
-                    INSERT INTO MapperProductCategory (ProductId, CategoryId, Value)
-                    VALUES (@ProductId, @CategoryId, @Value)", conn);
+            INSERT INTO MapperProductCategory (ProductId, CategoryId, Value)
+            VALUES (@ProductId, @CategoryId, @Value)", conn);
                 ins.Parameters.AddWithValue("@ProductId", product.Id);
                 ins.Parameters.AddWithValue("@CategoryId", paramId);
                 ins.Parameters.AddWithValue("@Value", value);
                 await ins.ExecuteNonQueryAsync();
             }
-        }        
+        }
         public async Task<Dictionary<string, int>> GetCountsByStatusAsync(int userId)
         {
             var result = new Dictionary<string, int>();
@@ -734,20 +741,24 @@ namespace Linkora.Repositories
                 throw; 
             }
         }
-        public async Task<int> CreateAsync(Product product, Dictionary<int, string> paramValues, int publishDurationDays = 30)
+        public async Task<int> CreateAsync(Product product, Dictionary<int, string> paramValues, int publishDurationDays = 30, string promotionType = "None")
         {
             if (!new[] { 7, 14, 30, 60, 90 }.Contains(publishDurationDays))
                 publishDurationDays = 30;
+
+            var allowedPromotions = new[] { "None", "Highlight", "Top", "Vip" };
+            if (!allowedPromotions.Contains(promotionType))
+                promotionType = "None";
 
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
             await using var cmd = new SqlCommand(@"
-                INSERT INTO Products (Name, Description, Qty, Address, CategoryId, UserId, AvatarImagePath,
-                                      CreatedTime, Status, PublishDurationDays, ExpiresAt)
-                OUTPUT INSERTED.Id
-                VALUES (@Name, @Description, @Qty, @Address, @CategoryId, @UserId, @AvatarImagePath,
-                        GETDATE(), 'Active', @Duration, DATEADD(DAY, @Duration, GETDATE()))", conn);
+        INSERT INTO Products (Name, Description, Qty, Address, CategoryId, UserId, AvatarImagePath,
+                              CreatedTime, Status, PublishDurationDays, ExpiresAt, PromotionType)
+        OUTPUT INSERTED.Id
+        VALUES (@Name, @Description, @Qty, @Address, @CategoryId, @UserId, @AvatarImagePath,
+                GETDATE(), 'Active', @Duration, DATEADD(DAY, @Duration, GETDATE()), @PromotionType)", conn);
 
             cmd.Parameters.AddWithValue("@Name", product.Name);
             cmd.Parameters.AddWithValue("@Description", (object?)product.Description ?? DBNull.Value);
@@ -757,6 +768,7 @@ namespace Linkora.Repositories
             cmd.Parameters.AddWithValue("@UserId", product.UserId!);
             cmd.Parameters.AddWithValue("@AvatarImagePath", (object?)product.AvatarImagePath ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@Duration", publishDurationDays);
+            cmd.Parameters.AddWithValue("@PromotionType", promotionType);
 
             var newId = (int)(await cmd.ExecuteScalarAsync())!;
 
@@ -764,8 +776,8 @@ namespace Linkora.Repositories
             {
                 if (string.IsNullOrWhiteSpace(value)) continue;
                 await using var p = new SqlCommand(@"
-                    INSERT INTO MapperProductCategory (ProductId, CategoryId, Value)
-                    VALUES (@ProductId, @CategoryId, @Value)", conn);
+            INSERT INTO MapperProductCategory (ProductId, CategoryId, Value)
+            VALUES (@ProductId, @CategoryId, @Value)", conn);
                 p.Parameters.AddWithValue("@ProductId", newId);
                 p.Parameters.AddWithValue("@CategoryId", paramId);
                 p.Parameters.AddWithValue("@Value", value);

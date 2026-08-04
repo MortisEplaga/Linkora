@@ -1,4 +1,34 @@
-﻿.param-swatches {
+﻿.create-promote-btn {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    background: #fff;
+    color: #1a1a1a;
+    border: 1px dashed #ccc;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+    .create-promote-btn:hover {
+        border-color: #00b0a3;
+        color: #00b0a3;
+    }
+
+.dark-theme .create-promote-btn {
+    background: transparent;
+    border-color: #444;
+    color: #ccc;
+}
+
+    .dark-theme .create-promote-btn:hover {
+        border-color: #00b0a3;
+        color: #00b0a3;
+    }
+
+.param-swatches {
     display: flex;
     flex-direction: column;
     gap: 6px;

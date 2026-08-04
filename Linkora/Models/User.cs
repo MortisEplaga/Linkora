@@ -36,6 +36,7 @@ namespace Linkora.Models
         public string? ConfirmationToken { get; set; }
         public string? FacebookId { get; set; }
         public int? PreferredAdDuration { get; set; }
+        public string SubscriptionType { get; set; } = "Free";
 
     }
     public class FacebookLoginModel

@@ -37,6 +37,7 @@ namespace Linkora.Models
 
         public int? UserId { get; set; }
         [NotMapped] public int? CategoryId { get; set; }
+        public string PromotionType { get; set; } = "None";
 
 
         [StringLength(500)]

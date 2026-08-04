@@ -255,6 +255,28 @@
             </div>
             <input type="hidden" id="fieldAdDuration" value="@(user.PreferredAdDuration?.ToString() ?? "")" />
         </div>
+        <div class="profile-section-title" data-i18n="profile_subscription_title">Subscription</div>
+
+        <div class="auth-field">
+            <label class="auth-label" data-i18n="profile_subscription_label">Subscription plan</label>
+            <div class="duration-pills" id="subscriptionPills">
+                @foreach (var plan in new[] { "Free", "Standard", "Premium" })
+                {
+                    var isActive = user.SubscriptionType == plan;
+                    <button type="button"
+                            class="duration-pill @(isActive ? "active" : "")"
+                            data-type="@plan"
+                            onclick="selectSubscription('@plan', this)"
+                            data-i18n="sub_plan_@(plan.ToLower())">
+                        @plan
+                    </button>
+                }
+            </div>
+            <div class="duration-hint" data-i18n="profile_subscription_hint">
+                Placeholder section. Plan benefits will be defined later.
+            </div>
+            <input type="hidden" id="fieldSubscriptionType" value="@user.SubscriptionType" />
+        </div>
 
         <button class="auth-submit" style="margin-top:28px"
                 data-i18n="profile_save_btn"
@@ -309,6 +331,12 @@
             document.getElementById('fieldAdDuration').value = days;
         }
 
+        function selectSubscription(type, btn) {
+            document.querySelectorAll('#subscriptionPills .duration-pill').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('fieldSubscriptionType').value = type;
+        }
+
         async function saveProfile() {
             const errorEl   = document.getElementById('profileError');
             const successEl = document.getElementById('profileSuccess');
@@ -323,6 +351,7 @@
                 currentPassword:     document.getElementById('fieldCurrentPwd').value || null,
                 newPassword:         document.getElementById('fieldNewPwd').value || null,
                 preferredAdDuration: durationVal ? parseInt(durationVal) : null,
+                subscriptionType:    document.getElementById('fieldSubscriptionType').value || null,
             };
 
             const res = await fetch('/Profile/Save', {
