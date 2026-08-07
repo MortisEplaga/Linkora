@@ -155,7 +155,6 @@
     .info-modal.modal-open {
         display: flex;
     }
-
 .info-modal-title {
     font-size: 20px;
     font-weight: 700;
@@ -386,7 +385,7 @@
 .info-modal .auth-submit {
     width: 100%;
     padding: 12px;
-    background: #2563eb;
+    background: #00b0a3;
     color: #fff;
     border: none;
     border-radius: 6px;
@@ -395,7 +394,7 @@
 }
 
     .info-modal .auth-submit:hover {
-        background: #1d4ed8;
+        background: #009488;
     }
 
 .info-modal .auth-error {
@@ -1513,3 +1512,8 @@ css.modal-overlay {
         color: #fff !important;
         border-bottom-color: #00b0a3 !important;
     }
+#promoRulesModal,
+#subRulesModal {
+    width: min(95vw, 1400px) !important;
+    max-width: min(95vw, 1400px) !important;
+}

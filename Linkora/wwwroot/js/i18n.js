@@ -10,6 +10,12 @@
 
 const TRANSLATIONS = {
     en: {
+        'promo_rules_title': 'Promotion rules',
+        'promo_rules_text': "Paid promotion is subject to the platform's terms of service. Placement is not guaranteed for a fixed duration.",
+        'promo_rules_agree': 'I agree — proceed to payment',
+        'promo_rules_disagree': 'I disagree — continue without promotion',
+        'sub_rules_title': 'Subscription rules',
+        'sub_rules_text': "Paid subscriptions are subject to the platform's terms of service. Benefits are placeholder and not yet active.",
         'profile_subscription_title': 'Subscription',
         'profile_subscription_label': 'Subscription plan',
         'profile_subscription_hint': 'Placeholder section. Plan benefits will be defined later.',
@@ -412,6 +418,12 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'promo_rules_title': 'Reklamēšanas noteikumi',
+        'promo_rules_text': 'Maksas reklamēšanai piemēro portāla lietošanas noteikumus. Izvietojuma ilgums nav garantēts.',
+        'promo_rules_agree': 'Piekrītu — pāriet uz apmaksu',
+        'promo_rules_disagree': 'Nepiekrītu — turpināt bez reklamēšanas',
+        'sub_rules_title': 'Abonementa noteikumi',
+        'sub_rules_text': 'Maksas abonementiem piemēro portāla lietošanas noteikumus. Priekšrocības ir pagaidu sadaļa un vēl nav aktīvas.',
         'profile_subscription_title': 'Abonements',
         'profile_subscription_label': 'Abonementa plāns',
         'profile_subscription_hint': 'Pagaidu sadaļa. Plānu priekšrocības tiks noteiktas vēlāk.',
@@ -824,6 +836,12 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'promo_rules_title': 'Правила продвижения',
+        'promo_rules_text': 'На платное продвижение распространяются правила пользования порталом. Срок размещения не гарантируется.',
+        'promo_rules_agree': 'Согласен — перейти к оплате',
+        'promo_rules_disagree': 'Не согласен — продолжить без продвижения',
+        'sub_rules_title': 'Правила подписки',
+        'sub_rules_text': 'На платные подписки распространяются правила пользования порталом. Условия тарифов являются черновыми и пока не активны.',
         'profile_subscription_title': 'Подписка',
         'profile_subscription_label': 'Тариф подписки',
         'profile_subscription_hint': 'Черновой раздел. Условия тарифов будут определены позже.',

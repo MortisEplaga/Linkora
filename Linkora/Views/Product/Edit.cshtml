@@ -96,6 +96,13 @@
             </div>
             <div class="create-section">
                 <div class="auth-field">
+                    <label class="auth-label" data-i18n="ad_duration_label">Publication duration</label>
+                    <div class="duration-pills" id="pubDurationPills"></div>
+                    <input type="hidden" id="pubDurationValue" value="30" />
+                </div>
+            </div>
+            <div class="create-section">
+                <div class="auth-field">
                     <label class="auth-label" data-i18n="promotion_label">Promote your listing</label>
                     <div class="duration-pills" id="promotionPills">
                         @foreach (var promo in new[] { "None", "Highlight", "Top", "Vip" })
@@ -120,6 +127,17 @@
             <div class="create-footer-sticky">
                 <button class="create-submit" onclick="submitEdit(@p.Id)" data-i18n="save_btn">Save</button>
             </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="promoRulesOverlay" onclick="closePromoRulesModal()"></div>
+    <div class="modal-overlay" id="promoRulesOverlay" onclick="closePromoRulesModal()"></div>
+    <div class="modal info-modal" id="promoRulesModal">
+        <button class="modal-close" onclick="closePromoRulesModal()">✕</button>
+        <h2 class="info-modal-title" data-i18n="promo_rules_title">Promotion rules</h2>
+        <div class="info-modal-body" id="promoRulesBody" onscroll="checkPromoRulesScroll()"></div>
+        <div style="display:flex;gap:10px;padding:16px 24px 24px;flex-shrink:0">
+            <button class="auth-submit" id="promoAgreeBtn" disabled onclick="confirmPromoRules(true)" data-i18n="promo_rules_agree">I agree — proceed to payment</button>
+            <button class="auth-submit auth-submit-secondary" id="promoDisagreeBtn" disabled onclick="confirmPromoRules(false)" data-i18n="promo_rules_disagree">I disagree — continue without promotion</button>
         </div>
     </div>
 </div>
@@ -703,13 +721,80 @@
         btn.classList.add('active');
         document.getElementById('pubDurationValue').value = days;
     }
-    
+
+    let pendingPromoType = null;
+    let pendingPromoBtn = null;
+
     function selectPromotion(type, btn) {
+        if (type === 'None') {
+            applyPromotionSelection(type, btn);
+            return;
+        }
+        pendingPromoType = type;
+        pendingPromoBtn = btn;
+        openPromoRulesModal();
+    }
+
+    function applyPromotionSelection(type, btn) {
         document.querySelectorAll('#promotionPills .duration-pill').forEach(p => p.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById('promotionValue').value = type;
     }
-    async function initDurationUI() {
+
+    function openPromoRulesModal() {
+        const body = document.getElementById('promoRulesBody');
+        const source = document.querySelector('#termsModal .info-modal-body');
+        if (source) body.innerHTML = source.innerHTML;
+
+        const lang = localStorage.getItem('lang') || 'en';
+        body.querySelectorAll('.info-lang-content').forEach(el => {
+            el.style.display = el.dataset.lang === lang ? '' : 'none';
+        });
+
+        const agreeBtn = document.getElementById('promoAgreeBtn');
+        const disagreeBtn = document.getElementById('promoDisagreeBtn');
+        agreeBtn.disabled = true;
+        disagreeBtn.disabled = true;
+        body.scrollTop = 0;
+
+        document.getElementById('promoRulesOverlay').classList.add('modal-open');
+        document.getElementById('promoRulesModal').classList.add('modal-open');
+        document.body.style.overflow = 'hidden';
+
+        setTimeout(() => {
+            if (body.scrollHeight <= body.clientHeight + 10) {
+                agreeBtn.disabled = false;
+                disagreeBtn.disabled = false;
+            }
+        }, 50);
+    }
+
+    function checkPromoRulesScroll() {
+        const body = document.getElementById('promoRulesBody');
+        const atBottom = body.scrollTop + body.clientHeight >= body.scrollHeight - 10;
+        if (atBottom) {
+            document.getElementById('promoAgreeBtn').disabled = false;
+            document.getElementById('promoDisagreeBtn').disabled = false;
+        }
+    }
+
+    function closePromoRulesModal() {
+        document.getElementById('promoRulesOverlay').classList.remove('modal-open');
+        document.getElementById('promoRulesModal').classList.remove('modal-open');
+        document.body.style.overflow = '';
+    }
+
+    function confirmPromoRules(agreed) {
+        closePromoRulesModal();
+        if (agreed && pendingPromoType) {
+            applyPromotionSelection(pendingPromoType, pendingPromoBtn);
+        }
+        pendingPromoType = null;
+        pendingPromoBtn = null;
+    }
+
+
+        async function initDurationUI() {
         let preferred = DEFAULT_DURATION;
 
         if (window.draftRestored) {

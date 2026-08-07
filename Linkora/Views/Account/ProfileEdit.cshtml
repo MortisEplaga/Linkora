@@ -284,6 +284,16 @@
             Save
         </button>
     </div>
+    <div class="modal-overlay" id="subRulesOverlay" onclick="closeSubRulesModal()"></div>
+    <div class="modal info-modal" id="subRulesModal">
+        <button class="modal-close" onclick="closeSubRulesModal()">✕</button>
+        <h2 class="info-modal-title" data-i18n="sub_rules_title">Subscription rules</h2>
+        <div class="info-modal-body" id="subRulesBody" onscroll="checkSubRulesScroll()"></div>
+        <div style="display:flex;gap:10px;padding:16px 24px 24px;flex-shrink:0">
+            <button class="auth-submit" id="subAgreeBtn" disabled onclick="confirmSubRules(true)" data-i18n="promo_rules_agree">I agree — proceed to payment</button>
+            <button class="auth-submit auth-submit-secondary" id="subDisagreeBtn" disabled onclick="confirmSubRules(false)" data-i18n="promo_rules_disagree">I disagree — continue without promotion</button>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
@@ -314,7 +324,76 @@
             input.type = input.type === 'password' ? 'text' : 'password';
             btn.style.opacity = input.type === 'text' ? '0.4' : '1';
         }
+                let pendingSubType = null;
+        let pendingSubBtn = null;
 
+        function selectSubscription(type, btn) {
+            if (type === 'Free') {
+                applySubscriptionSelection(type, btn);
+                return;
+            }
+            pendingSubType = type;
+            pendingSubBtn = btn;
+            openSubRulesModal();
+        }
+
+        function applySubscriptionSelection(type, btn) {
+            document.querySelectorAll('#subscriptionPills .duration-pill').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('fieldSubscriptionType').value = type;
+        }
+
+        function openSubRulesModal() {
+            const body = document.getElementById('subRulesBody');
+            const source = document.querySelector('#termsModal .info-modal-body');
+            if (source) body.innerHTML = source.innerHTML;
+
+            const lang = localStorage.getItem('lang') || 'en';
+            body.querySelectorAll('.info-lang-content').forEach(el => {
+                el.style.display = el.dataset.lang === lang ? '' : 'none';
+            });
+
+            const agreeBtn = document.getElementById('subAgreeBtn');
+            const disagreeBtn = document.getElementById('subDisagreeBtn');
+            agreeBtn.disabled = true;
+            disagreeBtn.disabled = true;
+            body.scrollTop = 0;
+
+            document.getElementById('subRulesOverlay').classList.add('modal-open');
+            document.getElementById('subRulesModal').classList.add('modal-open');
+            document.body.style.overflow = 'hidden';
+
+            setTimeout(() => {
+                if (body.scrollHeight <= body.clientHeight + 10) {
+                    agreeBtn.disabled = false;
+                    disagreeBtn.disabled = false;
+                }
+            }, 50);
+        }
+
+        function checkSubRulesScroll() {
+            const body = document.getElementById('subRulesBody');
+            const atBottom = body.scrollTop + body.clientHeight >= body.scrollHeight - 10;
+            if (atBottom) {
+                document.getElementById('subAgreeBtn').disabled = false;
+                document.getElementById('subDisagreeBtn').disabled = false;
+            }
+        }
+
+        function closeSubRulesModal() {
+            document.getElementById('subRulesOverlay').classList.remove('modal-open');
+            document.getElementById('subRulesModal').classList.remove('modal-open');
+            document.body.style.overflow = '';
+        }
+
+        function confirmSubRules(agreed) {
+            closeSubRulesModal();
+            if (agreed && pendingSubType) {
+                applySubscriptionSelection(pendingSubType, pendingSubBtn);
+            }
+            pendingSubType = null;
+            pendingSubBtn = null;
+        }
         function checkStrengthProfile(input) {
             const v = input.value;
             document.getElementById('profileRules').style.display = v.length ? 'flex' : 'none';
