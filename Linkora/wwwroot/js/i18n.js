@@ -10,6 +10,10 @@
 
 const TRANSLATIONS = {
     en: {
+        'footer_email': "Email: support@vena.lv",
+        'footer_operator': "Vena.lv operator: Andrejs Šapovals",
+        'footer_vid': "Tax registration No.: 16127710218",
+        'footer_phone': "Phone: +371 20029854",
         'promo_rules_title': 'Promotion rules',
         'promo_rules_text': "Paid promotion is subject to the platform's terms of service. Placement is not guaranteed for a fixed duration.",
         'promo_rules_agree': 'I agree — proceed to payment',
@@ -418,6 +422,10 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'footer_email': "E-pasts: support@vena.lv",
+        'footer_operator': "Vena.lv operators: Šapovals Andrejs",
+        'footer_vid': "VID reģistrācijas numurs: 16127710218",
+        'footer_phone': "Tālrunis: +371 20029854",
         'promo_rules_title': 'Reklamēšanas noteikumi',
         'promo_rules_text': 'Maksas reklamēšanai piemēro portāla lietošanas noteikumus. Izvietojuma ilgums nav garantēts.',
         'promo_rules_agree': 'Piekrītu — pāriet uz apmaksu',
@@ -836,6 +844,10 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'footer_email': "Email: support@vena.lv",
+        'footer_operator': "Оператор Vena.lv: Андрей Шаповал",
+        'footer_vid': "Регистрационный номер (VID): 16127710218",
+        'footer_phone': "Телефон: +371 20029854",
         'promo_rules_title': 'Правила продвижения',
         'promo_rules_text': 'На платное продвижение распространяются правила пользования порталом. Срок размещения не гарантируется.',
         'promo_rules_agree': 'Согласен — перейти к оплате',

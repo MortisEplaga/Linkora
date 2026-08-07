@@ -134,7 +134,7 @@
     font-size: 12px;
 }
 
-.footer-copy {
+.footer-contacts {
     font-size: 13px;
     color: #6c757d;
     text-align: center;
@@ -418,7 +418,7 @@
         color: #e0e0e0 !important;
     }
 
-.dark-theme .footer-copy {
+.dark-theme .footer-contacts {
     color: #555 !important;
 }
 
@@ -1516,4 +1516,14 @@ css.modal-overlay {
 #subRulesModal {
     width: min(95vw, 1400px) !important;
     max-width: min(95vw, 1400px) !important;
+}
+#rulesModal,
+#policyModal {
+    width: min(95vw, 1400px) !important;
+    max-width: min(95vw, 1400px) !important;
+}
+#contactsModal {
+    height: 38% !important;
+    max-width: 450px !important;
+    width: min(95vw, 450px) !important; 
 }
