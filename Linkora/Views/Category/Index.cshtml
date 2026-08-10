@@ -261,56 +261,7 @@
         <div class="listing-grid" id="listingContainer">
             @foreach (var p in products)
             {
-                <a class="product-card @(p.PromotionType != "None" ? "product-card-promoted" : "")"
-                   data-promo-top="@(p.PromotionType == "Top" ? "true" : "false")"
-                   asp-controller="Product" asp-action="Details" asp-route-id="@p.Id">
-                    <div class="product-card-img">
-                        <img src="@(p.AvatarImagePath ?? "/img/no-photo.svg")" alt="@p.Name"
-                             onerror="this.src='/img/no-photo.svg'" />
-                        <div class="product-card-actions">
-                            <button class="product-card-action-btn" title="Favourites"
-                                    onclick="event.preventDefault(); toggleFav(this, @p.Id, true)">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
-                            </button>
-                            <button class="product-card-action-btn" title="Cart"
-                                    onclick="event.preventDefault(); toggleFav(this, @p.Id, false)">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="product-card-body">
-                        <div class="product-card-name">@p.Name</div>
-                        <div class="product-card-price"
-                             @(p.Price.HasValue ? "" : Html.Raw("data-i18n=\"price_on_request\""))>
-                            @(p.Price.HasValue? p.Price.Value.ToString("N2") + " €" : "Price on request")
-                        </div>
-                        <div class="product-card-address">@p.Address</div>
-                        <div class="product-card-date">@(p.CreatedTime.HasValue? p.CreatedTime.Value.ToString("dd MMM, HH:mm") : "")</div>
-                        <div class="product-card-desc">@p.Description</div>
-                    </div>
-                    <div class="product-card-seller">
-                        <div class="seller-avatar" style="cursor:pointer" onclick="event.preventDefault(); openSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarPath', '@p.Seller?.PhoneNumber', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0))">
-                            @if (p.Seller?.AvatarPath != null)
-                            {
-                                <img src="@p.Seller?.AvatarPath" style="width:40px;height:40px;border-radius:50%;object-fit:cover"
-                                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
-                                <svg style="display:none;width:40px;height:40px" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                            }
-                            else
-                            {
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                            }
-                        </div>
-                        <div class="seller-name">@(p.Seller?.UserName ?? "Unknown")</div>
-                        @if (p.Seller?.IsCompany == true)
-                        {
-                            <div class="seller-badge">Company</div>
-                        }
-                        <div class="seller-btn" onclick="event.preventDefault(); openSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarPath', '@p.Seller?.PhoneNumber', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0))" data-i18n="seller_show_contact">
-                            Show contact
-                        </div>
-                    </div>
-                </a>
+                await Html.RenderPartialAsync("_ProductCard", new ProductCardViewModel { Product = p });
             }
         </div>
     </div>

@@ -136,20 +136,7 @@
         <div class="listing-grid" id="listingContainer">
             @foreach (var p in products)
             {
-                <a class="product-card" asp-controller="Product" asp-action="Details" asp-route-id="@p.Id">
-                    <div class="product-card-img">
-                        <img src="@(p.AvatarImagePath ?? "/img/no-photo.svg")" alt="@p.Name"
-                             onerror="this.src='/img/no-photo.svg'" />
-                    </div>
-                    <div class="product-card-body">
-                        <div class="product-card-price">
-                            @(p.Price.HasValue? p.Price.Value.ToString("N2") + " €" : "0 €")
-                        </div>
-                        <div class="product-card-name">@p.Name</div>
-                        <div class="product-card-address">@p.Address</div>
-                        <div class="product-card-date">@(p.CreatedTime?.ToString("dd MMM, HH:mm"))</div>
-                    </div>
-                </a>
+                await Html.RenderPartialAsync("_ProductCard", new ProductCardViewModel { Product = p, ShowFavActions = false, ShowSeller = false });
             }
         </div>
     </div>
