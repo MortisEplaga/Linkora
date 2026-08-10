@@ -141,7 +141,6 @@
     padding: 10px;
 }
 
-/* ── Info modal (FAQ / Terms) ── */
 .info-modal {
     width: min(67vw, 860px); 
     max-width: calc(100vw - 32px);
@@ -188,15 +187,14 @@
         border-bottom-color: #00b0a3;
     }
 
-/* Основной контейнер */
 .info-modal-body {
     flex: 1;
     overflow-y: auto;
     padding: 20px 24px 24px;
     scrollbar-gutter: stable;
     border-radius: 0 0 16px 16px;
-    background: #fafbfc;           /* мягкий светлый фон */
-    color: #2c3e50;                /* глубокий тёмно-синий для текста */
+    background: #fafbfc;    
+    color: #2c3e50;          
     font-size: 15px;
     line-height: 1.7;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -217,48 +215,42 @@
     background: #8e99a4;
 }
 
-/* Вводная дата */
 .terms-intro {
     font-style: italic;
-    font-weight: 300; /* Облегчаем */
+    font-weight: 300; 
     color: #64748b;
     margin-bottom: 24px;
     padding-bottom: 16px;
     border-bottom: 1px solid #e2e8f0;
 }
 
-/* Секция правил */
 .terms-section {
     margin-bottom: 32px;
 }
 
-/* ЗАГОЛОВОК (Уровень 1 - Самый черный и жирный) */
 .terms-title {
     font-weight: 800;
     font-size: 19px;
-    color: #020617; /* Почти черный */
+    color: #020617;
     margin-bottom: 12px;
     padding-bottom: 8px;
-    border-bottom: 2px solid #020617; /* Акцентная линия под цвет текста */
+    border-bottom: 2px solid #020617; 
     letter-spacing: -0.3px;
-    text-transform: uppercase; /* Можно добавить для еще большего контраста */
+    text-transform: uppercase; 
 }
 
-/* ТЕКСТ ПУНКТА (Уровень 3 - Обычный) */
 .terms-section p {
     margin: 0 0 12px;
     font-weight: 400;
-    color: #334155; /* Темно-серый */
+    color: #334155; 
     line-height: 1.5;
 }
 
-    /* НУМЕРАЦИЯ (Уровень 2 - Жирнее текста, но легче заголовка) */
     .terms-section p b {
-        color: #0f172a; /* Глубокий сине-черный */
+        color: #0f172a; 
         font-weight: 700;
     }
 
-/* СПИСКИ (Уровень 4 - Самый легкий и светлый) */
 .terms-section ul {
     margin: 8px 0 16px;
     padding-left: 24px;
@@ -268,14 +260,12 @@
 .terms-section li {
     position: relative;
     margin-bottom: 8px;
-    /*color: #64748b;*/ /* Светло-серый */
-    font-weight: 300; /* Тонкий шрифт */
-    font-size: 0.95em; /* Чуть меньше основного текста */
+    font-weight: 300; 
+    font-size: 0.95em; 
 }
 
-    /* Точка списка */
     .terms-section li::before {
-        content: "—"; /* Длинное тире смотрится изящнее в легком стиле */
+        content: "—"; 
         position: absolute;
         left: -20px;
         color: #94a3b8;
@@ -286,7 +276,6 @@
         margin-bottom: 0;
     }
 
-/* Адаптив */
 @media (max-width: 480px) {
     .terms-title {
         font-size: 17px;
@@ -295,7 +284,8 @@
     .terms-section p {
         font-size: 15px;
     }
-}/* ── FAQ accordion ── */
+}
+
 .faq-item {
     border-bottom: 1px solid #f0f0f0;
 }
@@ -343,7 +333,6 @@
         display: block;
     }
 
-/* ── Terms ── */
 .terms-intro {
     font-size: 14px;
     color: #555;
@@ -404,7 +393,7 @@
     border-radius: 6px;
     margin-bottom: 10px;
 }
-/* ── Dark theme ── */
+
 .dark-theme .site-footer {
     background: #1e1e1e !important;
     border-top-color: #333 !important;
@@ -451,7 +440,6 @@
     scrollbar-color: #444 transparent;
 }
 
-/* ── Settings modal ── */
 .settings-section {
     display: flex;
     align-items: center;
@@ -473,7 +461,6 @@
     color: #1a1a1a;
 }
 
-/* Тоггл */
 .settings-toggle {
     width: 44px;
     height: 24px;
@@ -506,7 +493,6 @@
     transform: translateX(20px);
 }
 
-/* Язык */
 .settings-lang-pills {
     display: flex;
     gap: 6px;
@@ -534,7 +520,6 @@
     border-color: #1a1a1a;
 }
 
-/* ── Dark theme — полное покрытие ── */
 .dark-theme {
     --bg-primary: #121212;
     --bg-secondary: #1e1e1e;
@@ -545,7 +530,6 @@
     --text-secondary: #aaa;
     --input-bg: #2a2a2a;
 }
-    /* ── Dark theme — категорийное меню ── */
     .dark-theme .catmenu {
         background: #1e1e1e;
         box-shadow: 4px 0 24px rgba(0,0,0,0.5);
@@ -568,9 +552,7 @@
     .dark-theme .catmenu-arrow {
         color: #888;
     }
-    /* ── Dark theme — страница категорий ── */
 
-    /* Хлебные крошки */
     .dark-theme .breadcrumb-nav,
     .dark-theme .breadcrumb-item a,
     .dark-theme .breadcrumb-item.active {
@@ -585,12 +567,10 @@
         color: #555;
     }
 
-    /* Заголовок категории */
     .dark-theme .category-title {
         color: #e8e8e8 !important;
     }
 
-    /* Сайдбар — ссылки */
     .dark-theme .sidebar-parent,
     .dark-theme .sidebar-child,
     .dark-theme .sidebar-current {
@@ -602,7 +582,6 @@
             color: #00b0a3 !important;
         }
 
-    /* Фильтры */
     .dark-theme .param-title,
     .dark-theme .param-check,
     .dark-theme .param-check-row,
@@ -648,7 +627,6 @@
         color: #aaa !important;
     }
 
-    /* Сортировка и тулбар */
     .dark-theme .listing-sort-btn,
     .dark-theme .listing-view-btn {
         background: #2a2a2a;
@@ -671,11 +649,9 @@
             color: #fff !important;
         }
 
-    /* Регион */
     .dark-theme .listing-region-btn {
         color: #ccc !important;
     }
-    /* Базовый фон и текст */
     .dark-theme body,
     .dark-theme .details-page,
     .dark-theme .create-page,
@@ -683,14 +659,11 @@
         background: var(--bg-primary);
         color: var(--text-primary);
     }
-    /* ── Dark theme — страница деталей ── */
 
-    /* Правая панель info */
     .dark-theme .details-info {
         background: transparent !important;
     }
 
-    /* Блок продавца */
     .dark-theme .details-seller {
         background: #2a2a2a !important;
         border-color: #3a3a3a !important;
@@ -704,7 +677,6 @@
         background: #3a3a3a !important;
     }
 
-    /* Кнопка Call / Show contact */
     .dark-theme .details-btn-secondary {
         background: #2a2a2a !important;
         border-color: #444 !important;
@@ -715,12 +687,10 @@
             background: #333 !important;
         }
 
-    /* Галерея */
     .dark-theme .details-gallery {
         background: #1a1a1a !important;
     }
 
-    /* Иконки над фото */
     .dark-theme .details-img-btn {
         background: rgba(40, 40, 40, 0.92) !important;
         color: #ccc !important;
@@ -731,7 +701,6 @@
             color: #fff !important;
         }
 
-    /* Параметры */
     .dark-theme .details-param-row {
         border-bottom-color: #333 !important;
     }
@@ -743,9 +712,7 @@
     .dark-theme .details-param-value {
         color: #e0e0e0 !important;
     }
-    /* ── Dark theme — пилюли и выбор городов ── */
 
-    /* Param pills (фильтры и форма создания) */
     .dark-theme .param-pill {
         background: #2a2a2a !important;
         border-color: #444 !important;
@@ -763,7 +730,6 @@
         color: #1a1a1a !important;
     }
 
-    /* Region pills (выбор города) */
     .dark-theme .region-pill {
         background: #2a2a2a !important;
         border-color: #444 !important;
@@ -781,7 +747,6 @@
         color: #1a1a1a !important;
     }
 
-    /* Язык в настройках */
     .dark-theme .settings-lang-pill {
         background: #2a2a2a !important;
         border-color: #444 !important;
@@ -794,19 +759,16 @@
         color: #1a1a1a !important;
     }
 
-    /* "Not important" — дефолтный вариант тоже pill */
     .dark-theme .param-pill:first-child:not(.param-pill-active) {
         background: #2a2a2a !important;
         color: #666 !important;
     }
-    /* ── Dark theme — страница сообщений ── */
 
     .dark-theme .msg-page {
         background: #1a1a1a !important;
         border-color: #333 !important;
     }
 
-    /* Сайдбар */
     .dark-theme .msg-sidebar {
         background: #1e1e1e !important;
         border-right-color: #333 !important;
@@ -852,7 +814,6 @@
         color: #666 !important;
     }
 
-    /* Область чата */
     .dark-theme .msg-chat {
         background: #121212 !important;
     }
@@ -874,7 +835,6 @@
         color: #aaa !important;
     }
 
-    /* Карточка объявления в шапке */
     .dark-theme .msg-product-card {
         background: #1a1a1a !important;
         border-bottom-color: #333 !important;
@@ -884,7 +844,6 @@
         color: #ccc !important;
     }
 
-    /* Сообщения */
     .dark-theme .msg-messages {
         background: #121212 !important;
     }
@@ -898,7 +857,6 @@
             background: #2a2a2a !important;
         }
 
-    /* Пузыри — чужие становятся тёмными, свои остаются тёмными (уже норм) */
     .dark-theme .msg-bubble-theirs .msg-bubble {
         background: #2a2a2a !important;
         color: #e0e0e0 !important;
@@ -908,7 +866,6 @@
         color: #666 !important;
     }
 
-    /* Поле ввода */
     .dark-theme .msg-input-wrap {
         background: #1e1e1e !important;
         border-top-color: #333 !important;
@@ -928,7 +885,6 @@
             border-color: #666 !important;
         }
 
-    /* Блок отзыва */
     .dark-theme .review-prompt {
         background: #1e1e1e !important;
         border-color: #333 !important;
@@ -944,11 +900,9 @@
         color: #e0e0e0 !important;
     }
 
-    /* Пустой чат */
     .dark-theme .msg-chat-empty {
         color: #444 !important;
     }
-    /* ── Dark theme — страница продавца ── */
 
     .dark-theme .seller-header {
         border-bottom-color: #333 !important;
@@ -993,20 +947,15 @@
     }
 
     .dark-theme .seller-subscribe
-    /* Описание */
+
     .dark-theme .details-description {
         color: #ccc !important;
     }
 
-    /* Похожие товары */
     .dark-theme .product-card {
         background: #2a2a2a !important;
         border-color: #3a3a3a !important;
     }
-
-        .dark-theme .product-card:hover {
-            box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
-        }
 
     .dark-theme .product-card-img {
         background: #1e1e1e !important;
@@ -1025,7 +974,6 @@
         color: #888 !important;
     }
 
-    /* Seller badge в листинге */
     .dark-theme .seller-badge {
         background: #1a3a5c !important;
         color: #5ba8e0 !important;
@@ -1045,7 +993,6 @@
         background: #3a3a3a !important;
     }
 
-    /* Белые блоки → тёмные */
     .dark-theme .header-search-bar,
     .dark-theme .modal,
     .dark-theme .user-dropdown,
@@ -1064,7 +1011,6 @@
         color: var(--text-primary) !important;
     }
 
-    /* Категорийное меню (catmenu) */
     .dark-theme .catmenu {
         background: var(--bg-secondary);
         border-color: var(--border);
@@ -1085,7 +1031,6 @@
             color: #fff;
         }
 
-    /* Карточки товаров */
     .dark-theme .product-card {
         background: var(--bg-card);
         border-color: var(--border);
@@ -1106,7 +1051,6 @@
         background: var(--bg-hover);
     }
 
-    /* Инпуты и поля */
     .dark-theme .create-input,
     .dark-theme .auth-input,
     .dark-theme .msg-input,
@@ -1121,7 +1065,6 @@
             color: #666;
         }
 
-    /* Дропдауны и выпадающие списки */
     .dark-theme .create-dropdown,
     .dark-theme .create-drop-item:hover {
         background: var(--bg-secondary);
@@ -1133,7 +1076,6 @@
         color: var(--text-primary);
     }
 
-    /* Параметры */
     .dark-theme .param-pill {
         background: var(--bg-hover);
         border-color: var(--border);
@@ -1152,7 +1094,6 @@
         color: var(--text-primary);
     }
 
-    /* Табы и разделители */
     .dark-theme .myads-tabs,
     .dark-theme .myads-card-stats {
         border-color: var(--border);
@@ -1176,7 +1117,6 @@
         color: var(--text-secondary);
     }
 
-    /* Кнопки */
     .dark-theme .myads-action-btn,
     .dark-theme .details-btn-secondary,
     .dark-theme .seller-modal-link {
@@ -1185,7 +1125,6 @@
         color: var(--text-primary);
     }
 
-    /* Сортировка и листинг */
     .dark-theme .listing-sort-wrap,
     .dark-theme .listing-sort-drop,
     .dark-theme .listing-sort-item {
@@ -1198,7 +1137,6 @@
             background: var(--bg-hover);
         }
 
-    /* Поиск в хедере */
     .dark-theme .search-pill {
         background: var(--input-bg);
         border-color: var(--border);
@@ -1208,7 +1146,6 @@
         background: var(--accent, #00b0a3);
     }
 
-    /* Заголовки и общий текст */
     .dark-theme h1,
     .dark-theme h2,
     .dark-theme h3,
@@ -1228,7 +1165,6 @@
         color: var(--text-secondary);
     }
 
-    /* Модалка продавца */
     .dark-theme #sellerModal,
     .dark-theme #settingsModal,
     .dark-theme #regionModal,
@@ -1252,7 +1188,6 @@
         border-bottom-color: var(--border);
     }
 
-    /* Отзывы */
     .dark-theme .review-item {
         border-bottom-color: var(--border);
     }
@@ -1264,7 +1199,6 @@
         color: var(--text-primary);
     }
 
-    /* Фото-превью в форме */
     .dark-theme .create-photos-area {
         border-color: var(--border);
     }
@@ -1406,7 +1340,7 @@ css.modal-overlay {
     max-width: calc(100vw - 32px) !important;
     max-height: 85vh !important;
     padding: 0 !important;
-    overflow: hidden !important; /* ключевое: обрезает скроллбар по border-radius */
+    overflow: hidden !important; 
     border-radius: 16px !important;
     display: none;
     flex-direction: column;
@@ -1420,12 +1354,11 @@ css.modal-overlay {
     #faqModal .info-modal-body,
     #termsModal .info-modal-body {
         flex: 1;
-        overflow-y: scroll; /* всегда показывает полосу — внутри скруглённого блока */
-        padding: 16px 8px 24px 24px; /* правый паддинг меньше — скроллбар занимает место */
+        overflow-y: scroll; 
+        padding: 16px 8px 24px 24px;
         border-radius: 0 0 16px 16px;
     }
 
-        /* Webkit-скроллбар */
         #faqModal .info-modal-body::-webkit-scrollbar,
         #termsModal .info-modal-body::-webkit-scrollbar {
             width: 6px;
@@ -1448,7 +1381,6 @@ css.modal-overlay {
                 background: #aaa;
             }
 
-/* Тёмная тема */
 .dark-theme #faqModal .info-modal-body::-webkit-scrollbar-thumb,
 .dark-theme #termsModal .info-modal-body::-webkit-scrollbar-thumb {
     background: #555;
@@ -1523,7 +1455,62 @@ css.modal-overlay {
     max-width: min(95vw, 1400px) !important;
 }
 #contactsModal {
-    height: 38% !important;
+    height: 43% !important;
     max-width: 450px !important;
     width: min(95vw, 450px) !important; 
 }
+
+.promo-scroll-wrapper {
+    display: flex;
+    flex-direction: column;
+    padding: 0 24px;
+}
+
+.promo-scroll-area {
+    width: 100%;
+}
+
+    .promo-scroll-area .info-modal-body {
+        max-height: 400px;
+        overflow-y: auto;
+        padding-right: 8px;
+        scrollbar-width: thin;
+    }
+
+        .promo-scroll-area .info-modal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .promo-scroll-area .info-modal-body::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
+.product-card-promoted {
+    border-color: #00b0a3;
+    box-shadow: 0 0 0 2px #00b0a3, 0 8px 20px rgba(0, 176, 163, 0.2);
+    background-image: linear-gradient(135deg, rgba(0, 176, 163, 0.05) 0%, rgba(255, 255, 255, 0) 60%);
+    transform: scale(1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+    .product-card-promoted:hover {
+        transform: scale(1.03);
+        box-shadow: 0 0 0 2px #00b0a3, 0 12px 28px rgba(0, 176, 163, 0.35);
+    }
+
+    .product-card-promoted .product-card-name {
+        color: #00b0a3;
+        font-weight: 700;
+    }
+
+.dark-theme .product-card-promoted {
+    border-color: #00b0a3;
+    box-shadow: 0 0 0 2px #00b0a3, 0 0 18px rgba(0, 176, 163, 0.4), 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+    background-image: linear-gradient(135deg, rgba(0, 176, 163, 0.1) 0%, rgba(30, 30, 30, 0) 60%);
+    transform: scale(1);
+}
+
+    .dark-theme .product-card-promoted:hover {
+        transform: scale(1.03);
+        box-shadow: 0 0 0 2px #00b0a3, 0 0 28px rgba(0, 176, 163, 0.55), 0 12px 32px rgba(0, 0, 0, 0.5);
+    }

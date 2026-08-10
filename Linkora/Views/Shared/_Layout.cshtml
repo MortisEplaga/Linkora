@@ -2008,18 +2008,21 @@
                 <p><strong>Email:</strong> support@vena.lv</p>
                 <p><strong>Оператор Vena.lv:</strong> Андрей Шаповал</p>
                 <p><strong>Регистрационный номер (VID):</strong> 16127710218</p>
+                <p><strong>Адрес:</strong> ул. Страдниеку, д. 43, кв. 34, г. Даугавпилс</p>
                 <p><strong>Телефон:</strong> +371 20029854</p>
             </div>
             <div class="info-lang-content" data-lang="lv" style="display:none">
                 <p><strong>E-pasts:</strong> support@vena.lv</p>
                 <p><strong>Vena.lv operators:</strong> Šapovals Andrejs</p>
                 <p><strong>VID reģistrācijas numurs:</strong> 16127710218</p>
+                <p><strong>Adrese:</strong> Strādnieku iela 43–34, Daugavpils</p>
                 <p><strong>Tālrunis:</strong> +371 20029854</p>
             </div>
             <div class="info-lang-content" data-lang="en" style="display:none">
                 <p><strong>Email:</strong> support@vena.lv</p>
                 <p><strong>Vena.lv operator:</strong> Andrejs Šapovals</p>
-                <p><strong>Tax registration No.:</strong> 16127710218</p>
+                <p><strong>Tax registration number:</strong> 16127710218</p>
+                <p><strong>Address:</strong> 43–34 Strādnieku Street, Daugavpils</p>
                 <p><strong>Phone:</strong> +371 20029854</p>
             </div>
         </div>
@@ -2051,6 +2054,8 @@
             document.getElementById('contactsModal').classList.remove('modal-open');
             document.body.style.overflow = '';
         }
+const CONTACTS_TITLES = { en: 'Contacts', lv: 'Kontakti', ru: 'Контакты' };
+
         function switchContactsLang(lang, btn) {
             const modal = document.getElementById('contactsModal');
             modal.querySelectorAll('.info-lang-btn').forEach(b => b.classList.remove('active'));
@@ -2058,8 +2063,13 @@
             modal.querySelectorAll('.info-lang-content').forEach(el => {
                 el.style.display = el.dataset.lang === lang ? '' : 'none';
             });
-        }
-        function openFaqModal() {
+
+            const titleEl = modal.querySelector('.info-modal-title');
+            if (titleEl) {
+                titleEl.removeAttribute('data-i18n');
+                titleEl.textContent = CONTACTS_TITLES[lang];
+            }
+        }        function openFaqModal() {
             document.getElementById('faqOverlay').classList.add('modal-open');
             document.getElementById('faqModal').classList.add('modal-open');
             document.body.style.overflow = 'hidden';
@@ -2125,15 +2135,29 @@
             answer.classList.toggle('open');
         }
 
-        function switchInfoLang(lang, btn, modal) {
-            const parent = btn.closest('.info-modal');
-            parent.querySelectorAll('.info-lang-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            parent.querySelectorAll('.info-lang-content').forEach(el => {
-                el.style.display = el.dataset.lang === lang ? '' : 'none';
-            });
-        }
-        function showModal(messageKeyOrText) {
+        const MODAL_TITLES = {
+                    faqModal:     { en: 'FAQ', lv: 'Bieži uzdotie jautājumi', ru: 'FAQ' },
+                    rulesModal:   { en: 'Terms of use', lv: 'Portāla lietošanas noteikumi', ru: 'Правила пользования порталом' },
+                    policyModal:  { en: 'Privacy Policy', lv: 'Privātuma politika', ru: 'Политика конфиденциальности' },
+                };
+
+                function switchInfoLang(lang, btn, modal) {
+                    const parent = btn.closest('.info-modal');
+                    parent.querySelectorAll('.info-lang-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    parent.querySelectorAll('.info-lang-content').forEach(el => {
+                        el.style.display = el.dataset.lang === lang ? '' : 'none';
+                    });
+
+                    const titles = MODAL_TITLES[parent.id];
+                    if (titles && titles[lang]) {
+                        const titleEl = parent.querySelector('.info-modal-title');
+                        if (titleEl) {
+                            titleEl.removeAttribute('data-i18n');
+                            titleEl.textContent = titles[lang];
+                        }
+                    }
+                }        function showModal(messageKeyOrText) {
             const overlay = document.getElementById('notificationOverlay');
             const modal = document.getElementById('notificationModal');
             const messageEl = document.getElementById('notifMessage');
@@ -2507,6 +2531,12 @@
                     }
                 }
             });
+                    const supportTitles = { en: 'Technical Support', lv: 'Tehniskā palīdzība', ru: 'Техническая поддержка' };
+                    const supportTitleEl = document.getElementById('supportTitle');
+                    if (supportTitleEl) {
+                        supportTitleEl.removeAttribute('data-i18n');
+                        supportTitleEl.textContent = supportTitles[lang];
+                    }
         }
                 async function submitSupportForm(event) {
             event.preventDefault();
