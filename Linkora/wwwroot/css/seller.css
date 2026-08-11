@@ -193,7 +193,7 @@
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.4);
-    z-index: 1000;
+    z-index: var(--z-modal-overlay);
 }
 
     .reviews-overlay.open {
@@ -211,7 +211,7 @@
     max-height: 80vh;
     background: #fff;
     border-radius: 16px;
-    z-index: 1001;
+    z-index: var(--z-modal);
     flex-direction: column;
     overflow: hidden;
 }

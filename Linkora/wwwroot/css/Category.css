@@ -2,7 +2,7 @@
 .floating-filter-actions {
     position: sticky;
     bottom: 20px;
-    z-index: 0;
+    z-index: var(--z-content);
     display: inline-flex;
     gap: 12px;
     background: #fff;
@@ -422,7 +422,7 @@
     border: 1px solid #e0e0e0;
     border-radius: 8px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-    z-index: 200;
+    z-index: var(--z-dropdown);
     min-width: 180px;
     overflow: hidden;
 }
@@ -710,6 +710,7 @@
 }
 
 .product-card {
+    z-index: var(--z-content);
     box-shadow: var(--card-shadow-rest);
     transition: transform var(--card-transition), box-shadow var(--card-transition);
 }
@@ -720,6 +721,7 @@
     }
 
 .product-card-promoted {
+    z-index: var(--z-content);
     border-color: #00b0a3;
     box-shadow: var(--card-shadow-promoted);
     background-image: linear-gradient(135deg, rgba(0,176,163,0.05) 0%, rgba(255,255,255,0) 60%);

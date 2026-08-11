@@ -387,7 +387,7 @@
     align-items: center;
     justify-content: center;
     transition: background 0.15s;
-    z-index: 1;
+    z-index: var(--z-content);
 }
 
     .lb-arrow:hover {

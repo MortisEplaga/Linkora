@@ -232,7 +232,7 @@
     .admin-table thead th {
         position: sticky;
         top: 0;
-        z-index: 10;
+        z-index: var(--z-content);
         background: #fff;
         border-bottom: 1px solid var(--admin-border);
     }
@@ -639,7 +639,7 @@
     border-radius: 10px;
     font-size: 14px;
     font-weight: 500;
-    z-index: 9999;
+    z-index: var(--z-toast);
     opacity: 0;
     transform: translateY(8px);
     transition: opacity 0.2s, transform 0.2s;
@@ -664,7 +664,7 @@
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.4);
-    z-index: 2000;
+    z-index: var(--z-modal-overlay);
 }
 
     .admin-confirm-overlay.open {
