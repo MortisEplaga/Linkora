@@ -12,7 +12,7 @@
              onerror="this.src='/img/no-photo.svg'" />
 
         <div class="product-card-price-tag" @(p.Price.HasValue ? "" : Html.Raw("data-i18n=\"price_on_request\""))>
-            @(p.Price.HasValue ? "€" + p.Price.Value.ToString("N2") : "Price on request")
+            <span class="price-value">@(p.Price.HasValue ? "€" + p.Price.Value.ToString("N2") : "Price on request")</span>
         </div>
 
         @if (Model.ShowFavActions)
