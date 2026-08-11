@@ -3,7 +3,7 @@
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.3);
-    z-index: 999;
+    z-index: var(--z-catmenu-overlay);
 }
 
 .catmenu-overlay-open {
@@ -16,7 +16,7 @@
     top: 60px;
     left: 0;
     bottom: 0;
-    z-index: 1000;
+    z-index: var(--z-catmenu);
     background: #fff;
     box-shadow: 4px 0 24px rgba(0,0,0,0.12);
     overflow: hidden;

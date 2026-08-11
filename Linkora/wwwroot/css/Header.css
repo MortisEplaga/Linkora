@@ -71,10 +71,11 @@
     color: #666666;
     cursor: not-allowed;
     opacity: 0.6;
-}.header-nav {
+}
+.header-nav {
     position: sticky;
     top: 0;
-    z-index: 1000;
+    z-index: var(--z-sticky-header);
     background-color: var(--nav-bg);
 }
 
@@ -485,7 +486,7 @@
     display: none;
     position: fixed;
     inset: 0;
-    z-index: 1050;
+    z-index: var(--z-notif-overlay);
 }
 
     .notif-overlay.open {
@@ -503,7 +504,7 @@
     border: 1px solid #e8e8e8;
     border-radius: 14px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.13);
-    z-index: 1051;
+    z-index: var(--z-notif-modal);
     flex-direction: column;
     overflow: hidden;
 }

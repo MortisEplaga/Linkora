@@ -502,9 +502,9 @@
                 const db = b.querySelector('.product-card-date')?.textContent.trim() || '';
                 return db.localeCompare(da);
             }
-            const pa = parseFloat(a.querySelector('.product-card-price')?.textContent.replace(/[^0-9.]/g, '')) || 0;
-            const pb = parseFloat(b.querySelector('.product-card-price')?.textContent.replace(/[^0-9.]/g, '')) || 0;
-            return type === 'cheap' ? pa - pb : pb - pa;
+    const pa = parseFloat(a.querySelector('.product-card-price-tag .price-value')?.textContent.replace(/[^0-9.]/g, '')) || 0;
+    const pb = parseFloat(b.querySelector('.product-card-price-tag .price-value')?.textContent.replace(/[^0-9.]/g, '')) || 0;
+    return type === 'cheap' ? pa - pb : pb - pa;
         });
 
         cards.forEach(c => container.appendChild(c));

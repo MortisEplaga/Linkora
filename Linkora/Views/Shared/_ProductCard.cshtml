@@ -5,7 +5,7 @@
 }
 
 <a class="product-card @(p.PromotionType != "None" ? "product-card-promoted" : "")"
-   data-promo-top="@(p.PromotionType == "Top" ? "true" : "false")"
+   data-promo-top="@(p.PromotionType is "Top" or "Vip" ? "true" : "false")"
    asp-controller="Product" asp-action="Details" asp-route-id="@p.Id">
     <div class="product-card-img">
         <img src="@(p.AvatarImagePath ?? "/img/no-photo.svg")" alt="@p.Name"

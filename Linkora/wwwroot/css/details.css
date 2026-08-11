@@ -194,17 +194,6 @@
 }
 
 /* Модалка */
-.msg-modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.4);
-    z-index: 500;
-}
-
-    .msg-modal-overlay.open {
-        display: block;
-    }
 
 .msg-modal {
     display: none;
@@ -216,7 +205,7 @@
     background: #fff;
     border-radius: 16px;
     padding: 20px;
-    z-index: 501;
+    z-index: var(--z-msg-modal);
     box-shadow: 0 8px 40px rgba(0,0,0,0.15);
     flex-direction: column;
     gap: 16px;
@@ -274,7 +263,7 @@
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.92);
-    z-index: 2000;
+    z-index: var(--z-lightbox-overlay);
 }
 
     .lb-overlay.open {
@@ -285,7 +274,7 @@
     display: none;
     position: fixed;
     inset: 0;
-    z-index: 2001;
+    z-index: var(--z-lightbox);
     flex-direction: column;
 }
 
@@ -459,7 +448,7 @@
     align-items: center;
     justify-content: center;
     transition: background 0.2s, color 0.2s;
-    z-index: 2002;
+    z-index: var(--z-lightbox-close);
 }
 
     .lb-close-btn:hover {

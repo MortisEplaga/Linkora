@@ -1,4 +1,22 @@
-﻿[onclick] {
+﻿:root {
+    --z-content: 1;
+    --z-sticky-header: 10;
+    --z-catmenu-overlay: 20;
+    --z-catmenu: 21;
+    --z-dropdown: 30;
+    --z-modal-overlay: 100;
+    --z-modal: 101;
+    --z-msg-modal-overlay: 110;
+    --z-msg-modal: 111;
+    --z-notif-overlay: 120;
+    --z-notif-modal: 121;
+    --z-lightbox-overlay: 130;
+    --z-lightbox: 131;
+    --z-lightbox-close: 132;
+    --z-toast: 140;
+    --z-scroll-top: 150;
+}
+[onclick] {
     cursor: pointer;
 }
 .msg-modal-overlay {
@@ -12,7 +30,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 9000;
+    z-index: var(--z-msg-modal-overlay);
     animation: modalFadeIn 0.2s ease;
 }
 .scroll-top-btn {
@@ -33,7 +51,7 @@
     transition: all 0.25s ease;
     opacity: 0;
     visibility: hidden;
-    z-index: 9999;
+    z-index: var(--z-scroll-top);
 }
 
     .scroll-top-btn:hover {
@@ -1255,7 +1273,7 @@ css.modal-overlay {
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.4);
-    z-index: 1000;
+    z-index: var(--z-modal-overlay);
 }
 
 .modal-overlay.open {
@@ -1271,7 +1289,7 @@ css.modal-overlay {
     background: #fff;
     border-radius: 16px;
     padding: 24px;
-    z-index: 1001;
+    z-index: var(--z-modal);
     min-width: 300px;
     max-width: 420px;
     width: calc(100vw - 32px);

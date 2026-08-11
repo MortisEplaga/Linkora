@@ -90,7 +90,11 @@ namespace Linkora.Repositories
                 "expensive" => priceParamId.HasValue ? "TRY_CAST(mpc.Value AS decimal(18,2)) DESC" : "p.CreatedTime DESC",
                 _ => "p.CreatedTime DESC"
             };
-            var order = $"CASE WHEN p.PromotionType = 'Top' THEN 0 ELSE 1 END, {baseOrder}";
+            var order = @"CASE 
+                WHEN p.PromotionType IN ('Top','Vip') THEN 0 
+                WHEN p.PromotionType = 'Highlight' THEN 1 
+                ELSE 2 
+              END, " + baseOrder;
             var whereClauses = new List<string>();
             var sqlParams = new List<SqlParameter>();
             int pIdx = 0;
@@ -155,7 +159,7 @@ namespace Linkora.Repositories
                 sqlParams.Add(new SqlParameter("@SearchTerm", search));
             }
             var extraWhere = whereClauses.Count > 0
-                ? $"AND (({string.Join(" AND ", whereClauses)}) OR p.PromotionType = 'Vip')"
+                ? $"AND (({string.Join(" AND ", whereClauses)}) OR p.PromotionType IN ('Top','Vip'))"
                 : "";
 
             var result = new List<Product>();

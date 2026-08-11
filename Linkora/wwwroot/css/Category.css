@@ -755,7 +755,7 @@
     font-weight: 600;
     font-size: 17px;
     padding: 0 8px 0 4px;
-    z-index: 1;
+    z-index: var(--z-content);
     max-width: calc(100% - 28px);
     display: flex;
     align-items: center;
@@ -769,7 +769,6 @@
         white-space: nowrap;
         vertical-align: middle;
         position: relative;
-        z-index: 1;
     }
 
     .product-card-price-tag::after {
@@ -782,7 +781,6 @@
         height: 5px;
         border-radius: 50%;
         background-color: #00b0a3;
-        z-index: 1;
     }
 
 .dark-theme .product-card-price-tag {
