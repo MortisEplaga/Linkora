@@ -710,6 +710,7 @@
 }
 
 .product-card {
+    position: relative;
     z-index: var(--z-content);
     box-shadow: var(--card-shadow-rest);
     transition: transform var(--card-transition), box-shadow var(--card-transition);
@@ -721,6 +722,7 @@
     }
 
 .product-card-promoted {
+    position: relative;
     z-index: var(--z-content);
     border-color: #00b0a3;
     box-shadow: var(--card-shadow-promoted);
