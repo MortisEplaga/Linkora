@@ -312,51 +312,7 @@
     margin-top: 2px;
     flex-shrink: 0;
 }
-.modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-}
 
-.modal-overlay.modal-open {
-    display: block;
-}
-
-.modal {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 420px;
-    max-height: 90vh;
-    overflow-y: auto;
-    background: #fff;
-    border-radius: 16px;
-    padding: 32px;
-    z-index: var(--z-modal);
-    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
-}
-
-.modal.modal-open {
-    display: block;
-}
-
-.modal-close {
-    position: absolute;
-    top: 16px;
-    right: 16px;
-    background: none;
-    border: none;
-    font-size: 18px;
-    cursor: pointer;
-    color: #aaa;
-    line-height: 1;
-}
-
-.modal-close:hover {
-    color: #333;
 }
 #authModal,
 #regionModal {
