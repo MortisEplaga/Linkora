@@ -1,0 +1,24 @@
+﻿@{
+    var status = (string)ViewBag.Status;
+    ViewData["Title"] = "Payment result";
+}
+<div class="auth-page">
+    <div class="auth-card" style="text-align:center">
+        @if (status == "completed")
+        {
+            <div style="font-size:48px;margin-bottom:16px">✅</div>
+            <h2 class="auth-title">Payment successful</h2>
+        }
+        else if (status == "already_completed")
+        {
+            <div style="font-size:48px;margin-bottom:16px">✅</div>
+            <h2 class="auth-title">Already processed</h2>
+        }
+        else
+        {
+            <div style="font-size:48px;margin-bottom:16px">❌</div>
+            <h2 class="auth-title">Payment not completed</h2>
+        }
+        <a href="/" class="auth-submit" style="display:inline-block;text-decoration:none;padding:12px 32px;margin-top:16px">Back to home</a>
+    </div>
+</div>

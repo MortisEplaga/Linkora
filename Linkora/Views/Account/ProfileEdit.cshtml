@@ -481,15 +481,27 @@
             document.body.style.overflow = '';
         }
 
-        function confirmSubRules(agreed) {
-            closeSubRulesModal();
-            if (agreed && pendingSubType) {
-                applySubscriptionSelection(pendingSubType, pendingSubBtn);
+        async function confirmSubRules(agreed) {
+            closePromoRulesModal();
+            if (agreed && pendingPromoType) {
+                const res = await fetch('/Payments/InitiatePromotion', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
+                    },
+                    body: `productId=${p.Id}&promotionType=${pendingPromoType}`
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    window.location.href = data.redirectUrl;
+                } else {
+                    alert('Payment initiation failed');
+                }
             }
-            pendingSubType = null;
-            pendingSubBtn = null;
+            pendingPromoType = null;
+            pendingPromoBtn = null;
         }
-
         function checkStrengthProfile(input) {
             const v = input.value;
             document.getElementById('profileRules').style.display = v.length ? 'flex' : 'none';

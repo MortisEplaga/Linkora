@@ -879,16 +879,26 @@
         document.body.style.overflow = '';
     }
 
-    function confirmPromoRules(agreed) {
+    async function confirmPromoRules(agreed) {
         closePromoRulesModal();
         if (agreed && pendingPromoType) {
-            applyPromotionSelection(pendingPromoType, pendingPromoBtn);
+            const res = await fetch('/Payments/InitiatePromotion', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `productId=@p.Id&promotionType=${pendingPromoType}`
+            });
+            if (res.ok) {
+                const data = await res.json();
+                window.location.href = data.redirectUrl;
+            } else {
+                alert('Payment initiation failed');
+            }
         }
         pendingPromoType = null;
         pendingPromoBtn = null;
     }
-
-
         async function initDurationUI() {
         let preferred = DEFAULT_DURATION;
 
