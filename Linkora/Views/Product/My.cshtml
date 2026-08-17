@@ -105,6 +105,12 @@
                         }
                         @if (tab != "Purchased" && User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value != "banned")
                         {
+                            @if (p.Status == ProductStatus.Archived)
+                            {
+                                <button class="myads-action-btn myads-action-republish" onclick="republishAd(@p.Id)" data-i18n="republish_btn">
+                                    Republish
+                                </button>
+                            }
                             <a class="myads-action-btn" asp-controller="Product" asp-action="Edit" asp-route-id="@p.Id" data-i18n="edit_btn">Edit</a>
                             <button class="myads-action-btn myads-action-danger" onclick="deleteAd(@p.Id)" data-i18n="delete_btn">
                                 Delete
@@ -126,7 +132,7 @@
     </div>
 </div>
 <script>
-        let currentProductId = null;
+    let currentProductId = null;
 
     function openPartnerModal(productId) {
         currentProductId = productId;
@@ -180,6 +186,7 @@
             console.error('Ошибка сети:', e);
         }
     }
+
     async function completeDeal(id) {
         try {
             const res = await fetch(`/Product/CompleteDeal?id=${id}`, {
@@ -191,8 +198,27 @@
         } catch (e) { console.error('Ошибка сети:', e); }
     }
 
+    async function republishAd(id) {
+        try {
+            const res = await fetch(`/Product/Republish?id=${id}`, {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
+                }
+            });
+            if (res.ok) {
+                location.reload();
+            } else {
+                const err = await res.text();
+                console.error('Ошибка:', err);
+                alert('Error: ' + err);
+            }
+        } catch (e) {
+            console.error('Ошибка сети:', e);
+        }
+    }
+
     async function deleteAd(id) {
-        if (!confirm(t('confirm_delete'))) return;
         await fetch(`/Product/Delete?id=${id}`, {
             method: 'POST',
             headers: { 'RequestVerificationToken': document.getElementById('afToken')?.value ?? '' }

@@ -508,7 +508,22 @@ namespace Linkora.Controllers
             await _productRepository.DeleteAsync(id);
             return Ok();
         }
+        [Authorize]
+        [HttpPost]
+        public async Task<IActionResult> Republish(int id)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            if (await IsUserBannedAsync(userId)) return Forbid();
 
+            var product = await _productRepository.GetByIdAsync(id);
+            if (product == null) return NotFound();
+            if (product.UserId != userId) return Forbid();
+
+            var success = await _productRepository.ReactivateProductAsync(id, userId);
+            if (!success) return BadRequest("Не удалось возобновить публикацию.");
+
+            return Ok();
+        }
         [HttpGet]
         public async Task<IActionResult> ParamValues(int productId)
         {

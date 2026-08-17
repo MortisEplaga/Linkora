@@ -427,6 +427,8 @@ const TRANSLATIONS = {
         'no_subscriptions': 'You are not subscribed to anyone yet',
         'unsubscribe_btn': 'Unsubscribe',
         'subscribed_btn': 'Subscribed',
+        'republish_btn': 'Republish',
+        'confirm_republish': 'Republish this ad?',
     },
 
     lv: {
@@ -857,6 +859,8 @@ const TRANSLATIONS = {
         'no_subscriptions': 'Jūs vēl neesat abonējis nevienu',
         'unsubscribe_btn': 'Atrakstīties',
         'subscribed_btn': 'Abonēts',
+        'republish_btn': 'Publicēt vēlreiz',
+        'confirm_republish': 'Publicēt šo sludinājumu vēlreiz?',
     },
 
     ru: {
@@ -1287,6 +1291,8 @@ const TRANSLATIONS = {
         'no_subscriptions': 'Вы ни на кого не подписаны',
         'unsubscribe_btn': 'Отписаться',
         'subscribed_btn': 'Подписан',
+        'republish_btn': 'Повторить публикацию',
+        'confirm_republish': 'Повторить публикацию этого объявления?',
     }
 };
 

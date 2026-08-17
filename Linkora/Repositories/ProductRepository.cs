@@ -643,7 +643,8 @@ namespace Linkora.Repositories
         UPDATE Products 
         SET Status = 'Active', 
             ArchivedAt = NULL,
-            CreatedTime = SYSUTCDATETIME() 
+            CreatedTime = SYSUTCDATETIME(),
+            ExpiresAt = DATEADD(day, PublishDurationDays, SYSUTCDATETIME())
         WHERE Id = @Id AND UserId = @UserId AND Status = 'Archived'";
 
             using var command = new SqlCommand(sql, connection);
