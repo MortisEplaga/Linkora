@@ -1,0 +1,181 @@
+﻿@page
+@model Linkora.Views.Shared.Partial._FaqModalModel
+@{
+
+}
+
+<div class="modal-overlay" id="faqOverlay" onclick="closeFaqModal()"></div>
+<div class="modal info-modal" id="faqModal">
+    <button class="modal-close" onclick="closeFaqModal()">✕</button>
+    <h2 class="info-modal-title" data-i18n="faq_title">FAQ</h2>
+    <div class="info-modal-lang-tabs">
+        <button class="info-lang-btn active" onclick="switchInfoLang('ru', this)">RU</button>
+        <button class="info-lang-btn" onclick="switchInfoLang('lv', this)">LV</button>
+        <button class="info-lang-btn" onclick="switchInfoLang('en', this)">EN</button>
+    </div>
+
+    <div class="info-modal-body">
+        <div class="info-lang-content" data-lang="ru">
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Как зарегистрироваться? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Нажав на раздел меню, найдите возможность «Зарегистрироваться», после чего откроется бланк, заполнив который вы станете зарегистрированным пользователем. При размещении поста вам потребуется активировать контактную информацию.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Можно ли пользоваться порталом, будучи незарегистрированным пользователем? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Незарегистрированный пользователь может просматривать размещенные посты и добавлять их в разделы «Любимое» и «Корзина»; они будут сохранены после регистрации или подключения к своему профилю.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Как активировать номер телефона и адрес электронной почты? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Зайдя в раздел «Мой профиль», вы найдете подраздел «Мои данные», где можно активировать или изменить контактную информацию.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Как изменить пароль? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Зайдя в раздел «Мой профиль», вы найдете подраздел «Изменение пароля», где можно изменить действующий пароль.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Как сохранить посты, которые я искал (-а)? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Интересующие вас посты можно сохранить, нажав на иконку «Добавить в Любимое». Позднее вы найдете их в разделе «Любимое».</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Как отслеживать появление новых интересующих меня постов? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Список постов можно фильтровать по желаемым параметрам, а также отметить, чтобы мы сообщали вам о появлении новинок по данному фильтру.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Через какое время мой пост будет утвержден? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Пост размещается на портале незамедлительно. Пост должен соответствовать правилам портала, в противном случае он будет заблокирован.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Как долго будет активен размещенный пост? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Срок публикации каждого размещенного поста составляет 1 месяц с момента публикации. После окончания срока вы можете повторно разместить данный пост.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Как редактировать содержание поста? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Все содержание поста можно редактировать перед публикацией. После публикации цену разрешается редактировать не более трёх раз, а изображения и видео — без ограничений.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Как редактировать цену, указанную в опубликованном посте? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Открыв соответствующий пост, вы найдете кнопку «Редактировать», после нажатия которой сможете исправить цену.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Что делать, если пост заблокирован? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">В случае блокировки поста его владелец получит по электронной почте сообщение с указанием причины блокировки. Вы можете отредактировать данный пост и отправить его на повторное рассмотрение.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Можно ли изменить или добавить в пост изображения и видео? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Проверьте размеры и формат фотографий и видео. Если они не соответствуют требованиям и разместить их не удается, просим обратиться к администрации.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Как удалить пост? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Открыв меню возле соответствующего поста, вы найдете возможность «Удалить».</div>
+            </div>
+        </div>
+        <div class="info-lang-content" data-lang="lv" style="display:none">
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Kā reģistrēties? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Nospiežot uz izvēlnes sadaļas, atrodiet iespēju "Reģistrēties", pēc tam atvērsies forma, kuru aizpildot jūs kļūsiet par reģistrētu lietotāju. Publicējot sludinājumu, jums būs jāaktivizē kontaktinformācija.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Vai portālu var izmantot nereģistrēts lietotājs? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Nereģistrēts lietotājs var apskatīt publicētos sludinājumus un pievienot tos sadaļām "Izlase" un "Grozs"; tie tiks saglabāti pēc reģistrācijas vai pieslēgšanās savam profilam.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Kā aktivizēt tālruņa numuru un e-pasta adresi? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Atverot sadaļu "Mans profils", jūs atradīsiet apakšsadaļu "Mani dati", kur var aktivizēt vai mainīt kontaktinformāciju.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Kā nomainīt paroli? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Atverot sadaļu "Mans profils", jūs atradīsiet apakšsadaļu "Paroles maiņa", kur var mainīt esošo paroli.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Kā saglabāt sludinājumus, kurus es meklēju? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Jūs interesējošos sludinājumus var saglabāt, nospiežot ikonu "Pievienot izlasei". Vēlāk jūs tos atradīsiet sadaļā "Izlase".</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Kā sekot līdzi jaunu sludinājumu parādīšanās? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Sludinājumu sarakstu var filtrēt pēc vēlamajiem parametriem, kā arī atzīmēt, lai mēs jūs informētu par jaunumiem atbilstoši šim filtram.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Cik ātri mans sludinājums tiks apstiprināts? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Sludinājums tiek publicēts nekavējoties. Tam jāatbilst portāla noteikumiem, pretējā gadījumā tas tiks bloķēts.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Cik ilgi publicētais sludinājums būs aktīvs? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Katra sludinājuma publicēšanas termiņš ir 1 mēnesis no publicēšanas brīža. Pēc termiņa beigām jūs varat to publicēt atkārtoti.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Kā rediģēt sludinājuma saturu? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Visu sludinājuma saturu var rediģēt pirms publicēšanas; pēc tam cenu drīkst rediģēt ne vairāk kā trīs reizes, bet attēlus un video – bez ierobežojumiem.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Kā rediģēt publicētajā sludinājumā norādīto cenu? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Atverot attiecīgo sludinājumu, jūs atradīsiet pogu "Rediģēt", pēc kuras nospiešanas varēsiet veikt labojumus.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Ko darīt, ja sludinājums ir bloķēts? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Bloķēšanas gadījumā sludinājuma īpašnieks saņems e-pasta ziņojumu ar bloķēšanas iemeslu. Jūs varat rediģēt sludinājumu un nosūtīt to atkārtotai pārskatīšanai.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Vai var mainīt vai pievienot sludinājumam attēlus un video? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Pārbaudiet attēlu un video izmērus un formātu; ja tie neatbilst prasībām un tos nevar augšupielādēt, lūdzam sazināties ar administrāciju.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Kā dzēst sludinājumu? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Atverot izvēlni pie attiecīgā sludinājuma, jūs atradīsiet iespēju "Dzēst".</div>
+            </div>
+        </div>
+        <div class="info-lang-content" data-lang="en" style="display:none">
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">How do I register? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Click on the menu section, find the “Register” option, and fill in the form that appears. Once you’ve completed it, you’ll become a registered user. When posting an ad, you’ll need to activate your contact information.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Can I use the portal without registering? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Unregistered users can browse published ads and add them to “Favorites” and “Cart”; these will be saved after registration or after logging into your profile.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">How do I activate my phone number and email address? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Go to “My Profile”, then to the “My Data” subsection, where you can activate or change your contact information.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">How do I change my password? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Go to “My Profile” and open “Change Password” to update your current password.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">How do I save ads I’m interested in? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Click the “Add to Favorites” icon on any ad. You’ll later find them in the “Favorites” section.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">How can I track new ads that match my interests? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">You can filter the list of ads using the desired parameters and also subscribe to be notified when new ads matching those filters appear.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">How long does it take for my ad to be approved? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Ads are published instantly. However, they must comply with the portal’s rules, otherwise they will be blocked.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">How long will my published ad remain active? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Each ad is published for 1 month from the date of posting. Once it expires, you can republish it.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">How do I edit the content of an ad? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">All ad content can be edited before publication. After publishing, the price can be edited up to three times, while images and videos can be edited without limits.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">How do I edit the price shown in a published ad? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Open the ad and click the “Edit” button; you can then correct the price.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">What should I do if my ad gets blocked? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">If an ad is blocked, its owner will receive an email explaining the reason. You can edit the ad and resubmit it for review.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">Can I add or change images and videos in my ad? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Check the size and format of your photos and videos. If they don’t meet the requirements and can’t be uploaded, please contact the administration.</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q" onclick="toggleFaq(this)">How do I delete an ad? <span class="faq-arrow">›</span></div>
+                <div class="faq-a">Open the menu next to the ad and select “Delete”.</div>
+            </div>
+        </div>
+    </div>
+</div>

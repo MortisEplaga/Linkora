@@ -1,0 +1,238 @@
+﻿@page
+@model Linkora.Views.Shared.Partial._PolicyModalModel
+@{
+}
+<div class="modal-overlay" id="policyOverlay" onclick="closePolicyModal()"></div>
+<div class="modal info-modal" id="policyModal">
+    <button class="modal-close" onclick="closePolicyModal()">✕</button>
+    <h2 class="info-modal-title" data-i18n="policy_title">Политика конфиденциальности</h2>
+    <div class="info-modal-lang-tabs">
+        <button class="info-lang-btn active" onclick="switchInfoLang('ru', this, 'policy')">RU</button>
+        <button class="info-lang-btn" onclick="switchInfoLang('lv', this, 'policy')">LV</button>
+        <button class="info-lang-btn" onclick="switchInfoLang('en', this, 'policy')">EN</button>
+    </div>
+
+    <div class="info-modal-body">
+        <!-- Russian Policy -->
+        <div class="info-lang-content" data-lang="ru">
+            <div class="terms-section">
+                <div class="terms-title">Политика конфиденциальности</div>
+                <p><b>1.</b> Настоящая Политика конфиденциальности определяет порядок обработки персональных данных физических лиц порталом Vena.lv при использовании Портала и предоставляемых им услуг. Политика распространяется на всех лиц, которые используют, использовали либо намерены использовать услуги Портала.</p>
+                <p><b>2.</b> Портал может обрабатывать следующие персональные данные:</p>
+                <ul>
+                    <li>имя и фамилию;</li>
+                    <li>адрес электронной почты;</li>
+                    <li>номер телефона;</li>
+                    <li>имя пользователя;</li>
+                    <li>фотографию профиля и описание профиля;</li>
+                    <li>данные авторизации;</li>
+                    <li>IP-адрес;</li>
+                    <li>сведения об используемом устройстве, браузере и операционной системе;</li>
+                    <li>информацию о совершенных на Портале сделках;</li>
+                    <li>информацию, необходимую для оформления услуги отправки.</li>
+                </ul>
+                <p><b>3.</b> Персональные данные обрабатываются в целях:</p>
+                <ul>
+                    <li>обеспечения работы Портала и ведения учетной записи Пользователя;</li>
+                    <li>предоставления услуг Портала;</li>
+                    <li>оформления и администрирования услуг отправки;</li>
+                    <li>обеспечения связи с Пользователями;</li>
+                    <li>совершенствования работы Портала и повышения удобства его использования;</li>
+                    <li>предотвращения мошенничества и иных противоправных действий;</li>
+                    <li>исполнения обязанностей, установленных законодательством.</li>
+                </ul>
+                <p><b>4.</b> Обработка платежей осуществляется платежной платформой MakeCommerce, поэтому необходимые для проведения платежей персональные данные передаются владельцу платформы Maksekeskus AS.</p>
+                <p><b>5.</b> Если Пользователь использует услугу отправки, Портал передает выбранному поставщику курьерских услуг только те персональные данные, которые необходимы для оформления, доставки и отслеживания отправления. Как правило, передаются:</p>
+                <ul>
+                    <li>имя получателя;</li>
+                    <li>номер телефона;</li>
+                    <li>адрес электронной почты (при необходимости);</li>
+                    <li>адрес доставки или выбранный почтомат.</li>
+                </ul>
+                <p>Передача указанных данных является обязательным условием оказания услуги отправки.</p>
+                <p><b>6.</b> Персональные данные могут передаваться:</p>
+                <ul>
+                    <li>поставщикам курьерских услуг;</li>
+                    <li>поставщикам платежных услуг;</li>
+                    <li>государственным и муниципальным органам в случаях, предусмотренных законодательством;</li>
+                    <li>иным поставщикам услуг, обеспечивающим техническое функционирование Портала.</li>
+                </ul>
+                <p>Портал не передает персональные данные третьим лицам в маркетинговых целях без согласия Пользователя.</p>
+                <p><b>7.</b> При наличии согласия Пользователя Портал вправе направлять:</p>
+                <ul>
+                    <li>информационные уведомления;</li>
+                    <li>информацию о новостях Портала;</li>
+                    <li>информацию о событиях и активности на Портале.</li>
+                </ul>
+                <p>Пользователь вправе отказаться от получения таких сообщений в любое время через настройки своего профиля либо воспользовавшись ссылкой для отказа, содержащейся в полученном электронном письме.</p>
+                <p><b>8.</b> Портал использует файлы cookie для:</p>
+                <ul>
+                    <li>обеспечения функционирования Портала;</li>
+                    <li>сохранения пользовательских настроек;</li>
+                    <li>анализа использования Портала;</li>
+                    <li>улучшения пользовательского опыта.</li>
+                </ul>
+                <p>Пользователь вправе изменить настройки файлов cookie в своем браузере либо отозвать ранее предоставленное согласие.</p>
+                <p><b>9.</b> Пользователь имеет право:</p>
+                <ul>
+                    <li>получать информацию об обработке своих персональных данных;</li>
+                    <li>требовать исправления персональных данных;</li>
+                    <li>требовать удаления персональных данных в случаях, предусмотренных законодательством;</li>
+                    <li>ограничить обработку персональных данных;</li>
+                    <li>возражать против обработки персональных данных;</li>
+                    <li>получать свои персональные данные в структурированном формате, если это применимо.</li>
+                </ul>
+                <p><b>10.</b> Пользователь вправе в любое время деактивировать свою учетную запись на Портале. После деактивации профиля общедоступная информация больше не отображается другим Пользователям, однако отдельные данные могут сохраняться в объеме, необходимом для соблюдения требований законодательства, разрешения споров, предотвращения мошенничества либо защиты законных интересов Портала.</p>
+                <p><b>11.</b> По вопросам обработки персональных данных либо реализации своих прав Пользователь может обратиться в Портал по адресу электронной почты: support@vena.lv</p>
+            </div>
+        </div>
+
+        <!-- Latvian Policy -->
+        <div class="info-lang-content" data-lang="lv" style="display:none">
+            <div class="terms-section">
+                <div class="terms-title">Privātuma politika</div>
+                <p><b>1.</b> Šī Privātuma politika nosaka, kā portāls Vena.lv apstrādā fizisko personu personas datus, izmantojot Portālu un tā sniegtos pakalpojumus. Privātuma politika ir piemērojama visām personām, kuras izmanto, ir izmantojušas vai vēlas izmantot Portāla pakalpojumus.</p>
+                <p><b>2.</b> Portāls var apstrādāt šādus personas datus:</p>
+                <ul>
+                    <li>vārdu un uzvārdu;</li>
+                    <li>e-pasta adresi;</li>
+                    <li>tālruņa numuru;</li>
+                    <li>lietotājvārdu;</li>
+                    <li>profila attēlu un profila aprakstu;</li>
+                    <li>autorizācijas informāciju;</li>
+                    <li>IP adresi;</li>
+                    <li>informāciju par izmantoto ierīci, pārlūkprogrammu un operētājsistēmu;</li>
+                    <li>informāciju par Portālā veiktajiem darījumiem;</li>
+                    <li>informāciju, kas nepieciešama sūtījuma pakalpojuma noformēšanai.</li>
+                </ul>
+                <p><b>3.</b> Personas dati tiek apstrādāti, lai:</p>
+                <ul>
+                    <li>nodrošinātu Portāla darbību un lietotāja profila uzturēšanu;</li>
+                    <li>sniegtu Portālā pieejamos pakalpojumus;</li>
+                    <li>noformētu un administrētu sūtījumu pakalpojumus;</li>
+                    <li>nodrošinātu saziņu ar lietotājiem;</li>
+                    <li>uzlabotu Portāla darbību un lietotāja pieredzi;</li>
+                    <li>novērstu krāpniecību un citas prettiesiskas darbības;</li>
+                    <li>izpildītu normatīvajos aktos noteiktos pienākumus.</li>
+                </ul>
+                <p><b>4.</b> Maksājumu apstrādi nodrošina maksājumu platforma MakeCommerce, tāpēc maksājumu izpildei nepieciešamos personas datus nodod platformas īpašniekam Maksekeskus AS.</p>
+                <p><b>5.</b> Ja Lietotājs izmanto sūtījuma pakalpojumu, Portāls nodod izvēlētajam kurjera pakalpojumu sniedzējam tikai tos personas datus, kas nepieciešami sūtījuma noformēšanai, piegādei un izsekošanai. Parasti tiek nodoti:</p>
+                <ul>
+                    <li>saņēmēja vārds;</li>
+                    <li>tālruņa numurs;</li>
+                    <li>e-pasta adrese (ja nepieciešams);</li>
+                    <li>piegādes adrese vai izvēlētais pakomāts.</li>
+                </ul>
+                <p>Šo datu nodošana ir obligāts priekšnosacījums sūtījuma pakalpojuma sniegšanai.</p>
+                <p><b>6.</b> Personas dati var tikt nodoti:</p>
+                <ul>
+                    <li>kurjera pakalpojumu sniedzējiem;</li>
+                    <li>maksājumu pakalpojumu sniedzējiem;</li>
+                    <li>valsts un pašvaldību iestādēm normatīvajos aktos paredzētajos gadījumos;</li>
+                    <li>citiem pakalpojumu sniedzējiem, kas nodrošina Portāla tehnisko darbību.</li>
+                </ul>
+                <p>Portāls nenodod personas datus trešajām personām mārketinga nolūkos bez lietotāja piekrišanas.</p>
+                <p><b>7.</b> Ja lietotājs ir devis piekrišanu, Portāls var sūtīt:</p>
+                <ul>
+                    <li>informatīvus paziņojumus;</li>
+                    <li>informāciju par Portāla jaunumiem;</li>
+                    <li>informāciju par aktivitātēm Portālā.</li>
+                </ul>
+                <p>Lietotājs var atteikties no šādu paziņojumu saņemšanas jebkurā laikā, mainot profila iestatījumus vai izmantojot atteikšanās saiti e-pastā.</p>
+                <p><b>8.</b> Portāls izmanto sīkdatnes, lai:</p>
+                <ul>
+                    <li>nodrošinātu Portāla darbību;</li>
+                    <li>saglabātu lietotāja iestatījumus;</li>
+                    <li>analizētu Portāla izmantošanu;</li>
+                    <li>uzlabotu lietotāja pieredzi.</li>
+                </ul>
+                <p>Lietotājs var mainīt sīkdatņu iestatījumus savā pārlūkprogrammā vai atsaukt iepriekš doto piekrišanu.</p>
+                <p><b>9.</b> Lietotājam ir tiesības:</p>
+                <ul>
+                    <li>saņemt informāciju par savu personas datu apstrādi;</li>
+                    <li>pieprasīt personas datu labošanu;</li>
+                    <li>pieprasīt personas datu dzēšanu normatīvajos aktos paredzētajos gadījumos;</li>
+                    <li>ierobežot datu apstrādi;</li>
+                    <li>iebilst pret datu apstrādi;</li>
+                    <li>saņemt savus personas datus strukturētā formātā, ja piemērojams.</li>
+                </ul>
+                <p><b>10.</b> Lietotājs jebkurā laikā var deaktivizēt savu Portāla profilu. Pēc profila deaktivizācijas publiski pieejamā informācija vairs nav redzama citiem lietotājiem, taču atsevišķi dati var tikt saglabāti tikpat, cik nepieciešams normatīvo aktu prasību izpildei, strīdu risināšanai, krāpšanās novēršanai vai Portāla leģitīmo interešu aizsardzībai.</p>
+                <p><b>11.</b> Jautājumu gadījumā par personas datu apstrādi vai savu tiesību īstenošanu lietotājs var sazināties ar Portālu, rakstot uz e-pasta adresi: support@vena.lv</p>
+            </div>
+        </div>
+
+        <!-- English Policy -->
+        <div class="info-lang-content" data-lang="en" style="display:none">
+            <div class="terms-section">
+                <div class="terms-title">Privacy Policy</div>
+                <p><b>1.</b> This Privacy Policy sets out how Vena.lv processes the personal data of natural persons in connection with the use of the Portal and the services provided through it. This Privacy Policy applies to all persons who use, have used, or intend to use the services of the Portal.</p>
+                <p><b>2.</b> The Portal may process the following categories of personal data:</p>
+                <ul>
+                    <li>first and last name;</li>
+                    <li>email address;</li>
+                    <li>telephone number;</li>
+                    <li>username;</li>
+                    <li>profile picture and profile description;</li>
+                    <li>authentication information;</li>
+                    <li>IP address;</li>
+                    <li>information about the device, browser, and operating system used;</li>
+                    <li>information relating to transactions carried out through the Portal;</li>
+                    <li>information required for arranging shipment services.</li>
+                </ul>
+                <p><b>3.</b> Personal data are processed for the following purposes:</p>
+                <ul>
+                    <li>to ensure the operation of the Portal and maintenance of user accounts;</li>
+                    <li>to provide services available on the Portal;</li>
+                    <li>to arrange and administer shipment services;</li>
+                    <li>to communicate with Users;</li>
+                    <li>to improve the operation of the Portal and user experience;</li>
+                    <li>to prevent fraud and other unlawful activities;</li>
+                    <li>to comply with legal and regulatory obligations.</li>
+                </ul>
+                <p><b>4.</b> Payment processing is carried out by the MakeCommerce payment platform. Accordingly, personal data required for processing payments are transferred to the platform operator, Maksekeskus AS.</p>
+                <p><b>5.</b> Where a User uses the shipment service, the Portal shall disclose to the selected courier service provider only such personal data as are necessary for arranging, delivering, and tracking the shipment. Such data may include:</p>
+                <ul>
+                    <li>recipient's full name;</li>
+                    <li>telephone number;</li>
+                    <li>email address (where required);</li>
+                    <li>delivery address or selected parcel locker.</li>
+                </ul>
+                <p>The transfer of these data is a prerequisite for the provision of the shipment service.</p>
+                <p><b>6.</b> Personal data may be disclosed to:</p>
+                <ul>
+                    <li>courier service providers;</li>
+                    <li>payment service providers;</li>
+                    <li>state and municipal authorities where required by applicable law;</li>
+                    <li>other service providers supporting the technical operation of the Portal.</li>
+                </ul>
+                <p>The Portal shall not disclose personal data to third parties for marketing purposes without the User's consent.</p>
+                <p><b>7.</b> Where the User has given their consent, the Portal may send:</p>
+                <ul>
+                    <li>informational notifications;</li>
+                    <li>news relating to the Portal;</li>
+                    <li>information about activities and events on the Portal.</li>
+                </ul>
+                <p>The User may withdraw consent to receiving such communications at any time through their profile settings or by using the unsubscribe link included in the relevant email.</p>
+                <p><b>8.</b> The Portal uses cookies for the following purposes:</p>
+                <ul>
+                    <li>ensuring the proper operation of the Portal;</li>
+                    <li>remembering User preferences;</li>
+                    <li>analysing the use of the Portal;</li>
+                    <li>improving the user experience.</li>
+                </ul>
+                <p>The User may modify cookie settings in their web browser or withdraw previously given consent at any time.</p>
+                <p><b>9.</b> The User has the right to:</p>
+                <ul>
+                    <li>request information concerning the processing of their personal data;</li>
+                    <li>request rectification of inaccurate personal data;</li>
+                    <li>request erasure of personal data where provided by applicable law;</li>
+                    <li>request restriction of processing;</li>
+                    <li>object to the processing of personal data;</li>
+                    <li>receive their personal data in a structured, commonly used, and machine-readable format, where applicable.</li>
+                </ul>
+                <p><b>10.</b> The User may deactivate their Portal profile at any time. Following deactivation, publicly available profile information shall no longer be visible to other Users. Certain data may nevertheless be retained to the extent necessary to comply with legal obligations, resolve disputes, prevent fraud, or protect the legitimate interests of the Portal.</p>
+                <p><b>11.</b> Any questions regarding the processing of personal data or the exercise of data protection rights may be addressed to the Portal by email at support@vena.lv.</p>
+            </div>
+        </div>
+    </div>
+</div>

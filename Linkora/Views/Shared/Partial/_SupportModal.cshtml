@@ -1,0 +1,54 @@
+﻿@page
+@model Linkora.Views.Shared.Partial._SupportModalModel
+@{
+}
+<div class="modal-overlay" id="supportOverlay" onclick="closeSupportModal()"></div>
+<div class="modal info-modal" id="supportModal">
+    <button class="modal-close" onclick="closeSupportModal()">✕</button>
+    <h2 class="info-modal-title" id="supportTitle" data-i18n="support_title">Technical Support</h2>
+    <div class="info-modal-lang-tabs">
+        <button class="info-lang-btn active" onclick="switchSupportLang('ru', this)">RU</button>
+        <button class="info-lang-btn" onclick="switchSupportLang('lv', this)">LV</button>
+        <button class="info-lang-btn" onclick="switchSupportLang('en', this)">EN</button>
+    </div>
+
+    <div class="info-modal-body">
+        <div class="info-lang-content" data-lang="ru">
+            <p>Техническое обслуживание и техническая поддержка этого сайта обеспечивается командой vena.lv. Не стесняйтесь, свяжитесь с нами, если Вы нашли ошибку.</p>
+        </div>
+        <div class="info-lang-content" data-lang="lv" style="display:none">
+            <p>Šīs vietnes tehnisko uzturēšanu un atbalstu nodrošina vena.lv komanda. Ja pamanāt kļūdu, lūdzu, sazinieties ar mums.</p>
+        </div>
+        <div class="info-lang-content" data-lang="en" style="display:none">
+            <p>Technical maintenance and support for this website are provided by the vena.lv team. Please don't hesitate to contact us if you find an error or issue.</p>
+        </div>
+
+        <form id="supportForm" onsubmit="submitSupportForm(event)" style="margin-top:20px;">
+            <input type="hidden" id="supportAfToken" />
+            <div class="auth-field">
+                <input type="text" class="auth-input" id="supportName"
+                       data-i18n="support_name_ph"
+                       data-i18n-placeholder="support_name_ph" required />
+            </div>
+            <div class="auth-field">
+                <input type="email" class="auth-input" id="supportEmail"
+                       data-i18n="support_email_ph"
+                       data-i18n-placeholder="support_email_ph" required />
+            </div>
+            <div class="auth-field">
+                <input type="tel" class="auth-input" id="supportPhone"
+                       data-i18n="support_phone_ph"
+                       data-i18n-placeholder="support_phone_ph" />
+            </div>
+            <div class="auth-field">
+                <textarea class="auth-input" id="supportMessage" rows="4"
+                          placeholder="Describe the error"
+                          required
+                          style="resize:vertical;"></textarea>
+            </div>
+            <div id="supportError" class="auth-error" style="display:none"></div>
+            <div id="supportSuccess" style="display:none;color:green;margin-bottom:10px;"></div>
+            <button type="submit" class="auth-submit" data-i18n="support_send_btn">Send</button>
+        </form>
+    </div>
+</div>
