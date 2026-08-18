@@ -1,0 +1,825 @@
+﻿function getCurrentLanguage() {
+    return localStorage.getItem('lang') || 'en';
+}
+
+/* ---------- Generic info-modal language switching ---------- */
+
+const MODAL_TITLES = {
+    faqModal: { en: 'FAQ', lv: 'Bieži uzdotie jautājumi', ru: 'FAQ' },
+    rulesModal: { en: 'Terms of use', lv: 'Portāla lietošanas noteikumi', ru: 'Правила пользования порталом' },
+    policyModal: { en: 'Privacy Policy', lv: 'Privātuma politika', ru: 'Политика конфиденциальности' },
+};
+
+function switchInfoLang(lang, btn) {
+    const parent = btn.closest('.info-modal');
+    parent.querySelectorAll('.info-lang-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    parent.querySelectorAll('.info-lang-content').forEach(el => {
+        el.style.display = el.dataset.lang === lang ? '' : 'none';
+    });
+
+    const titles = MODAL_TITLES[parent.id];
+    if (titles && titles[lang]) {
+        const titleEl = parent.querySelector('.info-modal-title');
+        if (titleEl) {
+            titleEl.removeAttribute('data-i18n');
+            titleEl.textContent = titles[lang];
+        }
+    }
+}
+
+function openInfoModalWithLang(overlayId, modalId) {
+    document.getElementById(overlayId)?.classList.add('modal-open');
+    document.getElementById(modalId)?.classList.add('modal-open');
+    document.body.style.overflow = 'hidden';
+
+    const lang = getCurrentLanguage();
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    const buttons = modal.querySelectorAll('.info-lang-btn');
+    for (const btn of buttons) {
+        const btnLang = btn.textContent.trim().toUpperCase();
+        if ((lang === 'ru' && btnLang === 'RU') ||
+            (lang === 'lv' && btnLang === 'LV') ||
+            (lang === 'en' && btnLang === 'EN')) {
+            switchInfoLang(lang, btn);
+            break;
+        }
+    }
+}
+
+function closeInfoModal(overlayId, modalId) {
+    document.getElementById(overlayId)?.classList.remove('modal-open');
+    document.getElementById(modalId)?.classList.remove('modal-open');
+    document.body.style.overflow = '';
+}
+
+/* ---------- FAQ ---------- */
+
+function openFaqModal() { openInfoModalWithLang('faqOverlay', 'faqModal'); }
+function closeFaqModal() { closeInfoModal('faqOverlay', 'faqModal'); }
+
+function toggleFaq(el) {
+    el.classList.toggle('open');
+    const answer = el.nextElementSibling;
+    answer.classList.toggle('open');
+}
+
+/* ---------- Rules ---------- */
+
+function openRulesModal() { openInfoModalWithLang('rulesOverlay', 'rulesModal'); }
+function closeRulesModal() { closeInfoModal('rulesOverlay', 'rulesModal'); }
+
+/* ---------- Policy ---------- */
+
+function openPolicyModal() { openInfoModalWithLang('policyOverlay', 'policyModal'); }
+function closePolicyModal() { closeInfoModal('policyOverlay', 'policyModal'); }
+
+/* ---------- Contacts ---------- */
+
+const CONTACTS_TITLES = { en: 'Contacts', lv: 'Kontakti', ru: 'Контакты' };
+
+function switchContactsLang(lang, btn) {
+    const modal = document.getElementById('contactsModal');
+    modal.querySelectorAll('.info-lang-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    modal.querySelectorAll('.info-lang-content').forEach(el => {
+        el.style.display = el.dataset.lang === lang ? '' : 'none';
+    });
+
+    const titleEl = modal.querySelector('.info-modal-title');
+    if (titleEl) {
+        titleEl.removeAttribute('data-i18n');
+        titleEl.textContent = CONTACTS_TITLES[lang];
+    }
+}
+
+function openContactsModal() {
+    document.getElementById('contactsOverlay').classList.add('modal-open');
+    document.getElementById('contactsModal').classList.add('modal-open');
+    document.body.style.overflow = 'hidden';
+
+    const lang = getCurrentLanguage();
+    const modal = document.getElementById('contactsModal');
+    if (modal) {
+        const buttons = modal.querySelectorAll('.info-lang-btn');
+        for (const btn of buttons) {
+            const btnLang = btn.textContent.trim().toUpperCase();
+            if ((lang === 'ru' && btnLang === 'RU') ||
+                (lang === 'lv' && btnLang === 'LV') ||
+                (lang === 'en' && btnLang === 'EN')) {
+                switchContactsLang(lang, btn);
+                break;
+            }
+        }
+    }
+}
+
+function closeContactsModal() { closeInfoModal('contactsOverlay', 'contactsModal'); }
+
+/* ---------- Support ---------- */
+
+let currentSupportLang = 'en';
+
+function openSupportModal() {
+    document.getElementById('supportAfToken').value = document.getElementById('afToken').value;
+    document.getElementById('supportError').style.display = 'none';
+    document.getElementById('supportSuccess').style.display = 'none';
+    document.getElementById('supportForm').reset();
+
+    document.getElementById('supportOverlay').classList.add('modal-open');
+    document.getElementById('supportModal').classList.add('modal-open');
+    document.body.style.overflow = 'hidden';
+
+    const lang = getCurrentLanguage();
+    const modal = document.getElementById('supportModal');
+    const buttons = modal.querySelectorAll('.info-lang-btn');
+    let activeBtn = null;
+    for (const btn of buttons) {
+        const btnLang = btn.textContent.trim().toUpperCase();
+        if ((lang === 'ru' && btnLang === 'RU') ||
+            (lang === 'lv' && btnLang === 'LV') ||
+            (lang === 'en' && btnLang === 'EN')) {
+            activeBtn = btn;
+            break;
+        }
+    }
+    switchSupportLang(lang, activeBtn || buttons[buttons.length - 1]);
+}
+
+function closeSupportModal() { closeInfoModal('supportOverlay', 'supportModal'); }
+
+function switchSupportLang(lang, btn) {
+    currentSupportLang = lang;
+
+    const modal = document.getElementById('supportModal');
+    modal.querySelectorAll('.info-lang-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    modal.querySelectorAll('.info-lang-content').forEach(el => {
+        el.style.display = el.dataset.lang === lang ? '' : 'none';
+    });
+
+    const translations = {
+        ru: {
+            support_name_ph: 'Ваше имя',
+            support_email_ph: 'Email',
+            support_phone_ph: 'Телефон (необязательно)',
+            support_message_ph: 'Опишите ошибку',
+            support_send_btn: 'Отправить'
+        },
+        lv: {
+            support_name_ph: 'Jūsu vārds',
+            support_email_ph: 'E-pasts',
+            support_phone_ph: 'Tālrunis (nav obligāti)',
+            support_message_ph: 'Aprakstiet kļūdu',
+            support_send_btn: 'Sūtīt'
+        },
+        en: {
+            support_name_ph: 'Your name',
+            support_email_ph: 'Email',
+            support_phone_ph: 'Phone',
+            support_message_ph: 'Describe the error',
+            support_send_btn: 'Send'
+        }
+    };
+
+    const dict = translations[lang] || translations.en;
+
+    const nameEl = document.getElementById('supportName');
+    const emailEl = document.getElementById('supportEmail');
+    const phoneEl = document.getElementById('supportPhone');
+    const messageEl = document.getElementById('supportMessage');
+    if (nameEl) nameEl.placeholder = dict.support_name_ph;
+    if (emailEl) emailEl.placeholder = dict.support_email_ph;
+    if (phoneEl) phoneEl.placeholder = dict.support_phone_ph;
+    if (messageEl) messageEl.placeholder = dict.support_message_ph;
+
+    const submitBtn = modal.querySelector('.auth-submit');
+    if (submitBtn) submitBtn.textContent = dict.support_send_btn;
+
+    const supportTitles = { en: 'Technical Support', lv: 'Tehniskā palīdzība', ru: 'Техническая поддержка' };
+    const supportTitleEl = document.getElementById('supportTitle');
+    if (supportTitleEl) {
+        supportTitleEl.removeAttribute('data-i18n');
+        supportTitleEl.textContent = supportTitles[lang];
+    }
+}
+
+async function submitSupportForm(event) {
+    event.preventDefault();
+    const errorEl = document.getElementById('supportError');
+    const successEl = document.getElementById('supportSuccess');
+    errorEl.style.display = 'none';
+    successEl.style.display = 'none';
+
+    const payload = {
+        name: document.getElementById('supportName').value.trim(),
+        email: document.getElementById('supportEmail').value.trim(),
+        phone: document.getElementById('supportPhone').value.trim(),
+        message: document.getElementById('supportMessage').value.trim()
+    };
+
+    if (!payload.name || !payload.email || !payload.message) {
+        errorEl.textContent = 'Please fill all required fields (name, email, message).';
+        errorEl.style.display = 'block';
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/support/contact', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.getElementById('supportAfToken').value
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            const text = await res.text();
+            throw new Error(text || 'Request failed');
+        }
+
+        successEl.textContent = 'Thank you! Your message has been sent.';
+        successEl.style.display = 'block';
+        document.getElementById('supportForm').reset();
+    } catch (err) {
+        errorEl.textContent = err.message || 'An error occurred. Please try again later.';
+        errorEl.style.display = 'block';
+    }
+}
+
+/* ---------- Generic notification (OK) modal ---------- */
+
+function showModal(messageKeyOrText) {
+    const overlay = document.getElementById('notificationOverlay');
+    const modal = document.getElementById('notificationModal');
+    const messageEl = document.getElementById('notifMessage');
+    const titleEl = document.getElementById('notifTitle');
+
+    if (!overlay || !modal || !messageEl) return;
+
+    const text = (typeof t === 'function') ? (t(messageKeyOrText) || messageKeyOrText) : messageKeyOrText;
+    messageEl.textContent = text;
+
+    if (titleEl) titleEl.style.display = 'none';
+
+    overlay.style.display = 'block';
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeNotificationModal(event) {
+    if (event && event.target && event.target !== event.currentTarget) return;
+
+    const overlay = document.getElementById('notificationOverlay');
+    const modal = document.getElementById('notificationModal');
+
+    if (overlay) overlay.style.display = 'none';
+    if (modal) modal.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const okBtn = document.getElementById('notifOkBtn');
+    if (okBtn) {
+        okBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            closeNotificationModal();
+        });
+    }
+});
+
+/* ---------- Auth modal ---------- */
+
+function openAuthModal(tab) {
+    switchTab(tab || 'login');
+    document.getElementById('authOverlay').classList.add('modal-open');
+    document.getElementById('authModal').classList.add('modal-open');
+    document.body.style.overflow = 'hidden';
+    applyTranslations();
+}
+
+function closeAuthModal() {
+    document.getElementById('authOverlay').classList.remove('modal-open');
+    document.getElementById('authModal').classList.remove('modal-open');
+    document.body.style.overflow = '';
+}
+
+function switchTab(tab) {
+    document.getElementById('tabLogin').style.display = tab === 'login' ? 'block' : 'none';
+    document.getElementById('tabRegister').style.display = tab === 'register' ? 'block' : 'none';
+    document.querySelectorAll('.auth-tab').forEach((el, i) => {
+        el.classList.toggle('auth-tab-active', (tab === 'login' && i === 0) || (tab === 'register' && i === 1));
+    });
+}
+
+function submitLogin() {
+    document.getElementById('fLoginUsername').value = document.getElementById('loginUsername').value;
+    document.getElementById('fLoginPassword').value = document.getElementById('loginPassword').value;
+    document.getElementById('fLoginReturn').value = window.location.pathname;
+    document.getElementById('loginForm').submit();
+}
+
+function submitRegister() {
+    if (!document.getElementById('chkTerms').checked) {
+        alert(t('auth_terms'));
+        return;
+    }
+    const phoneValue = document.getElementById('regPhone')?.value.trim() ?? '';
+    if (!phoneValue) {
+        alert('Phone number is required');
+        return;
+    }
+    document.getElementById('fRegUsername').value = document.getElementById('regUsername').value;
+    document.getElementById('fRegEmail').value = document.getElementById('regEmail').value;
+    document.getElementById('fRegPassword').value = document.getElementById('regPassword').value;
+    document.getElementById('fRegConfirm').value = document.getElementById('regConfirm').value;
+    document.getElementById('fRegPhone').value = phoneValue;
+    document.getElementById('registerForm').submit();
+}
+
+function togglePass(id, btn) {
+    const input = document.getElementById(id);
+    input.type = input.type === 'password' ? 'text' : 'password';
+    btn.style.opacity = input.type === 'text' ? '0.4' : '1';
+}
+
+function checkStrength(input) {
+    const v = input.value;
+    const set = (id, ok) => {
+        const el = document.getElementById(id);
+        if (el) el.classList.toggle('auth-rule-ok', ok);
+    };
+    set('rule-len', v.length >= 8);
+    set('rule-upper', /[A-Z]/.test(v));
+    set('rule-lower', /[a-z]/.test(v));
+    set('rule-digit', /[0-9]/.test(v));
+}
+
+function updateRegisterButton() {
+    const username = document.getElementById('regUsername');
+    const email = document.getElementById('regEmail');
+    const phone = document.getElementById('regPhone');
+    const password = document.getElementById('regPassword');
+    const confirm = document.getElementById('regConfirm');
+    const checkbox = document.getElementById('chkTerms');
+    const button = document.getElementById('registerBtn');
+    const emailError = document.getElementById('emailError');
+
+    if (!button) return;
+
+    const emailRegex = /^[^\s\x40]+\x40[^\s\x40]+\.[^\s\x40]+$/;
+    const isEmailValid = emailRegex.test(email.value.trim());
+
+    if (emailError) {
+        emailError.style.display = (email.value.trim() !== '' && !isEmailValid) ? 'block' : 'none';
+    }
+
+    const allFilled =
+        username.value.trim() !== '' &&
+        email.value.trim() !== '' &&
+        phone.value.trim() !== '' &&
+        isEmailValid &&
+        password.value.trim() !== '' &&
+        confirm.value.trim() !== '' &&
+        checkbox.checked;
+
+    button.disabled = !allFilled;
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    updateRegisterButton();
+
+    ['regUsername', 'regEmail', 'regPhone', 'regPassword', 'regConfirm'].forEach(id => {
+        document.getElementById(id)?.addEventListener('input', updateRegisterButton);
+    });
+
+    document.getElementById('chkTerms')?.addEventListener('change', updateRegisterButton);
+});
+
+/* ---------- User dropdown ---------- */
+
+function toggleUserMenu() {
+    document.getElementById('userDropdown')?.classList.toggle('open');
+}
+
+document.addEventListener('click', e => {
+    if (!e.target.closest('.user-menu-wrap')) {
+        document.getElementById('userDropdown')?.classList.remove('open');
+    }
+});
+
+/* ---------- Region modal ---------- */
+
+let regionCities = [];
+let selectedRegion = null;
+
+async function openRegionModal() {
+    if (!regionCities.length) {
+        const res = await fetch('/Product/Cities');
+        regionCities = await res.json();
+    }
+    renderRegions(regionCities);
+    document.getElementById('regionOverlay').classList.add('modal-open');
+    document.getElementById('regionModal').classList.add('modal-open');
+    document.body.style.overflow = 'hidden';
+    applyTranslations();
+}
+
+function closeRegionModal() {
+    document.getElementById('regionOverlay').classList.remove('modal-open');
+    document.getElementById('regionModal').classList.remove('modal-open');
+    document.body.style.overflow = '';
+}
+
+function renderRegions(cities) {
+    const container = document.getElementById('regionPills');
+    container.innerHTML = '';
+    const all = document.createElement('button');
+    all.className = 'region-pill' + (!selectedRegion ? ' region-pill-active' : '');
+    all.textContent = t('all_regions');
+    all.onclick = () => selectRegion(null, t('all_regions'));
+    container.appendChild(all);
+    cities.forEach(city => {
+        const btn = document.createElement('button');
+        btn.className = 'region-pill' + (selectedRegion?.id === city.id ? ' region-pill-active' : '');
+        btn.textContent = city.name;
+        btn.onclick = () => selectRegion(city, city.name);
+        container.appendChild(btn);
+    });
+}
+
+function filterRegions(val) {
+    const filtered = val
+        ? regionCities.filter(c => c.name.toLowerCase().includes(val.toLowerCase()))
+        : regionCities;
+    renderRegions(filtered);
+}
+
+function selectRegion(city, label) {
+    selectedRegion = city;
+    const regionsBtn = document.querySelector('.regions-btn');
+    if (regionsBtn) {
+        regionsBtn.innerHTML = `<img src="/img/marker_for_adv.svg" alt="" class="regions-icon" />${label}`;
+    }
+    const regionBtnLabel = document.getElementById('regionBtnLabel');
+    if (regionBtnLabel) regionBtnLabel.textContent = label;
+    closeRegionModal();
+    const path = window.location.pathname;
+    if (path.startsWith('/Category/Index') || path.startsWith('/Category')) {
+        const url = new URL(window.location.href);
+        if (city) url.searchParams.set('city', city.name);
+        else url.searchParams.delete('city');
+        window.location.href = url.toString();
+    }
+}
+
+/* ---------- Favourites / cart toggle ---------- */
+
+async function toggleFav(btn, productId, can) {
+    const res = await fetch(`/Favourite/Toggle?productId=${productId}&can=${can}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
+        },
+        body: '{}'
+    });
+    if (res.status === 401) {
+        openAuthModal('login');
+        return;
+    }
+    const data = await res.json();
+    btn.classList.toggle('product-card-action-active', data.active);
+    if (window.location.pathname.startsWith('/Favourite')) { location.reload(); }
+    if (res.ok && typeof updateFavAndCartBadges === 'function') { await updateFavAndCartBadges(); }
+}
+
+/* ---------- Seller modal ---------- */
+
+function openSellerModal(name, avatar, phone, isCompany, email, date, sellerId) {
+    const avatarEl = document.getElementById('smAvatar');
+    avatarEl.innerHTML = avatar
+        ? `<img src="${avatar}" onerror="this.src='/img/no-photo.svg'" />`
+        : `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+
+    document.getElementById('smName').textContent = name || t('unknown_seller');
+    const badge = document.getElementById('smBadge');
+    badge.innerHTML = isCompany ? `<span class="seller-badge">${t('company_badge')}</span>` : '';
+
+    const phoneRow = document.getElementById('smPhoneRow');
+    const phoneEl = document.getElementById('smPhone');
+    if (phone) { phoneEl.textContent = phone; phoneRow.style.display = 'flex'; }
+    else { phoneRow.style.display = 'none'; }
+
+    const emailRow = document.getElementById('smEmailRow');
+    const emailEl = document.getElementById('smEmail');
+    if (email) { emailEl.textContent = email; emailRow.style.display = 'flex'; }
+    else { emailRow.style.display = 'none'; }
+
+    const dateRow = document.getElementById('smDateRow');
+    const dateEl = document.getElementById('smDate');
+    if (date) { dateEl.textContent = t('seller_member_since') + ' ' + date; dateRow.style.display = 'flex'; }
+    else { dateRow.style.display = 'none'; }
+
+    const link = document.getElementById('smLink');
+    link.textContent = t('seller_other_listings');
+    if (sellerId) { link.href = '/Seller/Index/' + sellerId; link.style.display = ''; }
+    else { link.style.display = 'none'; }
+
+    const ratingEl = document.getElementById('smRating');
+    ratingEl.style.display = 'none';
+    ratingEl.innerHTML = '';
+    if (sellerId) {
+        fetch(`/Seller/Rating?id=${sellerId}`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.count) return;
+                const avg = data.avg;
+                ratingEl.innerHTML = [1, 2, 3, 4, 5].map(i => {
+                    const fill = i <= Math.floor(avg) ? '#f5a623' : 'none';
+                    const partial = i === Math.ceil(avg) && avg % 1 > 0;
+                    if (partial) {
+                        const pct = Math.round((avg % 1) * 100);
+                        return `<svg width="18" height="18" viewBox="0 0 24 24"><defs><linearGradient id="sg${i}"><stop offset="${pct}%" stop-color="#f5a623"/><stop offset="${pct}%" stop-color="none"/></linearGradient></defs><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="url(#sg${i})" stroke="#f5a623" stroke-width="2"/></svg>`;
+                    }
+                    return `<svg width="18" height="18" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="${fill}" stroke="#f5a623" stroke-width="2"/></svg>`;
+                }).join('') + `<span class="sm-rating-text">${avg.toFixed(1)} · ${data.count}</span>`;
+                ratingEl.style.display = 'flex';
+            })
+            .catch(() => { });
+    }
+
+    document.getElementById('sellerOverlay').classList.add('open');
+    document.getElementById('sellerModal').classList.add('open');
+}
+
+function closeSellerModal() {
+    document.getElementById('sellerOverlay').classList.remove('open');
+    document.getElementById('sellerModal').classList.remove('open');
+}
+
+/* ---------- Settings modal ---------- */
+
+function openSettingsModal() {
+    if (!document.getElementById('settingsOverlay')) return;
+    document.getElementById('userDropdown')?.classList.remove('open');
+    if (typeof applySettingsUI === 'function') applySettingsUI();
+    document.getElementById('settingsOverlay').classList.add('modal-open');
+    document.getElementById('settingsModal').classList.add('modal-open');
+    applyTranslations();
+}
+
+function closeSettingsModal() {
+    if (!document.getElementById('settingsOverlay')) return;
+    document.getElementById('settingsOverlay').classList.remove('modal-open');
+    document.getElementById('settingsModal').classList.remove('modal-open');
+}
+
+function applySettingsUI() {
+    const dark = localStorage.getItem('theme') === 'dark';
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) themeToggle.classList.toggle('settings-toggle-on', dark);
+}
+
+function toggleTheme() {
+    const isDark = document.documentElement.classList.toggle('dark-theme');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    const themeToggleBtn = document.getElementById('themeToggle');
+    if (themeToggleBtn) themeToggleBtn.classList.toggle('settings-toggle-on', isDark);
+
+    const logo = document.getElementById('siteLogo');
+    if (logo) logo.src = isDark ? '/img/DLogo.svg' : '/img/Logo.svg';
+}
+
+/* ---------- Reviews modal ---------- */
+
+async function openMyReviewsModal() {
+    if (!document.getElementById('myReviewsOverlay')) return;
+    document.getElementById('userDropdown')?.classList.remove('open');
+    document.getElementById('myReviewsOverlay').classList.add('open');
+    document.getElementById('myReviewsModal').classList.add('open');
+    applyTranslations();
+    await loadReviewTab('about');
+}
+
+function closeMyReviewsModal() {
+    if (!document.getElementById('myReviewsOverlay')) return;
+    document.getElementById('myReviewsOverlay').classList.remove('open');
+    document.getElementById('myReviewsModal').classList.remove('open');
+}
+
+async function switchReviewTab(tab) {
+    const tabAbout = document.getElementById('tabAboutMe');
+    const tabFrom = document.getElementById('tabFromMe');
+    if (tabAbout) tabAbout.classList.toggle('reviews-tab-active', tab === 'about');
+    if (tabFrom) tabFrom.classList.toggle('reviews-tab-active', tab === 'from');
+    await loadReviewTab(tab);
+}
+
+async function loadReviewTab(tab) {
+    const list = document.getElementById('myReviewsList');
+    if (!list) return;
+    list.innerHTML = `<div class="reviews-empty">${t('loading_text')}</div>`;
+    try {
+        const res = await fetch(`/Reviews/My?tab=${tab}`);
+        const data = await res.json();
+        if (!data.length) {
+            list.innerHTML = `<div class="reviews-empty">${t('no_reviews_yet')}</div>`;
+            return;
+        }
+        list.innerHTML = data.map(r => `
+            <div class="review-item">
+                <div class="review-author">
+                    <img src="${r.avatarPath || '/img/no-photo.svg'}"
+                         class="review-author-avatar"
+                         onerror="this.src='/img/no-photo.svg'" />
+                    <div>
+                        <a class="review-author-name" href="/Seller/Index/${r.userId}"
+                           onclick="closeMyReviewsModal()">
+                            ${r.userName}
+                        </a>
+                        <div class="review-date">${r.createdAt}</div>
+                    </div>
+                </div>
+                <div class="review-stars">
+                    ${[1, 2, 3, 4, 5].map(i =>
+            `<svg width="14" height="14" viewBox="0 0 24 24"
+                              fill="${i <= r.rating ? '#f5a623' : 'none'}"
+                              stroke="#f5a623" stroke-width="2">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                         </svg>`
+        ).join('')}
+                </div>
+                ${r.comment ? `<div class="review-comment">${r.comment}</div>` : ''}
+            </div>`
+        ).join('');
+    } catch {
+        list.innerHTML = `<div class="reviews-empty">${t('failed_load')}</div>`;
+    }
+}
+
+/* ---------- Deal review modal ---------- */
+
+let dealReviewTargetId = null;
+let dealReviewProductId = null;
+let dealReviewRating = 0;
+
+function openDealReviewModal(targetUserId, productId) {
+    dealReviewTargetId = targetUserId;
+    dealReviewProductId = productId;
+    dealReviewRating = 0;
+    document.getElementById('dealReviewComment').value = '';
+    document.querySelectorAll('#dealReviewStars .star').forEach(s => s.setAttribute('fill', 'none'));
+    document.getElementById('dealReviewOverlay').classList.add('open');
+    document.getElementById('dealReviewModal').classList.add('open');
+    applyTranslations();
+}
+
+function closeDealReviewModal() {
+    document.getElementById('dealReviewOverlay').classList.remove('open');
+    document.getElementById('dealReviewModal').classList.remove('open');
+}
+
+function rateDealUser(rating) {
+    dealReviewRating = rating;
+    document.querySelectorAll('#dealReviewStars .star').forEach((s, idx) => {
+        s.setAttribute('fill', idx < rating ? '#f5a623' : 'none');
+    });
+}
+
+async function submitDealReview() {
+    if (!dealReviewRating) return;
+    const comment = document.getElementById('dealReviewComment').value.trim();
+    const res = await fetch('/Reviews/Create', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
+        },
+        body: JSON.stringify({
+            targetUserId: dealReviewTargetId,
+            productId: dealReviewProductId,
+            rating: dealReviewRating,
+            comment: comment || null
+        })
+    });
+    if (res.ok) closeDealReviewModal();
+}
+
+/* ---------- Notification preferences modal ---------- */
+
+async function openNotifPrefsModal() {
+    closeSettingsModal();
+    const res = await fetch('/Notifications/Preferences');
+    if (res.ok) {
+        const p = await res.json();
+        document.getElementById('prefDeals').checked = p.deals;
+        document.getElementById('prefReviews').checked = p.reviews;
+        document.getElementById('prefModeration').checked = p.moderation;
+        document.getElementById('prefAccount').checked = p.account;
+        document.getElementById('prefFavourites').checked = p.favourites;
+        document.getElementById('prefNewListings').checked = p.newListings;
+    }
+    document.getElementById('notifPrefsOverlay').classList.add('modal-open');
+    document.getElementById('notifPrefsModal').classList.add('modal-open');
+    applyTranslations();
+}
+
+function closeNotifPrefsModal() {
+    document.getElementById('notifPrefsOverlay').classList.remove('modal-open');
+    document.getElementById('notifPrefsModal').classList.remove('modal-open');
+}
+
+async function saveNotifPrefs() {
+    const payload = {
+        deals: document.getElementById('prefDeals').checked,
+        reviews: document.getElementById('prefReviews').checked,
+        moderation: document.getElementById('prefModeration').checked,
+        account: document.getElementById('prefAccount').checked,
+        favourites: document.getElementById('prefFavourites').checked,
+        newListings: document.getElementById('prefNewListings').checked,
+    };
+    const res = await fetch('/Notifications/SavePreferences', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
+        },
+        body: JSON.stringify(payload)
+    });
+    if (res.ok) closeNotifPrefsModal();
+}
+
+/* ---------- Facebook login ---------- */
+
+window.fbAsyncInit = function () {
+    FB.init({
+        appId: '837576922674717',
+        cookie: true,
+        xfbml: true,
+        version: 'v25.0'
+    });
+    FB.AppEvents.logPageView();
+};
+
+(function (d, s, id) {
+    let js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s);
+    js.id = id;
+    js.src = "https://connect.facebook.net/en_US/sdk.js";
+    fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));
+
+function loginWithFacebook(returnUrl) {
+    FB.login(function (response) {
+        if (response.authResponse) {
+            const accessToken = response.authResponse.accessToken;
+            fetch('/Account/FacebookLogin', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': document.getElementById('afToken')?.value || ''
+                },
+                body: JSON.stringify({
+                    accessToken: accessToken,
+                    returnUrl: returnUrl || window.location.pathname
+                })
+            })
+                .then(res => {
+                    if (res.redirected) {
+                        window.location.href = res.url;
+                    } else if (res.ok) {
+                        window.location.reload();
+                    } else {
+                        return res.text().then(err => { throw new Error(err) });
+                    }
+                })
+                .catch(err => {
+                    console.error('Facebook login failed', err);
+                    alert('Ошибка входа через Facebook. Попробуйте позже.');
+                });
+        } else {
+            console.log('Пользователь отменил вход');
+        }
+    }, { scope: 'public_profile,email' });
+}
+
+/* ---------- Scroll-to-top button ---------- */
+
+window.addEventListener("load", function () {
+    const scrollBtn = document.getElementById("scrollTopBtn");
+    if (!scrollBtn) return;
+
+    function toggleBtn() {
+        scrollBtn.classList.toggle("show", document.documentElement.scrollTop > 300);
+    }
+
+    window.addEventListener("scroll", toggleBtn);
+    scrollBtn.addEventListener("click", function () {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    toggleBtn();
+});

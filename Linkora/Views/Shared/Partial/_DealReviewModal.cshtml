@@ -1,0 +1,20 @@
+﻿<div class="modal-overlay" id="dealReviewOverlay" onclick="closeDealReviewModal()"></div>
+<div class="modal" id="dealReviewModal" style="max-width:400px">
+    <button class="modal-close" onclick="closeDealReviewModal()">✕</button>
+    <h2 class="auth-title" data-i18n="how_rate">How would you rate this user?</h2>
+    <div class="review-stars" id="dealReviewStars">
+        @for (int i = 1; i <= 5; i++)
+        {
+            <svg class="star" data-rating="@i" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="#f5a623" stroke-width="2" onclick="rateDealUser(@i)">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+        }
+    </div>
+    <textarea class="review-comment" id="dealReviewComment" placeholder="Optional comment"
+              rows="2" data-i18n-placeholder="optional_comment"></textarea>
+    <button class="review-submit" id="dealReviewSubmitBtn"
+            onclick="submitDealReview()" data-i18n="submit_review_btn">
+        Submit review
+    </button>
+</div>

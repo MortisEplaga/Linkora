@@ -1,0 +1,133 @@
+﻿<div class="modal-overlay" id="authOverlay" onclick="closeAuthModal()"></div>
+<div class="modal" id="authModal">
+    <button class="modal-close" onclick="closeAuthModal()">✕</button>
+    <div class="auth-tabs">
+        <button class="auth-tab auth-tab-active" onclick="switchTab('login')" data-i18n="auth_sign_in">Sign in</button>
+        <button class="auth-tab" onclick="switchTab('register')" data-i18n="auth_register">Register</button>
+    </div>
+
+    <div id="authError" class="auth-error" style="display:none"></div>
+
+    <!-- Login -->
+    <div id="tabLogin">
+        <div class="auth-socials">
+            <a class="auth-social auth-social-google" href="/Account/GoogleLogin?returnUrl=@Context.Request.Path"
+               title="Sign in with Google">
+                <svg width="18" height="18" viewBox="0 0 48 48">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+                    <path fill="none" d="M0 0h48v48H0z" />
+                </svg>
+            </a>
+            <a class="auth-social auth-social-facebook" href="javascript:void(0);"
+               onclick="loginWithFacebook('@Context.Request.Query["returnUrl"]')"
+               title="Sign in with Facebook">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877f2">
+                    <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879v-6.99h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.99C18.343 21.128 22 16.991 22 12z" />
+                </svg>
+            </a>
+        </div>
+        <div class="auth-divider"><span data-i18n="auth_or">or</span></div>
+        <div class="auth-field">
+            <input type="text" class="auth-input" id="loginUsername"
+                   placeholder="Username or email"
+                   data-i18n-placeholder="auth_username_ph" />
+        </div>
+        <div class="auth-field auth-field-password">
+            <input type="password" class="auth-input" id="loginPassword"
+                   placeholder="Password"
+                   data-i18n-placeholder="auth_password_ph" />
+            <button type="button" class="auth-eye" onclick="togglePass('loginPassword',this)">👁</button>
+        </div>
+        <a class="auth-forgot" href="/Account/ForgotPassword" data-i18n="auth_forgot">Forgot password?</a>
+        <button class="auth-submit" onclick="submitLogin()" data-i18n="auth_submit_login">Sign in</button>
+    </div>
+
+    <!-- Register -->
+    <div id="tabRegister" style="display:none">
+        <div class="auth-socials">
+            <a class="auth-social auth-social-google" href="/Account/GoogleLogin"
+               title="Sign up with Google">
+                <svg width="18" height="18" viewBox="0 0 48 48">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+                    <path fill="none" d="M0 0h48v48H0z" />
+                </svg>
+            </a>
+        </div>
+        <div class="auth-divider"><span data-i18n="auth_or">or</span></div>
+        <div class="auth-type-row">
+            <label class="auth-type-option">
+                <input type="radio" name="accType" value="private" checked />
+                <span class="auth-type-circle"></span>
+                <span data-i18n="auth_private">Private</span>
+            </label>
+            <label class="auth-type-option">
+                <input type="radio" name="accType" value="business" />
+                <span class="auth-type-circle"></span>
+                <span data-i18n="auth_business">Business</span>
+            </label>
+        </div>
+        <div class="auth-type-hint" data-i18n="auth_type_hint">You won't be able to change this later.</div>
+        <div class="auth-field">
+            <input type="text" class="auth-input" id="regUsername" placeholder="Username" />
+        </div>
+        <div class="auth-field">
+            <input type="email" id="regEmail" name="email" class="auth-input" placeholder="Email" />
+            <div id="emailError" data-i18n="auth_email_invalid" style="color: red; display: none; font-size: 0.85em; margin-top: 5px;">
+                Неверный формат email (ожидается: xxxxx@domen.dm)
+            </div>
+        </div>
+        <div class="auth-field">
+            <input type="tel" class="auth-input" id="regPhone"
+                   placeholder="Phone"
+                   data-i18n-placeholder="auth_phone_ph" />
+        </div>
+        <div class="auth-field auth-field-password">
+            <input type="password" class="auth-input" id="regPassword"
+                   placeholder="Password"
+                   data-i18n-placeholder="auth_password_ph"
+                   oninput="checkStrength(this)" />
+            <button type="button" class="auth-eye" onclick="togglePass('regPassword',this)">👁</button>
+        </div>
+        <ul class="auth-rules">
+            <li id="rule-len" data-i18n="auth_rule_len">At least 8 characters</li>
+            <li id="rule-upper" data-i18n="auth_rule_upper">Uppercase letter</li>
+            <li id="rule-lower" data-i18n="auth_rule_lower">Lowercase letter</li>
+            <li id="rule-digit" data-i18n="auth_rule_digit">Digit</li>
+        </ul>
+        <div class="auth-field auth-field-password">
+            <input type="password" class="auth-input" id="regConfirm"
+                   placeholder="Confirm password"
+                   data-i18n-placeholder="auth_confirm_ph" />
+            <button type="button" class="auth-eye" onclick="togglePass('regConfirm',this)">👁</button>
+        </div>
+        <label class="auth-check-row">
+            <input type="checkbox" id="chkTerms" onchange="toggleRegisterButton()" />
+            <span data-i18n="auth_terms_prefix">I accept the </span>
+            <a href="#" id="rulesLink" class="terms-link" onclick="openRulesModal(); return false;" data-i18n="auth_rules_link">Rules</a>
+            <span> & </span>
+            <a href="#" id="policyLink" class="terms-link" onclick="openPolicyModal(); return false;" data-i18n="auth_policy_link">Privacy Policy</a>
+        </label>
+
+        <button class="auth-submit" id="registerBtn" onclick="submitRegister()" data-i18n="auth_submit_register" disabled>Register</button>
+    </div>
+</div>
+
+<!-- Hidden forms -->
+<form id="loginForm" method="post" action="/Account/Login" style="display:none">
+    <input type="hidden" name="username" id="fLoginUsername" />
+    <input type="hidden" name="password" id="fLoginPassword" />
+    <input type="hidden" name="returnUrl" id="fLoginReturn" />
+</form>
+<form id="registerForm" method="post" action="/Account/Register" style="display:none">
+    <input type="hidden" name="username" id="fRegUsername" />
+    <input type="hidden" name="email" id="fRegEmail" />
+    <input type="hidden" name="phone" id="fRegPhone" />
+    <input type="hidden" name="password" id="fRegPassword" />
+    <input type="hidden" name="confirm" id="fRegConfirm" />
+</form>

@@ -1,0 +1,22 @@
+﻿<div class="reviews-overlay" id="myReviewsOverlay" onclick="closeMyReviewsModal()"></div>
+<div class="reviews-modal" id="myReviewsModal">
+    <div class="reviews-modal-header">
+        <span class="reviews-modal-title" data-i18n="reviews_title">Reviews</span>
+        <button class="reviews-modal-close" onclick="closeMyReviewsModal()">✕</button>
+    </div>
+    <div class="reviews-tabs">
+        <button class="reviews-tab reviews-tab-active" id="tabAboutMe"
+                onclick="switchReviewTab('about')"
+                data-i18n="about_me_tab">
+            About me
+        </button>
+        <button class="reviews-tab" id="tabFromMe"
+                onclick="switchReviewTab('from')"
+                data-i18n="from_me_tab">
+            From me
+        </button>
+    </div>
+    <div class="reviews-list" id="myReviewsList">
+        <div class="reviews-empty" data-i18n="loading_text">Loading...</div>
+    </div>
+</div>

@@ -1,0 +1,32 @@
+﻿<div class="modal-overlay" id="notifPrefsOverlay" onclick="closeNotifPrefsModal()"></div>
+<div class="modal" id="notifPrefsModal" style="max-width:380px">
+    <button class="modal-close" onclick="closeNotifPrefsModal()">✕</button>
+    <h2 class="auth-title" data-i18n="notif_prefs_title">Notification settings</h2>
+    <div class="settings-section">
+        <div class="settings-row">
+            <span data-i18n="notif_cat_deals">Deals</span>
+            <input type="checkbox" id="prefDeals" />
+        </div>
+        <div class="settings-row">
+            <span data-i18n="notif_cat_reviews">Reviews</span>
+            <input type="checkbox" id="prefReviews" />
+        </div>
+        <div class="settings-row">
+            <span data-i18n="notif_cat_moderation">Listing moderation</span>
+            <input type="checkbox" id="prefModeration" />
+        </div>
+        <div class="settings-row">
+            <span data-i18n="notif_cat_account">Account status</span>
+            <input type="checkbox" id="prefAccount" />
+        </div>
+        <div class="settings-row">
+            <span data-i18n="notif_cat_favourites">Favourite listing changes</span>
+            <input type="checkbox" id="prefFavourites" />
+        </div>
+        <div class="settings-row">
+            <span data-i18n="notif_cat_new_listings">New listings from followed sellers</span>
+            <input type="checkbox" id="prefNewListings" />
+        </div>
+    </div>
+    <button class="auth-submit" style="margin-top:16px" onclick="saveNotifPrefs()" data-i18n="save_btn">Save</button>
+</div>

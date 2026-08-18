@@ -1,0 +1,13 @@
+﻿<div class="modal-overlay" id="regionOverlay" onclick="closeRegionModal()"></div>
+<div class="modal" id="regionModal">
+    <button class="modal-close" onclick="closeRegionModal()">✕</button>
+    <h2 class="auth-title" data-i18n="region_title">Select region</h2>
+    <div class="region-search-wrap">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+        <input type="text" class="region-search" id="regionSearch"
+               placeholder="Enter city"
+               data-i18n-placeholder="region_search_ph"
+               oninput="filterRegions(this.value)" />
+    </div>
+    <div class="region-pills" id="regionPills"></div>
+</div>

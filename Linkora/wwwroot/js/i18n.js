@@ -10,6 +10,17 @@
 
 const TRANSLATIONS = {
     en: {
+        'notif_empty_unread': 'No unread notifications',
+        'notif_empty_all': 'No notifications yet',
+        'notif_subscription_sold': '{0} sold their listing',
+        'notif_fav_qty_changed': "Quantity: {0} → {1}",
+        'notif_fav_title_changed': "Title changed",
+        'notif_fav_address_changed': "Address: {0} → {1}",
+        'notif_fav_description_updated': "Description updated",
+        'notif_fav_price_changed': "Price: {0}€ → {1}€",
+        'notif_fav_characteristics_updated': "Characteristics updated",
+        'notif_rejected_reason': "Your listing was rejected. Reason: {0}",
+        'notif_new_listing': "{0} posted a new listing: {1}",
         'footer_email': "Email: support@vena.lv",
         'footer_operator': "Vena.lv operator: Andrejs Šapovals",
         'footer_vid': "Tax registration No.: 16127710218",
@@ -432,6 +443,17 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'notif_empty_unread': 'Nav nelasītu paziņojumu',
+        'notif_empty_all': 'Nav paziņojumu',
+        'notif_subscription_sold': "{0} pārdeva savu sludinājumu",
+        'notif_fav_qty_changed': "Daudzums: {0} → {1}",
+        'notif_fav_title_changed': "Nosaukums mainīts",
+        'notif_fav_address_changed': "Adrese: {0} → {1}",
+        'notif_fav_description_updated': "Apraksts atjaunināts",
+        'notif_fav_price_changed': "Cena: {0}€ → {1}€",
+        'notif_fav_characteristics_updated': "Raksturlielumi atjaunināti",
+        'notif_rejected_reason': "Jūsu sludinājums tika noraidīts. Iemesls: {0}",
+        'notif_new_listing': "{0} publicēja jaunu sludinājumu: {1}",
         'footer_email': "E-pasts: support@vena.lv",
         'footer_operator': "Vena.lv operators: Šapovals Andrejs",
         'footer_vid': "VID reģistrācijas numurs: 16127710218",
@@ -864,6 +886,17 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'notif_empty_unread': 'Нет непрочитанных уведомлений',
+        'notif_empty_all': 'Пока нет уведомлений',
+        'notif_subscription_sold': "{0} продал своё объявление",
+        'notif_fav_qty_changed': "Количество: {0} → {1}",
+        'notif_fav_title_changed': "Название изменено",
+        'notif_fav_address_changed': "Адрес: {0} → {1}",
+        'notif_fav_description_updated': "Описание обновлено",
+        'notif_fav_price_changed': "Цена: {0}€ → {1}€",
+        'notif_fav_characteristics_updated': "Характеристики обновлены",
+        'notif_rejected_reason': "Ваше объявление было отклонено. Причина: {0}",
+        'notif_new_listing': "{0} опубликовал новое объявление: {1}",
         'footer_email': "Email: support@vena.lv",
         'footer_operator': "Оператор Vena.lv: Андрей Шаповал",
         'footer_vid': "Регистрационный номер (VID): 16127710218",
@@ -1325,6 +1358,118 @@ function applyTranslations() {
         const key = el.dataset.i18nValue;
         if (dict[key] !== undefined) el.value = dict[key];
     });
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function translateNotificationMessage(message, notif) {
+    const lang = localStorage.getItem('lang') || 'en';
+    const dict = TRANSLATIONS[lang] || TRANSLATIONS['en'];
+
+    function tl(key) { return dict[key] || key; }
+    function fmt(template) {
+        let s = template;
+        for (let i = 1; i < arguments.length; i++)
+            s = s.replace('{' + (i - 1) + '}', arguments[i] ?? '');
+        return s;
+    }
+
+    try {
+        const parsed = JSON.parse(message);
+        if (parsed && parsed.type) {
+            const from = notif?.fromUserName || '';
+            switch (parsed.type) {
+                case 'rejected_reason': {
+                    const reason = lang === 'lv' ? parsed.reasonLv
+                        : lang === 'ru' ? parsed.reasonRu : parsed.reasonEn;
+                    let r = fmt(tl('notif_rejected_reason'), reason || '');
+                    if (parsed.comment) r += ' (' + parsed.comment + ')';
+                    return r;
+                }
+                case 'deal_sold': return fmt(tl('notif_deal_sold'), from);
+                case 'deal_bought': return fmt(tl('notif_deal_bought'), from);
+                case 'review_received': return fmt(tl('notif_review_received'), from, parsed.rating || '');
+                case 'user_banned': return tl('notif_user_banned');
+                case 'user_unbanned': return tl('notif_user_unbanned');
+                case 'subscription_seller_banned': return fmt(tl('notif_subscription_seller_banned'), from);
+                case 'favourite_archived_ban': return tl('notif_favourite_archived_ban');
+                case 'report_on_product': {
+                    const reason = lang === 'lv' ? parsed.reasonLv
+                        : lang === 'ru' ? parsed.reasonRu : parsed.reasonEn;
+                    return fmt(tl('notif_report_on_product'), reason || '');
+                }
+                case 'product_approved': return tl('notif_product_approved');
+                case 'parameter_approved': {
+                    const pName = lang === 'lv' ? parsed.paramNameLv
+                        : lang === 'ru' ? parsed.paramNameRu : parsed.paramName;
+                    return fmt(tl('notif_parameter_approved'), pName || '');
+                }
+                case 'parameter_rejected': {
+                    const pName = lang === 'lv' ? parsed.paramNameLv
+                        : lang === 'ru' ? parsed.paramNameRu : parsed.paramName;
+                    return fmt(tl('notif_parameter_rejected'), pName || '');
+                }
+                case 'subscription_sold': return fmt(tl('notif_subscription_sold'), from);
+                case 'favourite_updated': {
+                    const changeItems = parsed.changes || [];
+                    const translated = changeItems.map(item => {
+                        switch (item.type) {
+                            case 'title_changed':
+                                return tl('notif_fav_title_changed');
+                            case 'address_changed':
+                                return fmt(tl('notif_fav_address_changed'), item.oldAddress, item.newAddress);
+                            case 'description_updated':
+                                return tl('notif_fav_description_updated');
+                            case 'price_changed':
+                                return fmt(tl('notif_fav_price_changed'), item.oldPrice, item.newPrice);
+                            case 'characteristics_updated':
+                                return tl('notif_fav_characteristics_updated');
+                            case 'qty_changed':
+                                return fmt(tl('notif_fav_qty_changed'), item.oldQty, item.newQty);
+                            default:
+                                return item;
+                        }
+                    });
+                    if (translated.every(x => typeof x === 'string') && parsed.changes && parsed.changes.length > 0 && typeof parsed.changes[0] === 'string') {
+                        return fmt(tl('notif_favourite_updated'), parsed.changes.join(', '));
+                    }
+                    return fmt(tl('notif_favourite_updated'), translated.join(', '));
+                }
+            }
+        }
+    } catch { }
+
+    const match = message.match(/^(.+?) posted a new listing: (.+)$/);
+    if (match) {
+        const template = dict['notif_new_listing'] || TRANSLATIONS.en['notif_new_listing'];
+        if (template) return template.replace('{0}', match[1]).replace('{1}', match[2]);
+    }
+    return message;
+}
+
+function setLang(lang) {
+    localStorage.setItem('lang', lang);
+    document.cookie = `lang=${lang};path=/;max-age=31536000`;
+    applyTranslations();
+
+    document.querySelectorAll('.lang-pill').forEach(btn => btn.classList.remove('active'));
+    if (lang === 'en') document.getElementById('headerLangEN')?.classList.add('active');
+    if (lang === 'lv') document.getElementById('headerLangLV')?.classList.add('active');
+    if (lang === 'ru') document.getElementById('headerLangRU')?.classList.add('active');
+
+    const regionBtnLabel = document.getElementById('regionBtnLabel');
+    if (regionBtnLabel && (regionBtnLabel.textContent === 'All regions' || regionBtnLabel.textContent === 'Visi reģioni' || regionBtnLabel.textContent === 'Все регионы')) {
+        regionBtnLabel.textContent = t('all_regions');
+    }
+
+    if (typeof window.beforeLangChange === 'function') {
+        window.beforeLangChange();
+    }
+
+    location.reload();
 }
 
 document.addEventListener('DOMContentLoaded', applyTranslations);
