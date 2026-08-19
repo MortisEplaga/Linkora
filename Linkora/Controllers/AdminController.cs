@@ -10,10 +10,19 @@ namespace Linkora.Controllers
     [Authorize]
     public class AdminController : Controller
     {
+        public class PagedResult<T>
+        {
+            public List<T> Items { get; set; } = new();
+            public int Total { get; set; }
+            public int TotalPages { get; set; }
+            public int CurrentPage { get; set; }
+        }
+
         private readonly string _connectionString;
         private readonly IProductRepository _productRepository;
         private readonly IReportRepository _reportRepository;
         private readonly INotificationRepository _notificationRepository;
+
         public AdminController(IConfiguration configuration,
                                IProductRepository productRepository,
                                IReportRepository reportRepository,
@@ -37,6 +46,46 @@ namespace Linkora.Controllers
 
             await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM SelectOptions WHERE IsConf = 0", conn))
                 ViewBag.PendingOptions = (int)(await cmd.ExecuteScalarAsync())!;
+        }
+
+        private async Task<PagedResult<T>> GetPagedDataAsync<T>(
+            SqlConnection conn,
+            string selectClause,
+            string fromWhereClause,
+            string orderByClause,
+            int page,
+            int pageSize,
+            Action<SqlParameterCollection>? addParameters,
+            Func<SqlDataReader, T> mapRow)
+        {
+            var offset = (page - 1) * pageSize;
+
+            await using var countCmd = new SqlCommand($"SELECT COUNT(*) {fromWhereClause}", conn);
+            addParameters?.Invoke(countCmd.Parameters);
+            var total = (int)(await countCmd.ExecuteScalarAsync())!;
+
+            await using var dataCmd = new SqlCommand($@"
+                {selectClause} 
+                {fromWhereClause} 
+                {orderByClause} 
+                OFFSET {offset} ROWS FETCH NEXT {pageSize} ROWS ONLY", conn);
+
+            addParameters?.Invoke(dataCmd.Parameters);
+
+            var items = new List<T>();
+            await using var reader = await dataCmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                items.Add(mapRow(reader));
+            }
+
+            return new PagedResult<T>
+            {
+                Items = items,
+                Total = total,
+                TotalPages = (int)Math.Ceiling(total / (double)pageSize),
+                CurrentPage = page
+            };
         }
 
         public async Task<IActionResult> Index()
@@ -104,72 +153,60 @@ namespace Linkora.Controllers
             ViewBag.Stats = stats;
             return View();
         }
+
         public async Task<IActionResult> Products(string status = "Moderation", int page = 1, string? search = null)
         {
             if (!IsAdmin()) return Forbid();
 
-            const int pageSize = 20;
-            var offset = (page - 1) * pageSize;
-
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
-
             await SetSidebarBadgesAsync(conn);
 
             var searchClause = string.IsNullOrEmpty(search) ? "" : "AND p.Name LIKE '%' + @Search + '%'";
 
-            await using var countCmd = new SqlCommand($@"
-                SELECT COUNT(*) FROM Products p WHERE p.Status = @Status {searchClause}", conn);
-            countCmd.Parameters.AddWithValue("@Status", status);
-            if (!string.IsNullOrEmpty(search))
-                countCmd.Parameters.AddWithValue("@Search", search);
-            var total = (int)(await countCmd.ExecuteScalarAsync())!;
+            var pagedData = await GetPagedDataAsync(
+                conn: conn,
+                selectClause: @"
+                    SELECT p.Id, p.Name, p.Status, p.CreatedTime,
+                           COALESCE(
+                               (SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+                               p.AvatarImagePath
+                           ) AS Img,
+                           u.UserName, u.Id AS UserId,
+                           (SELECT COUNT(*) FROM Reports WHERE ProductId = p.Id) AS ReportCount,
+                           (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
+                            FROM MapperProductCategory m
+                            JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
+                            WHERE m.ProductId = p.Id) AS Price",
+                fromWhereClause: $"FROM Products p LEFT JOIN Users u ON u.Id = p.UserId WHERE p.Status = @Status {searchClause}",
+                orderByClause: "ORDER BY p.CreatedTime DESC",
+                page: page,
+                pageSize: 20,
+                addParameters: parameters =>
+                {
+                    parameters.AddWithValue("@Status", status);
+                    if (!string.IsNullOrEmpty(search)) parameters.AddWithValue("@Search", search);
+                },
+                mapRow: r => new AdminProductRow
+                {
+                    Id = r.GetInt32(0),
+                    Name = r.IsDBNull(1) ? "" : r.GetString(1),
+                    Status = r.IsDBNull(2) ? "" : r.GetString(2),
+                    CreatedTime = r.IsDBNull(3) ? null : r.GetDateTime(3),
+                    ImagePath = r.IsDBNull(4) ? null : r.GetString(4),
+                    UserName = r.IsDBNull(5) ? "" : r.GetString(5),
+                    UserId = r.IsDBNull(6) ? 0 : r.GetInt32(6),
+                    ReportCount = r.IsDBNull(7) ? 0 : r.GetInt32(7),
+                    Price = r.IsDBNull(8) ? null : r.GetDecimal(8),
+                });
 
-            await using var cmd = new SqlCommand($@"
-                SELECT p.Id, p.Name, p.Status, p.CreatedTime,
-                       COALESCE(
-                           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-                           p.AvatarImagePath
-                       ) AS Img,
-                       u.UserName, u.Id AS UserId,
-                       (SELECT COUNT(*) FROM Reports WHERE ProductId = p.Id) AS ReportCount,
-                       (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
-                        FROM MapperProductCategory m
-                        JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
-                        WHERE m.ProductId = p.Id) AS Price
-                FROM Products p
-                LEFT JOIN Users u ON u.Id = p.UserId
-                WHERE p.Status = @Status {searchClause}
-                ORDER BY p.CreatedTime DESC
-                OFFSET {offset} ROWS FETCH NEXT {pageSize} ROWS ONLY", conn);
-            cmd.Parameters.AddWithValue("@Status", status);
-            if (!string.IsNullOrEmpty(search))
-                cmd.Parameters.AddWithValue("@Search", search);
-
-            var products = new List<AdminProductRow>();
-            await using (var r = await cmd.ExecuteReaderAsync())
-            {
-                while (await r.ReadAsync())
-                    products.Add(new AdminProductRow
-                    {
-                        Id = r.GetInt32(0),
-                        Name = r.IsDBNull(1) ? "" : r.GetString(1),
-                        Status = r.IsDBNull(2) ? "" : r.GetString(2),
-                        CreatedTime = r.IsDBNull(3) ? null : r.GetDateTime(3),
-                        ImagePath = r.IsDBNull(4) ? null : r.GetString(4),
-                        UserName = r.IsDBNull(5) ? "" : r.GetString(5),
-                        UserId = r.IsDBNull(6) ? 0 : r.GetInt32(6),
-                        ReportCount = r.IsDBNull(7) ? 0 : r.GetInt32(7),
-                        Price = r.IsDBNull(8) ? null : r.GetDecimal(8),
-                    });
-            }
-
-            ViewBag.Products = products;
+            ViewBag.Products = pagedData.Items;
             ViewBag.Status = status;
-            ViewBag.Page = page;
-            ViewBag.TotalPages = (int)Math.Ceiling(total / (double)pageSize);
-            ViewBag.Total = total;
+            ViewBag.Page = pagedData.CurrentPage;
+            ViewBag.TotalPages = pagedData.TotalPages;
+            ViewBag.Total = pagedData.Total;
             ViewBag.Search = search;
+
             return View();
         }
 
@@ -199,63 +236,56 @@ namespace Linkora.Controllers
 
             return Ok();
         }
+
         public async Task<IActionResult> Users(int page = 1, string? search = null, string role = "all")
         {
             if (!IsAdmin()) return Forbid();
 
-            const int pageSize = 25;
-            var offset = (page - 1) * pageSize;
-
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
-
             await SetSidebarBadgesAsync(conn);
 
             var roleClause = role == "all" ? "" : "AND Role = @Role";
             var searchClause = string.IsNullOrEmpty(search) ? "" : "AND (UserName LIKE '%' + @Search + '%' OR Email LIKE '%' + @Search + '%')";
 
-            await using var countCmd = new SqlCommand($"SELECT COUNT(*) FROM Users WHERE 1=1 {roleClause} {searchClause}", conn);
-            if (role != "all") countCmd.Parameters.AddWithValue("@Role", role);
-            if (!string.IsNullOrEmpty(search)) countCmd.Parameters.AddWithValue("@Search", search);
-            var total = (int)(await countCmd.ExecuteScalarAsync())!;
+            var pagedData = await GetPagedDataAsync(
+                conn: conn,
+                selectClause: @"
+                    SELECT u.Id, u.UserName, u.Email, u.PhoneNumber, u.Role, u.IsCompany,
+                           u.AvatarImagePath, u.CreatedAt,
+                           (SELECT COUNT(*) FROM Products WHERE UserId = u.Id) AS ProductCount",
+                fromWhereClause: $"FROM Users u WHERE 1=1 {roleClause} {searchClause}",
+                orderByClause: "ORDER BY u.CreatedAt DESC",
+                page: page,
+                pageSize: 25,
+                addParameters: parameters =>
+                {
+                    if (role != "all") parameters.AddWithValue("@Role", role);
+                    if (!string.IsNullOrEmpty(search)) parameters.AddWithValue("@Search", search);
+                },
+                mapRow: r => new AdminUserRow
+                {
+                    Id = r.GetInt32(0),
+                    UserName = r.IsDBNull(1) ? "" : r.GetString(1),
+                    Email = r.IsDBNull(2) ? null : r.GetString(2),
+                    Phone = r.IsDBNull(3) ? null : r.GetString(3),
+                    Role = r.IsDBNull(4) ? "user" : r.GetString(4),
+                    IsCompany = !r.IsDBNull(5) && r.GetBoolean(5),
+                    AvatarPath = r.IsDBNull(6) ? null : r.GetString(6),
+                    CreatedAt = r.IsDBNull(7) ? null : r.GetDateTime(7),
+                    ProductCount = r.IsDBNull(8) ? 0 : r.GetInt32(8),
+                });
 
-            await using var cmd = new SqlCommand($@"
-                SELECT u.Id, u.UserName, u.Email, u.PhoneNumber, u.Role, u.IsCompany,
-                       u.AvatarImagePath, u.CreatedAt,
-                       (SELECT COUNT(*) FROM Products WHERE UserId = u.Id) AS ProductCount
-                FROM Users u
-                WHERE 1=1 {roleClause} {searchClause}
-                ORDER BY u.CreatedAt DESC
-                OFFSET {offset} ROWS FETCH NEXT {pageSize} ROWS ONLY", conn);
-            if (role != "all") cmd.Parameters.AddWithValue("@Role", role);
-            if (!string.IsNullOrEmpty(search)) cmd.Parameters.AddWithValue("@Search", search);
-
-            var users = new List<AdminUserRow>();
-            await using (var r = await cmd.ExecuteReaderAsync())
-            {
-                while (await r.ReadAsync())
-                    users.Add(new AdminUserRow
-                    {
-                        Id = r.GetInt32(0),
-                        UserName = r.IsDBNull(1) ? "" : r.GetString(1),
-                        Email = r.IsDBNull(2) ? null : r.GetString(2),
-                        Phone = r.IsDBNull(3) ? null : r.GetString(3),
-                        Role = r.IsDBNull(4) ? "user" : r.GetString(4),
-                        IsCompany = !r.IsDBNull(5) && r.GetBoolean(5),
-                        AvatarPath = r.IsDBNull(6) ? null : r.GetString(6),
-                        CreatedAt = r.IsDBNull(7) ? null : r.GetDateTime(7),
-                        ProductCount = r.IsDBNull(8) ? 0 : r.GetInt32(8),
-                    });
-            }
-
-            ViewBag.Users = users;
-            ViewBag.Page = page;
-            ViewBag.TotalPages = (int)Math.Ceiling(total / (double)pageSize);
-            ViewBag.Total = total;
+            ViewBag.Users = pagedData.Items;
+            ViewBag.Page = pagedData.CurrentPage;
+            ViewBag.TotalPages = pagedData.TotalPages;
+            ViewBag.Total = pagedData.Total;
             ViewBag.Search = search;
             ViewBag.Role = role;
+
             return View();
         }
+
         [HttpPost, IgnoreAntiforgeryToken]
         public async Task<IActionResult> SetUserRole(int id, string role)
         {
@@ -317,7 +347,7 @@ namespace Linkora.Controllers
                 if (favUsers.Any())
                 {
                     var favBanMsg = System.Text.Json.JsonSerializer.Serialize(new { type = "favourite_archived_ban" });
-                    foreach (var fav in favUsers.Where(f => f.UserId != id)) 
+                    foreach (var fav in favUsers.Where(f => f.UserId != id))
                     {
                         await _notificationRepository.CreateAsync(fav.UserId, null, fav.ProductId, favBanMsg);
                     }
@@ -331,6 +361,7 @@ namespace Linkora.Controllers
 
             return Ok();
         }
+
         [HttpPost, IgnoreAntiforgeryToken]
         public async Task<IActionResult> DeleteUser(int id)
         {
@@ -361,6 +392,7 @@ namespace Linkora.Controllers
 
             return Ok();
         }
+
         [HttpPost, IgnoreAntiforgeryToken]
         public async Task<IActionResult> DeleteProduct(int id)
         {
@@ -369,69 +401,61 @@ namespace Linkora.Controllers
             await _productRepository.DeleteAsync(id);
             return Ok();
         }
+
         public async Task<IActionResult> Reports(string status = "Pending", int page = 1)
         {
             if (!IsAdmin()) return Forbid();
 
-            const int pageSize = 20;
-            var offset = (page - 1) * pageSize;
-
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
-
             await SetSidebarBadgesAsync(conn);
 
-            await using var countCmd = new SqlCommand(
-                "SELECT COUNT(*) FROM Reports WHERE Status = @Status", conn);
-            countCmd.Parameters.AddWithValue("@Status", status);
-            var total = (int)(await countCmd.ExecuteScalarAsync())!;
+            var pagedData = await GetPagedDataAsync(
+                conn: conn,
+                selectClause: @"
+                    SELECT r.Id, r.ProductId, r.UserId, r.Comment, r.CreatedAt, r.Status,
+                           p.Name AS ProductName,
+                           COALESCE(
+                               (SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+                               p.AvatarImagePath
+                           ) AS ProductImg,
+                           p.Status AS ProductStatus,
+                           u.UserName AS ReporterName,
+                           rr.ReasonText",
+                fromWhereClause: @"
+                    FROM Reports r
+                    LEFT JOIN Products p ON p.Id = r.ProductId
+                    LEFT JOIN Users u ON u.Id = r.UserId
+                    LEFT JOIN ReportReasons rr ON rr.Id = r.ReportReasonId
+                    WHERE r.Status = @Status",
+                orderByClause: "ORDER BY r.CreatedAt DESC",
+                page: page,
+                pageSize: 20,
+                addParameters: parameters => parameters.AddWithValue("@Status", status),
+                mapRow: r => new AdminReportRow
+                {
+                    Id = r.GetInt32(0),
+                    ProductId = r.GetInt32(1),
+                    UserId = r.GetInt32(2),
+                    Comment = r.IsDBNull(3) ? null : r.GetString(3),
+                    CreatedAt = r.GetDateTime(4),
+                    Status = r.GetString(5),
+                    ProductName = r.IsDBNull(6) ? "" : r.GetString(6),
+                    ProductImage = r.IsDBNull(7) ? null : r.GetString(7),
+                    ProductStatus = r.IsDBNull(8) ? "" : r.GetString(8),
+                    ReporterName = r.IsDBNull(9) ? "" : r.GetString(9),
+                    ReasonText = r.IsDBNull(10) ? "" : r.GetString(10),
+                });
 
-            await using var cmd = new SqlCommand($@"
-                SELECT r.Id, r.ProductId, r.UserId, r.Comment, r.CreatedAt, r.Status,
-                       p.Name AS ProductName,
-                       COALESCE(
-                           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-                           p.AvatarImagePath
-                       ) AS ProductImg,
-                       p.Status AS ProductStatus,
-                       u.UserName AS ReporterName,
-                       rr.ReasonText
-                FROM Reports r
-                LEFT JOIN Products p ON p.Id = r.ProductId
-                LEFT JOIN Users u ON u.Id = r.UserId
-                LEFT JOIN ReportReasons rr ON rr.Id = r.ReportReasonId
-                WHERE r.Status = @Status
-                ORDER BY r.CreatedAt DESC
-                OFFSET {offset} ROWS FETCH NEXT {pageSize} ROWS ONLY", conn);
-            cmd.Parameters.AddWithValue("@Status", status);
-
-            var reports = new List<AdminReportRow>();
-            await using (var r = await cmd.ExecuteReaderAsync())
-            {
-                while (await r.ReadAsync())
-                    reports.Add(new AdminReportRow
-                    {
-                        Id = r.GetInt32(0),
-                        ProductId = r.GetInt32(1),
-                        UserId = r.GetInt32(2),
-                        Comment = r.IsDBNull(3) ? null : r.GetString(3),
-                        CreatedAt = r.GetDateTime(4),
-                        Status = r.GetString(5),
-                        ProductName = r.IsDBNull(6) ? "" : r.GetString(6),
-                        ProductImage = r.IsDBNull(7) ? null : r.GetString(7),
-                        ProductStatus = r.IsDBNull(8) ? "" : r.GetString(8),
-                        ReporterName = r.IsDBNull(9) ? "" : r.GetString(9),
-                        ReasonText = r.IsDBNull(10) ? "" : r.GetString(10),
-                    });
-            }
-
-            ViewBag.Reports = reports;
+            ViewBag.Reports = pagedData.Items;
             ViewBag.Status = status;
-            ViewBag.Page = page;
-            ViewBag.TotalPages = (int)Math.Ceiling(total / (double)pageSize);
-            ViewBag.Total = total;
+            ViewBag.Page = pagedData.CurrentPage;
+            ViewBag.TotalPages = pagedData.TotalPages;
+            ViewBag.Total = pagedData.Total;
+
             return View();
         }
+
         [HttpPost, IgnoreAntiforgeryToken]
         public async Task<IActionResult> ResolveReport(int id, string action)
         {
@@ -464,6 +488,7 @@ namespace Linkora.Controllers
             }
             return Ok(new { status = newStatus });
         }
+
         [HttpGet]
         public async Task<IActionResult> StatsApi()
         {
@@ -498,6 +523,7 @@ namespace Linkora.Controllers
 
             return Json(new { registrations = regData, products = prodData });
         }
+
         [HttpGet]
         public async Task<IActionResult> ConfOptions()
         {
@@ -514,6 +540,7 @@ namespace Linkora.Controllers
 
             return View();
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ApproveOption(int id)
@@ -576,6 +603,7 @@ namespace Linkora.Controllers
             if (success) return Ok();
             return BadRequest();
         }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RejectProductByOption(int optionId, int productId)
@@ -623,6 +651,7 @@ namespace Linkora.Controllers
             if (success) return Ok();
             return BadRequest();
         }
+
         [HttpPost, IgnoreAntiforgeryToken]
         public async Task<IActionResult> RejectProductWithReason(int id, int reasonId, string? comment = null)
         {
