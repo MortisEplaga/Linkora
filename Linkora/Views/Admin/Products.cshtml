@@ -218,7 +218,7 @@
                 if (res.ok) rejectReasons = await res.json();
             }
             const select = document.getElementById('rejectReasonSelect');
-            select.innerHTML = `<option value="">${t('report_reason_ph')}</option>`;
+            select.innerHTML = `<option value="">${translate('report_reason_ph')}</option>`;
             rejectReasons.forEach(r => {
                 const opt = document.createElement('option');
                 opt.value = r.id;

@@ -269,7 +269,7 @@
             'cheap': 'sort_cheapest',
             'expensive': 'sort_expensive'
         };
-        label.textContent = t(map[sortKey]) || t('sort_newest');
+        label.textContent = translate(map[sortKey]) || translate('sort_newest');
     }
 
     function translatePage() {
@@ -307,7 +307,7 @@
 
         btn.classList.toggle('subscribed', subscribed);
         iconEl.textContent  = subscribed ? '♥' : '♡';
-        labelEl.textContent = subscribed ? t('subscribed_btn') : t('subscribe_btn');
+        labelEl.textContent = subscribed ? translate('subscribed_btn') : translate('subscribe_btn');
 
         if (count > 0) {
             countEl.textContent = count;

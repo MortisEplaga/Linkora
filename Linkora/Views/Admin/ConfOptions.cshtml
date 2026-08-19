@@ -154,15 +154,15 @@
             });
             if (res.ok) {
                 document.getElementById('row-' + optionId)?.remove();
-                showToast(t('approved'), 'success');
+                showToast(translate('approved'), 'success');
             } else {
-                showToast(t('err_action'), 'error');
+                showToast(translate('err_action'), 'error');
                 btn.disabled = false;
             }
         }
 
         async function rejectProduct(optionId, productId, btn) {
-            if (!confirm(t('confirm_reject'))) {
+            if (!confirm(translate('confirm_reject'))) {
                 return;
             }
             btn.disabled = true;
@@ -172,9 +172,9 @@
             });
             if (res.ok) {
                 document.getElementById('row-' + optionId)?.remove();
-                showToast(t('rejected'), 'success');
+                showToast(translate('rejected'), 'success');
             } else {
-                showToast(t('err_action'), 'error');
+                showToast(translate('err_action'), 'error');
                 btn.disabled = false;
             }
         }

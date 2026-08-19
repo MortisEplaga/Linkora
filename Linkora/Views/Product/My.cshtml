@@ -140,7 +140,7 @@
                 const list = document.getElementById('partnerList');
                 list.innerHTML = '';
                 if (partners.length === 0) {
-                    list.innerHTML = `<div class="partner-item">${t('no_partners')}</div>`;
+                    list.innerHTML = `<div class="partner-item">${translate('no_partners')}</div>`;
                     return;
                 }
                 partners.forEach(p => {

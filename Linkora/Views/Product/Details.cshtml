@@ -415,7 +415,7 @@
             reportReasons = await res.json();
         }
         const select = document.getElementById('reportReason');
-        select.innerHTML = `<option value="">${t('report_reason_ph')}</option>`;
+        select.innerHTML = `<option value="">${translate('report_reason_ph')}</option>`;
         reportReasons.forEach(r => {
             const opt = document.createElement('option');
             opt.value = r.id;
