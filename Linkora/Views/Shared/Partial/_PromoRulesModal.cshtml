@@ -1,0 +1,39 @@
+﻿@model string
+@{
+    var prefix = Model ?? "promo";
+    var isPromo = prefix == "promo";
+
+    var titleI18nKey = isPromo ? "promo_rules_title" : "sub_rules_title";
+    var titleDefault = isPromo ? "Promotion rules" : "Subscription rules";
+
+    var disagreeI18nKey = isPromo ? "promo_rules_disagree" : "sub_rules_disagree";
+    var agreeI18nKey = isPromo ? "promo_rules_agree" : "sub_rules_agree";
+
+    var disagreeText = isPromo ? "I disagree — continue without promotion" : "I disagree — continue without subscription";
+    var agreeText = "I agree — proceed to payment";
+}
+
+<div class="modal-overlay" id="@(prefix)RulesOverlay" onclick="closeSharedRulesModal('@prefix')"></div>
+<div class="modal info-modal" id="@(prefix)RulesModal">
+    <button class="modal-close" onclick="closeSharedRulesModal('@prefix')">✕</button>
+    <h2 class="info-modal-title" data-i18n="@titleI18nKey">@titleDefault</h2>
+
+    <div class="info-modal-lang-tabs">
+        <button class="info-lang-btn active" onclick="switchSharedRulesLang('@prefix', 'ru', this)">RU</button>
+        <button class="info-lang-btn" onclick="switchSharedRulesLang('@prefix', 'lv', this)">LV</button>
+        <button class="info-lang-btn" onclick="switchSharedRulesLang('@prefix', 'en', this)">EN</button>
+    </div>
+
+    <div class="promo-scroll-wrapper" style="padding: 0 24px;">
+        <div class="terms-title" style="margin-top: 15px; font-size: 16px;" data-i18n="rules_title">Правила</div>
+        <div class="info-modal-body" id="@(prefix)RulesBody" style="max-height:200px; overflow-y:auto; border: 1px solid #eee; padding: 10px; margin-bottom: 15px;" onscroll="checkSharedRulesScroll('@prefix', 'rules')"></div>
+
+        <div class="terms-title" style="font-size: 16px;" data-i18n="policy_title">Политика конфиденциальности</div>
+        <div class="info-modal-body" id="@(prefix)PolicyBody" style="max-height:200px; overflow-y:auto; border: 1px solid #eee; padding: 10px;" onscroll="checkSharedRulesScroll('@prefix', 'policy')"></div>
+    </div>
+
+    <div style="display:flex;gap:10px;padding:16px 24px 24px;flex-shrink:0">
+        <button class="auth-submit auth-submit-secondary" id="@(prefix)DisagreeBtn" onclick="confirmSharedRules('@prefix', false)" data-i18n="@disagreeI18nKey">@disagreeText</button>
+        <button class="auth-submit" id="@(prefix)AgreeBtn" disabled onclick="confirmSharedRules('@prefix', true)" data-i18n="@agreeI18nKey">@agreeText</button>
+    </div>
+</div>

@@ -1055,3 +1055,157 @@ async function updateMsgBadge() {
         console.warn('Failed to update message badge', e);
     }
 }
+
+/* ---------- Shared Rules Modal (Promo / Subscription) ---------- */
+
+const sharedRulesState = {};
+
+function openSharedRulesModal(prefix) {
+    const rulesBody = document.getElementById(`${prefix}RulesBody`);
+    const policyBody = document.getElementById(`${prefix}PolicyBody`);
+
+    const rulesSource = document.querySelector('#rulesModal .info-modal-body');
+    const policySource = document.querySelector('#policyModal .info-modal-body');
+
+    if (rulesSource && rulesBody) rulesBody.innerHTML = rulesSource.innerHTML;
+    if (policySource && policyBody) policyBody.innerHTML = policySource.innerHTML;
+
+    const lang = typeof getCurrentLanguage === 'function' ? getCurrentLanguage() : (localStorage.getItem('lang') || 'en');
+
+    [rulesBody, policyBody].forEach(body => {
+        if (!body) return;
+        body.querySelectorAll('.info-lang-content').forEach(el => {
+            el.style.display = el.dataset.lang === lang ? '' : 'none';
+        });
+    });
+
+    const modal = document.getElementById(`${prefix}RulesModal`);
+    if (modal) {
+        modal.querySelectorAll('.info-lang-btn').forEach(btn => {
+            const btnLang = btn.textContent.trim().toLowerCase();
+            btn.classList.toggle('active', btnLang === lang);
+        });
+
+        const titles = {
+            promo: { en: 'Promotion rules', lv: 'Veicināšanas noteikumi', ru: 'Правила продвижения' },
+            sub: { en: 'Subscription rules', lv: 'Abonementa noteikumi', ru: 'Правила подписки' }
+        };
+        const titleEl = modal.querySelector('.info-modal-title');
+        if (titleEl && titles[prefix]) {
+            titleEl.textContent = titles[prefix][lang] || titles[prefix]['en'];
+        }
+
+        const innerTitles = {
+            en: { rules: 'Rules', policy: 'Privacy Policy' },
+            lv: { rules: 'Noteikumi', policy: 'Privātuma politika' },
+            ru: { rules: 'Правила', policy: 'Политика конфиденциальности' }
+        };
+        const rulesTitleEl = modal.querySelector('[data-i18n="rules_title"]');
+        const policyTitleEl = modal.querySelector('[data-i18n="policy_title"]');
+        if (rulesTitleEl) rulesTitleEl.textContent = innerTitles[lang].rules;
+        if (policyTitleEl) policyTitleEl.textContent = innerTitles[lang].policy;
+    }
+
+    const agreeBtn = document.getElementById(`${prefix}AgreeBtn`);
+    if (agreeBtn) agreeBtn.disabled = true;
+
+    sharedRulesState[prefix] = { rulesScrolled: false, policyScrolled: false };
+
+    if (rulesBody) rulesBody.scrollTop = 0;
+    if (policyBody) policyBody.scrollTop = 0;
+
+    document.getElementById(`${prefix}RulesOverlay`).classList.add('modal-open');
+    modal.classList.add('modal-open');
+    document.body.style.overflow = 'hidden';
+
+    setTimeout(() => {
+        if (rulesBody && rulesBody.scrollHeight <= rulesBody.clientHeight + 10) sharedRulesState[prefix].rulesScrolled = true;
+        if (policyBody && policyBody.scrollHeight <= policyBody.clientHeight + 10) sharedRulesState[prefix].policyScrolled = true;
+        if (sharedRulesState[prefix].rulesScrolled && sharedRulesState[prefix].policyScrolled) {
+            if (agreeBtn) agreeBtn.disabled = false;
+        }
+    }, 50);
+}
+
+function checkSharedRulesScroll(prefix, type) {
+    const body = document.getElementById(`${prefix}${type === 'rules' ? 'Rules' : 'Policy'}Body`);
+    if (!body) return;
+
+    const atBottom = body.scrollTop + body.clientHeight >= body.scrollHeight - 10;
+    if (atBottom) {
+        if (type === 'rules') sharedRulesState[prefix].rulesScrolled = true;
+        if (type === 'policy') sharedRulesState[prefix].policyScrolled = true;
+    }
+
+    if (sharedRulesState[prefix].rulesScrolled && sharedRulesState[prefix].policyScrolled) {
+        document.getElementById(`${prefix}AgreeBtn`).disabled = false;
+    }
+}
+
+function switchSharedRulesLang(prefix, lang, btn) {
+    const modal = document.getElementById(`${prefix}RulesModal`);
+    if (!modal) return;
+
+    modal.querySelectorAll('.info-lang-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    ['Rules', 'Policy'].forEach(type => {
+        const body = document.getElementById(`${prefix}${type}Body`);
+        if (body) {
+            body.querySelectorAll('.info-lang-content').forEach(el => {
+                el.style.display = el.dataset.lang === lang ? '' : 'none';
+            });
+            body.scrollTop = 0;
+        }
+    });
+
+    sharedRulesState[prefix] = { rulesScrolled: false, policyScrolled: false };
+    const agreeBtn = document.getElementById(`${prefix}AgreeBtn`);
+    if (agreeBtn) agreeBtn.disabled = true;
+
+    setTimeout(() => {
+        const rBody = document.getElementById(`${prefix}RulesBody`);
+        const pBody = document.getElementById(`${prefix}PolicyBody`);
+        if (rBody && rBody.scrollHeight <= rBody.clientHeight + 10) sharedRulesState[prefix].rulesScrolled = true;
+        if (pBody && pBody.scrollHeight <= pBody.clientHeight + 10) sharedRulesState[prefix].policyScrolled = true;
+        if (sharedRulesState[prefix].rulesScrolled && sharedRulesState[prefix].policyScrolled) {
+            if (agreeBtn) agreeBtn.disabled = false;
+        }
+    }, 50);
+
+    const titles = {
+        promo: { en: 'Promotion rules', lv: 'Veicināšanas noteikumi', ru: 'Правила продвижения' },
+        sub: { en: 'Subscription rules', lv: 'Abonementa noteikumi', ru: 'Правила подписки' }
+    };
+    const titleEl = modal.querySelector('.info-modal-title');
+    if (titleEl && titles[prefix]) {
+        titleEl.textContent = titles[prefix][lang] || titles[prefix]['en'];
+    }
+
+    const innerTitles = {
+        en: { rules: 'Rules', policy: 'Privacy Policy' },
+        lv: { rules: 'Noteikumi', policy: 'Privātuma politika' },
+        ru: { rules: 'Правила', policy: 'Политика конфиденциальности' }
+    };
+    const rulesTitleEl = modal.querySelector('[data-i18n="rules_title"]');
+    const policyTitleEl = modal.querySelector('[data-i18n="policy_title"]');
+    if (rulesTitleEl) rulesTitleEl.textContent = innerTitles[lang].rules;
+    if (policyTitleEl) policyTitleEl.textContent = innerTitles[lang].policy;
+}
+
+function closeSharedRulesModal(prefix) {
+    document.getElementById(`${prefix}RulesOverlay`)?.classList.remove('modal-open');
+    document.getElementById(`${prefix}RulesModal`)?.classList.remove('modal-open');
+    document.body.style.overflow = '';
+}
+
+function confirmSharedRules(prefix, agreed) {
+    if (prefix === 'promo' && typeof window.confirmPromoRules === 'function') {
+        window.confirmPromoRules(agreed);
+    } else if (prefix === 'sub' && typeof window.confirmSubRules === 'function') {
+        window.confirmSubRules(agreed);
+    }
+}
+
+window.openPromoRulesModal = () => openSharedRulesModal('promo');
+window.closePromoRulesModal = () => closeSharedRulesModal('promo');

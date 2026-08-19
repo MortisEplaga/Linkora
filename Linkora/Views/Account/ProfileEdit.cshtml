@@ -77,7 +77,6 @@
             </div>
         </div>
 
-        <!-- Ad duration preference -->
         <div class="auth-field">
             <label class="auth-label" data-i18n="profile_ad_duration">Preferred ad duration</label>
             <div class="duration-pills" id="durationPills">
@@ -126,30 +125,8 @@
             Save
         </button>
     </div>
-    <div class="modal-overlay" id="subRulesOverlay" onclick="closeSubRulesModal()"></div>
-    <div class="modal info-modal" id="subRulesModal">
-        <button class="modal-close" onclick="closeSubRulesModal()">✕</button>
-        <h2 class="info-modal-title" data-i18n="sub_rules_title">Subscription rules</h2>
 
-        <div class="info-modal-lang-tabs">
-            <button class="info-lang-btn active" onclick="switchSubLang('ru', this)">RU</button>
-            <button class="info-lang-btn" onclick="switchSubLang('lv', this)">LV</button>
-            <button class="info-lang-btn" onclick="switchSubLang('en', this)">EN</button>
-        </div>
-
-        <div class="promo-scroll-wrapper" style="padding: 0 24px;">
-            <div class="terms-title" style="margin-top: 15px; font-size: 16px;" data-i18n="rules_title">Правила</div>
-            <div class="info-modal-body" id="subRulesBody" style="max-height:200px; overflow-y:auto; border: 1px solid #eee; padding: 10px; margin-bottom: 15px;" onscroll="checkSubRulesScroll('rules')"></div>
-
-            <div class="terms-title" style="font-size: 16px;" data-i18n="policy_title">Политика конфиденциальности</div>
-            <div class="info-modal-body" id="subPolicyBody" style="max-height:200px; overflow-y:auto; border: 1px solid #eee; padding: 10px;" onscroll="checkSubRulesScroll('policy')"></div>
-        </div>
-
-        <div style="display:flex;gap:10px;padding:16px 24px 24px;flex-shrink:0">
-            <button class="auth-submit auth-submit-secondary" id="subDisagreeBtn" onclick="confirmSubRules(false)" data-i18n="promo_rules_disagree">I disagree — continue without promotion</button>
-            <button class="auth-submit" id="subAgreeBtn" disabled onclick="confirmSubRules(true)" data-i18n="promo_rules_agree">I agree — proceed to payment</button>
-        </div>
-    </div>
+    <partial name="~/Views/Shared/Partial/_PromoRulesModal.cshtml" model="@("sub")" />
 </div>
 
 @section Scripts {
@@ -180,10 +157,9 @@
             input.type = input.type === 'password' ? 'text' : 'password';
             btn.style.opacity = input.type === 'text' ? '0.4' : '1';
         }
-                 let pendingSubType = null;
+
+        let pendingSubType = null;
         let pendingSubBtn = null;
-        let subRulesScrolled = false;
-        let subPolicyScrolled = false;
 
         function selectSubscription(type, btn) {
             if (type === 'Free') {
@@ -192,7 +168,7 @@
             }
             pendingSubType = type;
             pendingSubBtn = btn;
-            openSubRulesModal();
+            openSharedRulesModal('sub');
         }
 
         function applySubscriptionSelection(type, btn) {
@@ -201,130 +177,8 @@
             document.getElementById('fieldSubscriptionType').value = type;
         }
 
-        function openSubRulesModal() {
-            const rulesBody = document.getElementById('subRulesBody');
-            const policyBody = document.getElementById('subPolicyBody');
-
-            const rulesSource = document.querySelector('#rulesModal .info-modal-body');
-            const policySource = document.querySelector('#policyModal .info-modal-body');
-
-            if (rulesSource) rulesBody.innerHTML = rulesSource.innerHTML;
-            if (policySource) policyBody.innerHTML = policySource.innerHTML;
-
-            const lang = localStorage.getItem('lang') || 'en';
-            rulesBody.querySelectorAll('.info-lang-content').forEach(el => {
-                el.style.display = el.dataset.lang === lang ? '' : 'none';
-            });
-            policyBody.querySelectorAll('.info-lang-content').forEach(el => {
-                el.style.display = el.dataset.lang === lang ? '' : 'none';
-            });
-
-            const modal = document.getElementById('subRulesModal');
-            modal.querySelectorAll('.info-lang-btn').forEach(btn => {
-                const btnLang = btn.textContent.trim().toLowerCase();
-                btn.classList.toggle('active', btnLang === lang);
-            });
-
-            const agreeBtn = document.getElementById('subAgreeBtn');
-            agreeBtn.disabled = true;
-
-            subRulesScrolled = false;
-            subPolicyScrolled = false;
-
-            rulesBody.scrollTop = 0;
-            policyBody.scrollTop = 0;
-
-            document.getElementById('subRulesOverlay').classList.add('modal-open');
-            modal.classList.add('modal-open');
-            document.body.style.overflow = 'hidden';
-
-            const titles = { en: 'Subscription rules', lv: 'Abonementa noteikumi', ru: 'Правила подписки' };
-            modal.querySelector('.info-modal-title').textContent = titles[lang];
-
-            const innerTitles = {
-                en: { rules: 'Rules', policy: 'Privacy Policy' },
-                lv: { rules: 'Noteikumi', policy: 'Privātuma politika' },
-                ru: { rules: 'Правила', policy: 'Политика конфиденциальности' }
-            };
-            const rulesTitleEl = modal.querySelector('[data-i18n="rules_title"]');
-            const policyTitleEl = modal.querySelector('[data-i18n="policy_title"]');
-            if (rulesTitleEl) rulesTitleEl.textContent = innerTitles[lang].rules;
-            if (policyTitleEl) policyTitleEl.textContent = innerTitles[lang].policy;
-
-            setTimeout(() => {
-                if (rulesBody.scrollHeight <= rulesBody.clientHeight + 10) subRulesScrolled = true;
-                if (policyBody.scrollHeight <= policyBody.clientHeight + 10) subPolicyScrolled = true;
-                if (subRulesScrolled && subPolicyScrolled) {
-                    agreeBtn.disabled = false;
-                }
-            }, 50);
-        }
-
-        function checkSubRulesScroll(type) {
-            const body = type === 'rules' ? document.getElementById('subRulesBody') : document.getElementById('subPolicyBody');
-            const atBottom = body.scrollTop + body.clientHeight >= body.scrollHeight - 10;
-
-            if (atBottom) {
-                if (type === 'rules') subRulesScrolled = true;
-                if (type === 'policy') subPolicyScrolled = true;
-            }
-
-            if (subRulesScrolled && subPolicyScrolled) {
-                document.getElementById('subAgreeBtn').disabled = false;
-            }
-        }
-
-        function switchSubLang(lang, btn) {
-            const modal = document.getElementById('subRulesModal');
-            modal.querySelectorAll('.info-lang-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-
-            document.getElementById('subRulesBody').querySelectorAll('.info-lang-content').forEach(el => {
-                el.style.display = el.dataset.lang === lang ? '' : 'none';
-            });
-            document.getElementById('subPolicyBody').querySelectorAll('.info-lang-content').forEach(el => {
-                el.style.display = el.dataset.lang === lang ? '' : 'none';
-            });
-
-            subRulesScrolled = false;
-            subPolicyScrolled = false;
-            document.getElementById('subRulesBody').scrollTop = 0;
-            document.getElementById('subPolicyBody').scrollTop = 0;
-
-            document.getElementById('subAgreeBtn').disabled = true;
-
-            setTimeout(() => {
-                const rBody = document.getElementById('subRulesBody');
-                const pBody = document.getElementById('subPolicyBody');
-                if (rBody.scrollHeight <= rBody.clientHeight + 10) subRulesScrolled = true;
-                if (pBody.scrollHeight <= pBody.clientHeight + 10) subPolicyScrolled = true;
-                if (subRulesScrolled && subPolicyScrolled) {
-                    document.getElementById('subAgreeBtn').disabled = false;
-                }
-            }, 50);
-
-            const titles = { en: 'Subscription rules', lv: 'Abonementa noteikumi', ru: 'Правила подписки' };
-            modal.querySelector('.info-modal-title').textContent = titles[lang];
-
-            const innerTitles = {
-                en: { rules: 'Rules', policy: 'Privacy Policy' },
-                lv: { rules: 'Noteikumi', policy: 'Privātuma politika' },
-                ru: { rules: 'Правила', policy: 'Политика конфиденциальности' }
-            };
-            const rulesTitleEl = modal.querySelector('[data-i18n="rules_title"]');
-            const policyTitleEl = modal.querySelector('[data-i18n="policy_title"]');
-            if (rulesTitleEl) rulesTitleEl.textContent = innerTitles[lang].rules;
-            if (policyTitleEl) policyTitleEl.textContent = innerTitles[lang].policy;
-        }
-
-        function closeSubRulesModal() {
-            document.getElementById('subRulesOverlay').classList.remove('modal-open');
-            document.getElementById('subRulesModal').classList.remove('modal-open');
-            document.body.style.overflow = '';
-        }
-
-        async function confirmSubRules(agreed) {
-            closeSubRulesModal();
+        window.confirmSubRules = async function(agreed) {
+            closeSharedRulesModal('sub');
 
             if (agreed && pendingSubType) {
                 try {
@@ -357,7 +211,9 @@
 
             pendingSubType = null;
             pendingSubBtn = null;
-        }        function checkStrengthProfile(input) {
+        };
+
+        function checkStrengthProfile(input) {
             const v = input.value;
             document.getElementById('profileRules').style.display = v.length ? 'flex' : 'none';
             const set = (id, ok) => document.getElementById(id)?.classList.toggle('auth-rule-ok', ok);

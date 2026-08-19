@@ -69,7 +69,6 @@
                 </div>
             </div>
 
-
             <div class="create-section" id="paramsSection" style="display:none">
                 <h2 class="create-section-title" data-i18n="params_section">Parameters</h2>
                 <div class="create-params" id="createParams"></div>
@@ -94,6 +93,7 @@
                 </div>
                 <div class="create-photos-preview" id="photosPreview"></div>
             </div>
+
             <div class="create-section">
                 <div class="auth-field">
                     <label class="auth-label" data-i18n="ad_duration_label">Publication duration</label>
@@ -129,30 +129,8 @@
             </div>
         </div>
     </div>
-    <div class="modal-overlay" id="promoRulesOverlay" onclick="closePromoRulesModal()"></div>
-    <div class="modal info-modal" id="promoRulesModal">
-        <button class="modal-close" onclick="closePromoRulesModal()">✕</button>
-        <h2 class="info-modal-title" data-i18n="promo_rules_title">Promotion rules</h2>
 
-        <div class="info-modal-lang-tabs">
-            <button class="info-lang-btn active" onclick="switchPromoLang('ru', this)">RU</button>
-            <button class="info-lang-btn" onclick="switchPromoLang('lv', this)">LV</button>
-            <button class="info-lang-btn" onclick="switchPromoLang('en', this)">EN</button>
-        </div>
-
-        <div class="promo-scroll-wrapper" style="padding: 0 24px;">
-            <div class="terms-title" style="margin-top: 15px; font-size: 16px;" data-i18n="rules_title">Правила</div>
-            <div class="info-modal-body" id="promoRulesBody" style="max-height:200px; overflow-y:auto; border: 1px solid #eee; padding: 10px; margin-bottom: 15px;" onscroll="checkPromoRulesScroll('rules')"></div>
-
-            <div class="terms-title" style="font-size: 16px;" data-i18n="policy_title">Политика конфиденциальности</div>
-            <div class="info-modal-body" id="promoPolicyBody" style="max-height:200px; overflow-y:auto; border: 1px solid #eee; padding: 10px;" onscroll="checkPromoRulesScroll('policy')"></div>
-        </div>
-
-        <div style="display:flex;gap:10px;padding:16px 24px 24px;flex-shrink:0">
-            <button class="auth-submit auth-submit-secondary" id="promoDisagreeBtn" disabled onclick="confirmPromoRules(false)" data-i18n="promo_rules_disagree">I disagree — continue without promotion</button>
-            <button class="auth-submit" id="promoAgreeBtn" disabled onclick="confirmPromoRules(true)" data-i18n="promo_rules_agree">I agree — proceed to payment</button>
-        </div>
-    </div>
+    <partial name="~/Views/Shared/Partial/_PromoRulesModal.cshtml" model="@("promo")" />
 </div>
 
 <script src="~/js/param-rules-engine.js"></script>
