@@ -21,7 +21,6 @@ namespace Linkora.Models
         public virtual User User { get; set; }
 
         [Required]
-        [StringLength(50)]
         public int ReportReasonId { get; set; } 
 
         [StringLength(500)]
