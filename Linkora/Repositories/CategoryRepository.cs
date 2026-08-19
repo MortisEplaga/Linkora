@@ -102,23 +102,26 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
 
-            var currentId = (int?)categoryId;
+            await using var cmd = new SqlCommand(@"
+                WITH cte AS (
+                    SELECT Id, ParentId, Name, Type, NameLV, NameRU
+                    FROM Category
+                    WHERE Id = @Id AND Type = 1
+                    UNION ALL
+                    SELECT c.Id, c.ParentId, c.Name, c.Type, c.NameLV, c.NameRU
+                    FROM Category c
+                    INNER JOIN cte ON c.Id = cte.ParentId
+                    WHERE c.Type = 1
+                )
+                SELECT Id, ParentId, Name, Type, NameLV, NameRU
+                FROM cte", conn);
+            cmd.Parameters.AddWithValue("@Id", categoryId);
 
-            while (currentId != null)
-            {
-                await using var cmd = new SqlCommand(
-                    "SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE Id = @Id and Type = 1", conn);
-                cmd.Parameters.AddWithValue("@Id", currentId.Value);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+                breadcrumb.Add(MapRow(reader));
 
-                await using var reader = await cmd.ExecuteReaderAsync();
-
-                if (!await reader.ReadAsync()) break;
-
-                var category = MapRow(reader);
-                breadcrumb.Insert(0, category);
-                currentId = category.ParentId;
-            }
-
+            breadcrumb.Reverse();
             return breadcrumb;
         }
         public async Task<List<Parameter>> GetParametersAsync(IEnumerable<int> categoryIds)
