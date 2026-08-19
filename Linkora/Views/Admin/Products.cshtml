@@ -10,23 +10,7 @@
     string TabUrl(string s) => $"/Admin/Products?status={s}&page=1{(search != null ? "&search=" + Uri.EscapeDataString(search) : "")}";
 }
 
-@section Styles {
     <link rel="stylesheet" href="~/css/admin.css" />
-    <style>
-        .admin-table-wrapper {
-            max-height: 65vh;
-            overflow: auto;
-            border-radius: 8px;
-        }
-
-        .admin-table thead th {
-            position: sticky;
-            top: 0;
-            background: #fff;
-            border-bottom: 1px solid #e8e8e8;
-        }
-    </style>
-}
 
 <div class="admin-layout">
     @await Html.PartialAsync("Sidebar", "products")
