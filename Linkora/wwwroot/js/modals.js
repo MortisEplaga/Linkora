@@ -259,7 +259,7 @@ function showModal(messageKeyOrText) {
 
     if (!overlay || !modal || !messageEl) return;
 
-    const text = (typeof t === 'function') ? (t(messageKeyOrText) || messageKeyOrText) : messageKeyOrText;
+    const text = (typeof translate === 'function') ? (translate(messageKeyOrText) || messageKeyOrText) : messageKeyOrText;
     messageEl.textContent = text;
 
     if (titleEl) titleEl.style.display = 'none';
@@ -323,7 +323,7 @@ function submitLogin() {
 
 function submitRegister() {
     if (!document.getElementById('chkTerms').checked) {
-        alert(t('auth_terms'));
+        alert(translate('auth_terms'));
         return;
     }
     const phoneValue = document.getElementById('regPhone')?.value.trim() ?? '';
@@ -438,8 +438,8 @@ function renderRegions(cities) {
     container.innerHTML = '';
     const all = document.createElement('button');
     all.className = 'region-pill' + (!selectedRegion ? ' region-pill-active' : '');
-    all.textContent = t('all_regions');
-    all.onclick = () => selectRegion(null, t('all_regions'));
+    all.textContent = translate('all_regions');
+    all.onclick = () => selectRegion(null, translate('all_regions'));
     container.appendChild(all);
     cities.forEach(city => {
         const btn = document.createElement('button');
@@ -504,9 +504,9 @@ function openSellerModal(name, avatar, phone, isCompany, email, date, sellerId) 
         ? `<img src="${avatar}" onerror="this.src='/img/no-photo.svg'" />`
         : `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
 
-    document.getElementById('smName').textContent = name || t('unknown_seller');
+    document.getElementById('smName').textContent = name || translate('unknown_seller');
     const badge = document.getElementById('smBadge');
-    badge.innerHTML = isCompany ? `<span class="seller-badge">${t('company_badge')}</span>` : '';
+    badge.innerHTML = isCompany ? `<span class="seller-badge">${translate('company_badge')}</span>` : '';
 
     const phoneRow = document.getElementById('smPhoneRow');
     const phoneEl = document.getElementById('smPhone');
@@ -520,11 +520,11 @@ function openSellerModal(name, avatar, phone, isCompany, email, date, sellerId) 
 
     const dateRow = document.getElementById('smDateRow');
     const dateEl = document.getElementById('smDate');
-    if (date) { dateEl.textContent = t('seller_member_since') + ' ' + date; dateRow.style.display = 'flex'; }
+    if (date) { dateEl.textContent = translate('seller_member_since') + ' ' + date; dateRow.style.display = 'flex'; }
     else { dateRow.style.display = 'none'; }
 
     const link = document.getElementById('smLink');
-    link.textContent = t('seller_other_listings');
+    link.textContent = translate('seller_other_listings');
     if (sellerId) { link.href = '/Seller/Index/' + sellerId; link.style.display = ''; }
     else { link.style.display = 'none'; }
 
@@ -621,12 +621,12 @@ async function switchReviewTab(tab) {
 async function loadReviewTab(tab) {
     const list = document.getElementById('myReviewsList');
     if (!list) return;
-    list.innerHTML = `<div class="reviews-empty">${t('loading_text')}</div>`;
+    list.innerHTML = `<div class="reviews-empty">${translate('loading_text')}</div>`;
     try {
         const res = await fetch(`/Reviews/My?tab=${tab}`);
         const data = await res.json();
         if (!data.length) {
-            list.innerHTML = `<div class="reviews-empty">${t('no_reviews_yet')}</div>`;
+            list.innerHTML = `<div class="reviews-empty">${translate('no_reviews_yet')}</div>`;
             return;
         }
         list.innerHTML = data.map(r => `
@@ -656,7 +656,7 @@ async function loadReviewTab(tab) {
             </div>`
         ).join('');
     } catch {
-        list.innerHTML = `<div class="reviews-empty">${t('failed_load')}</div>`;
+        list.innerHTML = `<div class="reviews-empty">${translate('failed_load')}</div>`;
     }
 }
 
@@ -823,3 +823,235 @@ window.addEventListener("load", function () {
     });
     toggleBtn();
 });
+
+/* ---------- Notifications Modal & Badges ---------- */
+
+let notifAllData = [];
+let notifCurrentTab = 'all';
+let notifModalOpen = false;
+
+function toggleNotifModal(e) {
+    if (!document.getElementById('notifOverlay')) return;
+    e.stopPropagation();
+    if (notifModalOpen) {
+        closeNotifModal();
+    } else {
+        openNotifModal();
+    }
+}
+
+async function openNotifModal() {
+    if (!document.getElementById('notifOverlay')) return;
+    notifModalOpen = true;
+    document.getElementById('notifOverlay').classList.add('open');
+    document.getElementById('notifModal').classList.add('open');
+    await loadAllNotifications();
+}
+
+function closeNotifModal() {
+    if (!document.getElementById('notifOverlay')) return;
+    notifModalOpen = false;
+    document.getElementById('notifOverlay').classList.remove('open');
+    document.getElementById('notifModal').classList.remove('open');
+}
+
+async function loadAllNotifications() {
+    const list = document.getElementById('notifModalList');
+    if (!list) return;
+    list.innerHTML = '<div class="notif-modal-empty"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Loading...</div>';
+    try {
+        const res = await fetch('/Notifications/List');
+        notifAllData = await res.json();
+        renderNotifList();
+        updateNotifBadge(notifAllData.filter(n => !n.isRead).length);
+    } catch {
+        list.innerHTML = '<div class="notif-modal-empty">Failed to load</div>';
+    }
+}
+
+function renderNotifList() {
+    const list = document.getElementById('notifModalList');
+    if (!list) return;
+    const unreadCount = notifAllData.filter(n => !n.isRead).length;
+
+    const tabCount = document.getElementById('tabUnreadCount');
+    if (tabCount) {
+        if (unreadCount > 0) {
+            tabCount.textContent = unreadCount;
+            tabCount.style.display = 'inline-block';
+        } else {
+            tabCount.style.display = 'none';
+        }
+    }
+    const markAllBtn = document.getElementById('markAllBtn');
+    if (markAllBtn) markAllBtn.style.display = unreadCount > 0 ? '' : 'none';
+
+    const data = notifCurrentTab === 'unread'
+        ? notifAllData.filter(n => !n.isRead)
+        : notifAllData;
+
+    if (!data.length) {
+        list.innerHTML = `
+            <div class="notif-modal-empty">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+                ${notifCurrentTab === 'unread' ? translate('notif_empty_unread') : translate('notif_empty_all')}
+            </div>`;
+        return;
+    }
+
+    list.innerHTML = data.map(n => `
+        <div class="notif-item ${n.isRead ? '' : 'unread'}"
+             id="notif-item-${n.id}"
+             onclick="handleNotifClick(${n.id}, '${n.productId ? '/Product/Details/' + n.productId : ''}')">
+            <img class="notif-item-avatar"
+                 src="${n.fromUserAvatar || '/img/no-photo.svg'}"
+                 onerror="this.src='/img/no-photo.svg'" />
+            <div class="notif-item-body">
+                <div class="notif-item-msg">${escapeHtml(translateNotificationMessage(n.message, n))}</div>
+                <div class="notif-item-time">${n.createdAt}</div>
+                ${n.productId && n.productName ? `
+                    <div class="notif-item-product">
+                        ${n.productImage ? `<img src="${n.productImage}" onerror="this.src='/img/no-photo.svg'" />` : ''}
+                        <span>${escapeHtml(n.productName)}</span>
+                    </div>` : ''}
+            </div>
+        </div>`
+    ).join('');
+}
+
+async function handleNotifClick(id, url) {
+    const item = notifAllData.find(n => n.id === id);
+    if (!item) return;
+
+    if (!item.isRead) {
+        item.isRead = true;
+        await fetch(`/Notifications/MarkRead?id=${id}`, { method: 'POST' });
+        const unreadLeft = notifAllData.filter(n => !n.isRead).length;
+        updateNotifBadge(unreadLeft);
+
+        const el = document.getElementById('notif-item-' + id);
+        if (el) {
+            el.classList.remove('unread');
+            if (notifCurrentTab !== 'unread') {
+                const tabCount = document.getElementById('tabUnreadCount');
+                if (tabCount) {
+                    if (unreadLeft > 0) tabCount.textContent = unreadLeft;
+                    else tabCount.style.display = 'none';
+                }
+                const markAllBtn = document.getElementById('markAllBtn');
+                if (markAllBtn) markAllBtn.style.display = unreadLeft > 0 ? '' : 'none';
+            }
+        }
+    }
+
+    let notifType = null;
+    let reviewId = null;
+    try {
+        const parsed = JSON.parse(item.message);
+        notifType = parsed?.type;
+        reviewId = parsed?.reviewId;
+    } catch { }
+
+    if (notifType === 'review_received' && reviewId) {
+        closeNotifModal();
+        window.location.href = `/Seller/Index/${window.currentUserId}?reviewId=${reviewId}`;
+        return;
+    }
+
+    if (notifType === 'deal_sold' || notifType === 'deal_bought') {
+        closeNotifModal();
+        await handleDealNotifClick(item);
+        return;
+    }
+
+    if (url) {
+        closeNotifModal();
+        window.location.href = url;
+    }
+}
+
+async function handleDealNotifClick(notif) {
+    if (!notif.productId || !notif.fromUserId) return;
+    try {
+        const res = await fetch(`/Reviews/CanReview?targetUserId=${notif.fromUserId}&productId=${notif.productId}`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data.canReview) {
+                openDealReviewModal(notif.fromUserId, notif.productId);
+                return;
+            }
+        }
+    } catch { }
+    window.location.href = '/Product/Details/' + notif.productId;
+}
+
+function switchNotifTab(tab) {
+    notifCurrentTab = tab;
+    const tabAll = document.getElementById('tabAll');
+    const tabUnread = document.getElementById('tabUnread');
+    if (tabAll) tabAll.classList.toggle('notif-tab-active', tab === 'all');
+    if (tabUnread) tabUnread.classList.toggle('notif-tab-active', tab === 'unread');
+    renderNotifList();
+}
+
+async function markAllReadModal() {
+    await fetch('/Notifications/MarkAllRead', { method: 'POST' });
+    notifAllData.forEach(n => n.isRead = true);
+    updateNotifBadge(0);
+    renderNotifList();
+}
+
+function updateNotifBadge(count) {
+    const badge = document.getElementById('notifBadge');
+    if (!badge) return;
+    badge.textContent = count;
+    badge.style.display = count > 0 ? 'flex' : 'none';
+}
+
+async function updateFavAndCartBadges() {
+    try {
+        const res = await fetch('/Favourite/UserItems');
+        if (!res.ok) return;
+        const { favs, cart } = await res.json();
+
+        const favBadge = document.getElementById('favsNavBadge');
+        if (favBadge) {
+            if (favs && favs.length > 0) {
+                favBadge.textContent = favs.length;
+                favBadge.style.display = 'inline-flex';
+            } else {
+                favBadge.style.display = 'none';
+            }
+        }
+
+        const cartBadge = document.getElementById('cartNavBadge');
+        if (cartBadge) {
+            if (cart && cart.length > 0) {
+                cartBadge.textContent = cart.length;
+                cartBadge.style.display = 'inline-flex';
+            } else {
+                cartBadge.style.display = 'none';
+            }
+        }
+    } catch (e) {
+        console.warn("Failed to update fav/cart badges", e);
+    }
+}
+
+async function updateMsgBadge() {
+    try {
+        const res = await fetch('/Messages/UnreadCount');
+        if (!res.ok) return;
+        const { count } = await res.json();
+        const badge = document.getElementById('msgNavBadge');
+        if (badge) {
+            badge.textContent = count;
+            badge.style.display = count > 0 ? 'inline-flex' : 'none';
+        }
+    } catch (e) {
+        console.warn('Failed to update message badge', e);
+    }
+}

@@ -1329,7 +1329,7 @@ const TRANSLATIONS = {
     }
 };
 
-function t(key) {
+function translate(key) {
     const lang = localStorage.getItem('lang') || 'en';
     const dict = TRANSLATIONS[lang] || TRANSLATIONS['en'];
     return dict[key] || TRANSLATIONS['en'][key] || key;
@@ -1462,7 +1462,7 @@ function setLang(lang) {
 
     const regionBtnLabel = document.getElementById('regionBtnLabel');
     if (regionBtnLabel && (regionBtnLabel.textContent === 'All regions' || regionBtnLabel.textContent === 'Visi reģioni' || regionBtnLabel.textContent === 'Все регионы')) {
-        regionBtnLabel.textContent = t('all_regions');
+        regionBtnLabel.textContent = translate('all_regions');
     }
 
     if (typeof window.beforeLangChange === 'function') {
