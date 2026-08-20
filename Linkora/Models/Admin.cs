@@ -56,13 +56,10 @@
         public string ReasonRu { get; set; } = "";
         public string Comment { get; set; } = "";
     }
-    public class AdminDashboardViewModel
+    public class AdminDashboardViewModel : AdminBadges
     {
         public int TotalUsers { get; set; }
         public int TotalProducts { get; set; }
-        public int PendingModeration { get; set; }
-        public int PendingReports { get; set; }
-        public int PendingOptions { get; set; }
         public int NewUsersToday { get; set; }
         public int NewProductsToday { get; set; }
         public int ActiveProducts { get; set; }
