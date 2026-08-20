@@ -31,7 +31,6 @@ namespace Linkora.Services
             _apiBase = testMode ? "https://api.test.maksekeskus.ee" : "https://api.maksekeskus.ee";
             _http = httpClientFactory.CreateClient();
         }
-
         public async Task<(string TransactionId, string RedirectUrl)> CreateTransactionAsync(
             decimal amount, string currency, string reference,
             string customerEmail, string customerIp, string locale,

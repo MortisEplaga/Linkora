@@ -36,7 +36,6 @@ namespace Linkora.Repositories
                 });
             return result;
         }
-
         public async Task<bool> IsSubscribedAsync(int followerId, int followingId)
         {
             await using var conn = new SqlConnection(_connectionString);
@@ -48,7 +47,6 @@ namespace Linkora.Repositories
             var result = await cmd.ExecuteScalarAsync();
             return (result != null) && (int)result > 0;
         }
-
         public async Task<bool> ToggleAsync(int followerId, int followingId)
         {
             await using var conn = new SqlConnection(_connectionString);
@@ -78,7 +76,6 @@ namespace Linkora.Repositories
                 return true;
             }
         }
-
         public async Task<int> GetSubscriberCountAsync(int followingId)
         {
             await using var conn = new SqlConnection(_connectionString);

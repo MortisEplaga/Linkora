@@ -1023,5 +1023,160 @@ namespace Linkora.Repositories
                 return false;
             }
         }
+        public async Task<int?> GetPriceParamIdAsync(int productId)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(@"
+                SELECT TOP 1 mpc.CategoryId
+                FROM MapperProductCategory mpc
+                JOIN Category c ON c.Id = mpc.CategoryId AND c.Name = 'Price, €'
+                WHERE mpc.ProductId = @Id", conn);
+            cmd.Parameters.AddWithValue("@Id", productId);
+            var res = await cmd.ExecuteScalarAsync();
+            return res == null || res == DBNull.Value ? null : (int)res;
+        }
+        public async Task<int> RecalculateModerationScoreAsync(int productId)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            await using var confCmd = new SqlCommand(@"
+                SELECT COUNT(*) FROM MapperProductCategory mpc
+                JOIN SelectOptions so ON TRY_CAST(mpc.Value AS int) = so.Id
+                JOIN Category c ON c.Id = mpc.CategoryId AND c.Type IN (2, 4, 8)
+                WHERE mpc.ProductId = @Id AND so.IsConf = 0", conn);
+            confCmd.Parameters.AddWithValue("@Id", productId);
+            var unconfCount = (int)(await confCmd.ExecuteScalarAsync())!;
+
+            await using var scoreCmd = new SqlCommand(@"
+                UPDATE Products SET ModerationScore = @Score,
+                    Status = CASE WHEN @Score >= 5 THEN 'Moderation' ELSE Status END
+                WHERE Id = @Id", conn);
+            scoreCmd.Parameters.AddWithValue("@Score", unconfCount);
+            scoreCmd.Parameters.AddWithValue("@Id", productId);
+            await scoreCmd.ExecuteNonQueryAsync();
+
+            return unconfCount;
+        }
+        public async Task<List<int>> GetFavouriteSubscriberIdsAsync(int productId, int excludeUserId)
+        {
+            var result = new List<int>();
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(
+                "SELECT DISTINCT UserId FROM Favourites WHERE ProductId = @ProductId AND Can = 1 AND UserId != @ExcludeUserId", conn);
+            cmd.Parameters.AddWithValue("@ProductId", productId);
+            cmd.Parameters.AddWithValue("@ExcludeUserId", excludeUserId);
+            await using var r = await cmd.ExecuteReaderAsync();
+            while (await r.ReadAsync())
+                result.Add(r.GetInt32(0));
+            return result;
+        }
+        public async Task<List<Product>> GetPurchasedByUserAsync(int userId)
+        {
+            var result = new List<Product>();
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            const string sql = @"
+                SELECT p.Id, p.Name, p.Address, p.CreatedTime,
+                COALESCE(
+                    (SELECT TOP 1 pm.FilePath FROM ProductMedia pm 
+                     WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+                    p.AvatarImagePath
+                ) AS AvatarImagePath,
+                p.Status,
+                o.Cost AS Price
+                 FROM Products p
+                 INNER JOIN (
+                     SELECT ProductId, Cost, CreatedTime,
+                            ROW_NUMBER() OVER (PARTITION BY ProductId ORDER BY CreatedTime DESC) AS rn
+                     FROM Orders
+                     WHERE UserId = @UserId AND OrderStatus = 1
+                 ) o ON o.ProductId = p.Id AND o.rn = 1
+                 ORDER BY o.CreatedTime DESC";
+
+            await using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@UserId", userId);
+            await using var r = await cmd.ExecuteReaderAsync();
+            while (await r.ReadAsync())
+                result.Add(new Product
+                {
+                    Id = r.GetInt32(0),
+                    Name = r.IsDBNull(1) ? "" : r.GetString(1),
+                    Address = r.IsDBNull(2) ? null : r.GetString(2),
+                    CreatedTime = r.IsDBNull(3) ? null : r.GetDateTime(3),
+                    AvatarImagePath = r.IsDBNull(4) ? null : r.GetString(4),
+                    Status = ProductStatus.Succeeded,
+                    Price = r.IsDBNull(6) ? null : r.GetDecimal(6),
+                });
+            return result;
+        }
+        public async Task<int> GetPurchasedConversationCountAsync(int userId)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(@"
+                SELECT COUNT(DISTINCT p.Id)
+                FROM Products p
+                JOIN Conversations conv ON conv.ProductId = p.Id
+                    AND conv.IsSystem = 1
+                    AND conv.BuyerId = @UserId
+                WHERE p.Status = 'Succeeded'", conn);
+            cmd.Parameters.AddWithValue("@UserId", userId);
+            return (int)(await cmd.ExecuteScalarAsync())!;
+        }
+        public async Task DeleteSpecificMediaAsync(IEnumerable<int> mediaIds)
+        {
+            var ids = mediaIds.ToList();
+            if (!ids.Any()) return;
+
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+
+            await using var sel = new SqlCommand(
+                $"SELECT FilePath FROM ProductMedia WHERE Id IN ({string.Join(",", ids)})", conn);
+            var paths = new List<string>();
+            await using (var r = await sel.ExecuteReaderAsync())
+                while (await r.ReadAsync()) paths.Add(r.GetString(0));
+
+            foreach (var path in paths)
+            {
+                var full = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", path.TrimStart('/'));
+                if (File.Exists(full)) File.Delete(full);
+            }
+
+            await using var del = new SqlCommand(
+                $"DELETE FROM ProductMedia WHERE Id IN ({string.Join(",", ids)})", conn);
+            await del.ExecuteNonQueryAsync();
+        }
+        public async Task UpdatePublishDurationAsync(int productId, int userId, int days)
+        {
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(@"
+                UPDATE Products
+                SET PublishDurationDays = @D,
+                    ExpiresAt = DATEADD(DAY, @D, GETDATE())
+                WHERE Id = @Id AND UserId = @UserId", conn);
+            cmd.Parameters.AddWithValue("@D", days);
+            cmd.Parameters.AddWithValue("@Id", productId);
+            cmd.Parameters.AddWithValue("@UserId", userId);
+            await cmd.ExecuteNonQueryAsync();
+        }
+        public async Task<List<int>> GetSubscriberIdsExcludingAsync(int sellerId, int excludeBuyerId)
+        {
+            var result = new List<int>();
+            await using var conn = new SqlConnection(_connectionString);
+            await conn.OpenAsync();
+            await using var cmd = new SqlCommand(
+                "SELECT FollowerId FROM Subscriptions WHERE FollowingId = @SellerId AND FollowerId != @BuyerId", conn);
+            cmd.Parameters.AddWithValue("@SellerId", sellerId);
+            cmd.Parameters.AddWithValue("@BuyerId", excludeBuyerId);
+            await using var r = await cmd.ExecuteReaderAsync();
+            while (await r.ReadAsync()) result.Add(r.GetInt32(0));
+            return result;
+        }
     }
 }

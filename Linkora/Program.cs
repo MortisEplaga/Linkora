@@ -18,6 +18,15 @@ builder.Services.AddScoped<IReportRepository, ReportRepository>();
 builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<INotificationPreferencesRepository, NotificationPreferencesRepository>();
+builder.Services.AddScoped<ISupportRepository, SupportRepository>();
+builder.Services.AddScoped<IFavouriteRepository, FavouriteRepository>();
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+builder.Services.AddScoped<ISellerRepository, SellerRepository>();
+builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+builder.Services.AddScoped<ISelectOptionRepository, SelectOptionRepository>();
+builder.Services.AddScoped<ICompareRepository, CompareRepository>();
+builder.Services.AddScoped<IAdminRepository, AdminRepository>();
+
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddScoped<Linkora.Services.IMaksekeskusService, Linkora.Services.MaksekeskusService>();
 builder.Services.AddHostedService<Linkora.Services.ArchiveOldProductsService>();

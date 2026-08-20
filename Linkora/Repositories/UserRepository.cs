@@ -255,5 +255,10 @@ namespace Linkora.Repositories
             cmd.Parameters.AddWithValue("@Id", userId);
             await cmd.ExecuteNonQueryAsync();
         }
+        public async Task<bool> IsBannedAsync(int userId)
+        {
+            var user = await GetByIdAsync(userId);
+            return user?.Role == "banned";
+        }
     }
 }

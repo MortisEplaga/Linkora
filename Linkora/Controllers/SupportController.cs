@@ -1,16 +1,17 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
+﻿using Linkora.Repositories;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Linkora.Models;
 
 [Route("api/[controller]")]
 [ApiController]
 public class SupportController : ControllerBase
 {
-    private readonly string _connectionString;
+    private readonly ISupportRepository _supportRepository;
 
-    public SupportController(IConfiguration configuration)
+    public SupportController(ISupportRepository supportRepository)
     {
-        _connectionString = configuration.GetConnectionString("DefaultConnection");
+        _supportRepository = supportRepository;
     }
 
     [HttpPost("contact")]
@@ -20,37 +21,13 @@ public class SupportController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(new { error = "Invalid data" });
 
-        string userId = User.Identity.IsAuthenticated
+        string? userId = User.Identity.IsAuthenticated
             ? User.FindFirstValue(ClaimTypes.NameIdentifier)
             : null;
 
-        const string sql = @"
-            INSERT INTO SupportRequests (Name, Email, Phone, Message, CreatedAt, Status, UserId)
-            VALUES (@Name, @Email, @Phone, @Message, @CreatedAt, @Status, @UserId);
-            SELECT SCOPE_IDENTITY();";
-
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync();
-
-        await using var command = new SqlCommand(sql, connection);
-        command.Parameters.AddWithValue("@Name", model.Name);
-        command.Parameters.AddWithValue("@Email", model.Email);
-        command.Parameters.AddWithValue("@Phone", model.Phone ?? (object)DBNull.Value);
-        command.Parameters.AddWithValue("@Message", model.Message);
-        command.Parameters.AddWithValue("@CreatedAt", DateTime.UtcNow);
-        command.Parameters.AddWithValue("@Status", "New");
-        command.Parameters.AddWithValue("@UserId", userId ?? (object)DBNull.Value);
-
-        var newId = await command.ExecuteScalarAsync();
+        var newId = await _supportRepository.CreateRequestAsync(
+            model.Name, model.Email, model.Phone, model.Message, userId);
 
         return Ok(new { success = true, id = newId });
     }
-}
-
-public class SupportRequestDto
-{
-    public string Name { get; set; }
-    public string Email { get; set; }
-    public string Phone { get; set; }
-    public string Message { get; set; }
 }

@@ -24,5 +24,6 @@ namespace Linkora.Repositories
         Task ClearPasswordResetTokenAsync(int userId);
         Task UpdatePasswordHashAsync(int userId, string passwordHash);
         Task AdjustPromotionPointsAsync(int userId, int delta);
+        Task<bool> IsBannedAsync(int userId);
     }
 }

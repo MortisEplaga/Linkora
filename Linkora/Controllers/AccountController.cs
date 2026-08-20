@@ -189,7 +189,7 @@ namespace Linkora.Controllers
                     UserName = username,
                     Email = email,
                     AvatarImagePath = avatarUrl,
-                    EmailConfirmed = true, // Google already verified the email
+                    EmailConfirmed = true, 
                 };
 
                 var id = await _userRepository.CreateGoogleUserAsync(user);

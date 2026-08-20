@@ -1,5 +1,4 @@
-﻿// Models/Review.cs (создайте, если нет)
-using Linkora.Models;
+﻿using Linkora.Models;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 

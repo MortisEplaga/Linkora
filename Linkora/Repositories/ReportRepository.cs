@@ -96,7 +96,6 @@ namespace Linkora.Repositories
             }
             return reports;
         }
-
         public async Task<IEnumerable<Report>> GetPendingReportsAsync()
         {
             var reports = new List<Report>();
@@ -113,7 +112,6 @@ namespace Linkora.Repositories
             }
             return reports;
         }
-
         public async Task UpdateReportStatusAsync(int reportId, ReportStatus status)
         {
             using var connection = new SqlConnection(_connectionString);
@@ -125,7 +123,6 @@ namespace Linkora.Repositories
             command.Parameters.AddWithValue("@Id", reportId);
             await command.ExecuteNonQueryAsync();
         }
-
         private Report MapReport(SqlDataReader reader)
         {
             return new Report

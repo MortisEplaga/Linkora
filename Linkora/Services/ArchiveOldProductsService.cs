@@ -34,7 +34,6 @@ namespace Linkora.Services
                 await Task.Delay(_interval, stoppingToken);
             }
         }
-
         private async Task ArchiveExpiredProducts()
         {
             using var scope = _serviceScopeFactory.CreateScope();

@@ -49,4 +49,11 @@ namespace Linkora.Models
         public string ReasonText { get; set; } = string.Empty;
         public bool IsActive { get; set; } = true;
     }
+    public class ReportRequest
+    {
+        public int ProductId { get; set; }
+        public int ReportReasonId { get; set; }
+        public string? Comment { get; set; }
+    }
+
 }

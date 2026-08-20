@@ -1,163 +1,30 @@
-﻿using Linkora.Models;
-using Linkora.Repositories;
+﻿using Linkora.Repositories;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
 
 namespace Linkora.Controllers
 {
     public class SellerController : Controller
     {
-        private readonly string _connectionString;
-        private readonly ICategoryRepository _categoryRepository;
+        private readonly ISellerRepository _sellerRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public SellerController(IConfiguration configuration, ICategoryRepository categoryRepository, IHttpContextAccessor httpContextAccessor)
+        public SellerController(ISellerRepository sellerRepository, IHttpContextAccessor httpContextAccessor)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection")!;
-            _categoryRepository = categoryRepository;
+            _sellerRepository = sellerRepository;
             _httpContextAccessor = httpContextAccessor;
         }
+
         private string GetLang() => _httpContextAccessor.HttpContext?.Request.Cookies["lang"] ?? "en";
+
         public async Task<IActionResult> Index(int id, int? categoryId, string sort = "new")
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
+            var seller = await _sellerRepository.GetByIdAsync(id);
+            if (seller == null) return NotFound();
 
-            await using var userCmd = new SqlCommand(
-                "SELECT Id, UserName, AvatarImagePath, PhoneNumber, Email, IsCompany, CreatedAt FROM Users WHERE Id = @Id", conn);
-            userCmd.Parameters.AddWithValue("@Id", id);
-            await using var ur = await userCmd.ExecuteReaderAsync();
-            if (!await ur.ReadAsync()) return NotFound();
-
-            var seller = new SellerViewModel
-            {
-                Id = ur.GetInt32(0),
-                UserName = ur.IsDBNull(1) ? null : ur.GetString(1),
-                AvatarPath = ur.IsDBNull(2) ? null : ur.GetString(2),
-                PhoneNumber = ur.IsDBNull(3) ? null : ur.GetString(3),
-                Email = ur.IsDBNull(4) ? null : ur.GetString(4),
-                IsCompany = !ur.IsDBNull(5) && ur.GetBoolean(5),
-                CreatedAt = ur.IsDBNull(6) ? null : ur.GetDateTime(6),
-            };
-            await ur.CloseAsync();
-
-            await using var revCmd = new SqlCommand(
-                "SELECT COUNT(*), AVG(CAST(Rating AS float)) FROM Reviews WHERE TargetUserId = @Id", conn);
-            revCmd.Parameters.AddWithValue("@Id", id);
-            await using var rr = await revCmd.ExecuteReaderAsync();
-            int reviewCount = 0;
-            double reviewAvg = 0;
-            if (await rr.ReadAsync())
-            {
-                reviewCount = rr.IsDBNull(0) ? 0 : rr.GetInt32(0);
-                reviewAvg = rr.IsDBNull(1) ? 0 : rr.GetDouble(1);
-            }
-            await rr.CloseAsync();
-
-            await using var catCmd = new SqlCommand(@"
-                SELECT DISTINCT c.Id, c.Name, c.NameLV, c.NameRU, COUNT(p.Id) as Cnt
-                FROM Products p
-                JOIN Category c ON c.Id = p.CategoryId
-                WHERE p.UserId = @UserId
-                  AND (p.Status = 'active' OR p.Status IS NULL)
-                GROUP BY c.Id, c.Name, c.NameLV, c.NameRU
-                ORDER BY Cnt DESC", conn);
-            catCmd.Parameters.AddWithValue("@UserId", id);
-            await using var cr = await catCmd.ExecuteReaderAsync();
-            var categories = new List<CategoryCount>();
-            while (await cr.ReadAsync())
-            {
-                var catId = cr.GetInt32(0);
-                var nameEn = cr.GetString(1);
-                var nameLv = cr.IsDBNull(2) ? null : cr.GetString(2);
-                var nameRu = cr.IsDBNull(3) ? null : cr.GetString(3);
-                var count = cr.GetInt32(4);
-
-                var localizedName = GetLang() switch
-                {
-                    "lv" => nameLv ?? nameEn,
-                    "ru" => nameRu ?? nameEn,
-                    _ => nameEn
-                };
-
-                categories.Add(new CategoryCount
-                {
-                    Id = catId,
-                    Name = localizedName,
-                    Count = count
-                });
-            }
-            await cr.CloseAsync();
-
-            var order = sort switch
-            {
-                "cheap" => @"(SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
-                                  FROM MapperProductCategory m
-                                  JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
-                                  WHERE m.ProductId = p.Id) ASC",
-                "expensive" => @"(SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
-                                  FROM MapperProductCategory m
-                                  JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
-                                  WHERE m.ProductId = p.Id) DESC",
-                _ => "p.CreatedTime DESC"
-            };
-
-            var catFilter = categoryId.HasValue ? "AND p.CategoryId = @CatId" : "";
-
-            await using var prodCmd = new SqlCommand($@"
-                SELECT p.Id, p.Name, p.Address, p.CreatedTime, COALESCE(
-           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
-            WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-           p.AvatarImagePath
-       ) AS AvatarImagePath,
-                       (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
-                        FROM MapperProductCategory m
-                        JOIN Category c2 ON c2.Id = m.CategoryId AND c2.Name = 'Price, €'
-                        WHERE m.ProductId = p.Id) as Price
-                FROM Products p
-                WHERE p.UserId = @UserId
-                  AND (p.Status = 'active' OR p.Status IS NULL)
-                  {catFilter}
-                ORDER BY {order}", conn);
-            prodCmd.Parameters.AddWithValue("@UserId", id);
-            if (categoryId.HasValue)
-                prodCmd.Parameters.AddWithValue("@CatId", categoryId.Value);
-
-            await using var pr = await prodCmd.ExecuteReaderAsync();
-            var products = new List<Product>();
-            while (await pr.ReadAsync())
-                products.Add(new Product
-                {
-                    Id = pr.GetInt32(0),
-                    Name = pr.IsDBNull(1) ? "" : pr.GetString(1),
-                    Address = pr.IsDBNull(2) ? null : pr.GetString(2),
-                    CreatedTime = pr.IsDBNull(3) ? null : pr.GetDateTime(3),
-                    AvatarImagePath = pr.IsDBNull(4) ? null : pr.GetString(4),
-                    Price = pr.IsDBNull(5) ? null : pr.GetDecimal(5),
-                });
-            await pr.CloseAsync();
-
-            await using var reviewsCmd = new SqlCommand(@"
-                SELECT r.Id, r.Rating, r.Comment, r.CreatedAt,
-                       u.UserName, u.AvatarImagePath
-                FROM Reviews r
-                JOIN Users u ON u.Id = r.AuthorId
-                WHERE r.TargetUserId = @Id
-                ORDER BY r.CreatedAt DESC
-                OFFSET 0 ROWS FETCH NEXT 50 ROWS ONLY", conn);
-            reviewsCmd.Parameters.AddWithValue("@Id", id);
-            await using var rvr = await reviewsCmd.ExecuteReaderAsync();
-            var reviews = new List<dynamic>();
-            while (await rvr.ReadAsync())
-                reviews.Add(new
-                {
-                    Id = rvr.GetInt32(0),
-                    Rating = rvr.GetInt32(1),
-                    Comment = rvr.IsDBNull(2) ? "" : rvr.GetString(2),
-                    CreatedAt = rvr.GetDateTime(3),
-                    AuthorName = rvr.IsDBNull(4) ? "Unknown" : rvr.GetString(4),
-                    AuthorAvatar = rvr.IsDBNull(5) ? null : rvr.GetString(5),
-                });
+            var (reviewCount, reviewAvg) = await _sellerRepository.GetRatingAsync(id);
+            var categories = await _sellerRepository.GetCategoriesAsync(id, GetLang());
+            var products = await _sellerRepository.GetProductsAsync(id, categoryId, sort);
+            var reviews = await _sellerRepository.GetReviewsAsync(id);
 
             ViewBag.Seller = seller;
             ViewBag.ReviewCount = reviewCount;
@@ -170,17 +37,13 @@ namespace Linkora.Controllers
 
             return View();
         }
+
         [HttpGet]
         public async Task<IActionResult> Rating(int id)
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
-            await using var cmd = new SqlCommand(
-                "SELECT COUNT(*), AVG(CAST(Rating AS float)) FROM Reviews WHERE TargetUserId = @Id", conn);
-            cmd.Parameters.AddWithValue("@Id", id);
-            await using var r = await cmd.ExecuteReaderAsync();
-            if (await r.ReadAsync() && !r.IsDBNull(0) && r.GetInt32(0) > 0)
-                return Json(new { count = r.GetInt32(0), avg = Math.Round(r.GetDouble(1), 1) });
+            var (count, avg) = await _sellerRepository.GetRatingAsync(id);
+            if (count > 0)
+                return Json(new { count, avg = Math.Round(avg, 1) });
             return Json(new { count = 0, avg = 0.0 });
         }
     }

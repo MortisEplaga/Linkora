@@ -2,7 +2,6 @@
 using Linkora.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
 using System.Security.Claims;
 
 namespace Linkora.Controllers
@@ -13,7 +12,8 @@ namespace Linkora.Controllers
         IConfiguration configuration,
         IMessageRepository messageRepository,
         INotificationRepository notificationRepository,
-        IUserRepository userRepository) : Controller
+        IUserRepository userRepository,
+        ISelectOptionRepository selectOptionRepository) : Controller
     {
         private readonly ICategoryRepository _categoryRepository = categoryRepository;
         private readonly IAddressRepository _addressRepository = addressRepository;
@@ -21,7 +21,9 @@ namespace Linkora.Controllers
         private readonly IMessageRepository _messageRepository = messageRepository;
         private readonly INotificationRepository _notificationRepository = notificationRepository;
         private readonly IUserRepository _userRepository = userRepository;
+        private readonly ISelectOptionRepository _selectOptionRepository = selectOptionRepository;
         private readonly IConfiguration _configuration = configuration;
+
         private static int PromotionPoints(string? promotionType) => promotionType switch
         {
             "Highlight" => 1,
@@ -29,6 +31,7 @@ namespace Linkora.Controllers
             "Vip" => 3,
             _ => 0
         };
+
         private static Dictionary<int, string> ParseParamsJson(string? json)
         {
             var result = new Dictionary<int, string>();
@@ -40,90 +43,35 @@ namespace Linkora.Controllers
                     result[pid] = v;
             return result;
         }
-        [HttpPost]
-        private async Task<bool> IsUserBannedAsync(int userId)
-        {
-            await using var conn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
-            await conn.OpenAsync();
-            await using var cmd = new SqlCommand("SELECT Role FROM Users WHERE Id = @Id", conn);
-            cmd.Parameters.AddWithValue("@Id", userId);
-            var role = await cmd.ExecuteScalarAsync() as string;
-            return role == "banned";
-        }
+
+        private string GetLang() => Request.Cookies["lang"] ?? "en";
+
         public async Task<IActionResult> ResolveSelectOption([FromBody] ResolveSelectOptionDto dto)
         {
             if (dto == null || string.IsNullOrWhiteSpace(dto.Text))
                 return BadRequest("Text is required");
 
-            var lang = Request.Cookies["lang"] ?? "en";
-            var col = lang switch
-            {
-                "lv" => "ValueLV",
-                "ru" => "ValueRU",
-                _ => "Value"
-            };
-            var trimmed = dto.Text.Trim();
+            var lang = GetLang();
+            var existingId = await _selectOptionRepository.FindIdAsync(dto.ParamId, dto.Text, lang);
 
-            await using var conn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
-            await conn.OpenAsync();
-
-            await using var findCmd = new SqlCommand($@"
-                SELECT Id FROM SelectOptions
-                WHERE CategoryId = @ParamId
-                  AND LTRIM(RTRIM({col})) = LTRIM(RTRIM(@Text))", conn);
-            findCmd.Parameters.AddWithValue("@ParamId", dto.ParamId);
-            findCmd.Parameters.AddWithValue("@Text", trimmed);
-            var existingId = await findCmd.ExecuteScalarAsync();
-
-            if (existingId != null)
-                return Json(new { id = (int)existingId, created = false });
+            if (existingId.HasValue)
+                return Json(new { id = existingId.Value, created = false });
 
             if (!dto.CreateIfNotFound)
                 return Json(new { id = 0, created = false });
-            await using var insCmd = new SqlCommand(@"
-                INSERT INTO SelectOptions (CategoryId, Value, ValueLV, ValueRU, IsConf)
-                OUTPUT INSERTED.Id
-                VALUES (@ParamId, @Text, @Text, @Text, 0)", conn);
-            insCmd.Parameters.AddWithValue("@ParamId", dto.ParamId);
-            insCmd.Parameters.AddWithValue("@Text", trimmed);
-            var newId = (int)(await insCmd.ExecuteScalarAsync())!;
 
+            var newId = await _selectOptionRepository.CreateAsync(dto.ParamId, dto.Text);
             return Json(new { id = newId, created = true });
         }
+
         [HttpGet]
         public async Task<IActionResult> GetSelectOptions([FromQuery] int paramId)
         {
-            var lang = Request.Cookies["lang"] ?? "en";
-            var col = lang switch
-            {
-                "lv" => "ValueLV",
-                "ru" => "ValueRU",
-                _ => "Value"
-            };
-
-            await using var conn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
-            await conn.OpenAsync();
-
-            await using var cmd = new SqlCommand($@"
-        SELECT Id, {col} 
-        FROM SelectOptions 
-        WHERE CategoryId = @ParamId and IsConf = 1", conn);
-            cmd.Parameters.AddWithValue("@ParamId", paramId);
-
-            var options = new List<object>();
-
-            await using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                options.Add(new
-                {
-                    id = reader.GetInt32(0),
-                    text = reader.IsDBNull(1) ? string.Empty : reader.GetString(1)
-                });
-            }
-
-            return Json(options);
+            var lang = GetLang();
+            var options = await _selectOptionRepository.GetConfirmedAsync(paramId, lang);
+            return Json(options.Select(o => new { id = o.Id, text = o.Text }));
         }
+
         [HttpPost]
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> VerifyRecaptcha([FromBody] RecaptchaDto dto)
@@ -140,6 +88,7 @@ namespace Linkora.Controllers
         }
 
         public class RecaptchaDto { public string Token { get; set; } = ""; }
+
         [HttpGet]
         public async Task<IActionResult> Cities()
         {
@@ -160,6 +109,7 @@ namespace Linkora.Controllers
             var list = await _addressRepository.GetHousesAsync(streetId);
             return Json(list.Select(x => new { id = x.Id, name = x.Name }));
         }
+
         public IActionResult Create() => View();
 
         [HttpGet]
@@ -178,7 +128,7 @@ namespace Linkora.Controllers
                 max = p.Max,
                 step = p.Step
             }));
-        } 
+        }
 
         public async Task<IActionResult> Details(int id)
         {
@@ -193,7 +143,7 @@ namespace Linkora.Controllers
                 ? await _productRepository.GetSimilarAsync(product.CategoryId.Value, id)
                 : new List<Product>();
 
-            var lang = Request.Cookies["lang"] ?? "en";
+            var lang = GetLang();
             var paramValues = await _productRepository.GetParamDisplayValuesAsync(id, lang);
             List<Parameter> paramDefs = new();
             if (paramValues.Count > 0 && product.CategoryId.HasValue)
@@ -209,6 +159,7 @@ namespace Linkora.Controllers
             ViewBag.RecaptchaSiteKey = _configuration["Recaptcha:SiteKey"];
             return View();
         }
+
         [Authorize]
         public async Task<IActionResult> My(string tab = "Active")
         {
@@ -217,54 +168,8 @@ namespace Linkora.Controllers
 
             if (tab == "Purchased")
             {
-                var connectionString = _configuration.GetConnectionString("DefaultConnection")!;
-                var purchased = new List<Linkora.Models.Product>();
-                await using var conn = new SqlConnection(connectionString);
-                await conn.OpenAsync();
-
-                const string sql = @"
-                           SELECT p.Id, p.Name, p.Address, p.CreatedTime,
-                           COALESCE(
-                               (SELECT TOP 1 pm.FilePath FROM ProductMedia pm 
-                                WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-                               p.AvatarImagePath
-                           ) AS AvatarImagePath,
-                           p.Status,
-                           o.Cost AS Price
-                            FROM Products p
-                            INNER JOIN (
-                                SELECT ProductId, Cost, CreatedTime,
-                                       ROW_NUMBER() OVER (PARTITION BY ProductId ORDER BY CreatedTime DESC) AS rn
-                                FROM Orders
-                                WHERE UserId = @UserId AND OrderStatus = 1
-                            ) o ON o.ProductId = p.Id AND o.rn = 1
-                            ORDER BY o.CreatedTime DESC";
-
-                await using var cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@UserId", userId);
-                await using var r = await cmd.ExecuteReaderAsync();
-                while (await r.ReadAsync())
-                    purchased.Add(new Linkora.Models.Product
-                    {
-                        Id = r.GetInt32(0),
-                        Name = r.IsDBNull(1) ? "" : r.GetString(1),
-                        Address = r.IsDBNull(2) ? null : r.GetString(2),
-                        CreatedTime = r.IsDBNull(3) ? null : r.GetDateTime(3),
-                        AvatarImagePath = r.IsDBNull(4) ? null : r.GetString(4),
-                        Status = Linkora.Models.ProductStatus.Succeeded,
-                        Price = r.IsDBNull(6) ? null : r.GetDecimal(6),
-                    });
-
-                await r.CloseAsync();
-                await using var countCmd = new Microsoft.Data.SqlClient.SqlCommand(@"
-                        SELECT COUNT(DISTINCT p.Id)
-                        FROM Products p
-                        JOIN Conversations conv ON conv.ProductId = p.Id
-                            AND conv.IsSystem = 1
-                            AND conv.BuyerId = @UserId
-                        WHERE p.Status = 'Succeeded'", conn);
-                countCmd.Parameters.AddWithValue("@UserId", userId);
-                var purchasedCount = (int)(await countCmd.ExecuteScalarAsync())!;
+                var purchased = await _productRepository.GetPurchasedByUserAsync(userId);
+                var purchasedCount = await _productRepository.GetPurchasedConversationCountAsync(userId);
                 counts["Purchased"] = purchasedCount;
 
                 ViewBag.Products = purchased;
@@ -279,6 +184,7 @@ namespace Linkora.Controllers
             ViewBag.StatusCounts = counts;
             return View();
         }
+
         [Authorize]
         public async Task<IActionResult> Edit(int id)
         {
@@ -286,7 +192,8 @@ namespace Linkora.Controllers
             if (product == null) return NotFound();
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             if (product.UserId != userId) return Forbid();
-            if (await IsUserBannedAsync(userId)) return Forbid();
+            if (await _userRepository.IsBannedAsync(userId)) return Forbid();
+
             string? categoryName = null;
             if (product.CategoryId.HasValue)
             {
@@ -309,8 +216,6 @@ namespace Linkora.Controllers
 
         [Authorize]
         [HttpPost]
-        [Authorize]
-        [HttpPost]
         public async Task<IActionResult> Edit(int id, string title, string? description,
                                         int? qty, string? address, int? categoryId,
                                         string? paramsJson, List<IFormFile>? photos,
@@ -318,7 +223,7 @@ namespace Linkora.Controllers
                                         int? publishDays = null, string? promotionType = null)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            if (await IsUserBannedAsync(userId)) return Forbid();
+            if (await _userRepository.IsBannedAsync(userId)) return Forbid();
             var existing = await _productRepository.GetByIdAsync(id);
             if (existing == null) return NotFound();
             if (existing.UserId != userId) return Forbid();
@@ -329,19 +234,7 @@ namespace Linkora.Controllers
 
             var paramValues = ParseParamsJson(paramsJson);
             var oldParamValues = await _productRepository.GetParamValuesAsync(id);
-            int? priceParamId = null;
-            {
-                await using var pConn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
-                await pConn.OpenAsync();
-                await using var pCmd = new SqlCommand(@"
-                    SELECT TOP 1 mpc.CategoryId
-                    FROM MapperProductCategory mpc
-                    JOIN Category c ON c.Id = mpc.CategoryId AND c.Name = 'Price, €'
-                    WHERE mpc.ProductId = @Id", pConn);
-                pCmd.Parameters.AddWithValue("@Id", id);
-                var pRes = await pCmd.ExecuteScalarAsync();
-                if (pRes != null && pRes != DBNull.Value) priceParamId = (int)pRes;
-            }
+            var priceParamId = await _productRepository.GetPriceParamIdAsync(id);
             bool wasArchived = existing.Status == ProductStatus.Archived;
 
             var keepPaths = string.IsNullOrEmpty(keepMediaJson)
@@ -353,16 +246,7 @@ namespace Linkora.Controllers
 
             if (toDelete.Any())
             {
-                foreach (var m in toDelete)
-                {
-                    var full = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", m.FilePath.TrimStart('/'));
-                    if (System.IO.File.Exists(full)) System.IO.File.Delete(full);
-                }
-                await using var conn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
-                await conn.OpenAsync();
-                var ids = string.Join(",", toDelete.Select(m => m.Id));
-                await using var cmd = new SqlCommand($"DELETE FROM ProductMedia WHERE Id IN ({ids})", conn);
-                await cmd.ExecuteNonQueryAsync();
+                await _productRepository.DeleteSpecificMediaAsync(toDelete.Select(m => m.Id));
             }
 
             if (photos?.Count > 0)
@@ -388,26 +272,12 @@ namespace Linkora.Controllers
                 AvatarImagePath = newAvatar,
             }, paramValues, promotionType ?? "None");
 
-            await using var confConn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
-            await confConn.OpenAsync();
-            await using var confCmd = new SqlCommand(@"
-                SELECT COUNT(*) FROM MapperProductCategory mpc
-                JOIN SelectOptions so ON TRY_CAST(mpc.Value AS int) = so.Id
-                JOIN Category c ON c.Id = mpc.CategoryId AND c.Type IN (2, 4, 8)
-                WHERE mpc.ProductId = @Id AND so.IsConf = 0", confConn);
-            confCmd.Parameters.AddWithValue("@Id", id);
-            var unconfCount = (int)(await confCmd.ExecuteScalarAsync())!;
+            await _productRepository.RecalculateModerationScoreAsync(id);
 
-            await using var scoreUpdateCmd = new SqlCommand(@"
-                UPDATE Products SET ModerationScore = @Score,
-                    Status = CASE WHEN @Score >= 5 THEN 'Moderation' ELSE Status END
-                WHERE Id = @Id", confConn);
-            scoreUpdateCmd.Parameters.AddWithValue("@Score", unconfCount);
-            scoreUpdateCmd.Parameters.AddWithValue("@Id", id);
-            await scoreUpdateCmd.ExecuteNonQueryAsync();
-            var changes = new List<object>();
             if (newPoints != oldPoints)
                 await _userRepository.AdjustPromotionPointsAsync(userId, newPoints - oldPoints);
+
+            var changes = new List<object>();
             if (!string.Equals(existing.Name, title, StringComparison.Ordinal))
                 changes.Add(new { type = "title_changed" });
 
@@ -453,15 +323,7 @@ namespace Linkora.Controllers
 
             if (changes.Any())
             {
-                await using var favConn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
-                await favConn.OpenAsync();
-                await using var favCmd = new SqlCommand(
-                    "SELECT DISTINCT UserId FROM Favourites WHERE ProductId = @ProductId AND Can = 1", favConn);
-                favCmd.Parameters.AddWithValue("@ProductId", id);
-                await using var favR = await favCmd.ExecuteReaderAsync();
-                var favUserIds = new List<int>();
-                while (await favR.ReadAsync()) favUserIds.Add(favR.GetInt32(0));
-
+                var favUserIds = await _productRepository.GetFavouriteSubscriberIdsAsync(id, userId);
                 if (favUserIds.Any())
                 {
                     var payload = new
@@ -469,23 +331,14 @@ namespace Linkora.Controllers
                         type = "favourite_updated",
                         changes = changes.Take(3).ToList()
                     };
-                    foreach (var favUid in favUserIds.Where(uid => uid != userId))
+                    foreach (var favUid in favUserIds)
                         await _notificationRepository.CreateAsync(favUid, null, id, System.Text.Json.JsonSerializer.Serialize(payload));
                 }
             }
+
             if (publishDays.HasValue && new[] { 7, 14, 30, 60, 90 }.Contains(publishDays.Value))
             {
-                await using var conn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
-                await conn.OpenAsync();
-                await using var cmd = new SqlCommand(@"
-            UPDATE Products
-            SET PublishDurationDays = @D,
-                ExpiresAt = DATEADD(DAY, @D, GETDATE())
-            WHERE Id = @Id AND UserId = @UserId", conn);
-                cmd.Parameters.AddWithValue("@D", publishDays.Value);
-                cmd.Parameters.AddWithValue("@Id", id);
-                cmd.Parameters.AddWithValue("@UserId", userId);
-                await cmd.ExecuteNonQueryAsync();
+                await _productRepository.UpdatePublishDurationAsync(id, userId, publishDays.Value);
             }
 
             if (wasArchived)
@@ -493,12 +346,13 @@ namespace Linkora.Controllers
 
             return Ok();
         }
+
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> Delete(int id)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            if (await IsUserBannedAsync(userId)) return Forbid();
+            if (await _userRepository.IsBannedAsync(userId)) return Forbid();
             var isAdmin = User.IsInRole("admin");
 
             var product = await _productRepository.GetByIdAsync(id);
@@ -508,12 +362,13 @@ namespace Linkora.Controllers
             await _productRepository.DeleteAsync(id);
             return Ok();
         }
+
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> Republish(int id)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            if (await IsUserBannedAsync(userId)) return Forbid();
+            if (await _userRepository.IsBannedAsync(userId)) return Forbid();
 
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null) return NotFound();
@@ -524,19 +379,21 @@ namespace Linkora.Controllers
 
             return Ok();
         }
+
         [HttpGet]
         public async Task<IActionResult> ParamValues(int productId)
         {
-            var lang = Request.Cookies["lang"] ?? "en";
+            var lang = GetLang();
             var paramValues = await _productRepository.GetParamDisplayValuesAsync(productId, lang);
             return Json(paramValues);
         }
+
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> CompleteDeal(int id, int otherUserId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            if (await IsUserBannedAsync(userId)) return Forbid();
+            if (await _userRepository.IsBannedAsync(userId)) return Forbid();
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null) return NotFound();
             if (product.UserId != userId) return Forbid();
@@ -546,25 +403,13 @@ namespace Linkora.Controllers
             var success = await _productRepository.CompleteDealAsync(id, userId, otherUserId);
             if (!success) return BadRequest("Не удалось завершить сделку");
 
-            await using var dealConn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
-            await dealConn.OpenAsync();
-
             var soldMsg = System.Text.Json.JsonSerializer.Serialize(new { type = "deal_sold" });
             await _notificationRepository.CreateAsync(userId, otherUserId, id, soldMsg);
 
             var boughtMsg = System.Text.Json.JsonSerializer.Serialize(new { type = "deal_bought" });
             await _notificationRepository.CreateAsync(otherUserId, userId, id, boughtMsg);
 
-            await using var subsCmd = new SqlCommand(
-                "SELECT FollowerId FROM Subscriptions WHERE FollowingId = @SellerId AND FollowerId != @BuyerId",
-                dealConn);
-            subsCmd.Parameters.AddWithValue("@SellerId", userId);
-            subsCmd.Parameters.AddWithValue("@BuyerId", otherUserId);
-            await using var subsR = await subsCmd.ExecuteReaderAsync();
-            var subIds = new List<int>();
-            while (await subsR.ReadAsync()) subIds.Add(subsR.GetInt32(0));
-            await subsR.CloseAsync();
-
+            var subIds = await _productRepository.GetSubscriberIdsExcludingAsync(userId, otherUserId);
             if (subIds.Any())
             {
                 var subSoldMsg = System.Text.Json.JsonSerializer.Serialize(new { type = "subscription_sold" });
@@ -574,6 +419,7 @@ namespace Linkora.Controllers
 
             return Ok();
         }
+
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> GetConversationPartners(int productId)
@@ -582,9 +428,7 @@ namespace Linkora.Controllers
             var partners = await _messageRepository.GetConversationPartnersAsync(productId, userId);
             return Ok(partners.Select(p => new { p.Id, p.UserName, p.AvatarImagePath, p.IsCompany }));
         }
-        [Authorize]
-        [HttpPost]
-        [Authorize, HttpPost]
+
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> Create(string title, string? description, int? qty,
@@ -599,7 +443,8 @@ namespace Linkora.Controllers
                 return BadRequest("Total media size exceeds 50 MB");
 
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            if (await IsUserBannedAsync(userId)) return Forbid();
+            if (await _userRepository.IsBannedAsync(userId)) return Forbid();
+
             int duration = 30;
             if (publishDays.HasValue && new[] { 7, 14, 30, 60, 90 }.Contains(publishDays.Value))
             {
@@ -607,15 +452,9 @@ namespace Linkora.Controllers
             }
             else
             {
-                await using var conn = new Microsoft.Data.SqlClient.SqlConnection(
-                    _configuration.GetConnectionString("DefaultConnection")!);
-                await conn.OpenAsync();
-                await using var cmd = new Microsoft.Data.SqlClient.SqlCommand(
-                    "SELECT PreferredAdDuration FROM Users WHERE Id = @Id", conn);
-                cmd.Parameters.AddWithValue("@Id", userId);
-                var pref = await cmd.ExecuteScalarAsync();
-                if (pref != null && pref != DBNull.Value)
-                    duration = (int)pref;
+                var currentUser = await _userRepository.GetByIdAsync(userId);
+                if (currentUser?.PreferredAdDuration.HasValue == true)
+                    duration = currentUser.PreferredAdDuration.Value;
             }
 
             var media = photos?.Count > 0 ? await SaveUploadedFiles(photos) : new();
@@ -639,32 +478,14 @@ namespace Linkora.Controllers
             if (media.Count > 0)
                 await _productRepository.SaveMediaAsync(newId, media);
 
-            await using var scoreConn = new SqlConnection(_configuration.GetConnectionString("DefaultConnection")!);
-            await scoreConn.OpenAsync();
-            await using var scoreCheckCmd = new SqlCommand(@"
-                SELECT COUNT(*) FROM MapperProductCategory mpc
-                JOIN SelectOptions so ON TRY_CAST(mpc.Value AS int) = so.Id
-                JOIN Category c ON c.Id = mpc.CategoryId AND c.Type IN (2, 4, 8)
-                WHERE mpc.ProductId = @Id AND so.IsConf = 0", scoreConn);
-            scoreCheckCmd.Parameters.AddWithValue("@Id", newId);
-            var unconfCount = (int)(await scoreCheckCmd.ExecuteScalarAsync())!;
-
-            if (unconfCount > 0)
-            {
-                await using var scoreSetCmd = new SqlCommand(@"
-                    UPDATE Products SET ModerationScore = @Score,
-                        Status = CASE WHEN @Score >= 5 THEN 'Moderation' ELSE Status END
-                    WHERE Id = @Id", scoreConn);
-                scoreSetCmd.Parameters.AddWithValue("@Score", unconfCount);
-                scoreSetCmd.Parameters.AddWithValue("@Id", newId);
-                await scoreSetCmd.ExecuteNonQueryAsync();
-            }
+            await _productRepository.RecalculateModerationScoreAsync(newId);
 
             var userName = User.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
             await _notificationRepository.NotifySubscribersAsync(userId, newId, title, userName);
 
             return Ok(new { id = newId });
         }
+
         private async Task<List<ProductMedia>> SaveUploadedFiles(List<IFormFile> files)
         {
             var result = new List<ProductMedia>();
@@ -687,6 +508,7 @@ namespace Linkora.Controllers
             }
             return result;
         }
+
         [HttpGet]
         public async Task<IActionResult> CategoryRules(int categoryId)
         {

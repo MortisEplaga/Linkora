@@ -1,16 +1,16 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
 using System.Security.Claims;
 using System.Text.Json;
 using Linkora.Services;
+using Linkora.Repositories;
 
 namespace Linkora.Controllers
 {
     public class PaymentsController : Controller
     {
         private readonly IMaksekeskusService _mk;
-        private readonly string _connectionString;
+        private readonly IPaymentRepository _paymentRepository;
 
         private static readonly Dictionary<string, decimal> PromotionPrices = new()
         {
@@ -25,10 +25,10 @@ namespace Linkora.Controllers
             ["Premium"] = 9.99m,
         };
 
-        public PaymentsController(IMaksekeskusService mk, IConfiguration configuration)
+        public PaymentsController(IMaksekeskusService mk, IPaymentRepository paymentRepository)
         {
             _mk = mk;
-            _connectionString = configuration.GetConnectionString("DefaultConnection")!;
+            _paymentRepository = paymentRepository;
         }
 
         [Authorize]
@@ -41,17 +41,11 @@ namespace Linkora.Controllers
 
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
 
-            await using var checkConn = new SqlConnection(_connectionString);
-            await checkConn.OpenAsync();
-            await using (var ownCmd = new SqlCommand("SELECT UserId FROM Products WHERE Id = @Id", checkConn))
-            {
-                ownCmd.Parameters.AddWithValue("@Id", productId);
-                var owner = await ownCmd.ExecuteScalarAsync();
-                if (owner == null || (int)owner != userId) return Forbid();
-            }
+            var owner = await GetProductOwnerAsync(productId);
+            if (owner == null || owner != userId) return Forbid();
 
             var reference = $"PROMO{productId}{DateTime.UtcNow:HHmmss}";
-            var paymentId = await CreatePaymentRowAsync(userId, "Promotion", productId, promotionType, null, amount, reference);
+            var paymentId = await _paymentRepository.CreateAsync(userId, "Promotion", productId, promotionType, null, amount, reference);
 
             return await StartTransactionAsync(paymentId, amount, reference);
         }
@@ -66,30 +60,14 @@ namespace Linkora.Controllers
 
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var reference = $"SUB{userId}{DateTime.UtcNow:HHmmss}";
-            var paymentId = await CreatePaymentRowAsync(userId, "Subscription", null, null, subscriptionType, amount, reference);
+            var paymentId = await _paymentRepository.CreateAsync(userId, "Subscription", null, null, subscriptionType, amount, reference);
 
             return await StartTransactionAsync(paymentId, amount, reference);
         }
-
-        private async Task<int> CreatePaymentRowAsync(int userId, string purpose, int? productId,
-            string? promotionType, string? subscriptionType, decimal amount, string reference)
+        private async Task<int?> GetProductOwnerAsync(int productId)
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
-            await using var cmd = new SqlCommand(@"
-                INSERT INTO Payments (UserId, PurposeType, ProductId, PromotionType, SubscriptionType, Amount, Currency, Reference, Status, CreatedAt)
-                OUTPUT INSERTED.Id
-                VALUES (@UserId, @Purpose, @ProductId, @PromotionType, @SubscriptionType, @Amount, 'EUR', @Reference, 'Created', SYSUTCDATETIME())", conn);
-            cmd.Parameters.AddWithValue("@UserId", userId);
-            cmd.Parameters.AddWithValue("@Purpose", purpose);
-            cmd.Parameters.AddWithValue("@ProductId", (object?)productId ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@PromotionType", (object?)promotionType ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@SubscriptionType", (object?)subscriptionType ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@Amount", amount);
-            cmd.Parameters.AddWithValue("@Reference", reference);
-            return (int)(await cmd.ExecuteScalarAsync())!;
+            return await _paymentRepository.GetProductOwnerIdAsync(productId);
         }
-
         private async Task<IActionResult> StartTransactionAsync(int paymentId, decimal amount, string reference)
         {
             var scheme = Request.Scheme;
@@ -108,23 +86,13 @@ namespace Linkora.Controllers
                 var (transactionId, redirectUrl) = await _mk.CreateTransactionAsync(
                     amount, "EUR", reference, email, ip, lang, returnUrl, cancelUrl, notificationUrl);
 
-                await using var conn = new SqlConnection(_connectionString);
-                await conn.OpenAsync();
-                await using var cmd = new SqlCommand(
-                    "UPDATE Payments SET TransactionId = @TxId, Status = 'Pending' WHERE Id = @Id", conn);
-                cmd.Parameters.AddWithValue("@TxId", transactionId);
-                cmd.Parameters.AddWithValue("@Id", paymentId);
-                await cmd.ExecuteNonQueryAsync();
+                await _paymentRepository.SetTransactionIdAsync(paymentId, transactionId);
 
                 return Ok(new { redirectUrl });
             }
             catch (Exception ex)
             {
-                await using var conn = new SqlConnection(_connectionString);
-                await conn.OpenAsync();
-                await using var cmd = new SqlCommand("UPDATE Payments SET Status = 'Failed' WHERE Id = @Id", conn);
-                cmd.Parameters.AddWithValue("@Id", paymentId);
-                await cmd.ExecuteNonQueryAsync();
+                await _paymentRepository.SetStatusAsync(paymentId, "Failed");
                 return StatusCode(502, "Payment gateway error: " + ex.Message);
             }
         }
@@ -141,7 +109,7 @@ namespace Linkora.Controllers
             if (!_mk.VerifyMac(json, mac)) return Unauthorized();
 
             await ProcessPaymentMessageAsync(json);
-            return Ok(); 
+            return Ok();
         }
 
         [AllowAnonymous]
@@ -166,62 +134,28 @@ namespace Linkora.Controllers
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
             var reference = root.GetProperty("reference").GetString();
-            var mkStatus = root.GetProperty("status").GetString(); // COMPLETED, CANCELLED, EXPIRED и т.д.
+            var mkStatus = root.GetProperty("status").GetString(); // COMPLETED, CANCELLED, EXPIRED, etc.
 
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
+            var payment = await _paymentRepository.GetByReferenceAsync(reference!);
+            if (payment == null) return "not_found";
 
-            int paymentId, userId;
-            string currentStatus, purpose;
-            int? productId; string? promotionType; string? subscriptionType;
-
-            await using (var selectCmd = new SqlCommand(
-                "SELECT Id, Status, PurposeType, ProductId, PromotionType, SubscriptionType, UserId FROM Payments WHERE Reference = @Reference", conn))
-            {
-                selectCmd.Parameters.AddWithValue("@Reference", reference);
-                await using var r = await selectCmd.ExecuteReaderAsync();
-                if (!await r.ReadAsync()) return "not_found";
-                paymentId = r.GetInt32(0);
-                currentStatus = r.GetString(1);
-                purpose = r.GetString(2);
-                productId = r.IsDBNull(3) ? null : r.GetInt32(3);
-                promotionType = r.IsDBNull(4) ? null : r.GetString(4);
-                subscriptionType = r.IsDBNull(5) ? null : r.GetString(5);
-                userId = r.GetInt32(6);
-            }
-
-            if (currentStatus == "Completed") return "already_completed";
+            if (payment.Status == "Completed") return "already_completed";
 
             if (mkStatus != "COMPLETED")
             {
-                await using var failCmd = new SqlCommand("UPDATE Payments SET Status = 'Failed' WHERE Id = @Id", conn);
-                failCmd.Parameters.AddWithValue("@Id", paymentId);
-                await failCmd.ExecuteNonQueryAsync();
+                await _paymentRepository.SetStatusAsync(payment.Id, "Failed");
                 return "failed";
             }
 
-            await using (var doneCmd = new SqlCommand(
-                "UPDATE Payments SET Status = 'Completed', CompletedAt = SYSUTCDATETIME() WHERE Id = @Id", conn))
-            {
-                doneCmd.Parameters.AddWithValue("@Id", paymentId);
-                await doneCmd.ExecuteNonQueryAsync();
-            }
+            await _paymentRepository.MarkCompletedAsync(payment.Id);
 
-            if (purpose == "Promotion" && productId.HasValue && promotionType != null)
+            if (payment.Purpose == "Promotion" && payment.ProductId.HasValue && payment.PromotionType != null)
             {
-                await using var promoCmd = new SqlCommand(
-                    "UPDATE Products SET PromotionType = @Type WHERE Id = @Id", conn);
-                promoCmd.Parameters.AddWithValue("@Type", promotionType);
-                promoCmd.Parameters.AddWithValue("@Id", productId.Value);
-                await promoCmd.ExecuteNonQueryAsync();
+                await _paymentRepository.ApplyPromotionAsync(payment.ProductId.Value, payment.PromotionType);
             }
-            else if (purpose == "Subscription" && subscriptionType != null)
+            else if (payment.Purpose == "Subscription" && payment.SubscriptionType != null)
             {
-                await using var subCmd = new SqlCommand(
-                    "UPDATE Users SET SubscriptionType = @Type WHERE Id = @Id", conn);
-                subCmd.Parameters.AddWithValue("@Type", subscriptionType);
-                subCmd.Parameters.AddWithValue("@Id", userId);
-                await subCmd.ExecuteNonQueryAsync();
+                await _paymentRepository.ApplySubscriptionAsync(payment.UserId, payment.SubscriptionType);
             }
 
             return "completed";

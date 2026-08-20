@@ -109,7 +109,6 @@ namespace Linkora.Repositories
             }
             return result;
         }
-
         public async Task<int> GetUnreadCountAsync(int userId)
         {
             var prefs = await _preferencesRepository.GetAsync(userId);
@@ -127,7 +126,6 @@ namespace Linkora.Repositories
             }
             return count;
         }
-
         public async Task MarkReadAsync(int notificationId, int userId)
         {
             await using var conn = new SqlConnection(_connectionString);
@@ -138,7 +136,6 @@ namespace Linkora.Repositories
             cmd.Parameters.AddWithValue("@UserId", userId);
             await cmd.ExecuteNonQueryAsync();
         }
-
         public async Task MarkAllReadAsync(int userId)
         {
             await using var conn = new SqlConnection(_connectionString);
@@ -148,7 +145,6 @@ namespace Linkora.Repositories
             cmd.Parameters.AddWithValue("@UserId", userId);
             await cmd.ExecuteNonQueryAsync();
         }
-
         public async Task NotifySubscribersAsync(int authorId, int productId, string productName, string authorName)
         {
             await using var conn = new SqlConnection(_connectionString);

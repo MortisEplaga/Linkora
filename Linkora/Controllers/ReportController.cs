@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using System.Security.Claims;
+using Linkora.Models;
 
 namespace Linkora.Controllers
 {
@@ -14,18 +15,21 @@ namespace Linkora.Controllers
         private readonly IReportRepository _reportRepository;
         private readonly IProductRepository _productRepository;
         private readonly INotificationRepository _notificationRepository;
+        private readonly IReviewRepository _reviewRepository;
         private readonly string _connectionString;
 
         public ReportController(
             IReportRepository reportRepository,
             IProductRepository productRepository,
             IConfiguration configuration,
-            INotificationRepository notificationRepository)
+            INotificationRepository notificationRepository,
+            IReviewRepository reviewRepository)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection")!;
             _reportRepository = reportRepository;
             _productRepository = productRepository;
             _notificationRepository = notificationRepository;
+            _reviewRepository = reviewRepository;
         }
 
         [HttpGet("reasons")]
@@ -103,43 +107,19 @@ namespace Linkora.Controllers
         public async Task<IActionResult> My(string tab = "about")
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
+            var reviews = await _reviewRepository.GetUserReviewsAsync(userId, tab);
 
-            var isAbout = tab == "about";
-            var whereField = isAbout ? "r.TargetUserId" : "r.AuthorId";
-            var joinUserId = isAbout ? "r.AuthorId" : "r.TargetUserId";
-
-            await using var cmd = new SqlCommand($@"
-        SELECT r.Rating, r.Comment, r.CreatedAt,
-               u.Id, u.UserName, u.AvatarImagePath
-        FROM Reviews r
-        JOIN Users u ON u.Id = {joinUserId}
-        WHERE {whereField} = @UserId
-        ORDER BY r.CreatedAt DESC", conn);
-            cmd.Parameters.AddWithValue("@UserId", userId);
-
-            await using var r = await cmd.ExecuteReaderAsync();
-            var result = new List<object>();
-            while (await r.ReadAsync())
-                result.Add(new
-                {
-                    rating = r.GetInt32(0),
-                    comment = r.IsDBNull(1) ? "" : r.GetString(1),
-                    createdAt = r.GetDateTime(2).ToString("dd.MM.yyyy"),
-                    userId = r.GetInt32(3),
-                    userName = r.IsDBNull(4) ? "Unknown" : r.GetString(4),
-                    avatarPath = r.IsDBNull(5) ? null : r.GetString(5),
-                });
+            var result = reviews.Select(r => new
+            {
+                rating = r.Rating,
+                comment = r.Comment,
+                createdAt = r.CreatedAt.ToString("dd.MM.yyyy"),
+                userId = r.UserId,
+                userName = r.UserName,
+                avatarPath = r.AvatarPath,
+            });
 
             return Json(result);
         }
-    }
-
-    public class ReportRequest
-    {
-        public int ProductId { get; set; }
-        public int ReportReasonId { get; set; }
-        public string? Comment { get; set; }
     }
 }

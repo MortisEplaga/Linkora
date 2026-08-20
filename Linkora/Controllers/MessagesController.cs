@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Linkora.Models;
 
 namespace Linkora.Controllers
 {
@@ -77,12 +78,5 @@ namespace Linkora.Controllers
             var count = await _messageRepository.GetUnreadCountAsync(userId);
             return Json(new { count });
         }
-    }
-
-    public class StartMessageDto
-    {
-        public int ProductId { get; set; }
-        public int SellerId { get; set; }
-        public string? Text { get; set; }
     }
 }

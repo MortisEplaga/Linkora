@@ -35,6 +35,13 @@ namespace Linkora.Repositories
         Task<(List<AdminConfOptionRow> Items, int TotalCount)> GetUnconfirmedOptionsAsync();
         Task<bool> ApproveSelectOptionAsync(int optionId);
         Task<bool> RejectProductAndOptionAsync(int optionId, int productId);
-
+        Task<int?> GetPriceParamIdAsync(int productId);
+        Task<int> RecalculateModerationScoreAsync(int productId);
+        Task<List<int>> GetFavouriteSubscriberIdsAsync(int productId, int excludeUserId);
+        Task<List<Product>> GetPurchasedByUserAsync(int userId);
+        Task<int> GetPurchasedConversationCountAsync(int userId);
+        Task DeleteSpecificMediaAsync(IEnumerable<int> mediaIds);
+        Task UpdatePublishDurationAsync(int productId, int userId, int days);
+        Task<List<int>> GetSubscriberIdsExcludingAsync(int sellerId, int excludeBuyerId);
     }
 }

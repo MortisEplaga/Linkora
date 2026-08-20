@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using System.Security.Claims;
+using Linkora.Models;
 
 namespace Linkora.Controllers
 {
@@ -13,14 +14,16 @@ namespace Linkora.Controllers
     {
         private readonly IMessageRepository _messageRepository;
         private readonly INotificationRepository _notificationRepository;
+        private readonly IReviewRepository _reviewRepository;
         private readonly string _connectionString;
 
         public ReviewsController(IMessageRepository messageRepository, IConfiguration configuration,
-            INotificationRepository notificationRepository)
+            INotificationRepository notificationRepository, IReviewRepository reviewRepository)
         {
             _messageRepository = messageRepository;
             _connectionString = configuration.GetConnectionString("DefaultConnection")!;
             _notificationRepository = notificationRepository;
+            _reviewRepository = reviewRepository;
         }
 
         [HttpPost("Create")]
@@ -44,6 +47,7 @@ namespace Linkora.Controllers
 
             return Ok(new { reviewId });
         }
+
         [HttpGet("CanReview")]
         public async Task<IActionResult> CanReview(int targetUserId, int productId)
         {
@@ -61,48 +65,24 @@ namespace Linkora.Controllers
 
             return Ok(new { canReview = count == 0 });
         }
+
         [HttpGet("My")]
         public async Task<IActionResult> My(string tab = "about")
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var reviews = await _reviewRepository.GetUserReviewsAsync(userId, tab);
 
-            var isAbout = tab == "about";
-            var whereField = isAbout ? "r.TargetUserId" : "r.AuthorId";
-            var joinUserId = isAbout ? "r.AuthorId" : "r.TargetUserId";
-
-            await using var conn = new Microsoft.Data.SqlClient.SqlConnection(_connectionString);
-            await conn.OpenAsync();
-            await using var cmd = new Microsoft.Data.SqlClient.SqlCommand($@"
-        SELECT r.Rating, r.Comment, r.CreatedAt,
-               u.Id, u.UserName, u.AvatarImagePath
-        FROM Reviews r
-        JOIN Users u ON u.Id = {joinUserId}
-        WHERE {whereField} = @UserId
-        ORDER BY r.CreatedAt DESC", conn);
-            cmd.Parameters.AddWithValue("@UserId", userId);
-
-            await using var r = await cmd.ExecuteReaderAsync();
-            var result = new List<object>();
-            while (await r.ReadAsync())
-                result.Add(new
-                {
-                    rating = r.GetInt32(0),
-                    comment = r.IsDBNull(1) ? "" : r.GetString(1),
-                    createdAt = r.GetDateTime(2).ToString("dd.MM.yyyy"),
-                    userId = r.GetInt32(3),
-                    userName = r.IsDBNull(4) ? "Unknown" : r.GetString(4),
-                    avatarPath = r.IsDBNull(5) ? null : (object)r.GetString(5),
-                });
+            var result = reviews.Select(r => new
+            {
+                rating = r.Rating,
+                comment = r.Comment,
+                createdAt = r.CreatedAt.ToString("dd.MM.yyyy"),
+                userId = r.UserId,
+                userName = r.UserName,
+                avatarPath = (object?)r.AvatarPath,
+            });
 
             return Ok(result);
         }
-    }
-
-    public class CreateReviewDto
-    {
-        public int TargetUserId { get; set; }
-        public int ProductId { get; set; }
-        public int Rating { get; set; }
-        public string? Comment { get; set; }
     }
 }

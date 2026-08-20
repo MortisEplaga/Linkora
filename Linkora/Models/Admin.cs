@@ -1,5 +1,61 @@
 ﻿namespace Linkora.Models
 {
+    public class PagedResult<T>
+    {
+        public List<T> Items { get; set; } = new();
+        public int Total { get; set; }
+        public int TotalPages { get; set; }
+        public int CurrentPage { get; set; }
+    }
+
+    public class AdminBadges
+    {
+        public int PendingModeration { get; set; }
+        public int PendingReports { get; set; }
+        public int PendingOptions { get; set; }
+    }
+
+    public class AdminStatsApiData
+    {
+        public List<object> Registrations { get; set; } = new();
+        public List<object> Products { get; set; } = new();
+    }
+
+    public class BanUserResult
+    {
+        public List<int> SubscriberIds { get; set; } = new();
+        public List<(int UserId, int ProductId)> FavouriteUsers { get; set; } = new();
+    }
+
+    public class ApproveOptionResult
+    {
+        public bool Success { get; set; }
+        public int? OwnerId { get; set; }
+        public int? ProductId { get; set; }
+        public string? ParamName { get; set; }
+        public string? ParamNameRu { get; set; }
+        public string? ParamNameLv { get; set; }
+    }
+
+    public class RejectOptionResult
+    {
+        public bool Success { get; set; }
+        public int? OwnerId { get; set; }
+        public string? ParamName { get; set; }
+        public string? ParamNameRu { get; set; }
+        public string? ParamNameLv { get; set; }
+    }
+
+    public class RejectProductResult
+    {
+        public bool Success { get; set; }
+        public bool InvalidReason { get; set; }
+        public int OwnerId { get; set; }
+        public string ReasonEn { get; set; } = "";
+        public string ReasonLv { get; set; } = "";
+        public string ReasonRu { get; set; } = "";
+        public string Comment { get; set; } = "";
+    }
     public class AdminDashboardViewModel
     {
         public int TotalUsers { get; set; }
