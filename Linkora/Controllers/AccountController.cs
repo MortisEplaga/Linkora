@@ -113,7 +113,7 @@ namespace Linkora.Controllers
             {
                 UserName = username,
                 Email = email,
-                PhoneNumber = phone,
+                Phone = phone,
                 IsCompany = isCompany,
                 ConfirmationToken = token,
             };
@@ -188,17 +188,17 @@ namespace Linkora.Controllers
                 {
                     UserName = username,
                     Email = email,
-                    AvatarImagePath = avatarUrl,
+                    AvatarUrl = avatarUrl,
                     EmailConfirmed = true, 
                 };
 
                 var id = await _userRepository.CreateGoogleUserAsync(user);
                 user.Id = id;
             }
-            else if (string.IsNullOrEmpty(user.AvatarImagePath) && !string.IsNullOrEmpty(avatarUrl))
+            else if (string.IsNullOrEmpty(user.AvatarUrl) && !string.IsNullOrEmpty(avatarUrl))
             {
                 await _userRepository.UpdateAvatarAsync(user.Id, avatarUrl);
-                user.AvatarImagePath = avatarUrl;
+                user.AvatarUrl = avatarUrl;
             }
 
             await HttpContext.SignOutAsync("Cookies");
@@ -219,8 +219,8 @@ namespace Linkora.Controllers
                 new(ClaimTypes.Name,           user.UserName),
                 new(ClaimTypes.Role,           user.Role ?? "user"),
             };
-            if (!string.IsNullOrEmpty(user.AvatarImagePath))
-                claims.Add(new Claim("Avatar", user.AvatarImagePath));
+            if (!string.IsNullOrEmpty(user.AvatarUrl))
+                claims.Add(new Claim("Avatar", user.AvatarUrl));
 
             var identity = new ClaimsIdentity(claims, "Cookies");
             var principal = new ClaimsPrincipal(identity);
@@ -283,7 +283,7 @@ namespace Linkora.Controllers
                     UserName = username,
                     Email = !string.IsNullOrEmpty(fbUser.Email) ? fbUser.Email : null,
                     EmailConfirmed = !string.IsNullOrEmpty(fbUser.Email), 
-                    AvatarImagePath = avatarUrl,
+                    AvatarUrl = avatarUrl,
                     IsCompany = false,
                 };
 
@@ -295,11 +295,11 @@ namespace Linkora.Controllers
             }
             else
             {
-                if (string.IsNullOrEmpty(user.AvatarImagePath))
+                if (string.IsNullOrEmpty(user.AvatarUrl))
                 {
                     var avatarUrl = $"https://graph.facebook.com/{fbUser.Id}/picture?type=large";
                     await _userRepository.UpdateAvatarAsync(user.Id, avatarUrl);
-                    user.AvatarImagePath = avatarUrl;
+                    user.AvatarUrl = avatarUrl;
                 }
             }
             if (string.IsNullOrEmpty(user.FacebookId))

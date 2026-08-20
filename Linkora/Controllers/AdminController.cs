@@ -57,12 +57,12 @@ namespace Linkora.Controllers
         public async Task<IActionResult> SetProductStatus(int id, string status)
         {
             if (!IsAdmin()) return Forbid();
-            var ownerId = await _adminRepository.SetProductStatusAsync(id, status);
+            var UserId = await _adminRepository.SetProductStatusAsync(id, status);
 
-            if (status == "Active" && ownerId.HasValue)
+            if (status == "Active" && UserId.HasValue)
             {
                 var msg = System.Text.Json.JsonSerializer.Serialize(new { type = "product_approved" });
-                await _notificationRepository.CreateAsync(ownerId.Value, null, id, msg);
+                await _notificationRepository.CreateAsync(UserId.Value, null, id, msg);
             }
             return Ok();
         }
@@ -205,10 +205,10 @@ namespace Linkora.Controllers
             if (!IsAdmin()) return Forbid();
             var result = await _adminRepository.ApproveOptionAsync(id);
 
-            if (result.Success && result.OwnerId.HasValue)
+            if (result.Success && result.UserId.HasValue)
             {
                 var msg = System.Text.Json.JsonSerializer.Serialize(new { type = "parameter_approved", paramName = result.ParamName ?? "", paramNameRu = result.ParamNameRu ?? "", paramNameLv = result.ParamNameLv ?? "" });
-                await _notificationRepository.CreateAsync(result.OwnerId.Value, null, result.ProductId, msg);
+                await _notificationRepository.CreateAsync(result.UserId.Value, null, result.ProductId, msg);
             }
             return result.Success ? Ok() : BadRequest();
         }
@@ -220,10 +220,10 @@ namespace Linkora.Controllers
             if (!IsAdmin()) return Forbid();
             var result = await _adminRepository.RejectProductByOptionAsync(optionId, productId);
 
-            if (result.Success && result.OwnerId.HasValue)
+            if (result.Success && result.UserId.HasValue)
             {
                 var msg = System.Text.Json.JsonSerializer.Serialize(new { type = "parameter_rejected", paramName = result.ParamName ?? "", paramNameRu = result.ParamNameRu ?? "", paramNameLv = result.ParamNameLv ?? "" });
-                await _notificationRepository.CreateAsync(result.OwnerId.Value, null, productId, msg);
+                await _notificationRepository.CreateAsync(result.UserId.Value, null, productId, msg);
             }
             return result.Success ? Ok() : BadRequest();
         }
@@ -238,7 +238,7 @@ namespace Linkora.Controllers
             if (!result.Success) return NotFound();
 
             var message = System.Text.Json.JsonSerializer.Serialize(new { type = "rejected_reason", reasonEn = result.ReasonEn, reasonLv = result.ReasonLv, reasonRu = result.ReasonRu, comment = result.Comment });
-            await _notificationRepository.CreateAsync(result.OwnerId, null, id, message);
+            await _notificationRepository.CreateAsync(result.UserId, null, id, message);
 
             return Ok();
         }

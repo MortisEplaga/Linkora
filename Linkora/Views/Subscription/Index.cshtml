@@ -24,9 +24,9 @@
                 <div class="subs-card" id="seller-@seller.Id">
                     <a href="/Seller/Index/@seller.Id" class="subs-card-link">
                         <div class="subs-avatar">
-                            @if (seller.AvatarPath != null)
+                            @if (seller.AvatarUrl != null)
                             {
-                                <img src="@seller.AvatarPath" onerror="this.src='/img/no-photo.svg'" />
+                                <img src="@seller.AvatarUrl" onerror="this.src='/img/no-photo.svg'" />
                             }
                             else
                             {

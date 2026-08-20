@@ -166,7 +166,7 @@
                                 <span class="admin-badge admin-badge-@p.Status.ToLower()"
                                       data-i18n="admin_status_@p.Status.ToLower()">@p.Status</span>
                             </td>
-                            <td style="color:#aaa;font-size:12px">@(p.CreatedTime?.ToString("dd MMM, HH:mm"))</td>
+                            <td style="color:#aaa;font-size:12px">@(p.CreatedAt?.ToString("dd MMM, HH:mm"))</td>
                             <td>
                                 <a href="/Product/Details/@p.Id" target="_blank" class="admin-btn admin-btn-view" data-i18n="admin_view">View</a>
                             </td>

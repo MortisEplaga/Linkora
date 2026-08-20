@@ -160,10 +160,10 @@
                 }
                 @foreach (var m in messages)
                 {
-                    if (lastDate == null || lastDate.Value.Date != m.SentAt.Date)
+                    if (lastDate == null || lastDate.Value.Date != m.CreatedAt.Date)
                     {
-                        <div class="msg-date-divider">@m.SentAt.ToString("dd MMMM yyyy")</div>
-                        lastDate = m.SentAt;
+                        <div class="msg-date-divider">@m.CreatedAt.ToString("dd MMMM yyyy")</div>
+                        lastDate = m.CreatedAt;
                     }
 
                     if (m.IsAdmin)
@@ -171,7 +171,7 @@
                         <div class="msg-bubble-wrap msg-bubble-admin">
                             <div class="msg-bubble">
                                 <div class="msg-bubble-text">@m.Text</div>
-                                <div class="msg-bubble-time">@m.SentAt.ToString("HH:mm")</div>
+                                <div class="msg-bubble-time">@m.CreatedAt.ToString("HH:mm")</div>
                             </div>
                         </div>
                     }
@@ -181,7 +181,7 @@
                         <div class="msg-bubble-wrap @(isMine ? "msg-bubble-mine" : "msg-bubble-theirs")">
                             <div class="msg-bubble">
                                 <div class="msg-bubble-text">@m.Text</div>
-                                <div class="msg-bubble-time">@m.SentAt.ToString("HH:mm")</div>
+                                <div class="msg-bubble-time">@m.CreatedAt.ToString("HH:mm")</div>
                             </div>
                         </div>
                     }
@@ -276,14 +276,14 @@
                 wrap.innerHTML = `
                     <div class="msg-bubble">
                         <div class="msg-bubble-text">${escHtml(msg.text)}</div>
-                        <div class="msg-bubble-time">${formatTime(msg.sentAt)}</div>
+                        <div class="msg-bubble-time">${formatTime(msg.createdAt)}</div>
                     </div>`;
             } else {
                 wrap.className = `msg-bubble-wrap ${msg.senderId === myId ? 'msg-bubble-mine' : 'msg-bubble-theirs'}`;
                 wrap.innerHTML = `
                     <div class="msg-bubble">
                         <div class="msg-bubble-text">${escHtml(msg.text)}</div>
-                        <div class="msg-bubble-time">${formatTime(msg.sentAt)}</div>
+                        <div class="msg-bubble-time">${formatTime(msg.createdAt)}</div>
                     </div>`;
             }
 

@@ -59,13 +59,13 @@
             {
                 <div class="myads-card">
                     <a asp-controller="Product" asp-action="Details" asp-route-id="@p.Id" class="myads-card-img">
-                        <img src="@(p.AvatarImagePath ?? "/img/no-photo.svg")"
+                        <img src="@(p.AvatarUrl ?? "/img/no-photo.svg")"
                              onerror="this.src='/img/no-photo.svg'" alt="@p.Name" />
                     </a>
                     <div class="myads-card-body">
                         <a class="myads-card-name" asp-controller="Product" asp-action="Details" asp-route-id="@p.Id">@p.Name</a>
                         <div class="myads-card-price">@(p.Price.HasValue? p.Price.Value.ToString("N2") + " €" : "Price on request")</div>
-                        <div class="myads-card-meta">@p.Address · @(p.CreatedTime?.ToString("dd MMM, HH:mm"))</div>
+                        <div class="myads-card-meta">@p.Address · @(p.CreatedAt?.ToString("dd MMM, HH:mm"))</div>
                     </div>
                     <div class="myads-card-stats">
                         <div class="myads-stat">
@@ -148,7 +148,7 @@
                     item.className = 'partner-item';
                     item.onclick = () => selectPartner(p.id);
                     item.innerHTML = `
-                        <img class="partner-item-avatar" src="${p.avatarImagePath || '/img/no-photo.svg'}" onerror="this.src='/img/no-photo.svg'">
+                        <img class="partner-item-avatar" src="${p.avatarUrl || '/img/no-photo.svg'}" onerror="this.src='/img/no-photo.svg'">
                         <span class="partner-item-name">${p.userName}</span>
                         ${p.isCompany ? '<span class="partner-item-badge">Company</span>' : ''}
                     `;

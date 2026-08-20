@@ -49,7 +49,7 @@
         {
         ("compare_seller",  "Seller",  "seller",  p2 => p2.SellerName),
         ("compare_address", "Address", "address", p2 => p2.Address),
-        ("compare_posted",  "Posted",  "date",    p2 => p2.CreatedTime?.ToString("dd MMM yyyy")),
+        ("compare_posted",  "Posted",  "date",    p2 => p2.CreatedAt?.ToString("dd MMM yyyy")),
         };
 
         <div class="compare-group-label">
@@ -76,7 +76,7 @@
                         <button class="compare-remove-btn" title="Remove from comparison"
                                 onclick="removeFromCompare(@p.Id)">✕</button>
                         <a href="/Product/Details/@p.Id" class="compare-product-img-wrap">
-                            <img src="@(p.AvatarImagePath ?? "/img/no-photo.svg")"
+                            <img src="@(p.AvatarUrl ?? "/img/no-photo.svg")"
                                  alt="@p.Name"
                                  onerror="this.src='/img/no-photo.svg'" />
                             @if (p.MediaCount > 1)

@@ -89,7 +89,7 @@ namespace Linkora.Repositories
             await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Users WHERE CAST(CreatedAt AS DATE) = CAST(GETDATE() AS DATE)", conn))
                 stats.NewUsersToday = (int)(await cmd.ExecuteScalarAsync())!;
 
-            await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Products WHERE CAST(CreatedTime AS DATE) = CAST(GETDATE() AS DATE)", conn))
+            await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Products WHERE CAST(CreatedAt AS DATE) = CAST(GETDATE() AS DATE)", conn))
                 stats.NewProductsToday = (int)(await cmd.ExecuteScalarAsync())!;
 
             await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Products WHERE Status = 'Active'", conn))
@@ -103,10 +103,10 @@ namespace Linkora.Repositories
             }
 
             await using (var cmd = new SqlCommand(@"
-        SELECT TOP 10 p.Id, p.Name, p.Status, p.CreatedTime, u.UserName
+        SELECT TOP 10 p.Id, p.Name, p.Status, p.CreatedAt, u.UserName
         FROM Products p
         LEFT JOIN Users u ON u.Id = p.UserId
-        ORDER BY p.CreatedTime DESC", conn))
+        ORDER BY p.CreatedAt DESC", conn))
             {
                 await using var r = await cmd.ExecuteReaderAsync();
                 while (await r.ReadAsync())
@@ -115,7 +115,7 @@ namespace Linkora.Repositories
                         Id = r.GetInt32(0),
                         Name = r.IsDBNull(1) ? "" : r.GetString(1),
                         Status = r.IsDBNull(2) ? "" : r.GetString(2),
-                        CreatedTime = r.IsDBNull(3) ? null : r.GetDateTime(3),
+                        CreatedAt = r.IsDBNull(3) ? null : r.GetDateTime(3),
                         UserName = r.IsDBNull(4) ? "" : r.GetString(4),
                     });
             }
@@ -132,10 +132,10 @@ namespace Linkora.Repositories
             return await GetPagedDataAsync(
                 conn: conn,
                 selectClause: @"
-            SELECT p.Id, p.Name, p.Status, p.CreatedTime,
+            SELECT p.Id, p.Name, p.Status, p.CreatedAt,
                    COALESCE(
                        (SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-                       p.AvatarImagePath
+                       p.AvatarUrl
                    ) AS Img,
                    u.UserName, u.Id AS UserId,
                    (SELECT COUNT(*) FROM Reports WHERE ProductId = p.Id) AS ReportCount,
@@ -144,7 +144,7 @@ namespace Linkora.Repositories
                     JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
                     WHERE m.ProductId = p.Id) AS Price",
                 fromWhereClause: $"FROM Products p LEFT JOIN Users u ON u.Id = p.UserId WHERE p.Status = @Status {searchClause}",
-                orderByClause: "ORDER BY p.CreatedTime DESC",
+                orderByClause: "ORDER BY p.CreatedAt DESC",
                 page: page,
                 pageSize: 20,
                 addParameters: parameters =>
@@ -157,8 +157,8 @@ namespace Linkora.Repositories
                     Id = r.GetInt32(0),
                     Name = r.IsDBNull(1) ? "" : r.GetString(1),
                     Status = r.IsDBNull(2) ? "" : r.GetString(2),
-                    CreatedTime = r.IsDBNull(3) ? null : r.GetDateTime(3),
-                    ImagePath = r.IsDBNull(4) ? null : r.GetString(4),
+                    CreatedAt = r.IsDBNull(3) ? null : r.GetDateTime(3),
+                    AvatarUrl = r.IsDBNull(4) ? null : r.GetString(4),
                     UserName = r.IsDBNull(5) ? "" : r.GetString(5),
                     UserId = r.IsDBNull(6) ? 0 : r.GetInt32(6),
                     ReportCount = r.IsDBNull(7) ? 0 : r.GetInt32(7),
@@ -195,8 +195,8 @@ namespace Linkora.Repositories
             return await GetPagedDataAsync(
                 conn: conn,
                 selectClause: @"
-            SELECT u.Id, u.UserName, u.Email, u.PhoneNumber, u.Role, u.IsCompany,
-                   u.AvatarImagePath, u.CreatedAt,
+            SELECT u.Id, u.UserName, u.Email, u.Phone, u.Role, u.IsCompany,
+                   u.AvatarUrl, u.CreatedAt,
                    (SELECT COUNT(*) FROM Products WHERE UserId = u.Id) AS ProductCount",
                 fromWhereClause: $"FROM Users u WHERE 1=1 {roleClause} {searchClause}",
                 orderByClause: "ORDER BY u.CreatedAt DESC",
@@ -215,7 +215,7 @@ namespace Linkora.Repositories
                     Phone = r.IsDBNull(3) ? null : r.GetString(3),
                     Role = r.IsDBNull(4) ? "user" : r.GetString(4),
                     IsCompany = !r.IsDBNull(5) && r.GetBoolean(5),
-                    AvatarPath = r.IsDBNull(6) ? null : r.GetString(6),
+                    AvatarUrl = r.IsDBNull(6) ? null : r.GetString(6),
                     CreatedAt = r.IsDBNull(7) ? null : r.GetDateTime(7),
                     ProductCount = r.IsDBNull(8) ? 0 : r.GetInt32(8),
                 });
@@ -286,7 +286,7 @@ namespace Linkora.Repositories
                    p.Name AS ProductName,
                    COALESCE(
                        (SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-                       p.AvatarImagePath
+                       p.AvatarUrl
                    ) AS ProductImg,
                    p.Status AS ProductStatus,
                    u.UserName AS ReporterName,
@@ -355,10 +355,10 @@ namespace Linkora.Repositories
             }
 
             await using (var cmd2 = new SqlCommand(@"
-        SELECT CAST(CreatedTime AS DATE) AS Day, COUNT(*) AS Cnt
+        SELECT CAST(CreatedAt AS DATE) AS Day, COUNT(*) AS Cnt
         FROM Products
-        WHERE CreatedTime >= DATEADD(day, -6, CAST(GETDATE() AS DATE))
-        GROUP BY CAST(CreatedTime AS DATE)
+        WHERE CreatedAt >= DATEADD(day, -6, CAST(GETDATE() AS DATE))
+        GROUP BY CAST(CreatedAt AS DATE)
         ORDER BY Day", conn))
             {
                 await using var r2 = await cmd2.ExecuteReaderAsync();
@@ -381,7 +381,7 @@ namespace Linkora.Repositories
                 if (await r.ReadAsync())
                 {
                     result.ProductId = r.GetInt32(0);
-                    result.OwnerId = r.IsDBNull(1) ? null : r.GetInt32(1);
+                    result.UserId = r.IsDBNull(1) ? null : r.GetInt32(1);
                     result.ParamName = r.IsDBNull(2) ? null : r.GetString(2);
                     result.ParamNameRu = r.IsDBNull(3) ? result.ParamName : r.GetString(3);
                     result.ParamNameLv = r.IsDBNull(4) ? result.ParamName : r.GetString(4);
@@ -389,7 +389,7 @@ namespace Linkora.Repositories
             }
 
             result.Success = await _productRepository.ApproveSelectOptionAsync(id);
-            if (result.Success && result.OwnerId.HasValue && result.ProductId.HasValue)
+            if (result.Success && result.UserId.HasValue && result.ProductId.HasValue)
             {
                 await using var scoreCmd = new SqlCommand(@"UPDATE Products SET ModerationScore = CASE WHEN ModerationScore > 0 THEN ModerationScore - 1 ELSE 0 END, Status = CASE WHEN Status = 'Moderation' AND (CASE WHEN ModerationScore > 0 THEN ModerationScore - 1 ELSE 0 END) < 5 THEN 'Active' ELSE Status END WHERE Id = @ProductId", conn);
                 scoreCmd.Parameters.AddWithValue("@ProductId", result.ProductId.Value);
@@ -410,7 +410,7 @@ namespace Linkora.Repositories
             {
                 if (await r.ReadAsync())
                 {
-                    result.OwnerId = r.IsDBNull(0) ? null : r.GetInt32(0);
+                    result.UserId = r.IsDBNull(0) ? null : r.GetInt32(0);
                     result.ParamName = r.IsDBNull(1) ? null : r.GetString(1);
                     result.ParamNameRu = r.IsDBNull(2) ? result.ParamName : r.GetString(2);
                     result.ParamNameLv = r.IsDBNull(3) ? result.ParamName : r.GetString(3);
@@ -440,7 +440,7 @@ namespace Linkora.Repositories
                 prodCmd.Parameters.AddWithValue("@Id", id);
                 var res = await prodCmd.ExecuteScalarAsync();
                 if (res == null || res == DBNull.Value) return result;
-                result.OwnerId = (int)res;
+                result.UserId = (int)res;
             }
             await using (var updCmd = new SqlCommand("UPDATE Products SET Status = 'Rejected' WHERE Id = @Id", conn))
             {

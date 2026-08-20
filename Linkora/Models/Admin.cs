@@ -30,7 +30,7 @@
     public class ApproveOptionResult
     {
         public bool Success { get; set; }
-        public int? OwnerId { get; set; }
+        public int? UserId { get; set; }
         public int? ProductId { get; set; }
         public string? ParamName { get; set; }
         public string? ParamNameRu { get; set; }
@@ -40,7 +40,7 @@
     public class RejectOptionResult
     {
         public bool Success { get; set; }
-        public int? OwnerId { get; set; }
+        public int? UserId { get; set; }
         public string? ParamName { get; set; }
         public string? ParamNameRu { get; set; }
         public string? ParamNameLv { get; set; }
@@ -50,7 +50,7 @@
     {
         public bool Success { get; set; }
         public bool InvalidReason { get; set; }
-        public int OwnerId { get; set; }
+        public int UserId { get; set; }
         public string ReasonEn { get; set; } = "";
         public string ReasonLv { get; set; } = "";
         public string ReasonRu { get; set; } = "";
@@ -72,8 +72,8 @@
         public int Id { get; set; }
         public string Name { get; set; } = "";
         public string Status { get; set; } = "";
-        public DateTime? CreatedTime { get; set; }
-        public string? ImagePath { get; set; }
+        public DateTime? CreatedAt { get; set; }
+        public string? AvatarUrl { get; set; }
         public string UserName { get; set; } = "";
         public int UserId { get; set; }
         public int ReportCount { get; set; }
@@ -88,7 +88,7 @@
         public string? Phone { get; set; }
         public string Role { get; set; } = "user";
         public bool IsCompany { get; set; }
-        public string? AvatarPath { get; set; }
+        public string? AvatarUrl { get; set; }
         public DateTime? CreatedAt { get; set; }
         public int ProductCount { get; set; }
     }
@@ -116,7 +116,7 @@
         public string OptionValueRU { get; set; }
         public int ProductId { get; set; }
         public string ProductName { get; set; }
-        public DateTime? ProductCreatedTime { get; set; }
+        public DateTime? CreatedAt { get; set; }
         public int UserId { get; set; }
         public string UserName { get; set; }
         public int CategoryId { get; set; }

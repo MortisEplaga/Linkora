@@ -8,7 +8,7 @@ namespace Linkora.Services
     public interface IMaksekeskusService
     {
         Task<(string TransactionId, string RedirectUrl)> CreateTransactionAsync(
-            decimal amount, string currency, string reference,
+            decimal price, string currency, string reference,
             string customerEmail, string customerIp, string locale,
             string returnUrl, string cancelUrl, string notificationUrl);
         bool VerifyMac(string json, string mac);
@@ -32,7 +32,7 @@ namespace Linkora.Services
             _http = httpClientFactory.CreateClient();
         }
         public async Task<(string TransactionId, string RedirectUrl)> CreateTransactionAsync(
-            decimal amount, string currency, string reference,
+            decimal price, string currency, string reference,
             string customerEmail, string customerIp, string locale,
             string returnUrl, string cancelUrl, string notificationUrl)
         {
@@ -40,7 +40,7 @@ namespace Linkora.Services
             {
                 transaction = new
                 {
-                    amount = amount.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
+                    price = price.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
                     currency,
                     reference
                 },

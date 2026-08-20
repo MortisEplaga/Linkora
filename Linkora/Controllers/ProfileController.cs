@@ -53,7 +53,7 @@ namespace Linkora.Controllers
                 if (existing != null) errors.Add("Username already taken");
             }
 
-            if (!string.IsNullOrWhiteSpace(dto.Phone) && dto.Phone != user.PhoneNumber)
+            if (!string.IsNullOrWhiteSpace(dto.Phone) && dto.Phone != user.Phone)
             {
                 var byPhone = await _userRepository.GetByPhoneAsync(dto.Phone);
                 if (byPhone != null && byPhone.Id != userId)
@@ -105,7 +105,7 @@ namespace Linkora.Controllers
             var setParts = new List<string>
             {
                 "UserName = @U",
-                "PhoneNumber = @P",
+                "Phone = @P",
                 "PreferredAdDuration = @D"
             };
             if (newHash != null) setParts.Add("PasswordHash = @H");

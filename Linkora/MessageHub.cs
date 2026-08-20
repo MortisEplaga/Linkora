@@ -43,7 +43,7 @@ namespace Linkora.Hubs
                 senderId = userId,
                 senderName = userName,
                 text,
-                sentAt = DateTime.UtcNow.ToString("o"),
+                createdAt = DateTime.UtcNow.ToString("o"),
                 isRead = false,
             };
 

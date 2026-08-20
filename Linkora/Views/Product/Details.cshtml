@@ -14,8 +14,8 @@
         @{
             var mediaList = p.Media.Count > 0
             ? p.Media
-            : (p.AvatarImagePath != null
-            ? new List<ProductMedia> { new() { FilePath = p.AvatarImagePath, MediaType = "image" } }
+            : (p.AvatarUrl != null
+            ? new List<ProductMedia> { new() { FilePath = p.AvatarUrl, MediaType = "image" } }
             : new List<ProductMedia> { new() { FilePath = "/img/no-photo.svg", MediaType = "image" } });
         }
         <div class="details-gallery">
@@ -90,7 +90,7 @@
             }
             <div class="details-meta">
                 <span>@p.Address</span>
-                <span>@(p.CreatedTime?.ToString("dd MMM, HH:mm"))</span>
+                <span>@(p.CreatedAt?.ToString("dd MMM, HH:mm"))</span>
             </div>
 
             <div class="details-actions">
@@ -99,7 +99,7 @@
                     <span data-i18n="write_btn">Write</span>
                 </button>
                 <button class="details-btn details-btn-secondary" id="phoneBtn"
-                        onclick="handlePhoneClick(this)" data-phone="@p.Seller?.PhoneNumber">
+                        onclick="handlePhoneClick(this)" data-phone="@p.Seller?.Phone">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13.1a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.45h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.1a16 16 0 0 0 6 6l1.27-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 17.92z" /></svg>
                     <span data-i18n="call_btn">Call</span>
                 </button>
@@ -107,9 +107,9 @@
 
             <div class="details-seller" style="cursor:pointer">
                  <div class="details-seller-avatar">
-                    @if (p.Seller?.AvatarPath != null)
+                    @if (p.Seller?.AvatarUrl != null)
                     {
-                        <img src="@p.Seller?.AvatarPath" onerror="this.src='/img/no-photo.svg'" />
+                        <img src="@p.Seller?.AvatarUrl" onerror="this.src='/img/no-photo.svg'" />
                     }
                     else
                     {
@@ -124,7 +124,7 @@
                     }
                 </div>
                 <button class="details-btn details-btn-secondary"
-                        onclick="checkAuthAndOpenSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarPath', '@p.Seller?.PhoneNumber', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0))">
+                        onclick="checkAuthAndOpenSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarUrl', '@p.Seller?.Phone', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0))">
                     <span data-i18n="seller_show_contact">Show contact</span>
                 </button>
             </div>
@@ -285,9 +285,9 @@
     <div class="msg-modal-header">
         <div class="msg-modal-seller">
             <div class="details-seller-avatar" style="width:48px;height:48px">
-                @if (p.Seller?.AvatarPath != null)
+                @if (p.Seller?.AvatarUrl != null)
                 {
-                    <img src="@p.Seller?.AvatarPath" onerror="this.src='/img/no-photo.svg'" />
+                    <img src="@p.Seller?.AvatarUrl" onerror="this.src='/img/no-photo.svg'" />
                 }
                 else
                 {
@@ -573,9 +573,9 @@
         pendingPhone = null;
     }
     
-    function checkAuthAndOpenSellerModal(userName, avatarPath, phoneNumber, isCompany, email, createdAt, sellerId) {
+    function checkAuthAndOpenSellerModal(userName, avatarUrl, phone, isCompany, email, createdAt, sellerId) {
         if (isUserAuthenticated) {
-            openSellerModal(userName, avatarPath, phoneNumber, isCompany, email, createdAt, sellerId);
+            openSellerModal(userName, avatarUrl, phone, isCompany, email, createdAt, sellerId);
         } else {
             if (typeof openAuthModal === 'function') {
                 openAuthModal('login');

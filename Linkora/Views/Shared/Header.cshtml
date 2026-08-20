@@ -24,13 +24,13 @@
                     {
                         <div class="user-menu-wrap">
                             @{
-                                var avatarPath = User.FindFirst("Avatar")?.Value;
+                                var avatarUrl = User.FindFirst("Avatar")?.Value;
                             }
                             <div class="user-info-wrapper">
                                 <button class="login-btn" onclick="toggleUserMenu()">
-                                    @if (avatarPath != null)
+                                    @if (avatarUrl != null)
                                     {
-                                        <img src="@avatarPath" class="header-user-avatar" />
+                                        <img src="@avatarUrl" class="header-user-avatar" />
                                     }
                                     else
                                     {

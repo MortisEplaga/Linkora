@@ -10,7 +10,7 @@
         public int? ProductId { get; set; }
         public string? ProductName { get; set; }
         public string? ProductImage { get; set; }
-        public string Message { get; set; } = "";
+        public string Text { get; set; } = "";
         public bool IsRead { get; set; }
         public DateTime CreatedAt { get; set; }
     }

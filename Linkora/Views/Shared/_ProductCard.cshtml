@@ -8,7 +8,7 @@
    data-promo-top="@(p.PromotionType is "Top" or "Vip" ? "true" : "false")"
    asp-controller="Product" asp-action="Details" asp-route-id="@p.Id">
     <div class="product-card-img">
-        <img src="@(p.AvatarImagePath ?? "/img/no-photo.svg")" alt="@p.Name"
+        <img src="@(p.AvatarUrl ?? "/img/no-photo.svg")" alt="@p.Name"
              onerror="this.src='/img/no-photo.svg'" />
 
         <div class="product-card-price-tag" @(p.Price.HasValue ? "" : Html.Raw("data-i18n=\"price_on_request\""))>
@@ -34,7 +34,7 @@
     <div class="product-card-body">
         <div class="product-card-name">@p.Name</div>
         <div class="product-card-address">@p.Address</div>
-        <div class="product-card-date">@(p.CreatedTime?.ToString("dd MMM, HH:mm"))</div>
+        <div class="product-card-date">@(p.CreatedAt?.ToString("dd MMM, HH:mm"))</div>
         <div class="product-card-desc">@p.Description</div>
     </div>
 
@@ -42,10 +42,10 @@
     {
         <div class="product-card-seller">
             <div class="seller-avatar" style="cursor:pointer"
-                 onclick="event.preventDefault(); openSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarPath', '@p.Seller?.PhoneNumber', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0))">
-                @if (p.Seller?.AvatarPath != null)
+                 onclick="event.preventDefault(); openSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarUrl', '@p.Seller?.Phone', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0))">
+                @if (p.Seller?.AvatarUrl != null)
                 {
-                    <img src="@p.Seller?.AvatarPath" style="width:40px;height:40px;border-radius:50%;object-fit:cover"
+                    <img src="@p.Seller?.AvatarUrl" style="width:40px;height:40px;border-radius:50%;object-fit:cover"
                          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />
                     <svg style="display:none;width:40px;height:40px" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                 }
@@ -59,7 +59,7 @@
             {
                 <div class="seller-badge">Company</div>
             }
-            <div class="seller-btn" onclick="event.preventDefault(); openSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarPath', '@p.Seller?.PhoneNumber', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0))" data-i18n="seller_show_contact">
+            <div class="seller-btn" onclick="event.preventDefault(); openSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarUrl', '@p.Seller?.Phone', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0))" data-i18n="seller_show_contact">
                 Show contact
             </div>
         </div>

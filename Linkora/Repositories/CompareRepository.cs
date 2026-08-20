@@ -20,12 +20,12 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
 
             await using var cmd = new SqlCommand(@"
-                SELECT p.Id, p.Name, p.Address, p.CreatedTime,
+                SELECT p.Id, p.Name, p.Address, p.CreatedAt,
                        COALESCE(
                            (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
                             WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-                           p.AvatarImagePath
-                       ) AS AvatarImagePath,
+                           p.AvatarUrl
+                       ) AS AvatarUrl,
                        (SELECT COUNT(*) FROM ProductMedia pm2 WHERE pm2.ProductId = p.Id) AS MediaCount,
                        (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
                         FROM MapperProductCategory m
@@ -60,8 +60,8 @@ namespace Linkora.Repositories
                         Id = r.GetInt32(0),
                         Name = r.IsDBNull(1) ? "" : r.GetString(1),
                         Address = r.IsDBNull(2) ? null : r.GetString(2),
-                        CreatedTime = r.IsDBNull(3) ? null : r.GetDateTime(3),
-                        AvatarImagePath = r.IsDBNull(4) ? null : r.GetString(4),
+                        CreatedAt = r.IsDBNull(3) ? null : r.GetDateTime(3),
+                        AvatarUrl = r.IsDBNull(4) ? null : r.GetString(4),
                         MediaCount = r.IsDBNull(5) ? 0 : r.GetInt32(5),
                         Price = r.IsDBNull(6) ? null : r.GetDecimal(6),
                         CategoryName = catName,

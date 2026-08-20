@@ -36,7 +36,7 @@ namespace Linkora.Controllers
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> InitiatePromotion(int productId, string promotionType)
         {
-            if (!PromotionPrices.TryGetValue(promotionType, out var amount))
+            if (!PromotionPrices.TryGetValue(promotionType, out var price))
                 return BadRequest("Unknown promotion type");
 
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -45,9 +45,9 @@ namespace Linkora.Controllers
             if (owner == null || owner != userId) return Forbid();
 
             var reference = $"PROMO{productId}{DateTime.UtcNow:HHmmss}";
-            var paymentId = await _paymentRepository.CreateAsync(userId, "Promotion", productId, promotionType, null, amount, reference);
+            var paymentId = await _paymentRepository.CreateAsync(userId, "Promotion", productId, promotionType, null, price, reference);
 
-            return await StartTransactionAsync(paymentId, amount, reference);
+            return await StartTransactionAsync(paymentId, price, reference);
         }
 
         [Authorize]
@@ -55,20 +55,20 @@ namespace Linkora.Controllers
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> InitiateSubscription(string subscriptionType)
         {
-            if (!SubscriptionPrices.TryGetValue(subscriptionType, out var amount))
+            if (!SubscriptionPrices.TryGetValue(subscriptionType, out var price))
                 return BadRequest("Unknown subscription type");
 
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var reference = $"SUB{userId}{DateTime.UtcNow:HHmmss}";
-            var paymentId = await _paymentRepository.CreateAsync(userId, "Subscription", null, null, subscriptionType, amount, reference);
+            var paymentId = await _paymentRepository.CreateAsync(userId, "Subscription", null, null, subscriptionType, price, reference);
 
-            return await StartTransactionAsync(paymentId, amount, reference);
+            return await StartTransactionAsync(paymentId, price, reference);
         }
         private async Task<int?> GetProductOwnerAsync(int productId)
         {
-            return await _paymentRepository.GetProductOwnerIdAsync(productId);
+            return await _paymentRepository.GetProductUserIdAsync(productId);
         }
-        private async Task<IActionResult> StartTransactionAsync(int paymentId, decimal amount, string reference)
+        private async Task<IActionResult> StartTransactionAsync(int paymentId, decimal price, string reference)
         {
             var scheme = Request.Scheme;
             var host = Request.Host.Value;
@@ -84,7 +84,7 @@ namespace Linkora.Controllers
             try
             {
                 var (transactionId, redirectUrl) = await _mk.CreateTransactionAsync(
-                    amount, "EUR", reference, email, ip, lang, returnUrl, cancelUrl, notificationUrl);
+                    price, "EUR", reference, email, ip, lang, returnUrl, cancelUrl, notificationUrl);
 
                 await _paymentRepository.SetTransactionIdAsync(paymentId, transactionId);
 

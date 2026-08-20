@@ -129,7 +129,7 @@ public class MessageRepository : IMessageRepository
         await using var conn = new SqlConnection(_connectionString);
         await conn.OpenAsync();
         var sql = @"
-        SELECT DISTINCT u.Id, u.UserName, u.AvatarImagePath, u.IsCompany
+        SELECT DISTINCT u.Id, u.UserName, u.AvatarUrl, u.IsCompany
         FROM Conversations c
         JOIN Users u ON (u.Id = c.BuyerId OR u.Id = c.SellerId)
         WHERE c.ProductId = @ProductId 
@@ -145,7 +145,7 @@ public class MessageRepository : IMessageRepository
             {
                 Id = reader.GetInt32(0),
                 UserName = reader.GetString(1),
-                AvatarImagePath = reader.IsDBNull(2) ? null : reader.GetString(2),
+                AvatarUrl = reader.IsDBNull(2) ? null : reader.GetString(2),
                 IsCompany = !reader.IsDBNull(3) && reader.GetBoolean(3)
             });
         }
@@ -172,7 +172,7 @@ public class MessageRepository : IMessageRepository
         await using var conn = new SqlConnection(_connectionString);
         await conn.OpenAsync();
         var sql = @"
-        INSERT INTO Messages (ConversationId, SenderId, Text, SentAt, IsRead)
+        INSERT INTO Messages (ConversationId, SenderId, Text, CreatedAt, IsRead)
         OUTPUT INSERTED.Id
         VALUES (@ConvId, NULL, @Text, GETDATE(), 0)";
         await using var cmd = new SqlCommand(sql, conn);
@@ -194,8 +194,8 @@ SELECT c.Id, c.ProductId, c.BuyerId, c.SellerId, c.IsSystem, c.IsSupport, c.Crea
        p.Name,
        COALESCE(
            (SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-           p.AvatarImagePath
-       ) AS AvatarImagePath,
+           p.AvatarUrl
+       ) AS AvatarUrl,
        CASE 
            WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN bu.UserName
            WHEN c.IsSupport = 1 AND ur.Role != 'admin' THEN 'Tech Support'
@@ -203,7 +203,7 @@ SELECT c.Id, c.ProductId, c.BuyerId, c.SellerId, c.IsSystem, c.IsSupport, c.Crea
        END AS OtherUserName,
        CASE 
            WHEN c.IsSupport = 1 AND ur.Role != 'admin' THEN NULL
-           WHEN c.BuyerId = @UserId THEN su.AvatarImagePath ELSE bu.AvatarImagePath 
+           WHEN c.BuyerId = @UserId THEN su.AvatarUrl ELSE bu.AvatarUrl 
        END AS OtherUserAvatar,
        CASE 
            WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN c.BuyerId
@@ -214,8 +214,8 @@ SELECT c.Id, c.ProductId, c.BuyerId, c.SellerId, c.IsSystem, c.IsSupport, c.Crea
             WHEN c.BuyerId = @UserId THEN CAST(IIF(su.Role = 'banned', 1, 0) AS BIT)
             ELSE CAST(IIF(bu.Role = 'banned', 1, 0) AS BIT)
         END AS OtherUserIsBanned,
-       (SELECT TOP 1 Text FROM Messages WHERE ConversationId = c.Id ORDER BY SentAt DESC) AS LastMessage,
-       (SELECT TOP 1 SentAt FROM Messages WHERE ConversationId = c.Id ORDER BY SentAt DESC) AS LastMessageAt,
+       (SELECT TOP 1 Text FROM Messages WHERE ConversationId = c.Id ORDER BY CreatedAt DESC) AS LastMessage,
+       (SELECT TOP 1 CreatedAt FROM Messages WHERE ConversationId = c.Id ORDER BY CreatedAt DESC) AS LastMessageAt,
        (SELECT COUNT(*) FROM Messages WHERE ConversationId = c.Id AND IsRead = 0 AND SenderId != @UserId AND IsAdmin = 0) AS UnreadCount
 FROM Conversations c
 CROSS JOIN user_role ur
@@ -265,8 +265,8 @@ SELECT c.Id, c.ProductId, c.BuyerId, c.SellerId, c.IsSystem, c.IsSupport, c.Crea
        p.Name,
        COALESCE(
            (SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-           p.AvatarImagePath
-       ) AS AvatarImagePath,
+           p.AvatarUrl
+       ) AS AvatarUrl,
        p.Status,
        CASE 
            WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN bu.UserName
@@ -275,7 +275,7 @@ SELECT c.Id, c.ProductId, c.BuyerId, c.SellerId, c.IsSystem, c.IsSupport, c.Crea
        END AS OtherUserName,
        CASE 
            WHEN c.IsSupport = 1 AND ur.Role != 'admin' THEN NULL
-           WHEN c.BuyerId = @UserId THEN su.AvatarImagePath ELSE bu.AvatarImagePath 
+           WHEN c.BuyerId = @UserId THEN su.AvatarUrl ELSE bu.AvatarUrl 
        END AS OtherUserAvatar,
        CASE 
            WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN c.BuyerId
@@ -379,12 +379,12 @@ WHERE c.Id = @Id
         await using var conn = new SqlConnection(_connectionString);
         await conn.OpenAsync();
         await using var cmd = new SqlCommand(@"
-                SELECT m.Id, m.ConversationId, m.SenderId, m.Text, m.SentAt, m.IsRead, m.IsAdmin,
-                       u.UserName, u.AvatarImagePath
+                SELECT m.Id, m.ConversationId, m.SenderId, m.Text, m.CreatedAt, m.IsRead, m.IsAdmin,
+                       u.UserName, u.AvatarUrl
                 FROM Messages m
                 LEFT JOIN Users u ON u.Id = m.SenderId
                 WHERE m.ConversationId = @ConvId
-                ORDER BY m.SentAt ASC", conn);
+                ORDER BY m.CreatedAt ASC", conn);
         cmd.Parameters.AddWithValue("@ConvId", conversationId);
         await using var r = await cmd.ExecuteReaderAsync();
         while (await r.ReadAsync())
@@ -394,7 +394,7 @@ WHERE c.Id = @Id
                 ConversationId = r.GetInt32(1),
                 SenderId = r.IsDBNull(2) ? null : r.GetInt32(2),
                 Text = r.GetString(3),
-                SentAt = r.GetDateTime(4),
+                CreatedAt = r.GetDateTime(4),
                 IsRead = r.GetBoolean(5),
                 IsAdmin = r.IsDBNull(6) ? false : r.GetBoolean(6),
                 SenderName = r.IsDBNull(7) ? null : r.GetString(7),
@@ -408,7 +408,7 @@ WHERE c.Id = @Id
         await using var conn = new SqlConnection(_connectionString);
         await conn.OpenAsync();
         await using var cmd = new SqlCommand(@"
-                INSERT INTO Messages (ConversationId, SenderId, Text, SentAt, IsRead)
+                INSERT INTO Messages (ConversationId, SenderId, Text, CreatedAt, IsRead)
                 OUTPUT INSERTED.Id
                 VALUES (@ConvId, @SenderId, @Text, GETDATE(), 0)", conn);
         cmd.Parameters.AddWithValue("@ConvId", conversationId);

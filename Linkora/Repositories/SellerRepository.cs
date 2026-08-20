@@ -18,7 +18,7 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
 
             await using var cmd = new SqlCommand(
-                "SELECT Id, UserName, AvatarImagePath, PhoneNumber, Email, IsCompany, CreatedAt FROM Users WHERE Id = @Id", conn);
+                "SELECT Id, UserName, AvatarUrl, Phone, Email, IsCompany, CreatedAt FROM Users WHERE Id = @Id", conn);
             cmd.Parameters.AddWithValue("@Id", id);
             await using var r = await cmd.ExecuteReaderAsync();
             if (!await r.ReadAsync()) return null;
@@ -27,8 +27,8 @@ namespace Linkora.Repositories
             {
                 Id = r.GetInt32(0),
                 UserName = r.IsDBNull(1) ? null : r.GetString(1),
-                AvatarPath = r.IsDBNull(2) ? null : r.GetString(2),
-                PhoneNumber = r.IsDBNull(3) ? null : r.GetString(3),
+                AvatarUrl = r.IsDBNull(2) ? null : r.GetString(2),
+                Phone = r.IsDBNull(3) ? null : r.GetString(3),
                 Email = r.IsDBNull(4) ? null : r.GetString(4),
                 IsCompany = !r.IsDBNull(5) && r.GetBoolean(5),
                 CreatedAt = r.IsDBNull(6) ? null : r.GetDateTime(6),
@@ -103,7 +103,7 @@ namespace Linkora.Repositories
                                   FROM MapperProductCategory m
                                   JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
                                   WHERE m.ProductId = p.Id) DESC",
-                _ => "p.CreatedTime DESC"
+                _ => "p.CreatedAt DESC"
             };
 
             var catFilter = categoryId.HasValue ? "AND p.CategoryId = @CatId" : "";
@@ -111,11 +111,11 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand($@"
-                SELECT p.Id, p.Name, p.Address, p.CreatedTime, COALESCE(
+                SELECT p.Id, p.Name, p.Address, p.CreatedAt, COALESCE(
            (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
             WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-           p.AvatarImagePath
-       ) AS AvatarImagePath,
+           p.AvatarUrl
+       ) AS AvatarUrl,
                        (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
                         FROM MapperProductCategory m
                         JOIN Category c2 ON c2.Id = m.CategoryId AND c2.Name = 'Price, €'
@@ -136,8 +136,8 @@ namespace Linkora.Repositories
                     Id = r.GetInt32(0),
                     Name = r.IsDBNull(1) ? "" : r.GetString(1),
                     Address = r.IsDBNull(2) ? null : r.GetString(2),
-                    CreatedTime = r.IsDBNull(3) ? null : r.GetDateTime(3),
-                    AvatarImagePath = r.IsDBNull(4) ? null : r.GetString(4),
+                    CreatedAt = r.IsDBNull(3) ? null : r.GetDateTime(3),
+                    AvatarUrl = r.IsDBNull(4) ? null : r.GetString(4),
                     Price = r.IsDBNull(5) ? null : r.GetDecimal(5),
                 });
 
@@ -151,7 +151,7 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(@"
                 SELECT r.Id, r.Rating, r.Comment, r.CreatedAt,
-                       u.UserName, u.AvatarImagePath
+                       u.UserName, u.AvatarUrl
                 FROM Reviews r
                 JOIN Users u ON u.Id = r.AuthorId
                 WHERE r.TargetUserId = @Id

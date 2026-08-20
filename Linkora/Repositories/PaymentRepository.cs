@@ -13,20 +13,20 @@ namespace Linkora.Repositories
         }
 
         public async Task<int> CreateAsync(int userId, string purpose, int? productId, string? promotionType,
-            string? subscriptionType, decimal amount, string reference)
+            string? subscriptionType, decimal price, string reference)
         {
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(@"
-                INSERT INTO Payments (UserId, PurposeType, ProductId, PromotionType, SubscriptionType, Amount, Currency, Reference, Status, CreatedAt)
+                INSERT INTO Payments (UserId, PurposeType, ProductId, PromotionType, SubscriptionType, Price, Currency, Reference, Status, CreatedAt)
                 OUTPUT INSERTED.Id
-                VALUES (@UserId, @Purpose, @ProductId, @PromotionType, @SubscriptionType, @Amount, 'EUR', @Reference, 'Created', SYSUTCDATETIME())", conn);
+                VALUES (@UserId, @Purpose, @ProductId, @PromotionType, @SubscriptionType, @Price, 'EUR', @Reference, 'Created', SYSUTCDATETIME())", conn);
             cmd.Parameters.AddWithValue("@UserId", userId);
             cmd.Parameters.AddWithValue("@Purpose", purpose);
             cmd.Parameters.AddWithValue("@ProductId", (object?)productId ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@PromotionType", (object?)promotionType ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@SubscriptionType", (object?)subscriptionType ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@Amount", amount);
+            cmd.Parameters.AddWithValue("@Price", price);
             cmd.Parameters.AddWithValue("@Reference", reference);
             return (int)(await cmd.ExecuteScalarAsync())!;
         }
@@ -100,7 +100,7 @@ namespace Linkora.Repositories
             cmd.Parameters.AddWithValue("@Id", userId);
             await cmd.ExecuteNonQueryAsync();
         }
-        public async Task<int?> GetProductOwnerIdAsync(int productId)
+        public async Task<int?> GetProductUserIdAsync(int productId)
         {
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();

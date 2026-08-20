@@ -18,7 +18,7 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(@"
-                SELECT u.Id, u.UserName, u.AvatarImagePath, u.IsCompany, u.CreatedAt
+                SELECT u.Id, u.UserName, u.AvatarUrl, u.IsCompany, u.CreatedAt
                 FROM Subscriptions s
                 JOIN Users u ON u.Id = s.FollowingId
                 WHERE s.FollowerId = @FollowerId
@@ -30,7 +30,7 @@ namespace Linkora.Repositories
                 {
                     Id = r.GetInt32(0),
                     UserName = r.IsDBNull(1) ? null : r.GetString(1),
-                    AvatarPath = r.IsDBNull(2) ? null : r.GetString(2),
+                    AvatarUrl = r.IsDBNull(2) ? null : r.GetString(2),
                     IsCompany = !r.IsDBNull(3) && r.GetBoolean(3),
                     CreatedAt = r.IsDBNull(4) ? null : r.GetDateTime(4),
                 });

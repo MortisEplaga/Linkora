@@ -78,9 +78,9 @@
                                     <td>
                                         <div class="admin-user-cell">
                                             <div class="admin-user-avatar">
-                                                @if (u.AvatarPath != null)
+                                                @if (u.AvatarUrl != null)
                                                 {
-                                                    <img src="@u.AvatarPath" style="width:36px;height:36px;border-radius:50%;object-fit:cover"
+                                                    <img src="@u.AvatarUrl" style="width:36px;height:36px;border-radius:50%;object-fit:cover"
                                                          onerror="this.style.display='none'" />
                                                 }
                                                 else

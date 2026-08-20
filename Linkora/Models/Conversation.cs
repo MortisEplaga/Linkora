@@ -40,7 +40,7 @@ namespace Linkora.Models
         [Required]
         [StringLength(2000)]
         public string Text { get; set; } = "";
-        public DateTime SentAt { get; set; }
+        public DateTime CreatedAt { get; set; }
         public bool IsRead { get; set; }
         public bool IsAdmin { get; set; }
         [NotMapped] public string? SenderName { get; set; }

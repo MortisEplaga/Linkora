@@ -3,6 +3,7 @@ using Linkora.Models;
 using Linkora.Services;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Data.SqlClient;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Linkora.Repositories
 {
@@ -20,24 +21,24 @@ namespace Linkora.Repositories
             _preferencesRepository = preferencesRepository;
         }
 
-        public async Task<int> CreateAsync(int userId, int? fromUserId, int? productId, string message)
+        public async Task<int> CreateAsync(int userId, int? fromUserId, int? productId, string text)
         {
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(@"
-                INSERT INTO Notifications (UserId, FromUserId, ProductId, Message, IsRead, CreatedAt)
+                INSERT INTO Notifications (UserId, FromUserId, ProductId, Text, IsRead, CreatedAt)
                 OUTPUT INSERTED.Id
-                VALUES (@UserId, @FromUserId, @ProductId, @Message, 0, GETDATE())", conn);
+                VALUES (@UserId, @FromUserId, @ProductId, @Text, 0, GETDATE())", conn);
             cmd.Parameters.AddWithValue("@UserId", userId);
             cmd.Parameters.AddWithValue("@FromUserId", (object?)fromUserId ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@ProductId", (object?)productId ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@Message", message);
+            cmd.Parameters.AddWithValue("@Text", text);
             var id = (int)(await cmd.ExecuteScalarAsync())!;
 
             await _hubContext.Clients.Group($"user_{userId}").SendAsync("NotificationReceived", new
             {
                 id,
-                message,
+                text,
                 fromUserId,
                 productId,
                 createdAt = DateTime.UtcNow.ToString("dd MMM, HH:mm"),
@@ -49,9 +50,9 @@ namespace Linkora.Repositories
 
             return id;
         }
-        private static bool IsAllowed(string message, NotificationPreferences prefs)
+        private static bool IsAllowed(string text, NotificationPreferences prefs)
         {
-            var category = NotificationCategorizer.Categorize(message);
+            var category = NotificationCategorizer.Categorize(text);
             return category switch
             {
                 "Deals" => prefs.Deals,
@@ -70,13 +71,13 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(@"
             SELECT
-                n.Id, n.UserId, n.FromUserId, n.ProductId, n.Message, n.IsRead, n.CreatedAt,
-                u.UserName, u.AvatarImagePath,
+                n.Id, n.UserId, n.FromUserId, n.ProductId, n.Text, n.IsRead, n.CreatedAt,
+                u.UserName, u.AvatarUrl,
                 p.Name AS ProductName,
                 COALESCE(
                     (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
                      WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-                    p.AvatarImagePath
+                    p.AvatarUrl
                 ) AS ProductImage
             FROM Notifications n
             LEFT JOIN Users u ON u.Id = n.FromUserId
@@ -87,8 +88,8 @@ namespace Linkora.Repositories
             await using var r = await cmd.ExecuteReaderAsync();
             while (await r.ReadAsync())
             {
-                var message = r.IsDBNull(4) ? "" : r.GetString(4);
-                if (!IsAllowed(message, prefs)) continue;
+                var text = r.IsDBNull(4) ? "" : r.GetString(4);
+                if (!IsAllowed(text, prefs)) continue;
 
                 result.Add(new NotificationViewModel
                 {
@@ -96,7 +97,7 @@ namespace Linkora.Repositories
                     UserId = r.GetInt32(1),
                     FromUserId = r.IsDBNull(2) ? null : r.GetInt32(2),
                     ProductId = r.IsDBNull(3) ? null : r.GetInt32(3),
-                    Message = message,
+                    Text = text,
                     IsRead = r.GetBoolean(5),
                     CreatedAt = r.GetDateTime(6),
                     FromUserName = r.IsDBNull(7) ? null : r.GetString(7),
@@ -115,7 +116,7 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(
-                "SELECT Message FROM Notifications WHERE UserId = @UserId AND IsRead = 0", conn);
+                "SELECT Text FROM Notifications WHERE UserId = @UserId AND IsRead = 0", conn);
             cmd.Parameters.AddWithValue("@UserId", userId);
             await using var r = await cmd.ExecuteReaderAsync();
             int count = 0;
@@ -161,23 +162,23 @@ namespace Linkora.Repositories
 
             if (!followerIds.Any()) return;
 
-            var message = $"{authorName} posted a new listing: {productName}";
+            var text = $"{authorName} posted a new listing: {productName}";
             foreach (var followerId in followerIds)
             {
                 await using var insertCmd = new SqlCommand(@"
-                    INSERT INTO Notifications (UserId, FromUserId, ProductId, Message, IsRead, CreatedAt)
+                    INSERT INTO Notifications (UserId, FromUserId, ProductId, Text, IsRead, CreatedAt)
                     OUTPUT INSERTED.Id
-                    VALUES (@UserId, @FromUserId, @ProductId, @Message, 0, GETDATE())", conn);
+                    VALUES (@UserId, @FromUserId, @ProductId, @Text, 0, GETDATE())", conn);
                 insertCmd.Parameters.AddWithValue("@UserId", followerId);
                 insertCmd.Parameters.AddWithValue("@FromUserId", authorId);
                 insertCmd.Parameters.AddWithValue("@ProductId", productId);
-                insertCmd.Parameters.AddWithValue("@Message", message);
+                insertCmd.Parameters.AddWithValue("@Text", text);
                 var id = (int)(await insertCmd.ExecuteScalarAsync())!;
 
                 await _hubContext.Clients.Group($"user_{followerId}").SendAsync("NotificationReceived", new
                 {
                     id,
-                    message,
+                    text,
                     fromUserId = authorId,
                     productId,
                     createdAt = DateTime.UtcNow.ToString("dd MMM, HH:mm"),

@@ -24,7 +24,7 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
             await using var cmd = new SqlCommand($@"
         SELECT r.Rating, r.Comment, r.CreatedAt,
-               u.Id, u.UserName, u.AvatarImagePath
+               u.Id, u.UserName, u.AvatarUrl
         FROM Reviews r
         JOIN Users u ON u.Id = {joinUserId}
         WHERE {whereField} = @UserId
@@ -40,7 +40,7 @@ namespace Linkora.Repositories
                     CreatedAt = r.GetDateTime(2),
                     UserId = r.GetInt32(3),
                     UserName = r.IsDBNull(4) ? "Unknown" : r.GetString(4),
-                    AvatarPath = r.IsDBNull(5) ? null : r.GetString(5),
+                    AvatarUrl = r.IsDBNull(5) ? null : r.GetString(5),
                 });
 
             return result;

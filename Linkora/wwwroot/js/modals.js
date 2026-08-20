@@ -632,7 +632,7 @@ async function loadReviewTab(tab) {
         list.innerHTML = data.map(r => `
             <div class="review-item">
                 <div class="review-author">
-                    <img src="${r.avatarPath || '/img/no-photo.svg'}"
+                    <img src="${r.avatarUrl || '/img/no-photo.svg'}"
                          class="review-author-avatar"
                          onerror="this.src='/img/no-photo.svg'" />
                     <div>
@@ -910,7 +910,7 @@ function renderNotifList() {
                  src="${n.fromUserAvatar || '/img/no-photo.svg'}"
                  onerror="this.src='/img/no-photo.svg'" />
             <div class="notif-item-body">
-                <div class="notif-item-msg">${escapeHtml(translateNotificationMessage(n.message, n))}</div>
+                <div class="notif-item-msg">${escapeHtml(translateNotificationMessage(n.text, n))}</div>
                 <div class="notif-item-time">${n.createdAt}</div>
                 ${n.productId && n.productName ? `
                     <div class="notif-item-product">
@@ -950,7 +950,7 @@ async function handleNotifClick(id, url) {
     let notifType = null;
     let reviewId = null;
     try {
-        const parsed = JSON.parse(item.message);
+        const parsed = JSON.parse(item.text);
         notifType = parsed?.type;
         reviewId = parsed?.reviewId;
     } catch { }

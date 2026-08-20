@@ -86,9 +86,9 @@ namespace Linkora.Repositories
            WHERE m.ProductId = p.Id) as Price";
             var baseOrder = sort switch
             {
-                "cheap" => priceParamId.HasValue ? "TRY_CAST(mpc.Value AS decimal(18,2)) ASC" : "p.CreatedTime DESC",
-                "expensive" => priceParamId.HasValue ? "TRY_CAST(mpc.Value AS decimal(18,2)) DESC" : "p.CreatedTime DESC",
-                _ => "p.CreatedTime DESC"
+                "cheap" => priceParamId.HasValue ? "TRY_CAST(mpc.Value AS decimal(18,2)) ASC" : "p.CreatedAt DESC",
+                "expensive" => priceParamId.HasValue ? "TRY_CAST(mpc.Value AS decimal(18,2)) DESC" : "p.CreatedAt DESC",
+                _ => "p.CreatedAt DESC"
             };
             var order = @"CASE 
                 WHEN p.PromotionType IN ('Top','Vip') THEN 0 
@@ -167,13 +167,13 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
             await using var cmd = new SqlCommand($@"
                 SELECT p.Id, p.Name, p.Description, p.Address,
-                       p.CreatedTime, COALESCE(
+                       p.CreatedAt, COALESCE(
                    (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
                     WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-                   p.AvatarImagePath
-               ) AS AvatarImagePath,
-                       u.UserName, u.AvatarImagePath, u.IsCompany,
-                       u.PhoneNumber, u.Email, u.CreatedAt, u.Id, p.PromotionType
+                   p.AvatarUrl
+               ) AS AvatarUrl,
+                       u.UserName, u.AvatarUrl, u.IsCompany,
+                       u.Phone, u.Email, u.CreatedAt, u.Id, p.PromotionType
                        {priceSelect}
                 FROM Products p
                 LEFT JOIN Users u ON u.Id = p.UserId
@@ -193,15 +193,15 @@ namespace Linkora.Repositories
                     Name = r.IsDBNull(1) ? "" : r.GetString(1),
                     Description = r.IsDBNull(2) ? null : r.GetString(2),
                     Address = r.IsDBNull(3) ? null : r.GetString(3),
-                    CreatedTime = r.IsDBNull(4) ? null : r.GetDateTime(4),
-                    AvatarImagePath = r.IsDBNull(5) ? null : r.GetString(5),
+                    CreatedAt = r.IsDBNull(4) ? null : r.GetDateTime(4),
+                    AvatarUrl = r.IsDBNull(5) ? null : r.GetString(5),
                     Seller = new SellerViewModel
                     {
                         Id = r.IsDBNull(12) ? 0 : r.GetInt32(12),
                         UserName = r.IsDBNull(6) ? null : r.GetString(6),
-                        AvatarPath = r.IsDBNull(7) ? null : r.GetString(7),
+                        AvatarUrl = r.IsDBNull(7) ? null : r.GetString(7),
                         IsCompany = !r.IsDBNull(8) && r.GetBoolean(8),
-                        PhoneNumber = r.IsDBNull(9) ? null : r.GetString(9),
+                        Phone = r.IsDBNull(9) ? null : r.GetString(9),
                         Email = r.IsDBNull(10) ? null : r.GetString(10),
                         CreatedAt = r.IsDBNull(11) ? null : r.GetDateTime(11),
                     },
@@ -322,13 +322,13 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(@"
     SELECT p.Id, p.Name, p.Description, p.Address,
-           p.CreatedTime, COALESCE(
+           p.CreatedAt, COALESCE(
        (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
         WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-       p.AvatarImagePath
-   ) AS AvatarImagePath, p.CategoryId,
+       p.AvatarUrl
+   ) AS AvatarUrl, p.CategoryId,
            p.Status, p.Qty,
-           u.UserName, u.AvatarImagePath, u.IsCompany, u.PhoneNumber, u.Id,
+           u.UserName, u.AvatarUrl, u.IsCompany, u.Phone, u.Id,
            p.UserId, u.Email, u.CreatedAt, p.PromotionType
     FROM Products p
     LEFT JOIN Users u ON u.Id = p.UserId
@@ -343,8 +343,8 @@ namespace Linkora.Repositories
                 Name = r.IsDBNull(1) ? "" : r.GetString(1),
                 Description = r.IsDBNull(2) ? null : r.GetString(2),
                 Address = r.IsDBNull(3) ? null : r.GetString(3),
-                CreatedTime = r.IsDBNull(4) ? null : r.GetDateTime(4),
-                AvatarImagePath = r.IsDBNull(5) ? null : r.GetString(5),
+                CreatedAt = r.IsDBNull(4) ? null : r.GetDateTime(4),
+                AvatarUrl = r.IsDBNull(5) ? null : r.GetString(5),
                 CategoryId = r.IsDBNull(6) ? null : r.GetInt32(6),
                 Status = r.IsDBNull(7)
                         ? ProductStatus.Active
@@ -355,9 +355,9 @@ namespace Linkora.Repositories
                 {
                     Id = r.IsDBNull(13) ? 0 : r.GetInt32(13),        
                     UserName = r.IsDBNull(9) ? null : r.GetString(9),
-                    AvatarPath = r.IsDBNull(10) ? null : r.GetString(10),
+                    AvatarUrl = r.IsDBNull(10) ? null : r.GetString(10),
                     IsCompany = !r.IsDBNull(11) && r.GetBoolean(11),
-                    PhoneNumber = r.IsDBNull(12) ? null : r.GetString(12),
+                    Phone = r.IsDBNull(12) ? null : r.GetString(12),
                     Email = r.IsDBNull(15) ? null : r.GetString(15),
                     CreatedAt = r.IsDBNull(16) ? null : r.GetDateTime(16),
                 },
@@ -388,18 +388,18 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
             await using var cmd = new SqlCommand($@"
                 SELECT TOP {count}
-                       p.Id, p.Name, p.Address, p.CreatedTime, COALESCE(
+                       p.Id, p.Name, p.Address, p.CreatedAt, COALESCE(
            (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
             WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-           p.AvatarImagePath
-       ) AS AvatarImagePath,
+           p.AvatarUrl
+       ) AS AvatarUrl,
                        (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
                         FROM MapperProductCategory m
                         JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
                         WHERE m.ProductId = p.Id) as Price
                 FROM Products p
                 WHERE p.CategoryId = @CatId AND p.Id != @ExcId
-                ORDER BY p.CreatedTime DESC", conn);
+                ORDER BY p.CreatedAt DESC", conn);
             cmd.Parameters.AddWithValue("@CatId", categoryId);
             cmd.Parameters.AddWithValue("@ExcId", excludeId);
             await using var r = await cmd.ExecuteReaderAsync();
@@ -409,8 +409,8 @@ namespace Linkora.Repositories
                     Id = r.GetInt32(0),
                     Name = r.IsDBNull(1) ? "" : r.GetString(1),
                     Address = r.IsDBNull(2) ? null : r.GetString(2),
-                    CreatedTime = r.IsDBNull(3) ? null : r.GetDateTime(3),
-                    AvatarImagePath = r.IsDBNull(4) ? null : r.GetString(4),
+                    CreatedAt = r.IsDBNull(3) ? null : r.GetDateTime(3),
+                    AvatarUrl = r.IsDBNull(4) ? null : r.GetString(4),
                     Price = r.IsDBNull(5) ? null : r.GetDecimal(5),
                 });
             return result;
@@ -421,11 +421,11 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(@"
-        SELECT p.Id, p.Name, p.Address, p.CreatedTime, COALESCE(
+        SELECT p.Id, p.Name, p.Address, p.CreatedAt, COALESCE(
            (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
             WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-           p.AvatarImagePath
-       ) AS AvatarImagePath, p.Status,
+           p.AvatarUrl
+       ) AS AvatarUrl, p.Status,
                (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
                 FROM MapperProductCategory m
                 JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
@@ -436,7 +436,7 @@ namespace Linkora.Repositories
         FROM Products p
         WHERE p.UserId = @UserId
           AND (p.Status = @Status)
-        ORDER BY p.CreatedTime DESC", conn);
+        ORDER BY p.CreatedAt DESC", conn);
             cmd.Parameters.AddWithValue("@UserId", userId);
             cmd.Parameters.AddWithValue("@Status", status);
             await using var r = await cmd.ExecuteReaderAsync();
@@ -446,8 +446,8 @@ namespace Linkora.Repositories
                     Id = r.GetInt32(0),
                     Name = r.IsDBNull(1) ? "" : r.GetString(1),
                     Address = r.IsDBNull(2) ? null : r.GetString(2),
-                    CreatedTime = r.IsDBNull(3) ? null : r.GetDateTime(3),
-                    AvatarImagePath = r.IsDBNull(4) ? null : r.GetString(4),
+                    CreatedAt = r.IsDBNull(3) ? null : r.GetDateTime(3),
+                    AvatarUrl = r.IsDBNull(4) ? null : r.GetString(4),
                     Status = r.IsDBNull(5) ? ProductStatus.Active : Enum.Parse<ProductStatus>(r.GetString(5), true),
                     Price = r.IsDBNull(6) ? null : r.GetDecimal(6),
                     ViewCount = r.GetInt32(7),
@@ -547,12 +547,12 @@ namespace Linkora.Repositories
             {
                 var selectSql = @"
             SELECT 
-                p.AvatarImagePath,
+                p.AvatarUrl,
                 p.Qty,
                 (SELECT mpc.Value 
                  FROM MapperProductCategory mpc
                  INNER JOIN Category c ON mpc.CategoryId = c.Id
-                 WHERE mpc.ProductId = p.Id AND c.Name = 'Price, €') AS Cost,
+                 WHERE mpc.ProductId = p.Id AND c.Name = 'Price, €') AS Price,
                 (SELECT mpc.Value 
                  FROM MapperProductCategory mpc
                  INNER JOIN Category c ON mpc.CategoryId = c.Id
@@ -566,7 +566,7 @@ namespace Linkora.Repositories
 
                 string imagePath = null;
                 int qty = 0;
-                decimal? cost = 0;
+                decimal? price = 0;
                 string delivery = "";
 
                 using (var reader = await selectCmd.ExecuteReaderAsync())
@@ -579,7 +579,7 @@ namespace Linkora.Repositories
 
                     imagePath = reader.IsDBNull(0) ? null : reader.GetString(0);
                     qty = reader.GetInt32(1);
-                    cost = reader.IsDBNull(2) ? 0 : Convert.ToInt32(reader[2]);
+                    price = reader.IsDBNull(2) ? 0 : Convert.ToInt32(reader[2]);
                     delivery = reader.IsDBNull(3) ? "" : reader.GetString(3);
                 }
 
@@ -596,7 +596,7 @@ namespace Linkora.Repositories
                 var updateSql = @"
             UPDATE Products 
             SET Status = 'Succeeded', 
-                AvatarImagePath = NULL,
+                AvatarUrl = NULL,
                 ArchivedAt = GETDATE()
             WHERE Id = @ProductId AND UserId = @SellerId AND Status = 'Active'";
 
@@ -612,14 +612,14 @@ namespace Linkora.Repositories
                 }
 
                 var insertSql = @"
-            INSERT INTO Orders (OrderStatus, CreatedTime, Delivery, Qty, Cost, ProductId, UserId)
-            VALUES (@OrderStatus, GETDATE(), @Delivery, @Qty, @Cost, @ProductId, @BuyerId)";
+            INSERT INTO Orders (OrderStatus, CreatedAt, Delivery, Qty, Price, ProductId, UserId)
+            VALUES (@OrderStatus, GETDATE(), @Delivery, @Qty, @Price, @ProductId, @BuyerId)";
 
                 using var insertCmd = new SqlCommand(insertSql, connection, transaction);
                 insertCmd.Parameters.AddWithValue("@OrderStatus", 1);
                 insertCmd.Parameters.AddWithValue("@Delivery", delivery);
                 insertCmd.Parameters.AddWithValue("@Qty", qty);
-                insertCmd.Parameters.AddWithValue("@Cost", cost.Value);
+                insertCmd.Parameters.AddWithValue("@Price", price.Value);
                 insertCmd.Parameters.AddWithValue("@ProductId", productId);
                 insertCmd.Parameters.AddWithValue("@BuyerId", buyerId);
 
@@ -643,7 +643,7 @@ namespace Linkora.Repositories
         UPDATE Products 
         SET Status = 'Active', 
             ArchivedAt = NULL,
-            CreatedTime = SYSUTCDATETIME(),
+            CreatedAt = SYSUTCDATETIME(),
             ExpiresAt = DATEADD(day, PublishDurationDays, SYSUTCDATETIME())
         WHERE Id = @Id AND UserId = @UserId AND Status = 'Archived'";
 
@@ -702,8 +702,8 @@ namespace Linkora.Repositories
                 Name = reader.GetString(reader.GetOrdinal("Name")),
                 Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? null : reader.GetString(reader.GetOrdinal("Description")),
                 Price = reader.GetDecimal(reader.GetOrdinal("Price")),
-                AvatarImagePath = reader.IsDBNull(reader.GetOrdinal("AvatarImagePath")) ? null : reader.GetString(reader.GetOrdinal("AvatarImagePath")),
-                CreatedTime = reader.GetDateTime(reader.GetOrdinal("CreatedTime")),
+                AvatarUrl = reader.IsDBNull(reader.GetOrdinal("AvatarUrl")) ? null : reader.GetString(reader.GetOrdinal("AvatarUrl")),
+                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
 
                 Status = reader.IsDBNull(reader.GetOrdinal("Status"))
                     ? ProductStatus.Active
@@ -762,10 +762,10 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
 
             await using var cmd = new SqlCommand(@"
-        INSERT INTO Products (Name, Description, Qty, Address, CategoryId, UserId, AvatarImagePath,
-                              CreatedTime, Status, PublishDurationDays, ExpiresAt, PromotionType)
+        INSERT INTO Products (Name, Description, Qty, Address, CategoryId, UserId, AvatarUrl,
+                              CreatedAt, Status, PublishDurationDays, ExpiresAt, PromotionType)
         OUTPUT INSERTED.Id
-        VALUES (@Name, @Description, @Qty, @Address, @CategoryId, @UserId, @AvatarImagePath,
+        VALUES (@Name, @Description, @Qty, @Address, @CategoryId, @UserId, @AvatarUrl,
                 GETDATE(), 'Active', @Duration, DATEADD(DAY, @Duration, GETDATE()), @PromotionType)", conn);
 
             cmd.Parameters.AddWithValue("@Name", product.Name);
@@ -774,7 +774,7 @@ namespace Linkora.Repositories
             cmd.Parameters.AddWithValue("@Address", (object?)product.Address ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@CategoryId", (object?)product.CategoryId ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@UserId", product.UserId!);
-            cmd.Parameters.AddWithValue("@AvatarImagePath", (object?)product.AvatarImagePath ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@AvatarUrl", (object?)product.AvatarUrl ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@Duration", publishDurationDays);
             cmd.Parameters.AddWithValue("@PromotionType", promotionType);
 
@@ -928,7 +928,7 @@ namespace Linkora.Repositories
                             so.ValueRU AS OptionValueRU,
                             p.Id AS ProductId,
                             p.Name AS ProductName,
-                            p.CreatedTime AS ProductCreatedTime,
+                            p.CreatedAt AS CreatedAt,
                             u.Id AS UserId,
                             u.UserName AS UserName,
                             c.Id AS CategoryId,
@@ -967,7 +967,7 @@ namespace Linkora.Repositories
                     OptionValueRU = r.IsDBNull(3) ? "" : r.GetString(3), 
                     ProductId = r.GetInt32(4),
                     ProductName = r.IsDBNull(5) ? "" : r.GetString(5),
-                    ProductCreatedTime = r.IsDBNull(6) ? null : r.GetDateTime(6),
+                    CreatedAt = r.IsDBNull(6) ? null : r.GetDateTime(6),
                     UserId = r.GetInt32(7),
                     UserName = r.IsDBNull(8) ? "" : r.GetString(8),
                     CategoryId = r.GetInt32(9),
@@ -1080,22 +1080,22 @@ namespace Linkora.Repositories
             await conn.OpenAsync();
 
             const string sql = @"
-                SELECT p.Id, p.Name, p.Address, p.CreatedTime,
+                SELECT p.Id, p.Name, p.Address, p.CreatedAt,
                 COALESCE(
                     (SELECT TOP 1 pm.FilePath FROM ProductMedia pm 
                      WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-                    p.AvatarImagePath
-                ) AS AvatarImagePath,
+                    p.AvatarUrl
+                ) AS AvatarUrl,
                 p.Status,
-                o.Cost AS Price
+                o.Price AS Price
                  FROM Products p
                  INNER JOIN (
-                     SELECT ProductId, Cost, CreatedTime,
-                            ROW_NUMBER() OVER (PARTITION BY ProductId ORDER BY CreatedTime DESC) AS rn
+                     SELECT ProductId, Price, CreatedAt,
+                            ROW_NUMBER() OVER (PARTITION BY ProductId ORDER BY CreatedAt DESC) AS rn
                      FROM Orders
                      WHERE UserId = @UserId AND OrderStatus = 1
                  ) o ON o.ProductId = p.Id AND o.rn = 1
-                 ORDER BY o.CreatedTime DESC";
+                 ORDER BY o.CreatedAt DESC";
 
             await using var cmd = new SqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@UserId", userId);
@@ -1106,8 +1106,8 @@ namespace Linkora.Repositories
                     Id = r.GetInt32(0),
                     Name = r.IsDBNull(1) ? "" : r.GetString(1),
                     Address = r.IsDBNull(2) ? null : r.GetString(2),
-                    CreatedTime = r.IsDBNull(3) ? null : r.GetDateTime(3),
-                    AvatarImagePath = r.IsDBNull(4) ? null : r.GetString(4),
+                    CreatedAt = r.IsDBNull(3) ? null : r.GetDateTime(3),
+                    AvatarUrl = r.IsDBNull(4) ? null : r.GetString(4),
                     Status = ProductStatus.Succeeded,
                     Price = r.IsDBNull(6) ? null : r.GetDecimal(6),
                 });

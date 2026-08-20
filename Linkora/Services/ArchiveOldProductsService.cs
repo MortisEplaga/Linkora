@@ -50,7 +50,7 @@ WHERE Status = 'Active'
   AND (
         (ExpiresAt IS NOT NULL AND ExpiresAt < GETDATE())
         OR
-        (ExpiresAt IS NULL AND DATEADD(DAY, PublishDurationDays, CreatedTime) < GETDATE())
+        (ExpiresAt IS NULL AND DATEADD(DAY, PublishDurationDays, CreatedAt) < GETDATE())
       )";
 
             using var command = new SqlCommand(sql, connection);

@@ -68,7 +68,7 @@ namespace Linkora.Controllers
             return Json(notifications.Select(n => new
             {
                 id = n.Id,
-                message = n.Message,
+                text = n.Text,
                 isRead = n.IsRead,
                 createdAt = n.CreatedAt.ToString("dd MMM, HH:mm"),
                 fromUserId = n.FromUserId,

@@ -23,10 +23,10 @@ namespace Linkora.Repositories
             Id = r.GetInt32(r.GetOrdinal("Id")),
             UserName = r.GetString(r.GetOrdinal("UserName")),
             Email = r.IsDBNull(r.GetOrdinal("Email")) ? null : r.GetString(r.GetOrdinal("Email")),
-            PhoneNumber = r.IsDBNull(r.GetOrdinal("PhoneNumber")) ? null : r.GetString(r.GetOrdinal("PhoneNumber")),
+            Phone = r.IsDBNull(r.GetOrdinal("Phone")) ? null : r.GetString(r.GetOrdinal("Phone")),
             Role = r.IsDBNull(r.GetOrdinal("Role")) ? null : r.GetString(r.GetOrdinal("Role")),
             PasswordHash = r.IsDBNull(r.GetOrdinal("PasswordHash")) ? null : r.GetString(r.GetOrdinal("PasswordHash")),
-            AvatarImagePath = r.IsDBNull(r.GetOrdinal("AvatarImagePath")) ? null : r.GetString(r.GetOrdinal("AvatarImagePath")),
+            AvatarUrl = r.IsDBNull(r.GetOrdinal("AvatarUrl")) ? null : r.GetString(r.GetOrdinal("AvatarUrl")),
             EmailConfirmed = !r.IsDBNull(r.GetOrdinal("EmailConfirmed")) && r.GetBoolean(r.GetOrdinal("EmailConfirmed")),
             PreferredAdDuration = r.IsDBNull(r.GetOrdinal("PreferredAdDuration")) ? null : r.GetInt32(r.GetOrdinal("PreferredAdDuration")),
             SubscriptionType = HasColumn(r, "SubscriptionType") && !r.IsDBNull(r.GetOrdinal("SubscriptionType"))
@@ -38,7 +38,7 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(
-                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed, PreferredAdDuration FROM Users WHERE PhoneNumber = @P", conn);
+                "SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration FROM Users WHERE Phone = @P", conn);
             cmd.Parameters.AddWithValue("@P", phone);
             await using var r = await cmd.ExecuteReaderAsync();
             return await r.ReadAsync() ? MapRow(r) : null;
@@ -48,7 +48,7 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(
-                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed, PreferredAdDuration FROM Users WHERE UserName = @U", conn);
+                "SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration FROM Users WHERE UserName = @U", conn);
             cmd.Parameters.AddWithValue("@U", username);
             await using var r = await cmd.ExecuteReaderAsync();
             return await r.ReadAsync() ? MapRow(r) : null;
@@ -58,7 +58,7 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(
-                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed, PreferredAdDuration, SubscriptionType FROM Users WHERE Id = @Id", conn);
+                "SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration, SubscriptionType FROM Users WHERE Id = @Id", conn);
             cmd.Parameters.AddWithValue("@Id", id);
             await using var r = await cmd.ExecuteReaderAsync();
             return await r.ReadAsync() ? MapRow(r) : null;
@@ -68,12 +68,12 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(@"
-        INSERT INTO Users (UserName, Email, PhoneNumber, Role, PasswordHash, IsCompany, ConfirmationToken, EmailConfirmed)
+        INSERT INTO Users (UserName, Email, Phone, Role, PasswordHash, IsCompany, ConfirmationToken, EmailConfirmed)
         OUTPUT INSERTED.Id
         VALUES (@U, @E, @P, 'user', @H, @IC, @Token, 0)", conn);
             cmd.Parameters.AddWithValue("@U", user.UserName);
             cmd.Parameters.AddWithValue("@E", (object?)user.Email ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@P", (object?)user.PhoneNumber ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@P", (object?)user.Phone ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@H", passwordHash);
             cmd.Parameters.AddWithValue("@IC", user.IsCompany);
             cmd.Parameters.AddWithValue("@Token", (object?)user.ConfirmationToken ?? DBNull.Value);
@@ -84,7 +84,7 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(
-                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed, PreferredAdDuration FROM Users WHERE Email = @E", conn);
+                "SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration FROM Users WHERE Email = @E", conn);
             cmd.Parameters.AddWithValue("@E", email);
             await using var r = await cmd.ExecuteReaderAsync();
             return await r.ReadAsync() ? MapRow(r) : null;
@@ -94,21 +94,21 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(@"
-                INSERT INTO Users (UserName, Email, Role, AvatarImagePath, PasswordHash)
+                INSERT INTO Users (UserName, Email, Role, AvatarUrl, PasswordHash)
                 OUTPUT INSERTED.Id
                 VALUES (@U, @E, 'user', @A, NULL)", conn);
             cmd.Parameters.AddWithValue("@U", user.UserName);
             cmd.Parameters.AddWithValue("@E", (object?)user.Email ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@A", (object?)user.AvatarImagePath ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@A", (object?)user.AvatarUrl ?? DBNull.Value);
             return (int)(await cmd.ExecuteScalarAsync())!;
         }
-        public async Task UpdateAvatarAsync(int userId, string avatarPath)
+        public async Task UpdateAvatarAsync(int userId, string avatarUrl)
         {
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(
-                "UPDATE Users SET AvatarImagePath = @A WHERE Id = @Id", conn);
-            cmd.Parameters.AddWithValue("@A", avatarPath);
+                "UPDATE Users SET AvatarUrl = @A WHERE Id = @Id", conn);
+            cmd.Parameters.AddWithValue("@A", avatarUrl);
             cmd.Parameters.AddWithValue("@Id", userId);
             await cmd.ExecuteNonQueryAsync();
         }
@@ -135,7 +135,7 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(
-                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed, PreferredAdDuration FROM Users WHERE ConfirmationToken = @T", conn);
+                "SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration FROM Users WHERE ConfirmationToken = @T", conn);
             cmd.Parameters.AddWithValue("@T", token);
             await using var r = await cmd.ExecuteReaderAsync();
             return await r.ReadAsync() ? MapRow(r) : null;
@@ -154,12 +154,12 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(@"
-                INSERT INTO Users (UserName, Email, Role, PasswordHash, AvatarImagePath, EmailConfirmed, IsCompany, ConfirmationToken)
+                INSERT INTO Users (UserName, Email, Role, PasswordHash, AvatarUrl, EmailConfirmed, IsCompany, ConfirmationToken)
                 OUTPUT INSERTED.Id
                 VALUES (@U, @E, 'user', NULL, @A, @EC, @IC, NULL)", conn);
             cmd.Parameters.AddWithValue("@U", user.UserName);
             cmd.Parameters.AddWithValue("@E", (object?)user.Email ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@A", (object?)user.AvatarImagePath ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@A", (object?)user.AvatarUrl ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@EC", user.EmailConfirmed);
             cmd.Parameters.AddWithValue("@IC", user.IsCompany);
             return (int)(await cmd.ExecuteScalarAsync())!;
@@ -169,7 +169,7 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(
-                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed, IsCompany, FacebookId, PreferredAdDuration FROM Users WHERE FacebookId = @FbId", conn);
+                "SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, IsCompany, FacebookId, PreferredAdDuration FROM Users WHERE FacebookId = @FbId", conn);
             cmd.Parameters.AddWithValue("@FbId", facebookId);
             await using var r = await cmd.ExecuteReaderAsync();
             return await r.ReadAsync() ? MapRow(r) : null;
@@ -199,7 +199,7 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(
-                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed, IsCompany, FacebookId, PreferredAdDuration FROM Users WHERE DeletionRequestCode = @Code", conn);
+                "SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, IsCompany, FacebookId, PreferredAdDuration FROM Users WHERE DeletionRequestCode = @Code", conn);
             cmd.Parameters.AddWithValue("@Code", code);
             await using var r = await cmd.ExecuteReaderAsync();
             return await r.ReadAsync() ? MapRow(r) : null;
@@ -220,7 +220,7 @@ namespace Linkora.Repositories
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(
-                "SELECT Id, UserName, Email, PhoneNumber, Role, PasswordHash, AvatarImagePath, EmailConfirmed, PreferredAdDuration FROM Users WHERE PasswordResetToken = @T AND PasswordResetExpiry > GETUTCDATE()", conn);
+                "SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration FROM Users WHERE PasswordResetToken = @T AND PasswordResetExpiry > GETUTCDATE()", conn);
             cmd.Parameters.AddWithValue("@T", token);
             await using var r = await cmd.ExecuteReaderAsync();
             return await r.ReadAsync() ? MapRow(r) : null;

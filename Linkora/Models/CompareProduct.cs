@@ -5,8 +5,8 @@
         public int Id { get; set; }
         public string Name { get; set; } = "";
         public string? Address { get; set; }
-        public DateTime? CreatedTime { get; set; }
-        public string? AvatarImagePath { get; set; }
+        public DateTime? CreatedAt { get; set; }
+        public string? AvatarUrl { get; set; }
         public int MediaCount { get; set; }
         public decimal? Price { get; set; }
         public string? CategoryName { get; set; }

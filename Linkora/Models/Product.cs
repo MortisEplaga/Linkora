@@ -33,7 +33,7 @@ namespace Linkora.Models
         [StringLength(50)]
         public string Address { get; set; }
 
-        public DateTime? CreatedTime { get; set; }
+        public DateTime? CreatedAt { get; set; }
 
         public int? UserId { get; set; }
         [NotMapped] public int? CategoryId { get; set; }
@@ -41,7 +41,7 @@ namespace Linkora.Models
 
 
         [StringLength(500)]
-        public string AvatarImagePath { get; set; }
+        public string AvatarUrl { get; set; }
         [NotMapped] public SellerViewModel? Seller { get; set; }
         public ProductStatus Status { get; set; } = ProductStatus.Active;
         public DateTime? ArchivedAt { get; set; }

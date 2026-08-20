@@ -1186,7 +1186,7 @@ $.validator.addMethod( "phoneNL", function( value, element ) {
  *
  * Ministry of National Defence numbers and VoIP numbers starts with 26 and 39.
  *
- * Excludes intelligent networks (premium rate, shared cost, free phone numbers).
+ * Excludes intelligent networks (premium rate, shared price, free phone numbers).
  *
  * Poland National Numbering Plan http://www.itu.int/oth/T02020000A8/en
  */

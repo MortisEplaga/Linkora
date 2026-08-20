@@ -73,9 +73,9 @@
                                 <tr id="row-@p.Id">
                                     <td>
                                         <div class="admin-table-product">
-                                            @if (p.ImagePath != null)
+                                            @if (p.AvatarUrl != null)
                                             {
-                                                <img class="admin-table-img" src="@p.ImagePath"
+                                                <img class="admin-table-img" src="@p.AvatarUrl"
                                                      onerror="this.src='/img/no-photo.svg'" />
                                             }
                                             else
@@ -115,7 +115,7 @@
                                         }
                                     </td>
                                     <td style="color:#aaa;font-size:12px;white-space:nowrap">
-                                        @(p.CreatedTime?.ToString("dd MMM yyyy"))
+                                        @(p.CreatedAt?.ToString("dd MMM yyyy"))
                                     </td>
                                     <td>
                                         <div class="admin-actions">

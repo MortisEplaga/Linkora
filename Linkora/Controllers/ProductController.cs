@@ -256,7 +256,7 @@ namespace Linkora.Controllers
             }
 
             var refreshedMedia = await _productRepository.GetMediaAsync(id);
-            string? newAvatar = refreshedMedia.FirstOrDefault()?.FilePath ?? existing.AvatarImagePath;
+            string? newAvatar = refreshedMedia.FirstOrDefault()?.FilePath ?? existing.AvatarUrl;
             var oldPoints = PromotionPoints(existing.PromotionType);
             var newPoints = PromotionPoints(promotionType);
 
@@ -269,7 +269,7 @@ namespace Linkora.Controllers
                 Qty = qty,
                 Address = address,
                 CategoryId = categoryId,
-                AvatarImagePath = newAvatar,
+                AvatarUrl = newAvatar,
             }, paramValues, promotionType ?? "None");
 
             await _productRepository.RecalculateModerationScoreAsync(id);
@@ -426,7 +426,7 @@ namespace Linkora.Controllers
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             var partners = await _messageRepository.GetConversationPartnersAsync(productId, userId);
-            return Ok(partners.Select(p => new { p.Id, p.UserName, p.AvatarImagePath, p.IsCompany }));
+            return Ok(partners.Select(p => new { p.Id, p.UserName, p.AvatarUrl, p.IsCompany }));
         }
 
         [Authorize]
@@ -468,7 +468,7 @@ namespace Linkora.Controllers
                 Qty = qty,
                 Address = address,
                 CategoryId = categoryId,
-                AvatarImagePath = media.FirstOrDefault()?.FilePath,
+                AvatarUrl = media.FirstOrDefault()?.FilePath,
             }, paramValues, duration, promotionType ?? "None");
 
             var points = PromotionPoints(promotionType);

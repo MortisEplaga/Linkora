@@ -14,7 +14,7 @@ namespace Linkora.Models
         public int OrderStatus { get; set; } = 1;
 
         [Required]
-        public DateTime CreatedTime { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         [Required]
         public bool Delivery { get; set; }
@@ -24,7 +24,7 @@ namespace Linkora.Models
 
         [Required]
         [Column(TypeName = "decimal(18,2)")]
-        public decimal Cost { get; set; }
+        public decimal Price { get; set; }
 
         [Required]
         public int ProductId { get; set; }

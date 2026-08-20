@@ -75,12 +75,12 @@ namespace Linkora.Repositories
             FROM MapperProductCategory m
             JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
             WHERE m.ProductId = p.Id) as Price,
-           p.Address, p.CreatedTime,
+           p.Address, p.CreatedAt,
            COALESCE(
            (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
             WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-           p.AvatarImagePath
-       ) AS AvatarImagePath, u.UserName, u.AvatarImagePath, u.IsCompany
+           p.AvatarUrl
+       ) AS AvatarUrl, u.UserName, u.AvatarUrl, u.IsCompany
     FROM Favourites f
     JOIN Products p ON p.Id = f.ProductId
     LEFT JOIN Users u ON u.Id = p.UserId
@@ -95,12 +95,12 @@ namespace Linkora.Repositories
                     Name = r.IsDBNull(2) ? "" : r.GetString(2),
                     Price = r.IsDBNull(3) ? null : r.GetDecimal(3),
                     Address = r.IsDBNull(4) ? null : r.GetString(4),
-                    CreatedTime = r.IsDBNull(5) ? null : r.GetDateTime(5),
-                    AvatarImagePath = r.IsDBNull(6) ? null : r.GetString(6),
+                    CreatedAt = r.IsDBNull(5) ? null : r.GetDateTime(5),
+                    AvatarUrl = r.IsDBNull(6) ? null : r.GetString(6),
                     Seller = new SellerViewModel
                     {
                         UserName = r.IsDBNull(7) ? null : r.GetString(7),
-                        AvatarPath = r.IsDBNull(8) ? null : r.GetString(8),
+                        AvatarUrl = r.IsDBNull(8) ? null : r.GetString(8),
                         IsCompany = !r.IsDBNull(9) && r.GetBoolean(9),
                     }
                 };

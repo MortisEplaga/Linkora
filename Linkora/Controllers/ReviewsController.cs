@@ -79,7 +79,7 @@ namespace Linkora.Controllers
                 createdAt = r.CreatedAt.ToString("dd.MM.yyyy"),
                 userId = r.UserId,
                 userName = r.UserName,
-                avatarPath = (object?)r.AvatarPath,
+                avatarUrl = (object?)r.AvatarUrl,
             });
 
             return Ok(result);
