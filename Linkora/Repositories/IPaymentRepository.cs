@@ -1,16 +1,7 @@
-﻿namespace Linkora.Repositories
-{
-    public class PaymentRecord
-    {
-        public int Id { get; set; }
-        public int UserId { get; set; }
-        public string Status { get; set; } = "";
-        public string Purpose { get; set; } = "";
-        public int? ProductId { get; set; }
-        public string? PromotionType { get; set; }
-        public string? SubscriptionType { get; set; }
-    }
+﻿using Linkora.Models;
 
+namespace Linkora.Repositories
+{
     public interface IPaymentRepository
     {
         Task<int> CreateAsync(int userId, string purpose, int? productId, string? promotionType,
