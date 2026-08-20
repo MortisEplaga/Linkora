@@ -12,9 +12,9 @@ namespace Linkora.Repositories
             _connectionString = configuration.GetConnectionString("DefaultConnection")!;
         }
 
-        public async Task<List<SellerViewModel>> GetFollowingAsync(int followerId)
+        public async Task<List<UserSummary>> GetFollowingAsync(int followerId)
         {
-            var result = new List<SellerViewModel>();
+            var result = new List<UserSummary>();
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
             await using var cmd = new SqlCommand(@"
@@ -26,7 +26,7 @@ namespace Linkora.Repositories
             cmd.Parameters.AddWithValue("@FollowerId", followerId);
             await using var r = await cmd.ExecuteReaderAsync();
             while (await r.ReadAsync())
-                result.Add(new SellerViewModel
+                result.Add(new UserSummary
                 {
                     Id = r.GetInt32(0),
                     UserName = r.IsDBNull(1) ? null : r.GetString(1),

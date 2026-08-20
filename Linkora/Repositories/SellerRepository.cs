@@ -12,7 +12,7 @@ namespace Linkora.Repositories
             _connectionString = configuration.GetConnectionString("DefaultConnection")!;
         }
 
-        public async Task<SellerViewModel?> GetByIdAsync(int id)
+        public async Task<UserSummary?> GetByIdAsync(int id)
         {
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
@@ -23,7 +23,7 @@ namespace Linkora.Repositories
             await using var r = await cmd.ExecuteReaderAsync();
             if (!await r.ReadAsync()) return null;
 
-            return new SellerViewModel
+            return new UserSummary
             {
                 Id = r.GetInt32(0),
                 UserName = r.IsDBNull(1) ? null : r.GetString(1),

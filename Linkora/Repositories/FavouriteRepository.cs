@@ -97,7 +97,7 @@ namespace Linkora.Repositories
                     Address = r.IsDBNull(4) ? null : r.GetString(4),
                     CreatedAt = r.IsDBNull(5) ? null : r.GetDateTime(5),
                     AvatarUrl = r.IsDBNull(6) ? null : r.GetString(6),
-                    Seller = new SellerViewModel
+                    Seller = new UserSummary
                     {
                         UserName = r.IsDBNull(7) ? null : r.GetString(7),
                         AvatarUrl = r.IsDBNull(8) ? null : r.GetString(8),

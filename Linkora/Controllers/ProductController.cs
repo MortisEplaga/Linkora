@@ -141,11 +141,11 @@ namespace Linkora.Controllers
 
             var similar = product.CategoryId.HasValue
                 ? await _productRepository.GetSimilarAsync(product.CategoryId.Value, id)
-                : new List<Product>();
+                : [];
 
             var lang = GetLang();
             var paramValues = await _productRepository.GetParamDisplayValuesAsync(id, lang);
-            List<Parameter> paramDefs = new();
+            List<Parameter> paramDefs = [];
             if (paramValues.Count > 0 && product.CategoryId.HasValue)
             {
                 var breadcrumb = await _categoryRepository.GetBreadcrumbAsync(product.CategoryId.Value);
@@ -238,8 +238,8 @@ namespace Linkora.Controllers
             bool wasArchived = existing.Status == ProductStatus.Archived;
 
             var keepPaths = string.IsNullOrEmpty(keepMediaJson)
-                ? new List<string>()
-                : System.Text.Json.JsonSerializer.Deserialize<List<string>>(keepMediaJson) ?? new();
+                ? []
+                : System.Text.Json.JsonSerializer.Deserialize<List<string>>(keepMediaJson) ?? [];
 
             var currentMedia = await _productRepository.GetMediaAsync(id);
             var toDelete = currentMedia.Where(m => !keepPaths.Contains(m.FilePath)).ToList();
@@ -457,7 +457,7 @@ namespace Linkora.Controllers
                     duration = currentUser.PreferredAdDuration.Value;
             }
 
-            var media = photos?.Count > 0 ? await SaveUploadedFiles(photos) : new();
+            var media = photos?.Count > 0 ? await SaveUploadedFiles(photos) : [];
             var paramValues = ParseParamsJson(paramsJson);
 
             var newId = await _productRepository.CreateAsync(new Product

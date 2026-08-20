@@ -20,14 +20,14 @@ namespace Linkora.Models
         [Column(TypeName = "decimal(18,2)")]
         public decimal? Step { get; set; }
     }
-    public class SelectOption
+
+    public class SelectOption : Base
     {
-        public int Id { get; set; }
         public string Text { get; set; } = "";
     }
-    public class ColorOption
+
+    public class ColorOption : Base
     {
-        public int Id { get; set; }
         public string Name { get; set; } = "";
         public string HexValue { get; set; } = "";
     }

@@ -73,7 +73,7 @@ namespace Linkora.Repositories
             string? search = null)
         {
             var ids = string.Join(",", categoryIds);
-            if (string.IsNullOrEmpty(ids)) return new List<Product>();
+            if (string.IsNullOrEmpty(ids)) return [];
 
             var priceJoin = priceParamId.HasValue
                 ? $"LEFT JOIN MapperProductCategory mpc ON mpc.ProductId = p.Id AND mpc.CategoryId = {priceParamId}"
@@ -195,7 +195,7 @@ namespace Linkora.Repositories
                     Address = r.IsDBNull(3) ? null : r.GetString(3),
                     CreatedAt = r.IsDBNull(4) ? null : r.GetDateTime(4),
                     AvatarUrl = r.IsDBNull(5) ? null : r.GetString(5),
-                    Seller = new SellerViewModel
+                    Seller = new UserSummary
                     {
                         Id = r.IsDBNull(12) ? 0 : r.GetInt32(12),
                         UserName = r.IsDBNull(6) ? null : r.GetString(6),
@@ -245,7 +245,7 @@ namespace Linkora.Repositories
                     var ids = rawValue.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
                     var texts = ids.Select(id => ResolveOptionTextFromDictionary(id, options, lang));
                     if (!multiValues.ContainsKey(paramId))
-                        multiValues[paramId] = new List<string>();
+                        multiValues[paramId] = [];
                     multiValues[paramId].AddRange(texts);
                     continue; 
                 }
@@ -351,7 +351,7 @@ namespace Linkora.Repositories
                         : Enum.Parse<ProductStatus>(r.GetString(7), true),
                 Qty = r.IsDBNull(8) ? null : r.GetInt32(8),           
                 UserId = r.IsDBNull(14) ? null : r.GetInt32(14),      
-                Seller = new SellerViewModel
+                Seller = new UserSummary
                 {
                     Id = r.IsDBNull(13) ? 0 : r.GetInt32(13),        
                     UserName = r.IsDBNull(9) ? null : r.GetString(9),

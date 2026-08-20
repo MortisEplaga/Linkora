@@ -50,7 +50,7 @@ namespace Linkora.Repositories
             cmd.Parameters.AddWithValue("@Id", paymentId);
             await cmd.ExecuteNonQueryAsync();
         }
-        public async Task<PaymentRecord?> GetByReferenceAsync(string reference)
+        public async Task<PaymentBase?> GetByReferenceAsync(string reference)
         {
             await using var conn = new SqlConnection(_connectionString);
             await conn.OpenAsync();
@@ -60,11 +60,11 @@ namespace Linkora.Repositories
             await using var r = await cmd.ExecuteReaderAsync();
             if (!await r.ReadAsync()) return null;
 
-            return new PaymentRecord
+            return new PaymentBase
             {
                 Id = r.GetInt32(0),
                 Status = r.GetString(1),
-                Purpose = r.GetString(2),
+                PurposeType = r.GetString(2),
                 ProductId = r.IsDBNull(3) ? null : r.GetInt32(3),
                 PromotionType = r.IsDBNull(4) ? null : r.GetString(4),
                 SubscriptionType = r.IsDBNull(5) ? null : r.GetString(5),

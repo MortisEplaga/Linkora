@@ -149,11 +149,11 @@ namespace Linkora.Controllers
 
             await _paymentRepository.MarkCompletedAsync(payment.Id);
 
-            if (payment.Purpose == "Promotion" && payment.ProductId.HasValue && payment.PromotionType != null)
+            if (payment.PurposeType == "Promotion" && payment.ProductId.HasValue && payment.PromotionType != null)
             {
                 await _paymentRepository.ApplyPromotionAsync(payment.ProductId.Value, payment.PromotionType);
             }
-            else if (payment.Purpose == "Subscription" && payment.SubscriptionType != null)
+            else if (payment.PurposeType == "Subscription" && payment.SubscriptionType != null)
             {
                 await _paymentRepository.ApplySubscriptionAsync(payment.UserId, payment.SubscriptionType);
             }

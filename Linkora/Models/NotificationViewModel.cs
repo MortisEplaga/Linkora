@@ -1,8 +1,7 @@
 ﻿namespace Linkora.Models
 {
-    public class NotificationViewModel
+    public class NotificationViewModel : Base
     {
-        public int Id { get; set; }
         public int UserId { get; set; }
         public int? FromUserId { get; set; }
         public string? FromUserName { get; set; }
@@ -14,16 +13,6 @@
         public bool IsRead { get; set; }
         public DateTime CreatedAt { get; set; }
     }
-    public class NotificationPreferences
-    {
-        public int UserId { get; set; }
-        public bool Deals { get; set; } = true;
-        public bool Reviews { get; set; } = true;
-        public bool Moderation { get; set; } = true;
-        public bool Account { get; set; } = true;
-        public bool Favourites { get; set; } = true;
-        public bool NewListings { get; set; } = true;
-    }
 
     public class NotificationPreferencesDto
     {
@@ -33,5 +22,10 @@
         public bool Account { get; set; } = true;
         public bool Favourites { get; set; } = true;
         public bool NewListings { get; set; } = true;
+    }
+
+    public class NotificationPreferences : NotificationPreferencesDto
+    {
+        public int UserId { get; set; }
     }
 }

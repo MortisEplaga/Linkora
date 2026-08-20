@@ -2,7 +2,7 @@
 {
     public class PagedResult<T>
     {
-        public List<T> Items { get; set; } = new();
+        public List<T> Items { get; set; } = [];
         public int Total { get; set; }
         public int TotalPages { get; set; }
         public int CurrentPage { get; set; }
@@ -17,33 +17,23 @@
 
     public class AdminStatsApiData
     {
-        public List<object> Registrations { get; set; } = new();
-        public List<object> Products { get; set; } = new();
+        public List<object> Registrations { get; set; } = [];
+        public List<object> Products { get; set; } = [];
     }
 
     public class BanUserResult
     {
-        public List<int> SubscriberIds { get; set; } = new();
-        public List<(int UserId, int ProductId)> FavouriteUsers { get; set; } = new();
+        public List<int> SubscriberIds { get; set; } = [];
+        public List<(int UserId, int ProductId)> FavouriteUsers { get; set; } = [];
     }
 
-    public class ApproveOptionResult
+    public class ApproveOptionResult : OptionModerationResultBase
     {
-        public bool Success { get; set; }
-        public int? UserId { get; set; }
         public int? ProductId { get; set; }
-        public string? ParamName { get; set; }
-        public string? ParamNameRu { get; set; }
-        public string? ParamNameLv { get; set; }
     }
 
-    public class RejectOptionResult
+    public class RejectOptionResult : OptionModerationResultBase
     {
-        public bool Success { get; set; }
-        public int? UserId { get; set; }
-        public string? ParamName { get; set; }
-        public string? ParamNameRu { get; set; }
-        public string? ParamNameLv { get; set; }
     }
 
     public class RejectProductResult
@@ -56,6 +46,7 @@
         public string ReasonRu { get; set; } = "";
         public string Comment { get; set; } = "";
     }
+
     public class AdminDashboardViewModel : AdminBadges
     {
         public int TotalUsers { get; set; }
@@ -63,43 +54,26 @@
         public int NewUsersToday { get; set; }
         public int NewProductsToday { get; set; }
         public int ActiveProducts { get; set; }
-        public Dictionary<string, int> ProductsByStatus { get; set; } = new();
-        public List<AdminProductRow> RecentProducts { get; set; } = new();
+        public Dictionary<string, int> ProductsByStatus { get; set; } = [];
+        public List<AdminProductRow> RecentProducts { get; set; } = [];
     }
 
-    public class AdminProductRow
+    public class AdminProductRow : ProductSummaryBase
     {
-        public int Id { get; set; }
-        public string Name { get; set; } = "";
         public string Status { get; set; } = "";
-        public DateTime? CreatedAt { get; set; }
-        public string? AvatarUrl { get; set; }
         public string UserName { get; set; } = "";
         public int UserId { get; set; }
         public int ReportCount { get; set; }
-        public decimal? Price { get; set; }
     }
 
-    public class AdminUserRow
+    public class AdminUserRow : UserSummary
     {
-        public int Id { get; set; }
-        public string UserName { get; set; } = "";
-        public string? Email { get; set; }
-        public string? Phone { get; set; }
         public string Role { get; set; } = "user";
-        public bool IsCompany { get; set; }
-        public string? AvatarUrl { get; set; }
-        public DateTime? CreatedAt { get; set; }
         public int ProductCount { get; set; }
     }
 
-    public class AdminReportRow
+    public class AdminReportRow : ReportBase
     {
-        public int Id { get; set; }
-        public int ProductId { get; set; }
-        public int UserId { get; set; }
-        public string? Comment { get; set; }
-        public DateTime CreatedAt { get; set; }
         public string Status { get; set; } = "";
         public string ProductName { get; set; } = "";
         public string? ProductImage { get; set; }

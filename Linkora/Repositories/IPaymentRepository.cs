@@ -8,7 +8,7 @@ namespace Linkora.Repositories
             string? subscriptionType, decimal price, string reference);
         Task SetTransactionIdAsync(int paymentId, string transactionId);
         Task SetStatusAsync(int paymentId, string status);
-        Task<PaymentRecord?> GetByReferenceAsync(string reference);
+        Task<PaymentBase?> GetByReferenceAsync(string reference);
         Task MarkCompletedAsync(int paymentId);
         Task ApplyPromotionAsync(int productId, string promotionType);
         Task ApplySubscriptionAsync(int userId, string subscriptionType);

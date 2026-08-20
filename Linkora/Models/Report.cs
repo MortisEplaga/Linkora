@@ -3,29 +3,16 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Linkora.Models
 {
-    public class Report
+    public class Report : ReportBase
     {
-        [Key]
-        public int Id { get; set; }
-
-        [Required]
-        public int ProductId { get; set; }
-
         [ForeignKey("ProductId")]
         public virtual Product Product { get; set; }
-
-        [Required]
-        public int UserId { get; set; }
 
         [ForeignKey("UserId")]
         public virtual User User { get; set; }
 
         [Required]
-        public int ReportReasonId { get; set; } 
-
-        [StringLength(500)]
-        public string? Comment { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public int ReportReasonId { get; set; }
         public ReportStatus Status { get; set; } = ReportStatus.Pending;
     }
 
@@ -38,22 +25,18 @@ namespace Linkora.Models
     }
 
     [Table("ReportReasons")]
-    public class ReportReason
+    public class ReportReason : Base
     {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { get; set; }
-
         [Required]
         [StringLength(100)]
         public string ReasonText { get; set; } = string.Empty;
         public bool IsActive { get; set; } = true;
     }
+
     public class ReportRequest
     {
         public int ProductId { get; set; }
         public int ReportReasonId { get; set; }
         public string? Comment { get; set; }
     }
-
 }
