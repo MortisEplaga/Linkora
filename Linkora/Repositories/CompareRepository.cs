@@ -31,16 +31,7 @@ namespace Linkora.Repositories
                   ORDER BY f.Id",
                 r =>
                 {
-                    var catNameEn = r.IsDBNull(7) ? null : r.GetString(7);
-                    var catNameLv = r.IsDBNull(8) ? catNameEn : r.GetString(8);
-                    var catNameRu = r.IsDBNull(9) ? catNameEn : r.GetString(9);
-                    var catName = lang switch
-                    {
-                        "lv" => catNameLv,
-                        "ru" => catNameRu,
-                        _ => catNameEn
-                    };
-
+                    var catNameEn = r.IsDBNull(7) ? "" : r.GetString(7);
                     return new CompareProduct
                     {
                         Id = r.GetInt32(0),
@@ -50,7 +41,7 @@ namespace Linkora.Repositories
                         AvatarUrl = r.IsDBNull(4) ? null : r.GetString(4),
                         MediaCount = r.IsDBNull(5) ? 0 : r.GetInt32(5),
                         Price = r.IsDBNull(6) ? null : r.GetDecimal(6),
-                        CategoryName = catName,
+                        CategoryName = Resolve(lang, catNameEn, r.IsDBNull(8) ? catNameEn : r.GetString(8), r.IsDBNull(9) ? catNameEn : r.GetString(9)),
                         SellerName = r.IsDBNull(10) ? null : r.GetString(10),
                     };
                 },
@@ -59,9 +50,7 @@ namespace Linkora.Repositories
             result.Products.AddRange(products);
 
             if (result.Products.Count == 0)
-            {
                 return result;
-            }
 
             var selectOptionsList = await QueryAsync(
                 "SELECT Id, Value, ValueLV, ValueRU FROM SelectOptions WHERE IsConf = 1",
@@ -110,13 +99,7 @@ namespace Linkora.Repositories
 
             foreach (var row in paramRows)
             {
-                var label = lang switch
-                {
-                    "lv" => row.NameLv,
-                    "ru" => row.NameRu,
-                    _ => row.NameEn
-                };
-                result.ParamLabels[row.ParamId] = label;
+                result.ParamLabels[row.ParamId] = Resolve(lang, row.NameEn, row.NameLv, row.NameRu);
 
                 var rawValue = row.RawValue;
                 string value;
@@ -126,7 +109,6 @@ namespace Linkora.Repositories
                     var ids = rawValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
                     var texts = new List<string>();
                     foreach (var idStr in ids)
-                    {
                         if (int.TryParse(idStr.Trim(), out int optId) && selectOptionsDict.TryGetValue(optId, out var textsTuple))
                         {
                             texts.Add(lang switch
@@ -137,34 +119,21 @@ namespace Linkora.Repositories
                             });
                         }
                         else
-                        {
                             texts.Add(idStr);
-                        }
-                    }
+
                     value = string.Join(", ", texts);
                 }
                 else if (row.ParamType == 2 || row.ParamType == 8)
                 {
                     if (int.TryParse(rawValue, out int optId) && selectOptionsDict.TryGetValue(optId, out var textsTuple))
-                    {
-                        value = lang switch
-                        {
-                            "lv" => textsTuple.ValueLV,
-                            "ru" => textsTuple.ValueRU,
-                            _ => textsTuple.Value
-                        };
-                    }
+                        value = Resolve(lang, textsTuple.Value, textsTuple.ValueLV, textsTuple.ValueRU);
                     else
-                    {
                         value = rawValue;
-                    }
                 }
                 else if (row.ParamType == 6)
                 {
                     if (row.ColorNameEn == null)
-                    {
                         value = rawValue;
-                    }
                     else
                     {
                         if (lang == "lv" && row.ColorNameLv != null) value = row.ColorNameLv;
@@ -173,9 +142,7 @@ namespace Linkora.Repositories
                     }
                 }
                 else
-                {
                     value = rawValue;
-                }
 
                 if (!result.ParamMatrix.ContainsKey(row.ParamId))
                     result.ParamMatrix[row.ParamId] = [];

@@ -35,15 +35,9 @@ namespace Linkora.Repositories
             bind?.Invoke(cmd.Parameters);
             return await cmd.ExecuteNonQueryAsync();
         }
-        protected async Task<PagedResult<T>> GetPagedDataAsync<T>(
-           SqlConnection conn,
-           string selectClause,
-           string fromWhereClause,
-           string orderByClause,
-           int page,
-           int pageSize,
-           Action<SqlParameterCollection>? addParameters,
-           Func<SqlDataReader, T> mapRow)
+        protected async Task<PagedResult<T>> GetPagedDataAsync<T>(SqlConnection conn, string selectClause, string fromWhereClause,
+                                                                  string orderByClause, int page, int pageSize, 
+                                                                  Action<SqlParameterCollection>? addParameters, Func<SqlDataReader, T> mapRow)
         {
             var offset = (page - 1) * pageSize;
 
@@ -72,14 +66,8 @@ namespace Linkora.Repositories
                 CurrentPage = page
             };
         }
-        protected async Task<PagedResult<T>> GetPagedDataAsync<T>(
-            string selectClause,
-            string fromWhereClause,
-            string orderByClause,
-            int page,
-            int pageSize,
-            Action<SqlParameterCollection>? addParameters,
-            Func<SqlDataReader, T> mapRow)
+        protected async Task<PagedResult<T>> GetPagedDataAsync<T>(string selectClause, string fromWhereClause, string orderByClause, int page,
+                                                                  int pageSize, Action<SqlParameterCollection>? addParameters, Func<SqlDataReader, T> mapRow)
         {
             await using var conn = await OpenConnectionAsync();
             return await GetPagedDataAsync(conn, selectClause, fromWhereClause, orderByClause,
