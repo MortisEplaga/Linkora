@@ -36,27 +36,14 @@ namespace Linkora.Services
         }
         private async Task ArchiveExpiredProducts()
         {
-            using var scope = _serviceScopeFactory.CreateScope();
-            var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-            var connectionString = configuration.GetConnectionString("DefaultConnection");
-
-            using var connection = new SqlConnection(connectionString);
+            using var connection = new SqlConnection(_serviceScopeFactory.CreateScope().ServiceProvider.GetRequiredService<IConfiguration>().GetConnectionString("DefaultConnection"));
             await connection.OpenAsync();
 
-            var sql = @"
-UPDATE Products
-SET Status = 'Archived'
-WHERE Status = 'Active'
-  AND (
-        (ExpiresAt IS NOT NULL AND ExpiresAt < GETDATE())
-        OR
-        (ExpiresAt IS NULL AND DATEADD(DAY, PublishDurationDays, CreatedAt) < GETDATE())
-      )";
+            using var command = new SqlCommand(@"
+        UPDATE Products SET Status = 'Archived' WHERE Status = 'Active' AND (
+        (ExpiresAt IS NOT NULL AND ExpiresAt < GETDATE()) OR (ExpiresAt IS NULL AND DATEADD(DAY, PublishDurationDays, CreatedAt) < GETDATE()))", connection);
 
-            using var command = new SqlCommand(sql, connection);
-            var affected = await command.ExecuteNonQueryAsync();
-
-            _logger.LogInformation("Archived {Count} expired products", affected);
+            _logger.LogInformation("Archived {Count} expired products", await command.ExecuteNonQueryAsync());
         }
     }
 }

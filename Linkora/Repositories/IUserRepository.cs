@@ -25,5 +25,6 @@ namespace Linkora.Repositories
         Task UpdatePasswordHashAsync(int userId, string passwordHash);
         Task AdjustPromotionPointsAsync(int userId, int delta);
         Task<bool> IsBannedAsync(int userId);
+        Task UpdateProfileAsync(int userId, string userName, string? phone, int? duration, string? newHash, string? subscriptionType);
     }
 }

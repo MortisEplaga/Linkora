@@ -1,31 +1,27 @@
 ﻿using Linkora.Models;
 using Linkora.Repositories;
-using Microsoft.Data.SqlClient;
 
 public class MessageRepository : SqlRepositoryBase, IMessageRepository
 {
     public MessageRepository(IConfiguration configuration) : base(configuration) { }
     public async Task<int> GetOrCreateSupportConversationAsync(int userId)
     {
-        const int systemAccountId = 3;
+        var existing = (await QueryAsync<int?>(
+            "SELECT Id FROM Conversations WHERE BuyerId = @UserId AND IsSupport = 1",
+            r => r.GetInt32(0),
+            p => p.AddWithValue("@UserId", userId))).FirstOrDefault();
 
-        await using var conn = await OpenConnectionAsync();
+        if (existing != null) return existing.Value;
 
-        await using var findCmd = new SqlCommand(
-            "SELECT Id FROM Conversations WHERE BuyerId = @UserId AND IsSupport = 1", conn);
-        findCmd.Parameters.AddWithValue("@UserId", userId);
-
-        var existing = await findCmd.ExecuteScalarAsync();
-        if (existing != null) return (int)existing;
-
-        await using var createCmd = new SqlCommand(@"
-                INSERT INTO Conversations (ProductId, BuyerId, SellerId, CreatedAt, IsSystem, IsSupport)
-                OUTPUT INSERTED.Id
-                VALUES (NULL, @UserId, @SystemId, GETDATE(), 0, 1)", conn);
-        createCmd.Parameters.AddWithValue("@UserId", userId);
-        createCmd.Parameters.AddWithValue("@SystemId", systemAccountId);
-
-        return (int)(await createCmd.ExecuteScalarAsync())!;
+        return (await QueryAsync<int>(@"
+        INSERT INTO Conversations (ProductId, BuyerId, SellerId, CreatedAt, IsSystem, IsSupport)
+        OUTPUT INSERTED.Id VALUES (NULL, @UserId, @SystemId, GETDATE(), 0, 1)",
+            r => r.GetInt32(0),
+            p =>
+            {
+                p.AddWithValue("@UserId", userId);
+                p.AddWithValue("@SystemId", 3);
+            })).First();
     }
     public async Task<string> GetUserStatusAsync(int userId)
     {
@@ -312,27 +308,28 @@ WHERE c.Id = @Id
     }
     public async Task<int> GetOrCreateConversationAsync(int productId, int buyerId, int sellerId)
     {
-        await using var conn = await OpenConnectionAsync();
+        var existing = (await QueryAsync<int?>(
+            @"SELECT Id FROM Conversations WHERE ProductId = @ProductId AND BuyerId = @BuyerId AND SellerId = @SellerId",
+            r => r.GetInt32(0),
+            p =>
+            {
+                p.AddWithValue("@ProductId", productId);
+                p.AddWithValue("@BuyerId", buyerId);
+                p.AddWithValue("@SellerId", sellerId);
+            })).FirstOrDefault();
 
-        await using var findCmd = new SqlCommand(@"
-                SELECT Id FROM Conversations
-                WHERE ProductId = @ProductId AND BuyerId = @BuyerId AND SellerId = @SellerId", conn);
-        findCmd.Parameters.AddWithValue("@ProductId", productId);
-        findCmd.Parameters.AddWithValue("@BuyerId", buyerId);
-        findCmd.Parameters.AddWithValue("@SellerId", sellerId);
+        if (existing != null) return existing.Value;
 
-        var existing = await findCmd.ExecuteScalarAsync();
-        if (existing != null) return (int)existing;
-
-        await using var createCmd = new SqlCommand(@"
-                INSERT INTO Conversations (ProductId, BuyerId, SellerId, CreatedAt, IsSystem)
-                OUTPUT INSERTED.Id
-                VALUES (@ProductId, @BuyerId, @SellerId, GETDATE(), 0)", conn);
-        createCmd.Parameters.AddWithValue("@ProductId", productId);
-        createCmd.Parameters.AddWithValue("@BuyerId", buyerId);
-        createCmd.Parameters.AddWithValue("@SellerId", sellerId);
-
-        return (int)(await createCmd.ExecuteScalarAsync())!;
+        return (await QueryAsync<int>(@"
+        INSERT INTO Conversations (ProductId, BuyerId, SellerId, CreatedAt, IsSystem)
+        OUTPUT INSERTED.Id VALUES (@ProductId, @BuyerId, @SellerId, GETDATE(), 0)",
+            r => r.GetInt32(0),
+            p =>
+            {
+                p.AddWithValue("@ProductId", productId);
+                p.AddWithValue("@BuyerId", buyerId);
+                p.AddWithValue("@SellerId", sellerId);
+            })).First();
     }
     public async Task<List<Message>> GetMessagesAsync(int conversationId, int userId)
     {

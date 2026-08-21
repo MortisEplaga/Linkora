@@ -27,12 +27,10 @@ namespace Linkora.Repositories
         }
         public async Task<ReportReason?> GetReasonByIdAsync(int reasonId)
         {
-            const string sql = @"
+            return await QuerySingleAsync(@"
                 SELECT Id, ReasonText, ReasonTextLV, ReasonTextRU
                 FROM ReportReasons
-                WHERE Id = @Id";
-
-            return await QuerySingleAsync(sql, r => new ReportReason
+                WHERE Id = @Id", r => new ReportReason
             {
                 Id = r.GetInt32(0),
                 ReasonText = r.GetString(1),

@@ -12,12 +12,8 @@ namespace Linkora.Repositories
             var joinUserId = isAbout ? "r.AuthorId" : "r.TargetUserId";
 
             return await QueryAsync($@"
-        SELECT r.Rating, r.Comment, r.CreatedAt,
-               u.Id, u.UserName, u.AvatarUrl
-        FROM Reviews r
-        JOIN Users u ON u.Id = {joinUserId}
-        WHERE {whereField} = @UserId
-        ORDER BY r.CreatedAt DESC",
+                SELECT r.Rating, r.Comment, r.CreatedAt, u.Id, u.UserName, u.AvatarUrl FROM Reviews r
+                JOIN Users u ON u.Id = {joinUserId} WHERE {whereField} = @UserId ORDER BY r.CreatedAt DESC",
                 r => new ReviewRow
                 {
                     Rating = r.GetInt32(0),
@@ -28,6 +24,19 @@ namespace Linkora.Repositories
                     AvatarUrl = r.IsDBNull(5) ? null : r.GetString(5),
                 },
                 p => p.AddWithValue("@UserId", userId));
+        }
+        public async Task<bool> CanReviewAsync(int authorId, int targetUserId, int productId)
+        {
+            return (await QueryAsync<int>(@"
+        SELECT COUNT(*) FROM Reviews
+        WHERE AuthorId = @AuthorId AND TargetUserId = @TargetId AND ProductId = @ProductId",
+                r => r.GetInt32(0),
+                p =>
+                {
+                    p.AddWithValue("@AuthorId", authorId);
+                    p.AddWithValue("@TargetId", targetUserId);
+                    p.AddWithValue("@ProductId", productId);
+                })).FirstOrDefault() == 0;
         }
     }
 }

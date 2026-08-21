@@ -1,5 +1,4 @@
 ﻿using Linkora.Models;
-using Microsoft.Data.SqlClient;
 
 namespace Linkora.Repositories
 {
@@ -38,29 +37,29 @@ namespace Linkora.Repositories
         }
         public async Task<bool> ToggleAsync(int followerId, int followingId)
         {
-            await using var conn = await OpenConnectionAsync();
-
-            await using var checkCmd = new SqlCommand(
-                "SELECT Id FROM Subscriptions WHERE FollowerId = @FollowerId AND FollowingId = @FollowingId", conn);
-            checkCmd.Parameters.AddWithValue("@FollowerId", followerId);
-            checkCmd.Parameters.AddWithValue("@FollowingId", followingId);
-            var existing = await checkCmd.ExecuteScalarAsync();
+            var existing = (await QueryAsync<int?>(
+                "SELECT Id FROM Subscriptions WHERE FollowerId = @FollowerId AND FollowingId = @FollowingId",
+                r => r.GetInt32(0),
+                p =>
+                {
+                    p.AddWithValue("@FollowerId", followerId);
+                    p.AddWithValue("@FollowingId", followingId);
+                })).FirstOrDefault();
 
             if (existing != null)
             {
-                await using var delCmd = new SqlCommand(
-                    "DELETE FROM Subscriptions WHERE Id = @Id", conn);
-                delCmd.Parameters.AddWithValue("@Id", existing);
-                await delCmd.ExecuteNonQueryAsync();
+                await ExecuteAsync("DELETE FROM Subscriptions WHERE Id = @Id",
+                    p => p.AddWithValue("@Id", existing.Value));
                 return false;
             }
             else
             {
-                await using var insCmd = new SqlCommand(
-                    "INSERT INTO Subscriptions (FollowerId, FollowingId) VALUES (@FollowerId, @FollowingId)", conn);
-                insCmd.Parameters.AddWithValue("@FollowerId", followerId);
-                insCmd.Parameters.AddWithValue("@FollowingId", followingId);
-                await insCmd.ExecuteNonQueryAsync();
+                await ExecuteAsync("INSERT INTO Subscriptions (FollowerId, FollowingId) VALUES (@FollowerId, @FollowingId)",
+                    p =>
+                    {
+                        p.AddWithValue("@FollowerId", followerId);
+                        p.AddWithValue("@FollowingId", followingId);
+                    });
                 return true;
             }
         }

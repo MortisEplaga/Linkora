@@ -2,7 +2,6 @@
 using Linkora.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -13,17 +12,13 @@ namespace Linkora.Controllers
     public class ProfileController : Controller
     {
         private readonly IUserRepository _userRepository;
-        private readonly string _connectionString;
-
         private static readonly int[] AllowedDurations = { 1, 3, 7, 14, 30 };
         private static readonly string[] AllowedSubscriptionTypes = { "Free", "Standard", "Premium" };
 
         public ProfileController(IUserRepository userRepository, IConfiguration configuration)
         {
             _userRepository = userRepository;
-            _connectionString = configuration.GetConnectionString("DefaultConnection")!;
         }
-
         public async Task<IActionResult> Edit()
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -44,9 +39,7 @@ namespace Linkora.Controllers
             var errors = new List<string>();
 
             if (string.IsNullOrWhiteSpace(dto.UserName))
-            {
                 errors.Add("Username is required");
-            }
             else if (dto.UserName != user.UserName)
             {
                 var existing = await _userRepository.GetByUsernameAsync(dto.UserName);
@@ -62,21 +55,17 @@ namespace Linkora.Controllers
 
             int? duration = null;
             if (dto.PreferredAdDuration.HasValue)
-            {
                 if (!AllowedDurations.Contains(dto.PreferredAdDuration.Value))
                     errors.Add("Invalid ad duration value");
                 else
                     duration = dto.PreferredAdDuration.Value;
-            }
 
             string? subscriptionType = null;
             if (!string.IsNullOrWhiteSpace(dto.SubscriptionType))
-            {
                 if (!AllowedSubscriptionTypes.Contains(dto.SubscriptionType))
                     errors.Add("Invalid subscription type");
                 else
                     subscriptionType = dto.SubscriptionType;
-            }
 
             if (errors.Any())
                 return BadRequest(new { errors });
@@ -99,32 +88,10 @@ namespace Linkora.Controllers
                 newHash = Hash(dto.NewPassword);
             }
 
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
-
-            var setParts = new List<string>
-            {
-                "UserName = @U",
-                "Phone = @P",
-                "PreferredAdDuration = @D"
-            };
-            if (newHash != null) setParts.Add("PasswordHash = @H");
-            if (subscriptionType != null) setParts.Add("SubscriptionType = @S");
-
-            var sql = $"UPDATE Users SET {string.Join(", ", setParts)} WHERE Id = @Id";
-
-            await using var cmd = new SqlCommand(sql, conn);
-            cmd.Parameters.AddWithValue("@U", dto.UserName);
-            cmd.Parameters.AddWithValue("@P", (object?)dto.Phone ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@D", (object?)duration ?? DBNull.Value);
-            if (newHash != null) cmd.Parameters.AddWithValue("@H", newHash);
-            if (subscriptionType != null) cmd.Parameters.AddWithValue("@S", subscriptionType);
-            cmd.Parameters.AddWithValue("@Id", userId);
-            await cmd.ExecuteNonQueryAsync();
+            await _userRepository.UpdateProfileAsync(userId, dto.UserName, dto.Phone, duration, newHash, subscriptionType);
 
             return Ok(new { success = true });
         }
-
         private static string Hash(string input)
         {
             var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));

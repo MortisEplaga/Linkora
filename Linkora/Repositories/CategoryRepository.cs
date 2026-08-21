@@ -90,47 +90,41 @@ namespace Linkora.Repositories
             var lang = GetLang();
             var result = new List<Parameter>();
 
-            await using var conn = await OpenConnectionAsync();
-
             foreach (var p in parameters)
             {
                 var vm = new Parameter { Param = p };
 
                 if (p.Type == 2 || p.Type == 4 || p.Type == 8)
                 {
-                    await using var cmdO = new SqlCommand(
-                        "SELECT Id, Value, ValueLV, ValueRU FROM SelectOptions WHERE CategoryId = @Id and IsConf = 1", conn);
-                    cmdO.Parameters.AddWithValue("@Id", p.Id);
-                    await using var ro = await cmdO.ExecuteReaderAsync();
-                    while (await ro.ReadAsync())
-                        vm.Options.Add(new SelectOption { Id = ro.GetInt32(0), Text = Resolve(lang, ro.GetString(1), ro.IsDBNull(2) ? null : ro.GetString(2), ro.IsDBNull(3) ? null : ro.GetString(3)) });
+                    vm.Options.AddRange(await QueryAsync<SelectOption>(
+                        "SELECT Id, Value, ValueLV, ValueRU FROM SelectOptions WHERE CategoryId = @Id and IsConf = 1",
+                        r => new SelectOption { Id = r.GetInt32(0), Text = Resolve(lang, r.GetString(1), r.IsDBNull(2) ? null : r.GetString(2), r.IsDBNull(3) ? null : r.GetString(3)) },
+                        pr => pr.AddWithValue("@Id", p.Id)));
                 }
                 else if (p.Type == 5)
                 {
-                    await using var cmdR = new SqlCommand(
-                        "SELECT MinValue, MaxValue, Step FROM ParameterRange WHERE ParamId = @Id", conn);
-                    cmdR.Parameters.AddWithValue("@Id", p.Id);
-                    await using var rr = await cmdR.ExecuteReaderAsync();
-                    if (await rr.ReadAsync())
-                    {
-                        vm.Min = rr.IsDBNull(0) ? null : rr.GetDecimal(0);
-                        vm.Max = rr.IsDBNull(1) ? null : rr.GetDecimal(1);
-                        vm.Step = rr.IsDBNull(2) ? null : rr.GetDecimal(2);
-                    }
+                    await QueryAsync<Parameter>(
+                        "SELECT MinValue, MaxValue, Step FROM ParameterRange WHERE ParamId = @Id",
+                        r =>
+                        {
+                            vm.Min = r.IsDBNull(0) ? null : r.GetDecimal(0);
+                            vm.Max = r.IsDBNull(1) ? null : r.GetDecimal(1);
+                            vm.Step = r.IsDBNull(2) ? null : r.GetDecimal(2);
+                            return vm;
+                        },
+                        pr => pr.AddWithValue("@Id", p.Id));
                 }
                 else if (p.Type == 6)
                 {
-                    await using var cmdC = new SqlCommand(
-                        "SELECT Id, Name, NameLV, NameRU, HexValue FROM ColorOptions WHERE CategoryId = @Id AND IsConf = 1", conn);
-                    cmdC.Parameters.AddWithValue("@Id", p.Id);
-                    await using var rc = await cmdC.ExecuteReaderAsync();
-                    while (await rc.ReadAsync())
-                        vm.ColorOptions.Add(new ColorOption
+                    vm.ColorOptions.AddRange(await QueryAsync<ColorOption>(
+                        "SELECT Id, Name, NameLV, NameRU, HexValue FROM ColorOptions WHERE CategoryId = @Id AND IsConf = 1",
+                        r => new ColorOption
                         {
-                            Id = rc.GetInt32(0),
-                            Name = Resolve(lang, rc.GetString(1), rc.IsDBNull(2) ? null : rc.GetString(2), rc.IsDBNull(3) ? null : rc.GetString(3)),
-                            HexValue = rc.GetString(4)
-                        });
+                            Id = r.GetInt32(0),
+                            Name = Resolve(lang, r.GetString(1), r.IsDBNull(2) ? null : r.GetString(2), r.IsDBNull(3) ? null : r.GetString(3)),
+                            HexValue = r.GetString(4)
+                        },
+                        pr => pr.AddWithValue("@Id", p.Id)));
                 }
                 result.Add(vm);
             }

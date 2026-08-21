@@ -1,7 +1,6 @@
 ﻿using Linkora.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
 using System.Security.Claims;
 using Linkora.Models;
 
@@ -15,13 +14,11 @@ namespace Linkora.Controllers
         private readonly IMessageRepository _messageRepository;
         private readonly INotificationRepository _notificationRepository;
         private readonly IReviewRepository _reviewRepository;
-        private readonly string _connectionString;
 
         public ReviewsController(IMessageRepository messageRepository, IConfiguration configuration,
             INotificationRepository notificationRepository, IReviewRepository reviewRepository)
         {
             _messageRepository = messageRepository;
-            _connectionString = configuration.GetConnectionString("DefaultConnection")!;
             _notificationRepository = notificationRepository;
             _reviewRepository = reviewRepository;
         }
@@ -52,20 +49,9 @@ namespace Linkora.Controllers
         public async Task<IActionResult> CanReview(int targetUserId, int productId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
-            await using var cmd = new SqlCommand(@"
-                SELECT COUNT(*) FROM Reviews
-                WHERE AuthorId = @AuthorId AND TargetUserId = @TargetId AND ProductId = @ProductId", conn);
-            cmd.Parameters.AddWithValue("@AuthorId", userId);
-            cmd.Parameters.AddWithValue("@TargetId", targetUserId);
-            cmd.Parameters.AddWithValue("@ProductId", productId);
-            var count = (int)(await cmd.ExecuteScalarAsync())!;
-
-            return Ok(new { canReview = count == 0 });
+            var canReview = await _reviewRepository.CanReviewAsync(userId, targetUserId, productId);
+            return Ok(new { canReview });
         }
-
         [HttpGet("My")]
         public async Task<IActionResult> My(string tab = "about")
         {

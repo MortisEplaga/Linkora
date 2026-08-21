@@ -230,5 +230,26 @@ namespace Linkora.Repositories
             var user = await GetByIdAsync(userId);
             return user?.Role == "banned";
         }
+        public async Task UpdateProfileAsync(int userId, string userName, string? phone, int? duration, string? newHash, string? subscriptionType)
+        {
+            var setParts = new List<string>
+            {
+                "UserName = @U",
+                "Phone = @P",
+                "PreferredAdDuration = @D"
+            };
+            if (newHash != null) setParts.Add("PasswordHash = @H");
+            if (subscriptionType != null) setParts.Add("SubscriptionType = @S");
+
+            await ExecuteAsync($"UPDATE Users SET {string.Join(", ", setParts)} WHERE Id = @Id", p =>
+            {
+                p.AddWithValue("@U", userName);
+                p.AddWithValue("@P", (object?)phone ?? DBNull.Value);
+                p.AddWithValue("@D", (object?)duration ?? DBNull.Value);
+                if (newHash != null) p.AddWithValue("@H", newHash);
+                if (subscriptionType != null) p.AddWithValue("@S", subscriptionType);
+                p.AddWithValue("@Id", userId);
+            });
+        }
     }
 }
