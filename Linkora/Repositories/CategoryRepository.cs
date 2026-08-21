@@ -14,12 +14,12 @@ namespace Linkora.Repositories
         private Category MapRow(SqlDataReader reader)
         {
             var nameEn = reader.GetString(reader.GetOrdinal("Name"));
-
+            var lang = GetLang();
             return new Category
             {
                 Id = reader.GetInt32(reader.GetOrdinal("Id")),
                 ParentId = reader.IsDBNull(reader.GetOrdinal("ParentId")) ? null : reader.GetInt32(reader.GetOrdinal("ParentId")),
-                Name = Resolve(GetLang(), nameEn, reader.IsDBNull(reader.GetOrdinal("NameLV")) ? null : reader.GetString(reader.GetOrdinal("NameLV")), reader.IsDBNull(reader.GetOrdinal("NameRU")) ? null : reader.GetString(reader.GetOrdinal("NameRU"))),
+                Name = Resolve(lang, nameEn, reader.IsDBNull(reader.GetOrdinal("NameLV")) ? null : reader.GetString(reader.GetOrdinal("NameLV")), reader.IsDBNull(reader.GetOrdinal("NameRU")) ? null : reader.GetString(reader.GetOrdinal("NameRU"))),
                 NameEn = nameEn,
                 Type = reader.IsDBNull(reader.GetOrdinal("Type")) ? null : reader.GetInt32(reader.GetOrdinal("Type")),
             };
