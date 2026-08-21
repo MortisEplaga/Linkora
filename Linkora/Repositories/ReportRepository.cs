@@ -11,17 +11,35 @@ namespace Linkora.Repositories
             _httpContextAccessor = httpContextAccessor;
         }
         private string GetLang() => _httpContextAccessor.HttpContext?.Request.Cookies["lang"] ?? "en";
-        public async Task<List<ReportReason>> GetActiveReportReasonsAsync()
+        public async Task<List<ReportReasonLocalized>> GetActiveReasonsLocalizedAsync()
         {
-            return await QueryAsync(
-                "SELECT Id, ReasonText, IsActive, ReasonTextLV FROM ReportReasons WHERE IsActive = 1 ORDER BY ReasonText",
-                r => new ReportReason
-                    {
-                        Id = r.GetInt32(0),
-                        ReasonText = Resolve(GetLang(), r.GetString(1), r.GetString(3), r.GetString(4)),
-                        IsActive = r.GetBoolean(2)
-                    }
-                );
+            return await QueryAsync(@"
+                SELECT Id, ReasonText, ReasonTextLV, ReasonTextRU
+                FROM ReportReasons WHERE IsActive = 1 ORDER BY ReasonText", r =>
+            {
+                var en = r.GetString(1);
+                return new ReportReasonLocalized
+                {
+                    Id = r.GetInt32(0),
+                    Text = Resolve(GetLang(), en, r.IsDBNull(2) ? en : r.GetString(2), r.IsDBNull(3) ? en : r.GetString(3))
+                };
+            });
+        }
+        public async Task<ReportReason?> GetReasonByIdAsync(int reasonId)
+        {
+            const string sql = @"
+                SELECT Id, ReasonText, ReasonTextLV, ReasonTextRU
+                FROM ReportReasons
+                WHERE Id = @Id";
+
+            return await QuerySingleAsync(sql, r => new ReportReason
+            {
+                Id = r.GetInt32(0),
+                ReasonText = r.GetString(1),
+                ReasonTextLV = r.IsDBNull(2) ? r.GetString(1) : r.GetString(2),
+                ReasonTextRU = r.IsDBNull(3) ? r.GetString(1) : r.GetString(3),
+                 
+            }, p => p.AddWithValue("@Id", reasonId));
         }
         public async Task<Report> CreateReportAsync(int productId, int userId, int reportReasonId, string? comment)
         {
@@ -64,14 +82,14 @@ namespace Linkora.Repositories
         {
             return await QueryAsync(
                 "SELECT * FROM Reports WHERE ProductId = @ProductId ORDER BY CreatedAt DESC",
-                r => MapReport(r),
+                MapReport,
                 p => p.AddWithValue("@ProductId", productId));
         }
         public async Task<IEnumerable<Report>> GetPendingReportsAsync()
         {
             return await QueryAsync(
                 "SELECT * FROM Reports WHERE Status = 'Pending' ORDER BY CreatedAt ASC",
-                r => MapReport(r));
+                MapReport);
         }
         public async Task UpdateReportStatusAsync(int reportId, ReportStatus status)
         {

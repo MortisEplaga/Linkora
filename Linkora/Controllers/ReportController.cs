@@ -1,31 +1,27 @@
-﻿using Linkora.Repositories;
+﻿using Linkora.Models;
+using Linkora.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Data.SqlClient;
 using System.Security.Claims;
-using Linkora.Models;
 
 namespace Linkora.Controllers
 {
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class ReportController : Controller
+    public class ReportController : ControllerBase
     {
         private readonly IReportRepository _reportRepository;
         private readonly IProductRepository _productRepository;
         private readonly INotificationRepository _notificationRepository;
         private readonly IReviewRepository _reviewRepository;
-        private readonly string _connectionString;
 
         public ReportController(
             IReportRepository reportRepository,
             IProductRepository productRepository,
-            IConfiguration configuration,
             INotificationRepository notificationRepository,
             IReviewRepository reviewRepository)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection")!;
             _reportRepository = reportRepository;
             _productRepository = productRepository;
             _notificationRepository = notificationRepository;
@@ -35,26 +31,7 @@ namespace Linkora.Controllers
         [HttpGet("reasons")]
         public async Task<IActionResult> GetReportReasons()
         {
-            var lang = Request.Cookies["lang"] ?? "en";
-
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
-            await using var cmd = new SqlCommand(
-                "SELECT Id, ReasonText, ReasonTextLV, ReasonTextRU FROM ReportReasons WHERE IsActive = 1 ORDER BY ReasonText", conn);
-            await using var reader = await cmd.ExecuteReaderAsync();
-
-            var reasons = new List<object>();
-            while (await reader.ReadAsync())
-            {
-                var textEn = reader.GetString(1);
-                var text = lang switch
-                {
-                    "lv" => reader.IsDBNull(2) ? textEn : reader.GetString(2),
-                    "ru" => reader.IsDBNull(3) ? textEn : reader.GetString(3),
-                    _ => textEn
-                };
-                reasons.Add(new { id = reader.GetInt32(0), text });
-            }
+            var reasons = await _reportRepository.GetActiveReasonsLocalizedAsync();
             return Ok(reasons);
         }
         [HttpPost("create")]
@@ -76,27 +53,21 @@ namespace Linkora.Controllers
 
             if (product.UserId.HasValue && product.UserId.Value != userId)
             {
-                string reasonEn = "", reasonLv = "", reasonRu = "";
-                await using var rConn = new SqlConnection(_connectionString);
-                await rConn.OpenAsync();
-                await using var rCmd = new SqlCommand(
-                    "SELECT ReasonText, ReasonTextLV, ReasonTextRU FROM ReportReasons WHERE Id = @Id", rConn);
-                rCmd.Parameters.AddWithValue("@Id", request.ReportReasonId);
-                await using var rR = await rCmd.ExecuteReaderAsync();
-                if (await rR.ReadAsync())
-                {
-                    reasonEn = rR.IsDBNull(0) ? "" : rR.GetString(0);
-                    reasonLv = rR.IsDBNull(1) ? reasonEn : rR.GetString(1);
-                    reasonRu = rR.IsDBNull(2) ? reasonEn : rR.GetString(2);
-                }
+                var reason = await _reportRepository.GetReasonByIdAsync(request.ReportReasonId);
 
-                var msg = System.Text.Json.JsonSerializer.Serialize(new
+                var reasonEn = reason?.ReasonText ?? "";
+                var reasonLv = reason?.ReasonTextLV ?? reasonEn;
+                var reasonRu = reason?.ReasonTextRU ?? reasonEn;
+
+                var payload = new
                 {
                     type = "report_on_product",
                     reasonEn,
                     reasonLv,
                     reasonRu
-                });
+                };
+                var msg = System.Text.Json.JsonSerializer.Serialize(payload);
+
                 await _notificationRepository.CreateAsync(product.UserId.Value, null, request.ProductId, msg);
             }
 
@@ -116,10 +87,10 @@ namespace Linkora.Controllers
                 createdAt = r.CreatedAt.ToString("dd.MM.yyyy"),
                 userId = r.UserId,
                 userName = r.UserName,
-                avatarUrl = r.AvatarUrl,
+                avatarUrl = r.AvatarUrl
             });
 
-            return Json(result);
+            return new JsonResult(result);
         }
     }
 }

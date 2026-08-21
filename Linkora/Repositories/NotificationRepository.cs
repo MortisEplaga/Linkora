@@ -2,7 +2,6 @@
 using Linkora.Models;
 using Linkora.Services;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Data.SqlClient;
 
 namespace Linkora.Repositories
 {
@@ -18,48 +17,11 @@ namespace Linkora.Repositories
         }
         public async Task<int> CreateAsync(int userId, int? fromUserId, int? productId, string text)
         {
-            var ids = await QueryAsync<int>(
-                @"INSERT INTO Notifications (UserId, FromUserId, ProductId, Text, IsRead, CreatedAt)
-                  OUTPUT INSERTED.Id
-                  VALUES (@UserId, @FromUserId, @ProductId, @Text, 0, GETDATE())",
-                r => r.GetInt32(0),
-                p =>
-                {
-                    p.AddWithValue("@UserId", userId);
-                    p.AddWithValue("@FromUserId", (object?)fromUserId ?? DBNull.Value);
-                    p.AddWithValue("@ProductId", (object?)productId ?? DBNull.Value);
-                    p.AddWithValue("@Text", text);
-                });
+            var id = await InsertNotificationAsync(userId, fromUserId, productId, text);
 
-            var id = ids[0];
-
-            await _hubContext.Clients.Group($"user_{userId}").SendAsync("NotificationReceived", new
-            {
-                id,
-                text,
-                fromUserId,
-                productId,
-                createdAt = DateTime.UtcNow.ToString("dd MMM, HH:mm"),
-                isRead = false,
-                fromUserAvatar = (string?)null,
-                productName = (string?)null,
-                productImage = (string?)null,
-            });
+            await SendNotificationAsync(userId, id, text, fromUserId, productId, null);
 
             return id;
-        }
-        private static bool IsAllowed(string text, NotificationPreferences prefs)
-        {
-            var category = NotificationCategorizer.Categorize(text);
-            return category switch
-            {
-                "Deals" => prefs.Deals,
-                "Reviews" => prefs.Reviews,
-                "Moderation" => prefs.Moderation,
-                "Account" => prefs.Account,
-                "Favourites" => prefs.Favourites,
-                _ => prefs.NewListings,
-            };
         }
         public async Task<List<NotificationViewModel>> GetByUserAsync(int userId, int count = 20)
         {
@@ -104,7 +66,7 @@ namespace Linkora.Repositories
         public async Task<int> GetUnreadCountAsync(int userId)
         {
             var prefs = await _preferencesRepository.GetAsync(userId);
-            
+
             var texts = await QueryAsync<string>(
                 "SELECT Text FROM Notifications WHERE UserId = @UserId AND IsRead = 0",
                 r => r.IsDBNull(0) ? "" : r.GetString(0),
@@ -130,46 +92,68 @@ namespace Linkora.Repositories
         }
         public async Task NotifySubscribersAsync(int authorId, int productId, string productName, string authorName)
         {
-            await using var conn = await OpenConnectionAsync();
-
-            await using var followersCmd = new SqlCommand(
-                "SELECT FollowerId FROM Subscriptions WHERE FollowingId = @AuthorId", conn);
-            followersCmd.Parameters.AddWithValue("@AuthorId", authorId);
-            
-            await using var r = await followersCmd.ExecuteReaderAsync();
-            var followerIds = new List<int>();
-            while (await r.ReadAsync())
-                followerIds.Add(r.GetInt32(0));
-            await r.CloseAsync();
-
-            if (followerIds.Count == 0) return;
-
             var text = $"{authorName} posted a new listing: {productName}";
-            foreach (var followerId in followerIds)
-            {
-                await using var insertCmd = new SqlCommand(@"
-                    INSERT INTO Notifications (UserId, FromUserId, ProductId, Text, IsRead, CreatedAt)
-                    OUTPUT INSERTED.Id
-                    VALUES (@UserId, @FromUserId, @ProductId, @Text, 0, GETDATE())", conn);
-                insertCmd.Parameters.AddWithValue("@UserId", followerId);
-                insertCmd.Parameters.AddWithValue("@FromUserId", authorId);
-                insertCmd.Parameters.AddWithValue("@ProductId", productId);
-                insertCmd.Parameters.AddWithValue("@Text", text);
-                var id = (int)(await insertCmd.ExecuteScalarAsync())!;
 
-                await _hubContext.Clients.Group($"user_{followerId}").SendAsync("NotificationReceived", new
+            var createdNotifications = await QueryAsync<(int Id, int UserId)>(
+                @"INSERT INTO Notifications (UserId, FromUserId, ProductId, Text, IsRead, CreatedAt)
+                  OUTPUT INSERTED.Id, INSERTED.UserId
+                  SELECT FollowerId, @AuthorId, @ProductId, @Text, 0, GETDATE()
+                  FROM Subscriptions WHERE FollowingId = @AuthorId",
+                r => (r.GetInt32(0), r.GetInt32(1)),
+                p =>
                 {
-                    id,
-                    text,
-                    fromUserId = authorId,
-                    productId,
-                    createdAt = DateTime.UtcNow.ToString("dd MMM, HH:mm"),
-                    isRead = false,
-                    fromUserAvatar = (string?)null,
-                    productName,
-                    productImage = (string?)null,
+                    p.AddWithValue("@AuthorId", authorId);
+                    p.AddWithValue("@ProductId", productId);
+                    p.AddWithValue("@Text", text);
                 });
-            }
+
+            foreach (var (id, followerId) in createdNotifications)
+                await SendNotificationAsync(followerId, id, text, authorId, productId, productName);
+        }
+        private async Task<int> InsertNotificationAsync(int userId, int? fromUserId, int? productId, string text)
+        {
+            var ids = await QueryAsync<int>(
+                @"INSERT INTO Notifications (UserId, FromUserId, ProductId, Text, IsRead, CreatedAt)
+                  OUTPUT INSERTED.Id
+                  VALUES (@UserId, @FromUserId, @ProductId, @Text, 0, GETDATE())",
+                r => r.GetInt32(0),
+                p =>
+                {
+                    p.AddWithValue("@UserId", userId);
+                    p.AddWithValue("@FromUserId", (object?)fromUserId ?? DBNull.Value);
+                    p.AddWithValue("@ProductId", (object?)productId ?? DBNull.Value);
+                    p.AddWithValue("@Text", text);
+                });
+
+            return ids[0];
+        }
+        private async Task SendNotificationAsync(int targetUserId, int id, string text, int? fromUserId, int? productId, string? productName)
+        {
+            await _hubContext.Clients.Group($"user_{targetUserId}").SendAsync("NotificationReceived", new
+            {
+                id,
+                text,
+                fromUserId,
+                productId,
+                createdAt = DateTime.UtcNow.ToString("dd MMM, HH:mm"),
+                isRead = false,
+                fromUserAvatar = (string?)null,
+                productName,
+                productImage = (string?)null,
+            });
+        }
+        private static bool IsAllowed(string text, NotificationPreferences prefs)
+        {
+            var category = NotificationCategorizer.Categorize(text);
+            return category switch
+            {
+                "Deals" => prefs.Deals,
+                "Reviews" => prefs.Reviews,
+                "Moderation" => prefs.Moderation,
+                "Account" => prefs.Account,
+                "Favourites" => prefs.Favourites,
+                _ => prefs.NewListings,
+            };
         }
     }
 }

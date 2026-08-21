@@ -56,11 +56,8 @@ namespace Linkora.Repositories
                 "SELECT Id, Value, ValueLV, ValueRU FROM SelectOptions WHERE IsConf = 1",
                 r =>
                 {
-                    var id = r.GetInt32(0);
                     var value = r.GetString(1);
-                    var valueLv = r.IsDBNull(2) ? value : r.GetString(2);
-                    var valueRu = r.IsDBNull(3) ? value : r.GetString(3);
-                    return (Id: id, Value: value, ValueLV: valueLv, ValueRU: valueRu);
+                    return (Id: r.GetInt32(0), Value: value, ValueLV: r.IsDBNull(2) ? value : r.GetString(2), ValueRU: r.IsDBNull(3) ? value : r.GetString(3));
                 });
 
             var selectOptionsDict = selectOptionsList.ToDictionary(x => x.Id, x => (x.Value, x.ValueLV, x.ValueRU));
@@ -111,12 +108,7 @@ namespace Linkora.Repositories
                     foreach (var idStr in ids)
                         if (int.TryParse(idStr.Trim(), out int optId) && selectOptionsDict.TryGetValue(optId, out var textsTuple))
                         {
-                            texts.Add(lang switch
-                            {
-                                "lv" => textsTuple.ValueLV,
-                                "ru" => textsTuple.ValueRU,
-                                _ => textsTuple.Value
-                            });
+                            texts.Add(Resolve(lang, textsTuple.Value, textsTuple.ValueLV, textsTuple.ValueRU));
                         }
                         else
                             texts.Add(idStr);

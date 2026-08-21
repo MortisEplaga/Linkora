@@ -73,7 +73,7 @@ namespace Linkora.Repositories
             return await GetPagedDataAsync(conn, selectClause, fromWhereClause, orderByClause,
                 page, pageSize, addParameters, mapRow);
         }
-        protected static string Resolve(string lang, string en, string? lv, string? ru) => lang switch
+        public static string Resolve(string lang, string en, string? lv, string? ru) => lang switch
         {
             "lv" => lv ?? en,
             "ru" => ru ?? en,

@@ -30,6 +30,8 @@ namespace Linkora.Models
         [Required]
         [StringLength(100)]
         public string ReasonText { get; set; } = string.Empty;
+        public string ReasonTextLV { get; set; } = string.Empty;
+        public string ReasonTextRU { get; set; } = string.Empty;
         public bool IsActive { get; set; } = true;
     }
 
@@ -38,5 +40,10 @@ namespace Linkora.Models
         public int ProductId { get; set; }
         public int ReportReasonId { get; set; }
         public string? Comment { get; set; }
+    }
+    public class ReportReasonLocalized
+    {
+        public int Id { get; set; }
+        public string Text { get; set; } = "";
     }
 }
