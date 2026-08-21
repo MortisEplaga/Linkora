@@ -3,55 +3,16 @@ using Microsoft.Data.SqlClient;
 
 namespace Linkora.Repositories
 {
-    public class AdminRepository : IAdminRepository
+    public class AdminRepository : SqlRepositoryBase, IAdminRepository
     {
-        private readonly string _connectionString;
         private readonly IProductRepository _productRepository;
-
-        public AdminRepository(IConfiguration configuration, IProductRepository productRepository)
+        public AdminRepository(IConfiguration configuration, IProductRepository productRepository) : base(configuration)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection")!;
             _productRepository = productRepository;
         }
-
-        private async Task<PagedResult<T>> GetPagedDataAsync<T>(
-            SqlConnection conn, string selectClause, string fromWhereClause, string orderByClause,
-            int page, int pageSize, Action<SqlParameterCollection>? addParameters, Func<SqlDataReader, T> mapRow)
-        {
-            var offset = (page - 1) * pageSize;
-
-            await using var countCmd = new SqlCommand($"SELECT COUNT(*) {fromWhereClause}", conn);
-            addParameters?.Invoke(countCmd.Parameters);
-            var total = (int)(await countCmd.ExecuteScalarAsync())!;
-
-            await using var dataCmd = new SqlCommand($@"
-                {selectClause} 
-                {fromWhereClause} 
-                {orderByClause} 
-                OFFSET {offset} ROWS FETCH NEXT {pageSize} ROWS ONLY", conn);
-
-            addParameters?.Invoke(dataCmd.Parameters);
-
-            var items = new List<T>();
-            await using var reader = await dataCmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                items.Add(mapRow(reader));
-            }
-
-            return new PagedResult<T>
-            {
-                Items = items,
-                Total = total,
-                TotalPages = (int)Math.Ceiling(total / (double)pageSize),
-                CurrentPage = page
-            };
-        }
-
         public async Task<AdminBadges> GetSidebarBadgesAsync()
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
+            await using var conn = await OpenConnectionAsync();
             var badges = new AdminBadges();
 
             await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Products WHERE Status = 'Moderation'", conn))
@@ -63,11 +24,9 @@ namespace Linkora.Repositories
 
             return badges;
         }
-
         public async Task<AdminDashboardViewModel> GetDashboardStatsAsync()
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
+            await using var conn = await OpenConnectionAsync();
 
             var stats = new AdminDashboardViewModel();
 
@@ -124,13 +83,9 @@ namespace Linkora.Repositories
         }
         public async Task<PagedResult<AdminProductRow>> GetProductsAsync(string status, int page, string? search)
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
-
             var searchClause = string.IsNullOrEmpty(search) ? "" : "AND p.Name LIKE '%' + @Search + '%'";
 
             return await GetPagedDataAsync(
-                conn: conn,
                 selectClause: @"
             SELECT p.Id, p.Name, p.Status, p.CreatedAt,
                    COALESCE(
@@ -167,8 +122,7 @@ namespace Linkora.Repositories
         }
         public async Task<int?> SetProductStatusAsync(int id, string status)
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
+            await using var conn = await OpenConnectionAsync();
             await using var cmd = new SqlCommand("UPDATE Products SET Status = @S WHERE Id = @Id", conn);
             cmd.Parameters.AddWithValue("@S", status);
             cmd.Parameters.AddWithValue("@Id", id);
@@ -183,17 +137,12 @@ namespace Linkora.Repositories
             }
             return null;
         }
-
         public async Task<PagedResult<AdminUserRow>> GetUsersAsync(int page, string? search, string role)
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
-
             var roleClause = role == "all" ? "" : "AND Role = @Role";
             var searchClause = string.IsNullOrEmpty(search) ? "" : "AND (UserName LIKE '%' + @Search + '%' OR Email LIKE '%' + @Search + '%')";
 
             return await GetPagedDataAsync(
-                conn: conn,
                 selectClause: @"
             SELECT u.Id, u.UserName, u.Email, u.Phone, u.Role, u.IsCompany,
                    u.AvatarUrl, u.CreatedAt,
@@ -222,8 +171,7 @@ namespace Linkora.Repositories
         }
         public async Task<(string? oldRole, BanUserResult? banData)> SetUserRoleAsync(int id, string role)
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
+            await using var conn = await OpenConnectionAsync();
             string? oldRole;
             await using (var getRoleCmd = new SqlCommand("SELECT Role FROM Users WHERE Id = @Id", conn))
             {
@@ -255,11 +203,9 @@ namespace Linkora.Repositories
             }
             return (oldRole, banData);
         }
-
         public async Task DeleteUserAsync(int id)
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
+            await using var conn = await OpenConnectionAsync();
             var productIds = new List<int>();
             await using var getProductsCmd = new SqlCommand("SELECT Id FROM Products WHERE UserId = @UserId", conn);
             getProductsCmd.Parameters.AddWithValue("@UserId", id);
@@ -273,14 +219,9 @@ namespace Linkora.Repositories
             cmd.Parameters.AddWithValue("@Id", id);
             await cmd.ExecuteNonQueryAsync();
         }
-
         public async Task<PagedResult<AdminReportRow>> GetReportsAsync(string status, int page)
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
-
             return await GetPagedDataAsync(
-                conn: conn,
                 selectClause: @"
             SELECT r.Id, r.ProductId, r.UserId, r.Comment, r.CreatedAt, r.Status,
                    p.Name AS ProductName,
@@ -318,8 +259,7 @@ namespace Linkora.Repositories
         }
         public async Task<string> ResolveReportAsync(int id, string action)
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
+            await using var conn = await OpenConnectionAsync();
             var newStatus = action == "resolve" ? "Resolved" : "Rejected";
             await using var cmd = new SqlCommand("UPDATE Reports SET Status = @S WHERE Id = @Id", conn);
             cmd.Parameters.AddWithValue("@S", newStatus);
@@ -334,11 +274,9 @@ namespace Linkora.Repositories
             }
             return newStatus;
         }
-
         public async Task<AdminStatsApiData> GetStatsApiDataAsync()
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
+            await using var conn = await OpenConnectionAsync();
 
             var data = new AdminStatsApiData();
 
@@ -371,8 +309,7 @@ namespace Linkora.Repositories
         public async Task<ApproveOptionResult> ApproveOptionAsync(int id)
         {
             var result = new ApproveOptionResult();
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
+            await using var conn = await OpenConnectionAsync();
 
             await using var infoCmd = new SqlCommand(@"SELECT TOP 1 p.Id, p.UserId, c.Name, c.NameRU, c.NameLV FROM SelectOptions so JOIN MapperProductCategory mpc ON ',' + mpc.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%' JOIN Products p ON mpc.ProductId = p.Id JOIN Category c ON so.CategoryId = c.Id WHERE so.Id = @OptionId", conn);
             infoCmd.Parameters.AddWithValue("@OptionId", id);
@@ -397,12 +334,10 @@ namespace Linkora.Repositories
             }
             return result;
         }
-
         public async Task<RejectOptionResult> RejectProductByOptionAsync(int optionId, int productId)
         {
             var result = new RejectOptionResult();
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
+            await using var conn = await OpenConnectionAsync();
             await using var infoCmd = new SqlCommand(@"SELECT p.UserId, c.Name, c.NameRU, c.NameLV FROM SelectOptions so JOIN Category c ON so.CategoryId = c.Id JOIN Products p ON p.Id = @ProductId WHERE so.Id = @OptionId", conn);
             infoCmd.Parameters.AddWithValue("@OptionId", optionId);
             infoCmd.Parameters.AddWithValue("@ProductId", productId);
@@ -419,12 +354,10 @@ namespace Linkora.Repositories
             result.Success = await _productRepository.RejectProductAndOptionAsync(optionId, productId);
             return result;
         }
-
         public async Task<RejectProductResult> RejectProductWithReasonAsync(int id, int reasonId, string? comment)
         {
             var result = new RejectProductResult();
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
+            await using var conn = await OpenConnectionAsync();
 
             await using (var reasonCmd = new SqlCommand("SELECT ReasonText, ReasonTextLV, ReasonTextRU FROM ReportReasons WHERE Id = @Id", conn))
             {

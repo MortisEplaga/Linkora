@@ -3,70 +3,58 @@ using Microsoft.Data.SqlClient;
 
 namespace Linkora.Repositories
 {
-    public class ReportRepository : IReportRepository
+    public class ReportRepository : SqlRepositoryBase, IReportRepository
     {
-        private readonly string _connectionString;
         private readonly IHttpContextAccessor _httpContextAccessor;
-
-        public ReportRepository(IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+        public ReportRepository(IConfiguration configuration, IHttpContextAccessor httpContextAccessor) : base(configuration)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection");
             _httpContextAccessor = httpContextAccessor;
         }
         private string GetLang() => _httpContextAccessor.HttpContext?.Request.Cookies["lang"] ?? "en";
-
         public async Task<List<ReportReason>> GetActiveReportReasonsAsync()
         {
-            var result = new List<ReportReason>();
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
-            await using var cmd = new SqlCommand(
-                "SELECT Id, ReasonText, IsActive, ReasonTextLV FROM ReportReasons WHERE IsActive = 1 ORDER BY ReasonText", conn);
-            await using var reader = await cmd.ExecuteReaderAsync();
             var lang = GetLang();
-            while (await reader.ReadAsync())
-            {
-                var reasonText = reader.GetString(1);
-                if (lang == "lv" && !reader.IsDBNull(3))
-                    reasonText = reader.GetString(3);
-
-                result.Add(new ReportReason
+            return await QueryAsync(
+                "SELECT Id, ReasonText, IsActive, ReasonTextLV FROM ReportReasons WHERE IsActive = 1 ORDER BY ReasonText",
+                r =>
                 {
-                    Id = reader.GetInt32(0),
-                    ReasonText = reasonText,
-                    IsActive = reader.GetBoolean(2)
+                    var reasonText = r.GetString(1);
+                    if (lang == "lv" && !r.IsDBNull(3))
+                        reasonText = r.GetString(3);
+
+                    return new ReportReason
+                    {
+                        Id = r.GetInt32(0),
+                        ReasonText = reasonText,
+                        IsActive = r.GetBoolean(2)
+                    };
                 });
-            }
-            return result;
         }
         public async Task<Report> CreateReportAsync(int productId, int userId, int reportReasonId, string? comment)
         {
-            await using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
+            var ids = await QueryAsync<int>(
+                @"INSERT INTO Reports (ProductId, UserId, ReportReasonId, Comment, CreatedAt, Status)
+                  OUTPUT INSERTED.Id
+                  VALUES (@ProductId, @UserId, @ReportReasonId, @Comment, @CreatedAt, @Status)",
+                r => r.GetInt32(0),
+                p =>
+                {
+                    p.AddWithValue("@ProductId", productId);
+                    p.AddWithValue("@UserId", userId);
+                    p.AddWithValue("@ReportReasonId", reportReasonId);
+                    p.AddWithValue("@Comment", comment ?? (object)DBNull.Value);
+                    p.AddWithValue("@CreatedAt", DateTime.Now);
+                    p.AddWithValue("@Status", ReportStatus.Pending.ToString());
+                });
 
-            var sql = @"INSERT INTO Reports (ProductId, UserId, ReportReasonId, Comment, CreatedAt, Status)
-                        OUTPUT INSERTED.Id
-                        VALUES (@ProductId, @UserId, @ReportReasonId, @Comment, @CreatedAt, @Status)";
+            var id = ids[0];
 
-            await using var command = new SqlCommand(sql, connection);
-            command.Parameters.AddWithValue("@ProductId", productId);
-            command.Parameters.AddWithValue("@UserId", userId);
-            command.Parameters.AddWithValue("@ReportReasonId", reportReasonId); 
-            command.Parameters.AddWithValue("@Comment", comment ?? (object)DBNull.Value);
-            command.Parameters.AddWithValue("@CreatedAt", DateTime.Now);
-            command.Parameters.AddWithValue("@Status", ReportStatus.Pending.ToString());
-
-            var id = (int)await command.ExecuteScalarAsync();
-
-            var updateProductSql = @"
+            await ExecuteAsync(@"
                 UPDATE Products 
                 SET ModerationScore = ModerationScore + 1,
                     Status = CASE WHEN ModerationScore + 1 >= 5 THEN 'Moderation' ELSE Status END
-                WHERE Id = @ProductId AND Status NOT IN ('Moderation', 'Rejected', 'Archived', 'Succeeded')";
-
-            await using var updateCommand = new SqlCommand(updateProductSql, connection);
-            updateCommand.Parameters.AddWithValue("@ProductId", productId);
-            await updateCommand.ExecuteNonQueryAsync();
+                WHERE Id = @ProductId AND Status NOT IN ('Moderation', 'Rejected', 'Archived', 'Succeeded')",
+                p => p.AddWithValue("@ProductId", productId));
 
             return new Report
             {
@@ -81,47 +69,26 @@ namespace Linkora.Repositories
         }
         public async Task<IEnumerable<Report>> GetReportsByProductIdAsync(int productId)
         {
-            var reports = new List<Report>();
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
-
-            var sql = "SELECT * FROM Reports WHERE ProductId = @ProductId ORDER BY CreatedAt DESC";
-            using var command = new SqlCommand(sql, connection);
-            command.Parameters.AddWithValue("@ProductId", productId);
-
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                reports.Add(MapReport(reader));
-            }
-            return reports;
+            return await QueryAsync(
+                "SELECT * FROM Reports WHERE ProductId = @ProductId ORDER BY CreatedAt DESC",
+                r => MapReport(r),
+                p => p.AddWithValue("@ProductId", productId));
         }
         public async Task<IEnumerable<Report>> GetPendingReportsAsync()
         {
-            var reports = new List<Report>();
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
-
-            var sql = "SELECT * FROM Reports WHERE Status = 'Pending' ORDER BY CreatedAt ASC";
-            using var command = new SqlCommand(sql, connection);
-
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                reports.Add(MapReport(reader));
-            }
-            return reports;
+            return await QueryAsync(
+                "SELECT * FROM Reports WHERE Status = 'Pending' ORDER BY CreatedAt ASC",
+                r => MapReport(r));
         }
         public async Task UpdateReportStatusAsync(int reportId, ReportStatus status)
         {
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
-
-            var sql = "UPDATE Reports SET Status = @Status WHERE Id = @Id";
-            using var command = new SqlCommand(sql, connection);
-            command.Parameters.AddWithValue("@Status", status.ToString());
-            command.Parameters.AddWithValue("@Id", reportId);
-            await command.ExecuteNonQueryAsync();
+            await ExecuteAsync(
+                "UPDATE Reports SET Status = @Status WHERE Id = @Id",
+                p =>
+                {
+                    p.AddWithValue("@Status", status.ToString());
+                    p.AddWithValue("@Id", reportId);
+                });
         }
         private Report MapReport(SqlDataReader reader)
         {

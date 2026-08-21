@@ -1,28 +1,15 @@
 ﻿using Linkora.Models;
-using Microsoft.Data.SqlClient;
 
 namespace Linkora.Repositories
 {
-    public class NotificationPreferencesRepository : INotificationPreferencesRepository
+    public class NotificationPreferencesRepository : SqlRepositoryBase, INotificationPreferencesRepository
     {
-        private readonly string _connectionString;
-
-        public NotificationPreferencesRepository(IConfiguration configuration)
-        {
-            _connectionString = configuration.GetConnectionString("DefaultConnection")!;
-        }
-
+        public NotificationPreferencesRepository(IConfiguration configuration) : base(configuration) { }
         public async Task<NotificationPreferences> GetAsync(int userId)
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
-            await using var cmd = new SqlCommand(
-                "SELECT Deals, Reviews, Moderation, Account, Favourites, NewListings FROM NotificationPreferences WHERE UserId = @UserId", conn);
-            cmd.Parameters.AddWithValue("@UserId", userId);
-            await using var r = await cmd.ExecuteReaderAsync();
-            if (await r.ReadAsync())
-            {
-                return new NotificationPreferences
+            var prefs = await QuerySingleAsync(
+                "SELECT Deals, Reviews, Moderation, Account, Favourites, NewListings FROM NotificationPreferences WHERE UserId = @UserId",
+                r => new NotificationPreferences
                 {
                     UserId = userId,
                     Deals = r.GetBoolean(0),
@@ -31,16 +18,14 @@ namespace Linkora.Repositories
                     Account = r.GetBoolean(3),
                     Favourites = r.GetBoolean(4),
                     NewListings = r.GetBoolean(5),
-                };
-            }
-            return new NotificationPreferences { UserId = userId };
-        }
+                },
+                p => p.AddWithValue("@UserId", userId));
 
+            return prefs ?? new NotificationPreferences { UserId = userId };
+        }
         public async Task SaveAsync(NotificationPreferences prefs)
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
-            await using var cmd = new SqlCommand(@"
+            await ExecuteAsync(@"
                 MERGE NotificationPreferences AS target
                 USING (SELECT @UserId AS UserId) AS source
                 ON target.UserId = source.UserId
@@ -49,15 +34,17 @@ namespace Linkora.Repositories
                                Account = @Account, Favourites = @Favourites, NewListings = @NewListings
                 WHEN NOT MATCHED THEN
                     INSERT (UserId, Deals, Reviews, Moderation, Account, Favourites, NewListings)
-                    VALUES (@UserId, @Deals, @Reviews, @Moderation, @Account, @Favourites, @NewListings);", conn);
-            cmd.Parameters.AddWithValue("@UserId", prefs.UserId);
-            cmd.Parameters.AddWithValue("@Deals", prefs.Deals);
-            cmd.Parameters.AddWithValue("@Reviews", prefs.Reviews);
-            cmd.Parameters.AddWithValue("@Moderation", prefs.Moderation);
-            cmd.Parameters.AddWithValue("@Account", prefs.Account);
-            cmd.Parameters.AddWithValue("@Favourites", prefs.Favourites);
-            cmd.Parameters.AddWithValue("@NewListings", prefs.NewListings);
-            await cmd.ExecuteNonQueryAsync();
+                    VALUES (@UserId, @Deals, @Reviews, @Moderation, @Account, @Favourites, @NewListings);",
+                p =>
+                {
+                    p.AddWithValue("@UserId", prefs.UserId);
+                    p.AddWithValue("@Deals", prefs.Deals);
+                    p.AddWithValue("@Reviews", prefs.Reviews);
+                    p.AddWithValue("@Moderation", prefs.Moderation);
+                    p.AddWithValue("@Account", prefs.Account);
+                    p.AddWithValue("@Favourites", prefs.Favourites);
+                    p.AddWithValue("@NewListings", prefs.NewListings);
+                });
         }
     }
 }

@@ -1,7 +1,4 @@
-﻿using Humanizer;
-using Linkora.Models;
-using Microsoft.Data.SqlClient;
-using static System.Net.Mime.MediaTypeNames;
+﻿using Linkora.Models;
 
 namespace Linkora.Repositories
 {

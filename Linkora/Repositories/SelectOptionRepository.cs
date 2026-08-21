@@ -1,16 +1,8 @@
-﻿using Microsoft.Data.SqlClient;
-
-namespace Linkora.Repositories
+﻿namespace Linkora.Repositories
 {
-    public class SelectOptionRepository : ISelectOptionRepository
+    public class SelectOptionRepository : SqlRepositoryBase, ISelectOptionRepository
     {
-        private readonly string _connectionString;
-
-        public SelectOptionRepository(IConfiguration configuration)
-        {
-            _connectionString = configuration.GetConnectionString("DefaultConnection")!;
-        }
-
+        public SelectOptionRepository(IConfiguration configuration) : base(configuration) { }
         private static string ValueColumn(string lang) => lang switch
         {
             "lv" => "ValueLV",
@@ -22,54 +14,46 @@ namespace Linkora.Repositories
             var col = ValueColumn(lang);
             var trimmed = text.Trim();
 
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
+            var result = await QueryAsync<int?>(
+                $@"SELECT Id FROM SelectOptions
+                   WHERE CategoryId = @ParamId
+                     AND LTRIM(RTRIM({col})) = LTRIM(RTRIM(@Text))",
+                r => r.IsDBNull(0) ? (int?)null : r.GetInt32(0),
+                p =>
+                {
+                    p.AddWithValue("@ParamId", paramId);
+                    p.AddWithValue("@Text", trimmed);
+                });
 
-            await using var cmd = new SqlCommand($@"
-                SELECT Id FROM SelectOptions
-                WHERE CategoryId = @ParamId
-                  AND LTRIM(RTRIM({col})) = LTRIM(RTRIM(@Text))", conn);
-            cmd.Parameters.AddWithValue("@ParamId", paramId);
-            cmd.Parameters.AddWithValue("@Text", trimmed);
-            var existingId = await cmd.ExecuteScalarAsync();
-
-            return existingId == null ? null : (int)existingId;
+            return result.FirstOrDefault();
         }
         public async Task<int> CreateAsync(int paramId, string text)
         {
             var trimmed = text.Trim();
 
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
+            var result = await QueryAsync<int>(
+                @"INSERT INTO SelectOptions (CategoryId, Value, ValueLV, ValueRU, IsConf)
+                  OUTPUT INSERTED.Id
+                  VALUES (@ParamId, @Text, @Text, @Text, 0)",
+                r => r.GetInt32(0),
+                p =>
+                {
+                    p.AddWithValue("@ParamId", paramId);
+                    p.AddWithValue("@Text", trimmed);
+                });
 
-            await using var cmd = new SqlCommand(@"
-                INSERT INTO SelectOptions (CategoryId, Value, ValueLV, ValueRU, IsConf)
-                OUTPUT INSERTED.Id
-                VALUES (@ParamId, @Text, @Text, @Text, 0)", conn);
-            cmd.Parameters.AddWithValue("@ParamId", paramId);
-            cmd.Parameters.AddWithValue("@Text", trimmed);
-
-            return (int)(await cmd.ExecuteScalarAsync())!;
+            return result[0];
         }
         public async Task<List<(int Id, string Text)>> GetConfirmedAsync(int paramId, string lang)
         {
             var col = ValueColumn(lang);
-            var result = new List<(int, string)>();
 
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
-
-            await using var cmd = new SqlCommand($@"
-                SELECT Id, {col}
-                FROM SelectOptions
-                WHERE CategoryId = @ParamId and IsConf = 1", conn);
-            cmd.Parameters.AddWithValue("@ParamId", paramId);
-
-            await using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-                result.Add((reader.GetInt32(0), reader.IsDBNull(1) ? string.Empty : reader.GetString(1)));
-
-            return result;
+            return await QueryAsync<(int Id, string Text)>(
+                $@"SELECT Id, {col}
+                   FROM SelectOptions
+                   WHERE CategoryId = @ParamId and IsConf = 1",
+                r => (r.GetInt32(0), r.IsDBNull(1) ? string.Empty : r.GetString(1)),
+                p => p.AddWithValue("@ParamId", paramId));
         }
     }
 }

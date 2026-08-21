@@ -1,37 +1,27 @@
-﻿using Microsoft.Data.SqlClient;
-
-namespace Linkora.Repositories
+﻿namespace Linkora.Repositories
 {
-    public class SupportRepository : ISupportRepository
+    public class SupportRepository : SqlRepositoryBase, ISupportRepository
     {
-        private readonly string _connectionString;
-
-        public SupportRepository(IConfiguration configuration)
-        {
-            _connectionString = configuration.GetConnectionString("DefaultConnection")!;
-        }
-
+        public SupportRepository(IConfiguration configuration) : base(configuration) { }
         public async Task<int> CreateRequestAsync(string name, string email, string? phone, string message, string? userId)
         {
-            const string sql = @"
-                INSERT INTO SupportRequests (Name, Email, Phone, Message, CreatedAt, Status, UserId)
-                VALUES (@Name, @Email, @Phone, @Message, @CreatedAt, @Status, @UserId);
-                SELECT SCOPE_IDENTITY();";
+            var result = await QueryAsync<int>(
+                @"INSERT INTO SupportRequests (Name, Email, Phone, Message, CreatedAt, Status, UserId)
+                  OUTPUT INSERTED.Id
+                  VALUES (@Name, @Email, @Phone, @Message, @CreatedAt, @Status, @UserId)",
+                r => r.GetInt32(0),
+                p =>
+                {
+                    p.AddWithValue("@Name", name);
+                    p.AddWithValue("@Email", email);
+                    p.AddWithValue("@Phone", (object?)phone ?? DBNull.Value);
+                    p.AddWithValue("@Message", message);
+                    p.AddWithValue("@CreatedAt", DateTime.UtcNow);
+                    p.AddWithValue("@Status", "New");
+                    p.AddWithValue("@UserId", (object?)userId ?? DBNull.Value);
+                });
 
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
-
-            await using var cmd = new SqlCommand(sql, conn);
-            cmd.Parameters.AddWithValue("@Name", name);
-            cmd.Parameters.AddWithValue("@Email", email);
-            cmd.Parameters.AddWithValue("@Phone", (object?)phone ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@Message", message);
-            cmd.Parameters.AddWithValue("@CreatedAt", DateTime.UtcNow);
-            cmd.Parameters.AddWithValue("@Status", "New");
-            cmd.Parameters.AddWithValue("@UserId", (object?)userId ?? DBNull.Value);
-
-            var newId = await cmd.ExecuteScalarAsync();
-            return Convert.ToInt32(newId);
+            return result[0];
         }
     }
 }

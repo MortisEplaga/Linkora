@@ -3,37 +3,35 @@ using Linkora.Models;
 using Linkora.Services;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Data.SqlClient;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Linkora.Repositories
 {
-    public class NotificationRepository : INotificationRepository
+    public class NotificationRepository : SqlRepositoryBase, INotificationRepository
     {
-        private readonly string _connectionString;
         private readonly IHubContext<MessageHub> _hubContext;
         private readonly INotificationPreferencesRepository _preferencesRepository;
 
-        public NotificationRepository(IConfiguration configuration, IHubContext<MessageHub> hubContext,
-            INotificationPreferencesRepository preferencesRepository)
+        public NotificationRepository(IConfiguration configuration, IHubContext<MessageHub> hubContext, INotificationPreferencesRepository preferencesRepository) : base(configuration)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection")!;
             _hubContext = hubContext;
             _preferencesRepository = preferencesRepository;
         }
-
         public async Task<int> CreateAsync(int userId, int? fromUserId, int? productId, string text)
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
-            await using var cmd = new SqlCommand(@"
-                INSERT INTO Notifications (UserId, FromUserId, ProductId, Text, IsRead, CreatedAt)
-                OUTPUT INSERTED.Id
-                VALUES (@UserId, @FromUserId, @ProductId, @Text, 0, GETDATE())", conn);
-            cmd.Parameters.AddWithValue("@UserId", userId);
-            cmd.Parameters.AddWithValue("@FromUserId", (object?)fromUserId ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@ProductId", (object?)productId ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@Text", text);
-            var id = (int)(await cmd.ExecuteScalarAsync())!;
+            var ids = await QueryAsync<int>(
+                @"INSERT INTO Notifications (UserId, FromUserId, ProductId, Text, IsRead, CreatedAt)
+                  OUTPUT INSERTED.Id
+                  VALUES (@UserId, @FromUserId, @ProductId, @Text, 0, GETDATE())",
+                r => r.GetInt32(0),
+                p =>
+                {
+                    p.AddWithValue("@UserId", userId);
+                    p.AddWithValue("@FromUserId", (object?)fromUserId ?? DBNull.Value);
+                    p.AddWithValue("@ProductId", (object?)productId ?? DBNull.Value);
+                    p.AddWithValue("@Text", text);
+                });
+
+            var id = ids[0];
 
             await _hubContext.Clients.Group($"user_{userId}").SendAsync("NotificationReceived", new
             {
@@ -66,101 +64,85 @@ namespace Linkora.Repositories
         public async Task<List<NotificationViewModel>> GetByUserAsync(int userId, int count = 20)
         {
             var prefs = await _preferencesRepository.GetAsync(userId);
-            var result = new List<NotificationViewModel>();
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
-            await using var cmd = new SqlCommand(@"
-            SELECT
-                n.Id, n.UserId, n.FromUserId, n.ProductId, n.Text, n.IsRead, n.CreatedAt,
-                u.UserName, u.AvatarUrl,
-                p.Name AS ProductName,
-                COALESCE(
-                    (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
-                     WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-                    p.AvatarUrl
-                ) AS ProductImage
-            FROM Notifications n
-            LEFT JOIN Users u ON u.Id = n.FromUserId
-            LEFT JOIN Products p ON p.Id = n.ProductId
-            WHERE n.UserId = @UserId
-            ORDER BY n.CreatedAt DESC", conn);
-            cmd.Parameters.AddWithValue("@UserId", userId);
-            await using var r = await cmd.ExecuteReaderAsync();
-            while (await r.ReadAsync())
-            {
-                var text = r.IsDBNull(4) ? "" : r.GetString(4);
-                if (!IsAllowed(text, prefs)) continue;
 
-                result.Add(new NotificationViewModel
+            var allNotifications = await QueryAsync(
+                @"SELECT
+                    n.Id, n.UserId, n.FromUserId, n.ProductId, n.Text, n.IsRead, n.CreatedAt,
+                    u.UserName, u.AvatarUrl,
+                    p.Name AS ProductName,
+                    COALESCE(
+                        (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
+                         WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+                        p.AvatarUrl
+                    ) AS ProductImage
+                  FROM Notifications n
+                  LEFT JOIN Users u ON u.Id = n.FromUserId
+                  LEFT JOIN Products p ON p.Id = n.ProductId
+                  WHERE n.UserId = @UserId
+                  ORDER BY n.CreatedAt DESC",
+                r => new NotificationViewModel
                 {
                     Id = r.GetInt32(0),
                     UserId = r.GetInt32(1),
                     FromUserId = r.IsDBNull(2) ? null : r.GetInt32(2),
                     ProductId = r.IsDBNull(3) ? null : r.GetInt32(3),
-                    Text = text,
+                    Text = r.IsDBNull(4) ? "" : r.GetString(4),
                     IsRead = r.GetBoolean(5),
                     CreatedAt = r.GetDateTime(6),
                     FromUserName = r.IsDBNull(7) ? null : r.GetString(7),
                     FromUserAvatar = r.IsDBNull(8) ? null : r.GetString(8),
                     ProductName = r.IsDBNull(9) ? null : r.GetString(9),
                     ProductImage = r.IsDBNull(10) ? null : r.GetString(10),
-                });
+                },
+                p => p.AddWithValue("@UserId", userId));
 
-                if (result.Count >= count) break;
-            }
-            return result;
+            return allNotifications
+                .Where(n => IsAllowed(n.Text, prefs))
+                .Take(count)
+                .ToList();
         }
         public async Task<int> GetUnreadCountAsync(int userId)
         {
             var prefs = await _preferencesRepository.GetAsync(userId);
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
-            await using var cmd = new SqlCommand(
-                "SELECT Text FROM Notifications WHERE UserId = @UserId AND IsRead = 0", conn);
-            cmd.Parameters.AddWithValue("@UserId", userId);
-            await using var r = await cmd.ExecuteReaderAsync();
-            int count = 0;
-            while (await r.ReadAsync())
-            {
-                var message = r.IsDBNull(0) ? "" : r.GetString(0);
-                if (IsAllowed(message, prefs)) count++;
-            }
-            return count;
+            
+            var texts = await QueryAsync<string>(
+                "SELECT Text FROM Notifications WHERE UserId = @UserId AND IsRead = 0",
+                r => r.IsDBNull(0) ? "" : r.GetString(0),
+                p => p.AddWithValue("@UserId", userId));
+
+            return texts.Count(t => IsAllowed(t, prefs));
         }
         public async Task MarkReadAsync(int notificationId, int userId)
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
-            await using var cmd = new SqlCommand(
-                "UPDATE Notifications SET IsRead = 1 WHERE Id = @Id AND UserId = @UserId", conn);
-            cmd.Parameters.AddWithValue("@Id", notificationId);
-            cmd.Parameters.AddWithValue("@UserId", userId);
-            await cmd.ExecuteNonQueryAsync();
+            await ExecuteAsync(
+                "UPDATE Notifications SET IsRead = 1 WHERE Id = @Id AND UserId = @UserId",
+                p =>
+                {
+                    p.AddWithValue("@Id", notificationId);
+                    p.AddWithValue("@UserId", userId);
+                });
         }
         public async Task MarkAllReadAsync(int userId)
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
-            await using var cmd = new SqlCommand(
-                "UPDATE Notifications SET IsRead = 1 WHERE UserId = @UserId AND IsRead = 0", conn);
-            cmd.Parameters.AddWithValue("@UserId", userId);
-            await cmd.ExecuteNonQueryAsync();
+            await ExecuteAsync(
+                "UPDATE Notifications SET IsRead = 1 WHERE UserId = @UserId AND IsRead = 0",
+                p => p.AddWithValue("@UserId", userId));
         }
         public async Task NotifySubscribersAsync(int authorId, int productId, string productName, string authorName)
         {
-            await using var conn = new SqlConnection(_connectionString);
-            await conn.OpenAsync();
+            await using var conn = await OpenConnectionAsync();
 
             await using var followersCmd = new SqlCommand(
                 "SELECT FollowerId FROM Subscriptions WHERE FollowingId = @AuthorId", conn);
             followersCmd.Parameters.AddWithValue("@AuthorId", authorId);
+            
             await using var r = await followersCmd.ExecuteReaderAsync();
             var followerIds = new List<int>();
             while (await r.ReadAsync())
                 followerIds.Add(r.GetInt32(0));
             await r.CloseAsync();
 
-            if (!followerIds.Any()) return;
+            if (followerIds.Count == 0) return;
 
             var text = $"{authorName} posted a new listing: {productName}";
             foreach (var followerId in followerIds)
