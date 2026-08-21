@@ -391,130 +391,18 @@ function applyPromotionSelection(type, btn) {
     document.getElementById('promotionValue').value = type;
 }
 
-function openPromoRulesModal() {
-    const rulesBody = document.getElementById('promoRulesBody');
-    const policyBody = document.getElementById('promoPolicyBody');
-
-    const rulesSource = document.querySelector('#rulesModal .info-modal-body');
-    const policySource = document.querySelector('#policyModal .info-modal-body');
-
-    if (rulesSource) rulesBody.innerHTML = rulesSource.innerHTML;
-    if (policySource) policyBody.innerHTML = policySource.innerHTML;
-
-    const lang = localStorage.getItem('lang') || 'en';
-    rulesBody.querySelectorAll('.info-lang-content').forEach(el => {
-        el.style.display = el.dataset.lang === lang ? '' : 'none';
-    });
-    policyBody.querySelectorAll('.info-lang-content').forEach(el => {
-        el.style.display = el.dataset.lang === lang ? '' : 'none';
-    });
-
-    const modal = document.getElementById('promoRulesModal');
-    modal.querySelectorAll('.info-lang-btn').forEach(btn => {
-        const btnLang = btn.textContent.trim().toLowerCase();
-        btn.classList.toggle('active', btnLang === lang);
-    });
-
-    const agreeBtn = document.getElementById('promoAgreeBtn');
-    agreeBtn.disabled = true;
-
-    rulesScrolled = false;
-    policyScrolled = false;
-
-    rulesBody.scrollTop = 0;
-    policyBody.scrollTop = 0;
-
-    document.getElementById('promoRulesOverlay').classList.add('modal-open');
-    modal.classList.add('modal-open');
-    document.body.style.overflow = 'hidden';
-
-    const titles = { en: 'Promotion rules', lv: 'Reklamēšanas noteikumi', ru: 'Правила продвижения' };
-    modal.querySelector('.info-modal-title').textContent = titles[lang];
-
-    const innerTitles = {
-        en: { rules: 'Rules', policy: 'Privacy Policy' },
-        lv: { rules: 'Noteikumi', policy: 'Privātuma politika' },
-        ru: { rules: 'Правила', policy: 'Политика конфиденциальности' }
-    };
-    const rulesTitleEl = modal.querySelector('[data-i18n="rules_title"]');
-    const policyTitleEl = modal.querySelector('[data-i18n="policy_title"]');
-    if (rulesTitleEl) rulesTitleEl.textContent = innerTitles[lang].rules;
-    if (policyTitleEl) policyTitleEl.textContent = innerTitles[lang].policy;
-
-    setTimeout(() => {
-        if (rulesBody.scrollHeight <= rulesBody.clientHeight + 10) rulesScrolled = true;
-        if (policyBody.scrollHeight <= policyBody.clientHeight + 10) policyScrolled = true;
-        if (rulesScrolled && policyScrolled) {
-            agreeBtn.disabled = false;
-        }
-    }, 50);
-}
-
-function checkPromoRulesScroll(type) {
-    const body = type === 'rules' ? document.getElementById('promoRulesBody') : document.getElementById('promoPolicyBody');
-    const atBottom = body.scrollTop + body.clientHeight >= body.scrollHeight - 10;
-
-    if (atBottom) {
-        if (type === 'rules') rulesScrolled = true;
-        if (type === 'policy') policyScrolled = true;
+function selectPromotion(type, btn) {
+    if (type === 'None') {
+        applyPromotionSelection(type, btn);
+        return;
     }
-
-    if (rulesScrolled && policyScrolled) {
-        document.getElementById('promoAgreeBtn').disabled = false;
-    }
-}
-
-function switchPromoLang(lang, btn) {
-    const modal = document.getElementById('promoRulesModal');
-    modal.querySelectorAll('.info-lang-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    document.getElementById('promoRulesBody').querySelectorAll('.info-lang-content').forEach(el => {
-        el.style.display = el.dataset.lang === lang ? '' : 'none';
-    });
-    document.getElementById('promoPolicyBody').querySelectorAll('.info-lang-content').forEach(el => {
-        el.style.display = el.dataset.lang === lang ? '' : 'none';
-    });
-
-    rulesScrolled = false;
-    policyScrolled = false;
-    document.getElementById('promoRulesBody').scrollTop = 0;
-    document.getElementById('promoPolicyBody').scrollTop = 0;
-
-    document.getElementById('promoAgreeBtn').disabled = true;
-
-    setTimeout(() => {
-        const rBody = document.getElementById('promoRulesBody');
-        const pBody = document.getElementById('promoPolicyBody');
-        if (rBody.scrollHeight <= rBody.clientHeight + 10) rulesScrolled = true;
-        if (pBody.scrollHeight <= pBody.clientHeight + 10) policyScrolled = true;
-        if (rulesScrolled && policyScrolled) {
-            document.getElementById('promoAgreeBtn').disabled = false;
-        }
-    }, 50);
-
-    const titles = { en: 'Promotion rules', lv: 'Reklamēšanas noteikumi', ru: 'Правила продвижения' };
-    modal.querySelector('.info-modal-title').textContent = titles[lang];
-
-    const innerTitles = {
-        en: { rules: 'Rules', policy: 'Privacy Policy' },
-        lv: { rules: 'Noteikumi', policy: 'Privātuma politika' },
-        ru: { rules: 'Правила', policy: 'Политика конфиденциальности' }
-    };
-    const rulesTitleEl = modal.querySelector('[data-i18n="rules_title"]');
-    const policyTitleEl = modal.querySelector('[data-i18n="policy_title"]');
-    if (rulesTitleEl) rulesTitleEl.textContent = innerTitles[lang].rules;
-    if (policyTitleEl) policyTitleEl.textContent = innerTitles[lang].policy;
-}
-
-function closePromoRulesModal() {
-    document.getElementById('promoRulesOverlay').classList.remove('modal-open');
-    document.getElementById('promoRulesModal').classList.remove('modal-open');
-    document.body.style.overflow = '';
+    pendingPromoType = type;
+    pendingPromoBtn = btn;
+    openSharedRulesModal('promo');
 }
 
 async function confirmPromoRules(agreed) {
-    closePromoRulesModal();
+    closeSharedRulesModal('promo');
     if (agreed && pendingPromoType) {
         if (typeof window.onPromoAgree === 'function') {
             await window.onPromoAgree(pendingPromoType, pendingPromoBtn);

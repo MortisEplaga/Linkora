@@ -8,6 +8,14 @@ const MODAL_TITLES = {
     faqModal: { en: 'FAQ', lv: 'Bieži uzdotie jautājumi', ru: 'FAQ' },
     rulesModal: { en: 'Terms of use', lv: 'Portāla lietošanas noteikumi', ru: 'Правила пользования порталом' },
     policyModal: { en: 'Privacy Policy', lv: 'Privātuma politika', ru: 'Политика конфиденциальности' },
+    contactsModal: { en: 'Contacts', lv: 'Kontakti', ru: 'Контакты' },
+    supportModal: { en: 'Technical Support', lv: 'Tehniskā palīdzība', ru: 'Техническая поддержка' },
+};
+
+const SUPPORT_FORM_TEXT = {
+    en: { name: 'Your name', email: 'Email', phone: 'Phone', message: 'Describe the error', send: 'Send' },
+    lv: { name: 'Jūsu vārds', email: 'E-pasts', phone: 'Tālrunis (nav obligāti)', message: 'Aprakstiet kļūdu', send: 'Sūtīt' },
+    ru: { name: 'Ваше имя', email: 'Email', phone: 'Телефон (необязательно)', message: 'Опишите ошибку', send: 'Отправить' },
 };
 
 function switchInfoLang(lang, btn) {
@@ -77,44 +85,7 @@ function closePolicyModal() { closeInfoModal('policyOverlay', 'policyModal'); }
 
 /* ---------- Contacts ---------- */
 
-const CONTACTS_TITLES = { en: 'Contacts', lv: 'Kontakti', ru: 'Контакты' };
-
-function switchContactsLang(lang, btn) {
-    const modal = document.getElementById('contactsModal');
-    modal.querySelectorAll('.info-lang-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    modal.querySelectorAll('.info-lang-content').forEach(el => {
-        el.style.display = el.dataset.lang === lang ? '' : 'none';
-    });
-
-    const titleEl = modal.querySelector('.info-modal-title');
-    if (titleEl) {
-        titleEl.removeAttribute('data-i18n');
-        titleEl.textContent = CONTACTS_TITLES[lang];
-    }
-}
-
-function openContactsModal() {
-    document.getElementById('contactsOverlay').classList.add('modal-open');
-    document.getElementById('contactsModal').classList.add('modal-open');
-    document.body.style.overflow = 'hidden';
-
-    const lang = getCurrentLanguage();
-    const modal = document.getElementById('contactsModal');
-    if (modal) {
-        const buttons = modal.querySelectorAll('.info-lang-btn');
-        for (const btn of buttons) {
-            const btnLang = btn.textContent.trim().toUpperCase();
-            if ((lang === 'ru' && btnLang === 'RU') ||
-                (lang === 'lv' && btnLang === 'LV') ||
-                (lang === 'en' && btnLang === 'EN')) {
-                switchContactsLang(lang, btn);
-                break;
-            }
-        }
-    }
-}
-
+function openContactsModal() { openInfoModalWithLang('contactsOverlay', 'contactsModal'); }
 function closeContactsModal() { closeInfoModal('contactsOverlay', 'contactsModal'); }
 
 /* ---------- Support ---------- */
@@ -122,7 +93,10 @@ function closeContactsModal() { closeInfoModal('contactsOverlay', 'contactsModal
 let currentSupportLang = 'en';
 
 function openSupportModal() {
-    document.getElementById('supportAfToken').value = document.getElementById('afToken').value;
+    const afToken = document.getElementById('afToken');
+    const supportAfToken = document.getElementById('supportAfToken');
+    if (afToken && supportAfToken) supportAfToken.value = afToken.value;
+
     document.getElementById('supportError').style.display = 'none';
     document.getElementById('supportSuccess').style.display = 'none';
     document.getElementById('supportForm').reset();
@@ -151,57 +125,19 @@ function closeSupportModal() { closeInfoModal('supportOverlay', 'supportModal');
 
 function switchSupportLang(lang, btn) {
     currentSupportLang = lang;
+    switchInfoLang(lang, btn);
 
+    const dict = SUPPORT_FORM_TEXT[lang] || SUPPORT_FORM_TEXT.en;
     const modal = document.getElementById('supportModal');
-    modal.querySelectorAll('.info-lang-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    modal.querySelectorAll('.info-lang-content').forEach(el => {
-        el.style.display = el.dataset.lang === lang ? '' : 'none';
-    });
+    const setPh = (id, val) => { const el = document.getElementById(id); if (el) el.placeholder = val; };
+    setPh('supportName', dict.name);
+    setPh('supportEmail', dict.email);
+    setPh('supportPhone', dict.phone);
+    setPh('supportMessage', dict.message);
 
-    const translations = {
-        ru: {
-            support_name_ph: 'Ваше имя',
-            support_email_ph: 'Email',
-            support_phone_ph: 'Телефон (необязательно)',
-            support_message_ph: 'Опишите ошибку',
-            support_send_btn: 'Отправить'
-        },
-        lv: {
-            support_name_ph: 'Jūsu vārds',
-            support_email_ph: 'E-pasts',
-            support_phone_ph: 'Tālrunis (nav obligāti)',
-            support_message_ph: 'Aprakstiet kļūdu',
-            support_send_btn: 'Sūtīt'
-        },
-        en: {
-            support_name_ph: 'Your name',
-            support_email_ph: 'Email',
-            support_phone_ph: 'Phone',
-            support_message_ph: 'Describe the error',
-            support_send_btn: 'Send'
-        }
-    };
-
-    const dict = translations[lang] || translations.en;
-
-    const nameEl = document.getElementById('supportName');
-    const emailEl = document.getElementById('supportEmail');
-    const phoneEl = document.getElementById('supportPhone');
-    const messageEl = document.getElementById('supportMessage');
-    if (nameEl) nameEl.placeholder = dict.support_name_ph;
-    if (emailEl) emailEl.placeholder = dict.support_email_ph;
-    if (phoneEl) phoneEl.placeholder = dict.support_phone_ph;
-    if (messageEl) messageEl.placeholder = dict.support_message_ph;
-
-    const submitBtn = modal.querySelector('.auth-submit');
-    if (submitBtn) submitBtn.textContent = dict.support_send_btn;
-
-    const supportTitles = { en: 'Technical Support', lv: 'Tehniskā palīdzība', ru: 'Техническая поддержка' };
-    const supportTitleEl = document.getElementById('supportTitle');
-    if (supportTitleEl) {
-        supportTitleEl.removeAttribute('data-i18n');
-        supportTitleEl.textContent = supportTitles[lang];
+    if (modal) {
+        const submitBtn = modal.querySelector('.auth-submit');
+        if (submitBtn) submitBtn.textContent = dict.send;
     }
 }
 

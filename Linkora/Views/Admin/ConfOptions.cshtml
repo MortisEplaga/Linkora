@@ -18,7 +18,7 @@
     }
 }
 
-    <link rel="stylesheet" href="~/css/admin.css" />
+<link rel="stylesheet" href="~/css/admin.css" />
 
 <div class="admin-layout">
     @await Html.PartialAsync("Sidebar", "conf-options")
@@ -144,8 +144,6 @@
             }
         })();
 
-        const afToken = document.getElementById('afToken')?.value ?? '';
-
         async function approveOption(optionId, btn) {
             btn.disabled = true;
             const res = await fetch(`/Admin/ApproveOption?id=${optionId}`, {
@@ -177,13 +175,6 @@
                 showToast(translate('err_action'), 'error');
                 btn.disabled = false;
             }
-        }
-
-        function showToast(msg, type = 'success') {
-            const tEl = document.getElementById('toast');
-            tEl.textContent = msg;
-            tEl.className = `admin-toast ${type} show`;
-            setTimeout(() => tEl.className = 'admin-toast', 2500);
         }
 
         window.approveOption = approveOption;

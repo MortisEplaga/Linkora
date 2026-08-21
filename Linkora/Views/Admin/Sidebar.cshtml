@@ -7,7 +7,6 @@
     if (ViewBag.PendingModeration != null) pendingMod = (int)ViewBag.PendingModeration;
     if (ViewBag.PendingReports != null) pendingRep = (int)ViewBag.PendingReports;
     if (ViewBag.PendingOptions != null) pendingOptions = (int)ViewBag.PendingOptions;
-
 }
 
 <aside class="admin-sidebar">
@@ -79,6 +78,7 @@
         </a>
     </div>
 </aside>
+<script src="~/js/admin.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', applyTranslations);
+    document.addEventListener('DOMContentLoaded', applyTranslations);
 </script>

@@ -203,8 +203,6 @@
 
 @section Scripts {
     <script>
-        const afToken = document.getElementById('afToken')?.value ?? '';
-
         const jsLangs = {
             en: {
                 role_updated: 'Role updated to ',
@@ -232,11 +230,6 @@
             }
         };
 
-        function getJsText(key) {
-            const currentLang = localStorage.getItem('lang') || 'en';
-            return jsLangs[currentLang]?.[key] || jsLangs['en'][key];
-        }
-
         async function setRole(id, role, btn) {
             btn.disabled = true;
             const res = await fetch(`/Admin/SetUserRole?id=${id}&role=${role}`, {
@@ -248,18 +241,17 @@
                     badge.textContent = role;
                     badge.className = `admin-badge admin-badge-${role}`;
                 }
-                showToast(getJsText('role_updated') + role, 'success');
+                showToast(getJsText('role_updated', jsLangs) + role, 'success');
                 setTimeout(() => location.reload(), 800);
             } else {
-                showToast(getJsText('err_role'), 'error');
+                showToast(getJsText('err_role', jsLangs), 'error');
             }
             btn.disabled = false;
         }
 
-        let pendingAction = null;
         function confirmDeleteUser(id, name) {
-            document.getElementById('confirmTitle').textContent = getJsText('confirm_del_title');
-            document.getElementById('confirmText').textContent = getJsText('confirm_del_text').replace('{name}', name);
+            document.getElementById('confirmTitle').textContent = getJsText('confirm_del_title', jsLangs);
+            document.getElementById('confirmText').textContent = getJsText('confirm_del_text', jsLangs).replace('{name}', name);
             document.getElementById('confirmOk').onclick = () => doDeleteUser(id);
             document.getElementById('confirmOverlay').classList.add('open');
         }
@@ -275,17 +267,10 @@
             });
             if (res.ok) {
                 document.getElementById('urow-' + id)?.remove();
-                showToast(getJsText('del_success'), 'success');
+                showToast(getJsText('del_success', jsLangs), 'success');
             } else {
-                showToast(getJsText('err_del') + await res.text(), 'error');
+                showToast(getJsText('err_del', jsLangs) + await res.text(), 'error');
             }
-        }
-
-        function showToast(msg, type = 'success') {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.className = `admin-toast ${type} show`;
-            setTimeout(() => t.className = 'admin-toast', 2500);
         }
 
         document.getElementById('confirmOverlay').addEventListener('click', e => {

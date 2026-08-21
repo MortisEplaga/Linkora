@@ -10,7 +10,7 @@
     string TabUrl(string s) => $"/Admin/Products?status={s}&page=1{(search != null ? "&search=" + Uri.EscapeDataString(search) : "")}";
 }
 
-    <link rel="stylesheet" href="~/css/admin.css" />
+<link rel="stylesheet" href="~/css/admin.css" />
 
 <div class="admin-layout">
     @await Html.PartialAsync("Sidebar", "products")
@@ -208,7 +208,7 @@
 
 @section Scripts {
     <script>
-                let rejectReasons = [];
+        let rejectReasons = [];
         let currentRejectProductId = null;
 
         async function openRejectModal(productId) {
@@ -248,12 +248,11 @@
             if (res.ok) {
                 closeRejectModal();
                 document.getElementById('row-' + currentRejectProductId)?.remove();
-                showToast(getJsText('status_updated') + 'Rejected', 'success');
+                showToast(getJsText('status_updated', jsLangs) + 'Rejected', 'success');
             } else {
-                showToast(getJsText('err_status'), 'error');
+                showToast(getJsText('err_status', jsLangs), 'error');
             }
         }
-        const afToken = document.getElementById('afToken')?.value ?? '';
 
         const jsLangs = {
             en: {
@@ -279,11 +278,6 @@
             }
         };
 
-        function getJsText(key) {
-            const currentLang = localStorage.getItem('lang') || 'en';
-            return jsLangs[currentLang]?.[key] || jsLangs['en'][key];
-        }
-
         async function setStatus(id, status, btn) {
             btn.disabled = true;
             const res = await fetch(`/Admin/SetProductStatus?id=${id}&status=${status}`, {
@@ -292,9 +286,9 @@
             });
             if (res.ok) {
                 document.getElementById('row-' + id)?.remove();
-                showToast(getJsText('status_updated') + status, 'success');
+                showToast(getJsText('status_updated', jsLangs) + status, 'success');
             } else {
-                showToast(getJsText('err_status'), 'error');
+                showToast(getJsText('err_status', jsLangs), 'error');
                 btn.disabled = false;
             }
         }
@@ -302,7 +296,7 @@
         let deleteId = null;
         function confirmDelete(id, name) {
             deleteId = id;
-            document.getElementById('confirmText').textContent = getJsText('confirm_question').replace('{name}', name);
+            document.getElementById('confirmText').textContent = getJsText('confirm_question', jsLangs).replace('{name}', name);
             document.getElementById('confirmOverlay').classList.add('open');
             document.getElementById('confirmOk').onclick = doDelete;
         }
@@ -319,17 +313,10 @@
             });
             if (res.ok) {
                 document.getElementById('row-' + deleteId)?.remove();
-                showToast(getJsText('deleted_success'), 'success');
+                showToast(getJsText('deleted_success', jsLangs), 'success');
             } else {
-                showToast(getJsText('err_delete'), 'error');
+                showToast(getJsText('err_delete', jsLangs), 'error');
             }
-        }
-
-        function showToast(msg, type = 'success') {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.className = `admin-toast ${type} show`;
-            setTimeout(() => t.className = 'admin-toast', 2500);
         }
 
         document.getElementById('confirmOverlay').addEventListener('click', e => {
