@@ -13,22 +13,15 @@ namespace Linkora.Repositories
         private string GetLang() => _httpContextAccessor.HttpContext?.Request.Cookies["lang"] ?? "en";
         public async Task<List<ReportReason>> GetActiveReportReasonsAsync()
         {
-            var lang = GetLang();
             return await QueryAsync(
                 "SELECT Id, ReasonText, IsActive, ReasonTextLV FROM ReportReasons WHERE IsActive = 1 ORDER BY ReasonText",
-                r =>
-                {
-                    var reasonText = r.GetString(1);
-                    if (lang == "lv" && !r.IsDBNull(3))
-                        reasonText = r.GetString(3);
-
-                    return new ReportReason
+                r => new ReportReason
                     {
                         Id = r.GetInt32(0),
-                        ReasonText = reasonText,
+                        ReasonText = Resolve(GetLang(), r.GetString(1), r.GetString(3), r.GetString(4)),
                         IsActive = r.GetBoolean(2)
-                    };
-                });
+                    }
+                );
         }
         public async Task<Report> CreateReportAsync(int productId, int userId, int reportReasonId, string? comment)
         {

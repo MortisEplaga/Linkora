@@ -6,18 +6,14 @@ namespace Linkora.Repositories
     public abstract class SqlRepositoryBase
     {
         protected readonly string ConnectionString;
-        protected SqlRepositoryBase(IConfiguration config)
-            => ConnectionString = config.GetConnectionString("DefaultConnection")!;
-
+        protected SqlRepositoryBase(IConfiguration config) => ConnectionString = config.GetConnectionString("DefaultConnection")!;
         protected async Task<SqlConnection> OpenConnectionAsync()
         {
             var conn = new SqlConnection(ConnectionString);
             await conn.OpenAsync();
             return conn;
         }
-
-        protected async Task<List<T>> QueryAsync<T>(string sql, Func<SqlDataReader, T> map,
-            Action<SqlParameterCollection>? bind = null)
+        protected async Task<List<T>> QueryAsync<T>(string sql, Func<SqlDataReader, T> map, Action<SqlParameterCollection>? bind = null)
         {
             await using var conn = await OpenConnectionAsync();
             await using var cmd = new SqlCommand(sql, conn);
@@ -27,14 +23,11 @@ namespace Linkora.Repositories
             while (await r.ReadAsync()) result.Add(map(r));
             return result;
         }
-
-        protected async Task<T?> QuerySingleAsync<T>(string sql, Func<SqlDataReader, T> map,
-            Action<SqlParameterCollection>? bind = null) where T : class
+        protected async Task<T?> QuerySingleAsync<T>(string sql, Func<SqlDataReader, T> map, Action<SqlParameterCollection>? bind = null) where T : class
         {
             var list = await QueryAsync(sql, map, bind);
             return list.FirstOrDefault();
         }
-
         protected async Task<int> ExecuteAsync(string sql, Action<SqlParameterCollection>? bind = null)
         {
             await using var conn = await OpenConnectionAsync();
@@ -92,20 +85,11 @@ namespace Linkora.Repositories
             return await GetPagedDataAsync(conn, selectClause, fromWhereClause, orderByClause,
                 page, pageSize, addParameters, mapRow);
         }
-
-        public interface ILocalizationResolver
+        protected static string Resolve(string lang, string en, string? lv, string? ru) => lang switch
         {
-            string Resolve(string lang, string en, string? lv, string? ru);
-        }
-
-        public class LocalizationResolver : ILocalizationResolver
-        {
-            public string Resolve(string lang, string en, string? lv, string? ru) => lang switch
-            {
-                "lv" => lv ?? en,
-                "ru" => ru ?? en,
-                _ => en
-            };
-        }
+            "lv" => lv ?? en,
+            "ru" => ru ?? en,
+            _ => en
+        };
     }
 }

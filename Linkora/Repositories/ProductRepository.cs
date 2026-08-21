@@ -223,9 +223,7 @@ namespace Linkora.Repositories
             {
                 string text;
                 if (type == 2 || type == 8)
-                {
                     text = ResolveOptionTextFromDictionary(rawValue, options, lang);
-                }
                 else if (type == 4)
                 {
                     var ids = rawValue.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
@@ -236,17 +234,11 @@ namespace Linkora.Repositories
                     continue;
                 }
                 else if (type == 6)
-                {
                     if (int.TryParse(rawValue, out int colorId) && colors.TryGetValue(colorId, out var c))
-                    {
-                        text = lang switch { "lv" => c.NameLV, "ru" => c.NameRU, _ => c.Name };
-                    }
+                        text = Resolve(lang, c.Name, c.NameLV, c.NameRU);
                     else text = rawValue;
-                }
                 else
-                {
                     text = rawValue;
-                }
 
                 result[paramId] = text;
             }
@@ -260,12 +252,7 @@ namespace Linkora.Repositories
         {
             if (!int.TryParse(idStr, out int id) || !options.TryGetValue(id, out var texts))
                 return idStr;
-            return lang switch
-            {
-                "lv" => texts.ValueLV,
-                "ru" => texts.ValueRU,
-                _ => texts.Value
-            };
+            return Resolve(lang, texts.Value, texts.ValueLV, texts.ValueRU);
         }
         private async Task<Dictionary<int, (string Value, string ValueLV, string ValueRU)>> LoadSelectOptionsDictionaryAsync()
         {

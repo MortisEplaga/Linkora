@@ -43,27 +43,10 @@ namespace Linkora.Repositories
                     AND (p.Status = 'active' OR p.Status IS NULL)
                   GROUP BY c.Id, c.Name, c.NameLV, c.NameRU
                   ORDER BY Cnt DESC",
-                r =>
-                {
-                    var catId = r.GetInt32(0);
-                    var nameEn = r.GetString(1);
-                    var nameLv = r.IsDBNull(2) ? null : r.GetString(2);
-                    var nameRu = r.IsDBNull(3) ? null : r.GetString(3);
-                    var count = r.GetInt32(4);
-
-                    var localizedName = lang switch
-                    {
-                        "lv" => nameLv ?? nameEn,
-                        "ru" => nameRu ?? nameEn,
-                        _ => nameEn
-                    };
-
-                    return new CategoryCount
-                    {
-                        Id = catId,
-                        Name = localizedName,
-                        Count = count
-                    };
+                r => new CategoryCount {
+                        Id = r.GetInt32(0),
+                        Name = Resolve(lang, r.GetString(1), r.IsDBNull(2) ? null : r.GetString(2), r.IsDBNull(3) ? null : r.GetString(3)),
+                        Count = r.GetInt32(4)
                 },
                 p => p.AddWithValue("@UserId", userId));
         }

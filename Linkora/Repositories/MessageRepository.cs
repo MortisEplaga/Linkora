@@ -29,12 +29,10 @@ public class MessageRepository : SqlRepositoryBase, IMessageRepository
     }
     public async Task<string> GetUserStatusAsync(int userId)
     {
-        var rows = await QueryAsync<string>(
+        return (await QueryAsync<string>(
             "SELECT Role FROM Users WHERE Id = @Id",
             r => r.IsDBNull(0) ? null! : r.GetString(0),
-            p => p.AddWithValue("@Id", userId));
-
-        return rows.Count == 0 ? "user" : rows[0];
+            p => p.AddWithValue("@Id", userId))).FirstOrDefault() ?? "user";
     }
     public async Task<bool> CanReviewAsync(int conversationId, int userId)
     {
