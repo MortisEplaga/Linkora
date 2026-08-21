@@ -73,24 +73,5 @@ namespace Linkora.Controllers
 
             return Ok(new { success = true, reportId = report.Id });
         }
-        [Authorize]
-        [HttpGet]
-        public async Task<IActionResult> My(string tab = "about")
-        {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var reviews = await _reviewRepository.GetUserReviewsAsync(userId, tab);
-
-            var result = reviews.Select(r => new
-            {
-                rating = r.Rating,
-                comment = r.Comment,
-                createdAt = r.CreatedAt.ToString("dd.MM.yyyy"),
-                userId = r.UserId,
-                userName = r.UserName,
-                avatarUrl = r.AvatarUrl
-            });
-
-            return new JsonResult(result);
-        }
     }
 }
