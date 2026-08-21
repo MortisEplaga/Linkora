@@ -7,67 +7,63 @@ namespace Linkora.Repositories
     {
         private readonly IProductRepository _productRepository;
         public AdminRepository(IConfiguration configuration, IProductRepository productRepository) : base(configuration)
-        {
-            _productRepository = productRepository;
-        }
+            => _productRepository = productRepository;
         public async Task<AdminBadges> GetSidebarBadgesAsync()
         {
             await using var conn = await OpenConnectionAsync();
-            var badges = new AdminBadges();
-
-            await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Products WHERE Status = 'Moderation'", conn))
-                badges.PendingModeration = (int)(await cmd.ExecuteScalarAsync())!;
-            await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Reports WHERE Status = 'Pending'", conn))
-                badges.PendingReports = (int)(await cmd.ExecuteScalarAsync())!;
-            await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM SelectOptions WHERE IsConf = 0", conn))
-                badges.PendingOptions = (int)(await cmd.ExecuteScalarAsync())!;
-
-            return badges;
+            await using var cmd = new SqlCommand(@"
+                SELECT 
+                    (SELECT COUNT(*) FROM Products WHERE Status = 'Moderation'),
+                    (SELECT COUNT(*) FROM Reports WHERE Status = 'Pending'),
+                    (SELECT COUNT(*) FROM SelectOptions WHERE IsConf = 0)", conn);
+            await using var r = await cmd.ExecuteReaderAsync();
+            await r.ReadAsync();
+            return new AdminBadges
+            {
+                PendingModeration = r.GetInt32(0),
+                PendingReports = r.GetInt32(1),
+                PendingOptions = r.GetInt32(2)
+            };
         }
         public async Task<AdminDashboardViewModel> GetDashboardStatsAsync()
         {
             await using var conn = await OpenConnectionAsync();
-
             var stats = new AdminDashboardViewModel();
 
-            await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Users", conn))
-                stats.TotalUsers = (int)(await cmd.ExecuteScalarAsync())!;
-
-            await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Products", conn))
-                stats.TotalProducts = (int)(await cmd.ExecuteScalarAsync())!;
-
-            await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Products WHERE Status = 'Moderation'", conn))
-                stats.PendingModeration = (int)(await cmd.ExecuteScalarAsync())!;
-
-            await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Reports WHERE Status = 'Pending'", conn))
-                stats.PendingReports = (int)(await cmd.ExecuteScalarAsync())!;
-
-            await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM SelectOptions WHERE IsConf = 0", conn))
-                stats.PendingOptions = (int)(await cmd.ExecuteScalarAsync())!;
-
-            await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Users WHERE CAST(CreatedAt AS DATE) = CAST(GETDATE() AS DATE)", conn))
-                stats.NewUsersToday = (int)(await cmd.ExecuteScalarAsync())!;
-
-            await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Products WHERE CAST(CreatedAt AS DATE) = CAST(GETDATE() AS DATE)", conn))
-                stats.NewProductsToday = (int)(await cmd.ExecuteScalarAsync())!;
-
-            await using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Products WHERE Status = 'Active'", conn))
-                stats.ActiveProducts = (int)(await cmd.ExecuteScalarAsync())!;
-
-            await using (var cmd = new SqlCommand("SELECT Status, COUNT(*) FROM Products GROUP BY Status", conn))
+            await using (var cmd = new SqlCommand(@"
+                SELECT
+                    (SELECT COUNT(*) FROM Users),
+                    (SELECT COUNT(*) FROM Products),
+                    (SELECT COUNT(*) FROM Products WHERE Status = 'Moderation'),
+                    (SELECT COUNT(*) FROM Reports WHERE Status = 'Pending'),
+                    (SELECT COUNT(*) FROM SelectOptions WHERE IsConf = 0),
+                    (SELECT COUNT(*) FROM Users WHERE CAST(CreatedAt AS DATE) = CAST(GETDATE() AS DATE)),
+                    (SELECT COUNT(*) FROM Products WHERE CAST(CreatedAt AS DATE) = CAST(GETDATE() AS DATE)),
+                    (SELECT COUNT(*) FROM Products WHERE Status = 'Active')", conn))
+            await using (var r = await cmd.ExecuteReaderAsync())
             {
-                await using var r = await cmd.ExecuteReaderAsync();
-                while (await r.ReadAsync())
-                    stats.ProductsByStatus[r.GetString(0)] = r.GetInt32(1);
+                await r.ReadAsync();
+                stats.TotalUsers = r.GetInt32(0);
+                stats.TotalProducts = r.GetInt32(1);
+                stats.PendingModeration = r.GetInt32(2);
+                stats.PendingReports = r.GetInt32(3);
+                stats.PendingOptions = r.GetInt32(4);
+                stats.NewUsersToday = r.GetInt32(5);
+                stats.NewProductsToday = r.GetInt32(6);
+                stats.ActiveProducts = r.GetInt32(7);
             }
 
+            await using (var cmd = new SqlCommand("SELECT Status, COUNT(*) FROM Products GROUP BY Status", conn))
+            await using (var r = await cmd.ExecuteReaderAsync())
+                while (await r.ReadAsync())
+                    stats.ProductsByStatus[r.GetString(0)] = r.GetInt32(1);
+
             await using (var cmd = new SqlCommand(@"
-        SELECT TOP 10 p.Id, p.Name, p.Status, p.CreatedAt, u.UserName
-        FROM Products p
-        LEFT JOIN Users u ON u.Id = p.UserId
-        ORDER BY p.CreatedAt DESC", conn))
-            {
-                await using var r = await cmd.ExecuteReaderAsync();
+                SELECT TOP 10 p.Id, p.Name, p.Status, p.CreatedAt, u.UserName
+                FROM Products p
+                LEFT JOIN Users u ON u.Id = p.UserId
+                ORDER BY p.CreatedAt DESC", conn))
+            await using (var r = await cmd.ExecuteReaderAsync())
                 while (await r.ReadAsync())
                     stats.RecentProducts.Add(new AdminProductRow
                     {
@@ -77,35 +73,32 @@ namespace Linkora.Repositories
                         CreatedAt = r.IsDBNull(3) ? null : r.GetDateTime(3),
                         UserName = r.IsDBNull(4) ? "" : r.GetString(4),
                     });
-            }
 
             return stats;
         }
         public async Task<PagedResult<AdminProductRow>> GetProductsAsync(string status, int page, string? search)
         {
             var searchClause = string.IsNullOrEmpty(search) ? "" : "AND p.Name LIKE '%' + @Search + '%'";
-
             return await GetPagedDataAsync(
                 selectClause: @"
-            SELECT p.Id, p.Name, p.Status, p.CreatedAt,
-                   COALESCE(
-                       (SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-                       p.AvatarUrl
-                   ) AS Img,
-                   u.UserName, u.Id AS UserId,
-                   (SELECT COUNT(*) FROM Reports WHERE ProductId = p.Id) AS ReportCount,
-                   (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
-                    FROM MapperProductCategory m
-                    JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
-                    WHERE m.ProductId = p.Id) AS Price",
+                    SELECT p.Id, p.Name, p.Status, p.CreatedAt,
+                           COALESCE(
+                               (SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+                               p.AvatarUrl
+                           ) AS Img,
+                           u.UserName, u.Id AS UserId,
+                           (SELECT COUNT(*) FROM Reports WHERE ProductId = p.Id) AS ReportCount,
+                           (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
+                            FROM MapperProductCategory m
+                            JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
+                            WHERE m.ProductId = p.Id) AS Price",
                 fromWhereClause: $"FROM Products p LEFT JOIN Users u ON u.Id = p.UserId WHERE p.Status = @Status {searchClause}",
                 orderByClause: "ORDER BY p.CreatedAt DESC",
-                page: page,
-                pageSize: 20,
-                addParameters: parameters =>
+                page: page, pageSize: 20,
+                addParameters: p =>
                 {
-                    parameters.AddWithValue("@Status", status);
-                    if (!string.IsNullOrEmpty(search)) parameters.AddWithValue("@Search", search);
+                    p.AddWithValue("@Status", status);
+                    if (!string.IsNullOrEmpty(search)) p.AddWithValue("@Search", search);
                 },
                 mapRow: r => new AdminProductRow
                 {
@@ -123,38 +116,28 @@ namespace Linkora.Repositories
         public async Task<int?> SetProductStatusAsync(int id, string status)
         {
             await using var conn = await OpenConnectionAsync();
-            await using var cmd = new SqlCommand("UPDATE Products SET Status = @S WHERE Id = @Id", conn);
+            await using var cmd = new SqlCommand("UPDATE Products SET Status = @S OUTPUT inserted.UserId WHERE Id = @Id", conn);
             cmd.Parameters.AddWithValue("@S", status);
             cmd.Parameters.AddWithValue("@Id", id);
-            await cmd.ExecuteNonQueryAsync();
-
-            if (status == "Active")
-            {
-                await using var ownerCmd = new SqlCommand("SELECT UserId FROM Products WHERE Id = @Id", conn);
-                ownerCmd.Parameters.AddWithValue("@Id", id);
-                var ownerObj = await ownerCmd.ExecuteScalarAsync();
-                if (ownerObj != null && ownerObj != DBNull.Value) return (int)ownerObj;
-            }
-            return null;
+            var owner = await cmd.ExecuteScalarAsync();
+            return status == "Active" && owner != null && owner != DBNull.Value ? (int)owner : null;
         }
         public async Task<PagedResult<AdminUserRow>> GetUsersAsync(int page, string? search, string role)
         {
             var roleClause = role == "all" ? "" : "AND Role = @Role";
             var searchClause = string.IsNullOrEmpty(search) ? "" : "AND (UserName LIKE '%' + @Search + '%' OR Email LIKE '%' + @Search + '%')";
-
             return await GetPagedDataAsync(
                 selectClause: @"
-            SELECT u.Id, u.UserName, u.Email, u.Phone, u.Role, u.IsCompany,
-                   u.AvatarUrl, u.CreatedAt,
-                   (SELECT COUNT(*) FROM Products WHERE UserId = u.Id) AS ProductCount",
+                    SELECT u.Id, u.UserName, u.Email, u.Phone, u.Role, u.IsCompany,
+                           u.AvatarUrl, u.CreatedAt,
+                           (SELECT COUNT(*) FROM Products WHERE UserId = u.Id) AS ProductCount",
                 fromWhereClause: $"FROM Users u WHERE 1=1 {roleClause} {searchClause}",
                 orderByClause: "ORDER BY u.CreatedAt DESC",
-                page: page,
-                pageSize: 25,
-                addParameters: parameters =>
+                page: page, pageSize: 25,
+                addParameters: p =>
                 {
-                    if (role != "all") parameters.AddWithValue("@Role", role);
-                    if (!string.IsNullOrEmpty(search)) parameters.AddWithValue("@Search", search);
+                    if (role != "all") p.AddWithValue("@Role", role);
+                    if (!string.IsNullOrEmpty(search)) p.AddWithValue("@Search", search);
                 },
                 mapRow: r => new AdminUserRow
                 {
@@ -172,17 +155,10 @@ namespace Linkora.Repositories
         public async Task<(string? oldRole, BanUserResult? banData)> SetUserRoleAsync(int id, string role)
         {
             await using var conn = await OpenConnectionAsync();
-            string? oldRole;
-            await using (var getRoleCmd = new SqlCommand("SELECT Role FROM Users WHERE Id = @Id", conn))
-            {
-                getRoleCmd.Parameters.AddWithValue("@Id", id);
-                oldRole = (await getRoleCmd.ExecuteScalarAsync()) as string;
-            }
-
-            await using var cmd = new SqlCommand("UPDATE Users SET Role = @R WHERE Id = @Id", conn);
+            await using var cmd = new SqlCommand("UPDATE Users SET Role = @R OUTPUT deleted.Role WHERE Id = @Id", conn);
             cmd.Parameters.AddWithValue("@R", role);
             cmd.Parameters.AddWithValue("@Id", id);
-            await cmd.ExecuteNonQueryAsync();
+            var oldRole = await cmd.ExecuteScalarAsync() as string;
 
             BanUserResult? banData = null;
             if (role == "banned" && oldRole != "banned")
@@ -192,56 +168,50 @@ namespace Linkora.Repositories
 
                 await using var subsCmd = new SqlCommand("SELECT FollowerId FROM Subscriptions WHERE FollowingId = @Id", conn);
                 subsCmd.Parameters.AddWithValue("@Id", id);
-                await using var subsR = await subsCmd.ExecuteReaderAsync();
-                while (await subsR.ReadAsync()) banData.SubscriberIds.Add(subsR.GetInt32(0));
-                await subsR.CloseAsync();
+                await using (var subsR = await subsCmd.ExecuteReaderAsync())
+                    while (await subsR.ReadAsync()) banData.SubscriberIds.Add(subsR.GetInt32(0));
 
                 await using var favCmd = new SqlCommand(@"SELECT DISTINCT f.UserId, f.ProductId FROM Favourites f JOIN Products p ON f.ProductId = p.Id WHERE p.UserId = @Id AND f.Can = 1", conn);
                 favCmd.Parameters.AddWithValue("@Id", id);
-                await using var favR = await favCmd.ExecuteReaderAsync();
-                while (await favR.ReadAsync()) banData.FavouriteUsers.Add((favR.GetInt32(0), favR.GetInt32(1)));
+                await using (var favR = await favCmd.ExecuteReaderAsync())
+                    while (await favR.ReadAsync()) banData.FavouriteUsers.Add((favR.GetInt32(0), favR.GetInt32(1)));
             }
             return (oldRole, banData);
         }
         public async Task DeleteUserAsync(int id)
         {
-            await using var conn = await OpenConnectionAsync();
-            var productIds = new List<int>();
-            await using var getProductsCmd = new SqlCommand("SELECT Id FROM Products WHERE UserId = @UserId", conn);
-            getProductsCmd.Parameters.AddWithValue("@UserId", id);
-            await using var reader = await getProductsCmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync()) productIds.Add(reader.GetInt32(0));
-            await reader.CloseAsync();
+            var productIds = await QueryAsync(
+                "SELECT Id FROM Products WHERE UserId = @UserId",
+                r => r.GetInt32(0),
+                p => p.AddWithValue("@UserId", id));
 
-            foreach (var productId in productIds) await _productRepository.DeleteAsync(productId);
+            foreach (var productId in productIds)
+                await _productRepository.DeleteAsync(productId);
 
-            await using var cmd = new SqlCommand("DELETE FROM Users WHERE Id = @Id", conn);
-            cmd.Parameters.AddWithValue("@Id", id);
-            await cmd.ExecuteNonQueryAsync();
+            await ExecuteAsync("DELETE FROM Users WHERE Id = @Id", p => p.AddWithValue("@Id", id));
         }
         public async Task<PagedResult<AdminReportRow>> GetReportsAsync(string status, int page)
         {
             return await GetPagedDataAsync(
                 selectClause: @"
-            SELECT r.Id, r.ProductId, r.UserId, r.Comment, r.CreatedAt, r.Status,
-                   p.Name AS ProductName,
-                   COALESCE(
-                       (SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-                       p.AvatarUrl
-                   ) AS ProductImg,
-                   p.Status AS ProductStatus,
-                   u.UserName AS ReporterName,
-                   rr.ReasonText",
+                    SELECT r.Id, r.ProductId, r.UserId, r.Comment, r.CreatedAt, r.Status,
+                           p.Name AS ProductName,
+                           COALESCE(
+                               (SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+                               p.AvatarUrl
+                           ) AS ProductImg,
+                           p.Status AS ProductStatus,
+                           u.UserName AS ReporterName,
+                           rr.ReasonText",
                 fromWhereClause: @"
-            FROM Reports r
-            LEFT JOIN Products p ON p.Id = r.ProductId
-            LEFT JOIN Users u ON u.Id = r.UserId
-            LEFT JOIN ReportReasons rr ON rr.Id = r.ReportReasonId
-            WHERE r.Status = @Status",
+                    FROM Reports r
+                    LEFT JOIN Products p ON p.Id = r.ProductId
+                    LEFT JOIN Users u ON u.Id = r.UserId
+                    LEFT JOIN ReportReasons rr ON rr.Id = r.ReportReasonId
+                    WHERE r.Status = @Status",
                 orderByClause: "ORDER BY r.CreatedAt DESC",
-                page: page,
-                pageSize: 20,
-                addParameters: parameters => parameters.AddWithValue("@Status", status),
+                page: page, pageSize: 20,
+                addParameters: p => p.AddWithValue("@Status", status),
                 mapRow: r => new AdminReportRow
                 {
                     Id = r.GetInt32(0),
@@ -259,50 +229,38 @@ namespace Linkora.Repositories
         }
         public async Task<string> ResolveReportAsync(int id, string action)
         {
-            await using var conn = await OpenConnectionAsync();
             var newStatus = action == "resolve" ? "Resolved" : "Rejected";
-            await using var cmd = new SqlCommand("UPDATE Reports SET Status = @S WHERE Id = @Id", conn);
-            cmd.Parameters.AddWithValue("@S", newStatus);
-            cmd.Parameters.AddWithValue("@Id", id);
-            await cmd.ExecuteNonQueryAsync();
+
+            await ExecuteAsync("UPDATE Reports SET Status = @S WHERE Id = @Id",
+                p => { p.AddWithValue("@S", newStatus); p.AddWithValue("@Id", id); });
 
             if (action == "reject_report")
-            {
-                await using var pCmd = new SqlCommand(@"UPDATE Products SET ModerationScore = CASE WHEN ModerationScore > 0 THEN ModerationScore - 1 ELSE 0 END, Status = CASE WHEN Status = 'Moderation' AND (CASE WHEN ModerationScore > 0 THEN ModerationScore - 1 ELSE 0 END) < 5 THEN 'Active' ELSE Status END WHERE Id = (SELECT ProductId FROM Reports WHERE Id = @Id) AND Status IN ('Active', 'Moderation')", conn);
-                pCmd.Parameters.AddWithValue("@Id", id);
-                await pCmd.ExecuteNonQueryAsync();
-            }
+                await ExecuteAsync(@"UPDATE Products SET ModerationScore = CASE WHEN ModerationScore > 0 THEN ModerationScore - 1 ELSE 0 END, Status = CASE WHEN Status = 'Moderation' AND (CASE WHEN ModerationScore > 0 THEN ModerationScore - 1 ELSE 0 END) < 5 THEN 'Active' ELSE Status END WHERE Id = (SELECT ProductId FROM Reports WHERE Id = @Id) AND Status IN ('Active', 'Moderation')",
+                    p => p.AddWithValue("@Id", id));
+
             return newStatus;
         }
         public async Task<AdminStatsApiData> GetStatsApiDataAsync()
         {
+            var data = new AdminStatsApiData();
             await using var conn = await OpenConnectionAsync();
 
-            var data = new AdminStatsApiData();
+            const string sql = @"
+                SELECT CAST(CreatedAt AS DATE) AS Day, COUNT(*) AS Cnt
+                FROM {0}
+                WHERE CreatedAt >= DATEADD(day, -6, CAST(GETDATE() AS DATE))
+                GROUP BY CAST(CreatedAt AS DATE)
+                ORDER BY Day";
 
-            await using (var cmd = new SqlCommand(@"
-        SELECT CAST(CreatedAt AS DATE) AS Day, COUNT(*) AS Cnt
-        FROM Users
-        WHERE CreatedAt >= DATEADD(day, -6, CAST(GETDATE() AS DATE))
-        GROUP BY CAST(CreatedAt AS DATE)
-        ORDER BY Day", conn))
-            {
-                await using var r = await cmd.ExecuteReaderAsync();
+            await using (var cmd = new SqlCommand(string.Format(sql, "Users"), conn))
+            await using (var r = await cmd.ExecuteReaderAsync())
                 while (await r.ReadAsync())
                     data.Registrations.Add(new { day = r.GetDateTime(0).ToString("dd MMM"), count = r.GetInt32(1) });
-            }
 
-            await using (var cmd2 = new SqlCommand(@"
-        SELECT CAST(CreatedAt AS DATE) AS Day, COUNT(*) AS Cnt
-        FROM Products
-        WHERE CreatedAt >= DATEADD(day, -6, CAST(GETDATE() AS DATE))
-        GROUP BY CAST(CreatedAt AS DATE)
-        ORDER BY Day", conn))
-            {
-                await using var r2 = await cmd2.ExecuteReaderAsync();
-                while (await r2.ReadAsync())
-                    data.Products.Add(new { day = r2.GetDateTime(0).ToString("dd MMM"), count = r2.GetInt32(1) });
-            }
+            await using (var cmd = new SqlCommand(string.Format(sql, "Products"), conn))
+            await using (var r = await cmd.ExecuteReaderAsync())
+                while (await r.ReadAsync())
+                    data.Products.Add(new { day = r.GetDateTime(0).ToString("dd MMM"), count = r.GetInt32(1) });
 
             return data;
         }
@@ -310,10 +268,16 @@ namespace Linkora.Repositories
         {
             var result = new ApproveOptionResult();
             await using var conn = await OpenConnectionAsync();
+            await using var cmd = new SqlCommand(@"
+                SELECT TOP 1 p.Id, p.UserId, c.Name, c.NameRU, c.NameLV
+                FROM SelectOptions so
+                JOIN MapperProductCategory mpc ON ',' + mpc.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%'
+                JOIN Products p ON mpc.ProductId = p.Id
+                JOIN Category c ON so.CategoryId = c.Id
+                WHERE so.Id = @OptionId", conn);
+            cmd.Parameters.AddWithValue("@OptionId", id);
 
-            await using var infoCmd = new SqlCommand(@"SELECT TOP 1 p.Id, p.UserId, c.Name, c.NameRU, c.NameLV FROM SelectOptions so JOIN MapperProductCategory mpc ON ',' + mpc.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%' JOIN Products p ON mpc.ProductId = p.Id JOIN Category c ON so.CategoryId = c.Id WHERE so.Id = @OptionId", conn);
-            infoCmd.Parameters.AddWithValue("@OptionId", id);
-            await using (var r = await infoCmd.ExecuteReaderAsync())
+            await using (var r = await cmd.ExecuteReaderAsync())
             {
                 if (await r.ReadAsync())
                 {
@@ -338,10 +302,16 @@ namespace Linkora.Repositories
         {
             var result = new RejectOptionResult();
             await using var conn = await OpenConnectionAsync();
-            await using var infoCmd = new SqlCommand(@"SELECT p.UserId, c.Name, c.NameRU, c.NameLV FROM SelectOptions so JOIN Category c ON so.CategoryId = c.Id JOIN Products p ON p.Id = @ProductId WHERE so.Id = @OptionId", conn);
-            infoCmd.Parameters.AddWithValue("@OptionId", optionId);
-            infoCmd.Parameters.AddWithValue("@ProductId", productId);
-            await using (var r = await infoCmd.ExecuteReaderAsync())
+            await using var cmd = new SqlCommand(@"
+                SELECT p.UserId, c.Name, c.NameRU, c.NameLV
+                FROM SelectOptions so
+                JOIN Category c ON so.CategoryId = c.Id
+                JOIN Products p ON p.Id = @ProductId
+                WHERE so.Id = @OptionId", conn);
+            cmd.Parameters.AddWithValue("@OptionId", optionId);
+            cmd.Parameters.AddWithValue("@ProductId", productId);
+
+            await using (var r = await cmd.ExecuteReaderAsync())
             {
                 if (await r.ReadAsync())
                 {
@@ -351,35 +321,32 @@ namespace Linkora.Repositories
                     result.ParamNameLv = r.IsDBNull(3) ? result.ParamName : r.GetString(3);
                 }
             }
+
             result.Success = await _productRepository.RejectProductAndOptionAsync(optionId, productId);
             return result;
         }
         public async Task<RejectProductResult> RejectProductWithReasonAsync(int id, int reasonId, string? comment)
         {
             var result = new RejectProductResult();
-            await using var conn = await OpenConnectionAsync();
-
-            await using (var reasonCmd = new SqlCommand("SELECT ReasonText, ReasonTextLV, ReasonTextRU FROM ReportReasons WHERE Id = @Id", conn))
+            await using (var conn = await OpenConnectionAsync())
             {
-                reasonCmd.Parameters.AddWithValue("@Id", reasonId);
-                await using var r = await reasonCmd.ExecuteReaderAsync();
+                await using var cmd = new SqlCommand(@"
+                    SELECT rr.ReasonText, rr.ReasonTextLV, rr.ReasonTextRU, p.UserId
+                    FROM ReportReasons rr
+                    LEFT JOIN Products p ON p.Id = @Id
+                    WHERE rr.Id = @ReasonId", conn);
+                cmd.Parameters.AddWithValue("@Id", id);
+                cmd.Parameters.AddWithValue("@ReasonId", reasonId);
+                await using var r = await cmd.ExecuteReaderAsync();
                 if (!await r.ReadAsync()) { result.InvalidReason = true; return result; }
+                if (r.IsDBNull(3)) return result;
                 result.ReasonEn = r.IsDBNull(0) ? "" : r.GetString(0);
                 result.ReasonLv = r.IsDBNull(1) ? result.ReasonEn : r.GetString(1);
                 result.ReasonRu = r.IsDBNull(2) ? result.ReasonEn : r.GetString(2);
+                result.UserId = r.GetInt32(3);
             }
-            await using (var prodCmd = new SqlCommand("SELECT UserId FROM Products WHERE Id = @Id", conn))
-            {
-                prodCmd.Parameters.AddWithValue("@Id", id);
-                var res = await prodCmd.ExecuteScalarAsync();
-                if (res == null || res == DBNull.Value) return result;
-                result.UserId = (int)res;
-            }
-            await using (var updCmd = new SqlCommand("UPDATE Products SET Status = 'Rejected' WHERE Id = @Id", conn))
-            {
-                updCmd.Parameters.AddWithValue("@Id", id);
-                await updCmd.ExecuteNonQueryAsync();
-            }
+
+            await ExecuteAsync("UPDATE Products SET Status = 'Rejected' WHERE Id = @Id", p => p.AddWithValue("@Id", id));
             result.Success = true;
             result.Comment = comment ?? "";
             return result;
