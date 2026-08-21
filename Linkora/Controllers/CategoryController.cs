@@ -3,13 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Linkora.Controllers
 {
-    public class Category : Controller
+    public class CategoryController : Controller
     {
         private readonly ICategoryRepository _categoryRepository;
 
         private readonly IProductRepository _productRepository;
 
-        public Category(ICategoryRepository categoryRepository, IProductRepository productRepository)
+        public CategoryController(ICategoryRepository categoryRepository, IProductRepository productRepository)
         {
             _categoryRepository = categoryRepository;
             _productRepository = productRepository;

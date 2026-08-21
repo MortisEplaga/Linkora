@@ -464,7 +464,7 @@ namespace Linkora.Repositories
                     }
                     imagePath = reader.IsDBNull(0) ? null : reader.GetString(0);
                     qty = reader.GetInt32(1);
-                    price = reader.IsDBNull(2) ? 0 : Convert.ToInt32(reader[2]);
+                    price = reader.IsDBNull(2) ? 0 : Convert.ToDecimal(reader[2]);
                     delivery = reader.IsDBNull(3) ? "" : reader.GetString(3);
                 }
                 if (!string.IsNullOrEmpty(imagePath))
