@@ -87,49 +87,100 @@ namespace Linkora.Repositories
         }
         private async Task<List<Parameter>> LoadParameterOptionsAsync(List<Category> parameters)
         {
+            if (parameters == null || parameters.Count == 0)
+                return new List<Parameter>();
+
             var lang = GetLang();
-            var result = new List<Parameter>();
 
-            foreach (var p in parameters)
+            var resultDict = parameters.ToDictionary(p => p.Id, p => new Parameter { Param = p });
+
+            (string InClause, Action<SqlParameterCollection> AddParams) PrepareInClause(List<int> ids)
             {
-                var vm = new Parameter { Param = p };
+                var paramNames = ids.Select((_, i) => $"@id{i}").ToList();
+                var inClause = string.Join(",", paramNames);
 
-                if (p.Type == 2 || p.Type == 4 || p.Type == 8)
+                Action<SqlParameterCollection> addParams = pr =>
                 {
-                    vm.Options.AddRange(await QueryAsync<SelectOption>(
-                        "SELECT Id, Value, ValueLV, ValueRU FROM SelectOptions WHERE CategoryId = @Id and IsConf = 1",
-                        r => new SelectOption { Id = r.GetInt32(0), Text = Resolve(lang, r.GetString(1), r.IsDBNull(2) ? null : r.GetString(2), r.IsDBNull(3) ? null : r.GetString(3)) },
-                        pr => pr.AddWithValue("@Id", p.Id)));
-                }
-                else if (p.Type == 5)
-                {
-                    await QueryAsync<Parameter>(
-                        "SELECT MinValue, MaxValue, Step FROM ParameterRange WHERE ParamId = @Id",
-                        r =>
-                        {
-                            vm.Min = r.IsDBNull(0) ? null : r.GetDecimal(0);
-                            vm.Max = r.IsDBNull(1) ? null : r.GetDecimal(1);
-                            vm.Step = r.IsDBNull(2) ? null : r.GetDecimal(2);
-                            return vm;
-                        },
-                        pr => pr.AddWithValue("@Id", p.Id));
-                }
-                else if (p.Type == 6)
-                {
-                    vm.ColorOptions.AddRange(await QueryAsync<ColorOption>(
-                        "SELECT Id, Name, NameLV, NameRU, HexValue FROM ColorOptions WHERE CategoryId = @Id AND IsConf = 1",
-                        r => new ColorOption
-                        {
-                            Id = r.GetInt32(0),
-                            Name = Resolve(lang, r.GetString(1), r.IsDBNull(2) ? null : r.GetString(2), r.IsDBNull(3) ? null : r.GetString(3)),
-                            HexValue = r.GetString(4)
-                        },
-                        pr => pr.AddWithValue("@Id", p.Id)));
-                }
-                result.Add(vm);
+                    for (int i = 0; i < ids.Count; i++)
+                        pr.AddWithValue($"@id{i}", ids[i]);
+                };
+
+                return (inClause, addParams);
             }
 
-            return result;
+            var selectIds = parameters.Where(p => p.Type == 2 || p.Type == 4 || p.Type == 8).Select(p => p.Id).ToList();
+            if (selectIds.Count > 0)
+            {
+                var (inClause, addParams) = PrepareInClause(selectIds);
+
+                var options = await QueryAsync(
+                    $"SELECT CategoryId, Id, Value, ValueLV, ValueRU FROM SelectOptions WHERE CategoryId IN ({inClause}) AND IsConf = 1",
+                    r => new
+                    {
+                        CategoryId = r.GetInt32(0),
+                        Option = new SelectOption
+                        {
+                            Id = r.GetInt32(1),
+                            Text = Resolve(lang, r.GetString(2), r.IsDBNull(3) ? null : r.GetString(3), r.IsDBNull(4) ? null : r.GetString(4))
+                        }
+                    },
+                    addParams);
+
+                foreach (var item in options)
+                    if (resultDict.TryGetValue(item.CategoryId, out var param))
+                        param.Options.Add(item.Option);
+            }
+
+            var rangeIds = parameters.Where(p => p.Type == 5).Select(p => p.Id).ToList();
+            if (rangeIds.Count > 0)
+            {
+                var (inClause, addParams) = PrepareInClause(rangeIds);
+
+                var ranges = await QueryAsync(
+                    $"SELECT ParamId, MinValue, MaxValue, Step FROM ParameterRange WHERE ParamId IN ({inClause})",
+                    r => new
+                    {
+                        ParamId = r.GetInt32(0),
+                        Min = r.IsDBNull(1) ? null : (decimal?)r.GetDecimal(1),
+                        Max = r.IsDBNull(2) ? null : (decimal?)r.GetDecimal(2),
+                        Step = r.IsDBNull(3) ? null : (decimal?)r.GetDecimal(3)
+                    },
+                    addParams);
+
+                foreach (var range in ranges)
+                    if (resultDict.TryGetValue(range.ParamId, out var param))
+                    {
+                        param.Min = range.Min;
+                        param.Max = range.Max;
+                        param.Step = range.Step;
+                    }
+            }
+
+            var colorIds = parameters.Where(p => p.Type == 6).Select(p => p.Id).ToList();
+            if (colorIds.Count > 0)
+            {
+                var (inClause, addParams) = PrepareInClause(colorIds);
+
+                var colors = await QueryAsync(
+                    $"SELECT CategoryId, Id, Name, NameLV, NameRU, HexValue FROM ColorOptions WHERE CategoryId IN ({inClause}) AND IsConf = 1",
+                    r => new
+                    {
+                        CategoryId = r.GetInt32(0),
+                        Option = new ColorOption
+                        {
+                            Id = r.GetInt32(1),
+                            Name = Resolve(lang, r.GetString(2), r.IsDBNull(3) ? null : r.GetString(3), r.IsDBNull(4) ? null : r.GetString(4)),
+                            HexValue = r.GetString(5)
+                        }
+                    },
+                    addParams);
+
+                foreach (var item in colors)
+                    if (resultDict.TryGetValue(item.CategoryId, out var param))
+                        param.ColorOptions.Add(item.Option);
+            }
+
+            return resultDict.Values.ToList();
         }
         public async Task<List<int>> GetDescendantIdsAsync(int categoryId)
         {
