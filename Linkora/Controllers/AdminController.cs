@@ -11,13 +11,19 @@ namespace Linkora.Controllers
     {
         private readonly IAdminRepository _adminRepository;
         private readonly IProductRepository _productRepository;
-        private readonly INotificationService _notifications;
+        private readonly INotificationRepository _notificationRepository;
+        private readonly IAdminService _adminService;
 
-        public AdminController(IAdminRepository adminRepository, IProductRepository productRepository, INotificationService notifications)
+        public AdminController(
+            IAdminRepository adminRepository,
+            IProductRepository productRepository,
+            INotificationRepository notificationRepository,
+            IAdminService adminService)
         {
             _adminRepository = adminRepository;
             _productRepository = productRepository;
-            _notifications = notifications;
+            _notificationRepository = notificationRepository;
+            _adminService = adminService;
         }
 
         private bool IsAdmin() => User.FindFirst(ClaimTypes.Role)?.Value == "admin";
@@ -63,7 +69,7 @@ namespace Linkora.Controllers
             if (status == "Active" && UserId.HasValue)
             {
                 var msg = System.Text.Json.JsonSerializer.Serialize(new { type = "product_approved" });
-                await _notifications.CreateAsync(UserId.Value, null, id, msg);
+                await _notificationRepository.CreateAsync(UserId.Value, null, id, msg);
             }
             return Ok();
         }
@@ -95,12 +101,12 @@ namespace Linkora.Controllers
             var myId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             if (id == myId) return BadRequest("Cannot change your own role");
 
-            var (oldRole, banData) = await _adminRepository.SetUserRoleAsync(id, role);
+            var (oldRole, banData) = await _adminService.SetUserRoleAsync(id, role);
 
             if (role == "banned" && oldRole != "banned")
             {
                 var msg = System.Text.Json.JsonSerializer.Serialize(new { type = "user_banned" });
-                await _notifications.CreateAsync(id, null, null, msg);
+                await _notificationRepository.CreateAsync(id, null, null, msg);
 
                 if (banData != null)
                 {
@@ -108,21 +114,21 @@ namespace Linkora.Controllers
                     {
                         var subBanMsg = System.Text.Json.JsonSerializer.Serialize(new { type = "subscription_seller_banned" });
                         foreach (var subId in banData.SubscriberIds)
-                            await _notifications.CreateAsync(subId, id, null, subBanMsg);
+                            await _notificationRepository.CreateAsync(subId, id, null, subBanMsg);
                     }
 
                     if (banData.FavouriteUsers.Any())
                     {
                         var favBanMsg = System.Text.Json.JsonSerializer.Serialize(new { type = "favourite_archived_ban" });
                         foreach (var fav in banData.FavouriteUsers.Where(f => f.UserId != id))
-                            await _notifications.CreateAsync(fav.UserId, null, fav.ProductId, favBanMsg);
+                            await _notificationRepository.CreateAsync(fav.UserId, null, fav.ProductId, favBanMsg);
                     }
                 }
             }
             else if (role != "banned" && oldRole == "banned")
             {
                 var msg = System.Text.Json.JsonSerializer.Serialize(new { type = "user_unbanned" });
-                await _notifications.CreateAsync(id, null, null, msg);
+                await _notificationRepository.CreateAsync(id, null, null, msg);
             }
 
             return Ok();
@@ -135,7 +141,7 @@ namespace Linkora.Controllers
             var myId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             if (id == myId) return BadRequest("Cannot delete yourself");
 
-            await _adminRepository.DeleteUserAsync(id);
+            await _adminService.DeleteUserCascadeAsync(id);
             return Ok();
         }
 
@@ -204,12 +210,12 @@ namespace Linkora.Controllers
         public async Task<IActionResult> ApproveOption(int id)
         {
             if (!IsAdmin()) return Forbid();
-            var result = await _adminRepository.ApproveOptionAsync(id);
+            var result = await _adminService.ApproveOptionAsync(id);
 
             if (result.Success && result.UserId.HasValue)
             {
                 var msg = System.Text.Json.JsonSerializer.Serialize(new { type = "parameter_approved", paramName = result.ParamName ?? "", paramNameRu = result.ParamNameRu ?? "", paramNameLv = result.ParamNameLv ?? "" });
-                await _notifications.CreateAsync(result.UserId.Value, null, result.ProductId, msg);
+                await _notificationRepository.CreateAsync(result.UserId.Value, null, result.ProductId, msg);
             }
             return result.Success ? Ok() : BadRequest();
         }
@@ -219,12 +225,12 @@ namespace Linkora.Controllers
         public async Task<IActionResult> RejectProductByOption(int optionId, int productId)
         {
             if (!IsAdmin()) return Forbid();
-            var result = await _adminRepository.RejectProductByOptionAsync(optionId, productId);
+            var result = await _adminService.RejectProductByOptionAsync(optionId, productId);
 
             if (result.Success && result.UserId.HasValue)
             {
                 var msg = System.Text.Json.JsonSerializer.Serialize(new { type = "parameter_rejected", paramName = result.ParamName ?? "", paramNameRu = result.ParamNameRu ?? "", paramNameLv = result.ParamNameLv ?? "" });
-                await _notifications.CreateAsync(result.UserId.Value, null, productId, msg);
+                await _notificationRepository.CreateAsync(result.UserId.Value, null, productId, msg);
             }
             return result.Success ? Ok() : BadRequest();
         }
@@ -239,7 +245,7 @@ namespace Linkora.Controllers
             if (!result.Success) return NotFound();
 
             var message = System.Text.Json.JsonSerializer.Serialize(new { type = "rejected_reason", reasonEn = result.ReasonEn, reasonLv = result.ReasonLv, reasonRu = result.ReasonRu, comment = result.Comment });
-            await _notifications.CreateAsync(result.UserId, null, id, message);
+            await _notificationRepository.CreateAsync(result.UserId, null, id, message);
 
             return Ok();
         }

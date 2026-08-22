@@ -4,22 +4,21 @@ namespace Linkora.Repositories
 {
     public class AdminRepository : SqlRepositoryBase, IAdminRepository
     {
-        private readonly IProductRepository _productRepository;
-        public AdminRepository(IConfiguration configuration, IProductRepository productRepository) : base(configuration)
-            => _productRepository = productRepository;
+        public AdminRepository(IConfiguration configuration) : base(configuration) { }
         public async Task<AdminBadges> GetSidebarBadgesAsync()
         {
-            return await QuerySingleAsync<AdminBadges>(@"
-                SELECT 
-                    (SELECT COUNT(*) FROM Products WHERE Status = 'Moderation'),
-                    (SELECT COUNT(*) FROM Reports WHERE Status = 'Pending'),
-                    (SELECT COUNT(*) FROM SelectOptions WHERE IsConf = 0)",
+            var badges = await QuerySingleAsync<AdminBadges>(@"
+        SELECT 
+            (SELECT COUNT(*) FROM Products WHERE Status = 'Moderation'),
+            (SELECT COUNT(*) FROM Reports WHERE Status = 'Pending'),
+            (SELECT COUNT(*) FROM SelectOptions WHERE IsConf = 0)",
                 r => new AdminBadges
                 {
                     PendingModeration = r.GetInt32(0),
                     PendingReports = r.GetInt32(1),
                     PendingOptions = r.GetInt32(2)
-                }) ?? new AdminBadges();
+                });
+            return badges ?? new AdminBadges();
         }
         public async Task<AdminDashboardViewModel> GetDashboardStatsAsync()
         {
@@ -136,35 +135,37 @@ namespace Linkora.Repositories
                     ProductCount = r.IsDBNull(8) ? 0 : r.GetInt32(8),
                 });
         }
-        public async Task<(string? oldRole, BanUserResult? banData)> SetUserRoleAsync(int id, string role)
+        public async Task<string?> UpdateUserRoleAsync(int id, string role)
         {
-            var oldRole = await QuerySingleAsync<string>("UPDATE Users SET Role = @R OUTPUT deleted.Role WHERE Id = @Id",
+            return await QuerySingleAsync<string>(
+                "UPDATE Users SET Role = @R OUTPUT deleted.Role WHERE Id = @Id",
                 r => r.IsDBNull(0) ? null! : r.GetString(0),
                 p => { p.AddWithValue("@R", role); p.AddWithValue("@Id", id); });
-            BanUserResult? banData = null;
-            if (role == "banned" && oldRole != "banned")
-            {
-                await _productRepository.ArchiveProductsByUserAsync(id);
-                banData = new BanUserResult();
-                await QueryAsync<int>("SELECT FollowerId FROM Subscriptions WHERE FollowingId = @Id",
-                    r => { banData!.SubscriberIds.Add(r.GetInt32(0)); return 0; },
-                    p => p.AddWithValue("@Id", id));
-                await QueryAsync<(int, int)>(@"SELECT DISTINCT f.UserId, f.ProductId FROM Favourites f JOIN Products p ON f.ProductId = p.Id WHERE p.UserId = @Id AND f.Can = 1",
-                    r => { banData!.FavouriteUsers.Add((r.GetInt32(0), r.GetInt32(1))); return (0, 0); },
-                    p => p.AddWithValue("@Id", id));
-            }
-            return (oldRole, banData);
+        }
+        public Task<List<int>> GetSubscriberIdsAsync(int userId)
+        {
+            return QueryAsync("SELECT FollowerId FROM Subscriptions WHERE FollowingId = @Id",
+                r => r.GetInt32(0),
+                p => p.AddWithValue("@Id", userId));
+        }
+        public Task<List<(int UserId, int ProductId)>> GetFavouriteUsersBySellerAsync(int sellerId)
+        {
+            return QueryAsync(
+                @"SELECT DISTINCT f.UserId, f.ProductId
+                  FROM Favourites f
+                  JOIN Products p ON f.ProductId = p.Id
+                  WHERE p.UserId = @Id AND f.Can = 1",
+                r => (UserId: r.GetInt32(0), ProductId: r.GetInt32(1)),
+                p => p.AddWithValue("@Id", sellerId));
+        }
+        public Task<List<int>> GetUserProductIdsAsync(int userId)
+        {
+            return QueryAsync("SELECT Id FROM Products WHERE UserId = @UserId",
+                r => r.GetInt32(0),
+                p => p.AddWithValue("@UserId", userId));
         }
         public async Task DeleteUserAsync(int id)
-        {
-            var productIds = await QueryAsync(
-                "SELECT Id FROM Products WHERE UserId = @UserId",
-                r => r.GetInt32(0),
-                p => p.AddWithValue("@UserId", id));
-            foreach (var productId in productIds)
-                await _productRepository.DeleteAsync(productId);
-            await ExecuteAsync("DELETE FROM Users WHERE Id = @Id", p => p.AddWithValue("@Id", id));
-        }
+            => await ExecuteAsync("DELETE FROM Users WHERE Id = @Id", p => p.AddWithValue("@Id", id));
         public async Task<PagedResult<AdminReportRow>> GetReportsAsync(string status, int page)
         {
             return await GetPagedDataAsync(
@@ -227,7 +228,7 @@ namespace Linkora.Repositories
                 r => new { day = r.GetDateTime(0).ToString("dd MMM"), count = r.GetInt32(1) }));
             return data;
         }
-        public async Task<ApproveOptionResult> ApproveOptionAsync(int id)
+        public async Task<ApproveOptionResult> GetApproveOptionContextAsync(int optionId)
         {
             var result = new ApproveOptionResult();
             await QueryAsync<ApproveOptionResult>(@"
@@ -246,16 +247,16 @@ namespace Linkora.Repositories
                     result.ParamNameLv = r.IsDBNull(4) ? result.ParamName : r.GetString(4);
                     return result;
                 },
-                p => p.AddWithValue("@OptionId", id));
-            result.Success = await _productRepository.ApproveSelectOptionAsync(id);
-            if (result.Success && result.UserId.HasValue && result.ProductId.HasValue)
-            {
-                await ExecuteAsync(@"UPDATE Products SET ModerationScore = CASE WHEN ModerationScore > 0 THEN ModerationScore - 1 ELSE 0 END, Status = CASE WHEN Status = 'Moderation' AND (CASE WHEN ModerationScore > 0 THEN ModerationScore - 1 ELSE 0 END) < 5 THEN 'Active' ELSE Status END WHERE Id = @ProductId",
-                    p => p.AddWithValue("@ProductId", result.ProductId.Value));
-            }
+                p => p.AddWithValue("@OptionId", optionId));
             return result;
         }
-        public async Task<RejectOptionResult> RejectProductByOptionAsync(int optionId, int productId)
+        public async Task DecrementModerationScoreAsync(int productId)
+            => await ExecuteAsync(@"UPDATE Products
+                SET ModerationScore = CASE WHEN ModerationScore > 0 THEN ModerationScore - 1 ELSE 0 END,
+                    Status = CASE WHEN Status = 'Moderation' AND (CASE WHEN ModerationScore > 0 THEN ModerationScore - 1 ELSE 0 END) < 5 THEN 'Active' ELSE Status END
+                WHERE Id = @ProductId",
+                p => p.AddWithValue("@ProductId", productId));
+        public async Task<RejectOptionResult> GetRejectOptionContextAsync(int optionId, int productId)
         {
             var result = new RejectOptionResult();
             await QueryAsync<RejectOptionResult>(@"
@@ -273,7 +274,6 @@ namespace Linkora.Repositories
                     return result;
                 },
                 p => { p.AddWithValue("@OptionId", optionId); p.AddWithValue("@ProductId", productId); });
-            result.Success = await _productRepository.RejectProductAndOptionAsync(optionId, productId);
             return result;
         }
         public async Task<RejectProductResult> RejectProductWithReasonAsync(int id, int reasonId, string? comment)
