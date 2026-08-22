@@ -1,8 +1,9 @@
-﻿using Linkora.Repositories;
+﻿using Linkora.Models;
+using Linkora.Repositories;
+using Linkora.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using Linkora.Models;
 
 namespace Linkora.Controllers
 {
@@ -12,14 +13,14 @@ namespace Linkora.Controllers
     public class ReviewsController : ControllerBase
     {
         private readonly IMessageRepository _messageRepository;
-        private readonly INotificationRepository _notificationRepository;
+        private readonly INotificationService _notifications;
         private readonly IReviewRepository _reviewRepository;
 
-        public ReviewsController(IMessageRepository messageRepository, IConfiguration configuration,
-            INotificationRepository notificationRepository, IReviewRepository reviewRepository)
+        public ReviewsController(IMessageRepository messageRepository,
+            INotificationService notifications, IReviewRepository reviewRepository)
         {
             _messageRepository = messageRepository;
-            _notificationRepository = notificationRepository;
+            _notifications = notifications;
             _reviewRepository = reviewRepository;
         }
 
@@ -40,7 +41,7 @@ namespace Linkora.Controllers
                 rating = dto.Rating,
                 reviewId
             });
-            await _notificationRepository.CreateAsync(dto.TargetUserId, userId, dto.ProductId, msg);
+            await _notifications.CreateAsync(dto.TargetUserId, userId, dto.ProductId, msg);
 
             return Ok(new { reviewId });
         }

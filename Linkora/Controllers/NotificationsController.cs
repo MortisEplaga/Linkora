@@ -1,5 +1,6 @@
 ﻿using Linkora.Models;
 using Linkora.Repositories;
+using Linkora.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -9,12 +10,12 @@ namespace Linkora.Controllers
     [Authorize]
     public class NotificationsController : Controller
     {
-        private readonly INotificationRepository _notificationRepository;
+        private readonly INotificationService _notifications;
         private readonly INotificationPreferencesRepository _preferencesRepository;
 
-        public NotificationsController(INotificationRepository notificationRepository, INotificationPreferencesRepository preferencesRepository)
+        public NotificationsController(INotificationService notifications, INotificationPreferencesRepository preferencesRepository)
         {
-            _notificationRepository = notificationRepository;
+            _notifications = notifications;
             _preferencesRepository = preferencesRepository;
         }
 
@@ -22,7 +23,7 @@ namespace Linkora.Controllers
         public async Task<IActionResult> Count()
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var count = await _notificationRepository.GetUnreadCountAsync(userId);
+            var count = await _notifications.GetUnreadCountAsync(userId);
             return Json(new { count });
         }
 
@@ -62,7 +63,7 @@ namespace Linkora.Controllers
         public async Task<IActionResult> List()
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var notifications = await _notificationRepository.GetByUserAsync(userId, 20);
+            var notifications = await _notifications.GetByUserAsync(userId, 20);
             return Json(notifications.Select(n => new
             {
                 id = n.Id,
@@ -82,7 +83,7 @@ namespace Linkora.Controllers
         public async Task<IActionResult> MarkRead(int id)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            await _notificationRepository.MarkReadAsync(id, userId);
+            await _notifications.MarkReadAsync(id, userId);
             return Ok();
         }
 
@@ -90,7 +91,7 @@ namespace Linkora.Controllers
         public async Task<IActionResult> MarkAllRead()
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            await _notificationRepository.MarkAllReadAsync(userId);
+            await _notifications.MarkAllReadAsync(userId);
             return Ok();
         }
     }

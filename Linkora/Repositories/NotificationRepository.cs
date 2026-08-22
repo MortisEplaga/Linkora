@@ -1,33 +1,46 @@
-﻿using Linkora.Hubs;
-using Linkora.Models;
-using Linkora.Services;
-using Microsoft.AspNetCore.SignalR;
+﻿using Linkora.Models;
 
 namespace Linkora.Repositories
 {
-    public class NotificationRepository : SqlRepositoryBase, INotificationRepository
+    public class NotificationRepository(IConfiguration configuration) : SqlRepositoryBase(configuration), INotificationRepository
     {
-        private readonly IHubContext<MessageHub> _hubContext;
-        private readonly INotificationPreferencesRepository _preferencesRepository;
-
-        public NotificationRepository(IConfiguration configuration, IHubContext<MessageHub> hubContext, INotificationPreferencesRepository preferencesRepository) : base(configuration)
-        {
-            _hubContext = hubContext;
-            _preferencesRepository = preferencesRepository;
-        }
         public async Task<int> CreateAsync(int userId, int? fromUserId, int? productId, string text)
         {
-            var id = await InsertNotificationAsync(userId, fromUserId, productId, text);
+            var ids = await QueryAsync<int>(
+                @"INSERT INTO Notifications (UserId, FromUserId, ProductId, Text, IsRead, CreatedAt)
+                  OUTPUT INSERTED.Id
+                  VALUES (@UserId, @FromUserId, @ProductId, @Text, 0, GETDATE())",
+                r => r.GetInt32(0),
+                p =>
+                {
+                    p.AddWithValue("@UserId", userId);
+                    p.AddWithValue("@FromUserId", (object?)fromUserId ?? DBNull.Value);
+                    p.AddWithValue("@ProductId", (object?)productId ?? DBNull.Value);
+                    p.AddWithValue("@Text", text);
+                });
 
-            await SendNotificationAsync(userId, id, text, fromUserId, productId, null);
-
-            return id;
+            return ids[0];
         }
-        public async Task<List<NotificationViewModel>> GetByUserAsync(int userId, int count = 20)
+        public async Task<List<(int NotificationId, int UserId)>> CreateForSubscribersAsync(int authorId, int productId, string text)
         {
-            var prefs = await _preferencesRepository.GetAsync(userId);
+            var created = await QueryAsync<(int, int)>(
+                @"INSERT INTO Notifications (UserId, FromUserId, ProductId, Text, IsRead, CreatedAt)
+                  OUTPUT INSERTED.Id, INSERTED.UserId
+                  SELECT FollowerId, @AuthorId, @ProductId, @Text, 0, GETDATE()
+                  FROM Subscriptions WHERE FollowingId = @AuthorId",
+                r => (r.GetInt32(0), r.GetInt32(1)),
+                p =>
+                {
+                    p.AddWithValue("@AuthorId", authorId);
+                    p.AddWithValue("@ProductId", productId);
+                    p.AddWithValue("@Text", text);
+                });
 
-            var allNotifications = await QueryAsync(
+            return created;
+        }
+        public Task<List<NotificationViewModel>> GetByUserAsync(int userId)
+        {
+            return QueryAsync(
                 @"SELECT
                     n.Id, n.UserId, n.FromUserId, n.ProductId, n.Text, n.IsRead, n.CreatedAt,
                     u.UserName, u.AvatarUrl,
@@ -57,26 +70,17 @@ namespace Linkora.Repositories
                     ProductImage = r.IsDBNull(10) ? null : r.GetString(10),
                 },
                 p => p.AddWithValue("@UserId", userId));
-
-            return allNotifications
-                .Where(n => IsAllowed(n.Text, prefs))
-                .Take(count)
-                .ToList();
         }
-        public async Task<int> GetUnreadCountAsync(int userId)
+        public Task<List<string>> GetUnreadTextsAsync(int userId)
         {
-            var prefs = await _preferencesRepository.GetAsync(userId);
-
-            var texts = await QueryAsync<string>(
+            return QueryAsync<string>(
                 "SELECT Text FROM Notifications WHERE UserId = @UserId AND IsRead = 0",
                 r => r.IsDBNull(0) ? "" : r.GetString(0),
                 p => p.AddWithValue("@UserId", userId));
-
-            return texts.Count(t => IsAllowed(t, prefs));
         }
-        public async Task MarkReadAsync(int notificationId, int userId)
+        public Task MarkReadAsync(int notificationId, int userId)
         {
-            await ExecuteAsync(
+            return ExecuteAsync(
                 "UPDATE Notifications SET IsRead = 1 WHERE Id = @Id AND UserId = @UserId",
                 p =>
                 {
@@ -84,76 +88,11 @@ namespace Linkora.Repositories
                     p.AddWithValue("@UserId", userId);
                 });
         }
-        public async Task MarkAllReadAsync(int userId)
+        public Task MarkAllReadAsync(int userId)
         {
-            await ExecuteAsync(
+            return ExecuteAsync(
                 "UPDATE Notifications SET IsRead = 1 WHERE UserId = @UserId AND IsRead = 0",
                 p => p.AddWithValue("@UserId", userId));
-        }
-        public async Task NotifySubscribersAsync(int authorId, int productId, string productName, string authorName)
-        {
-            var text = $"{authorName} posted a new listing: {productName}";
-
-            var createdNotifications = await QueryAsync<(int Id, int UserId)>(
-                @"INSERT INTO Notifications (UserId, FromUserId, ProductId, Text, IsRead, CreatedAt)
-                  OUTPUT INSERTED.Id, INSERTED.UserId
-                  SELECT FollowerId, @AuthorId, @ProductId, @Text, 0, GETDATE()
-                  FROM Subscriptions WHERE FollowingId = @AuthorId",
-                r => (r.GetInt32(0), r.GetInt32(1)),
-                p =>
-                {
-                    p.AddWithValue("@AuthorId", authorId);
-                    p.AddWithValue("@ProductId", productId);
-                    p.AddWithValue("@Text", text);
-                });
-
-            foreach (var (id, followerId) in createdNotifications)
-                await SendNotificationAsync(followerId, id, text, authorId, productId, productName);
-        }
-        private async Task<int> InsertNotificationAsync(int userId, int? fromUserId, int? productId, string text)
-        {
-            var ids = await QueryAsync<int>(
-                @"INSERT INTO Notifications (UserId, FromUserId, ProductId, Text, IsRead, CreatedAt)
-                  OUTPUT INSERTED.Id
-                  VALUES (@UserId, @FromUserId, @ProductId, @Text, 0, GETDATE())",
-                r => r.GetInt32(0),
-                p =>
-                {
-                    p.AddWithValue("@UserId", userId);
-                    p.AddWithValue("@FromUserId", (object?)fromUserId ?? DBNull.Value);
-                    p.AddWithValue("@ProductId", (object?)productId ?? DBNull.Value);
-                    p.AddWithValue("@Text", text);
-                });
-
-            return ids[0];
-        }
-        private async Task SendNotificationAsync(int targetUserId, int id, string text, int? fromUserId, int? productId, string? productName)
-        {
-            await _hubContext.Clients.Group($"user_{targetUserId}").SendAsync("NotificationReceived", new
-            {
-                id,
-                text,
-                fromUserId,
-                productId,
-                createdAt = DateTime.UtcNow.ToString("dd MMM, HH:mm"),
-                isRead = false,
-                fromUserAvatar = (string?)null,
-                productName,
-                productImage = (string?)null,
-            });
-        }
-        private static bool IsAllowed(string text, NotificationPreferences prefs)
-        {
-            var category = NotificationCategorizer.Categorize(text);
-            return category switch
-            {
-                "Deals" => prefs.Deals,
-                "Reviews" => prefs.Reviews,
-                "Moderation" => prefs.Moderation,
-                "Account" => prefs.Account,
-                "Favourites" => prefs.Favourites,
-                _ => prefs.NewListings,
-            };
         }
     }
 }

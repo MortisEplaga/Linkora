@@ -1,5 +1,6 @@
 ﻿using Linkora.Models;
 using Linkora.Repositories;
+using Linkora.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -11,7 +12,7 @@ namespace Linkora.Controllers
         IProductRepository productRepository,
         IConfiguration configuration,
         IMessageRepository messageRepository,
-        INotificationRepository notificationRepository,
+        INotificationService notifications,
         IUserRepository userRepository,
         ISelectOptionRepository selectOptionRepository) : Controller
     {
@@ -19,7 +20,7 @@ namespace Linkora.Controllers
         private readonly IAddressRepository _addressRepository = addressRepository;
         private readonly IProductRepository _productRepository = productRepository;
         private readonly IMessageRepository _messageRepository = messageRepository;
-        private readonly INotificationRepository _notificationRepository = notificationRepository;
+        private readonly INotificationService _notifications = notifications;
         private readonly IUserRepository _userRepository = userRepository;
         private readonly ISelectOptionRepository _selectOptionRepository = selectOptionRepository;
         private readonly IConfiguration _configuration = configuration;
@@ -331,7 +332,7 @@ namespace Linkora.Controllers
                         changes = changes.Take(3).ToList()
                     };
                     foreach (var favUid in favUserIds)
-                        await _notificationRepository.CreateAsync(favUid, null, id, System.Text.Json.JsonSerializer.Serialize(payload));
+                        await _notifications.CreateAsync(favUid, null, id, System.Text.Json.JsonSerializer.Serialize(payload));
                 }
             }
 
@@ -403,17 +404,17 @@ namespace Linkora.Controllers
             if (!success) return BadRequest("Не удалось завершить сделку");
 
             var soldMsg = System.Text.Json.JsonSerializer.Serialize(new { type = "deal_sold" });
-            await _notificationRepository.CreateAsync(userId, otherUserId, id, soldMsg);
+            await _notifications.CreateAsync(userId, otherUserId, id, soldMsg);
 
             var boughtMsg = System.Text.Json.JsonSerializer.Serialize(new { type = "deal_bought" });
-            await _notificationRepository.CreateAsync(otherUserId, userId, id, boughtMsg);
+            await _notifications.CreateAsync(otherUserId, userId, id, boughtMsg);
 
             var subIds = await _productRepository.GetSubscriberIdsExcludingAsync(userId, otherUserId);
             if (subIds.Any())
             {
                 var subSoldMsg = System.Text.Json.JsonSerializer.Serialize(new { type = "subscription_sold" });
                 foreach (var subId in subIds)
-                    await _notificationRepository.CreateAsync(subId, userId, id, subSoldMsg);
+                    await _notifications.CreateAsync(subId, userId, id, subSoldMsg);
             }
 
             return Ok();
@@ -480,11 +481,10 @@ namespace Linkora.Controllers
             await _productRepository.RecalculateModerationScoreAsync(newId);
 
             var userName = User.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
-            await _notificationRepository.NotifySubscribersAsync(userId, newId, title, userName);
+            await _notifications.NotifySubscribersAsync(userId, newId, title, userName);
 
             return Ok(new { id = newId });
         }
-
         private async Task<List<ProductMedia>> SaveUploadedFiles(List<IFormFile> files)
         {
             var result = new List<ProductMedia>();

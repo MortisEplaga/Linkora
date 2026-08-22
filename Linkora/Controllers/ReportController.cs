@@ -1,5 +1,6 @@
 ﻿using Linkora.Models;
 using Linkora.Repositories;
+using Linkora.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -13,19 +14,16 @@ namespace Linkora.Controllers
     {
         private readonly IReportRepository _reportRepository;
         private readonly IProductRepository _productRepository;
-        private readonly INotificationRepository _notificationRepository;
-        private readonly IReviewRepository _reviewRepository;
+        private readonly INotificationService _notifications;
 
         public ReportController(
             IReportRepository reportRepository,
             IProductRepository productRepository,
-            INotificationRepository notificationRepository,
-            IReviewRepository reviewRepository)
+            INotificationService notifications)
         {
             _reportRepository = reportRepository;
             _productRepository = productRepository;
-            _notificationRepository = notificationRepository;
-            _reviewRepository = reviewRepository;
+            _notifications = notifications;
         }
 
         [HttpGet("reasons")]
@@ -68,7 +66,7 @@ namespace Linkora.Controllers
                 };
                 var msg = System.Text.Json.JsonSerializer.Serialize(payload);
 
-                await _notificationRepository.CreateAsync(product.UserId.Value, null, request.ProductId, msg);
+                await _notifications.CreateAsync(product.UserId.Value, null, request.ProductId, msg);
             }
 
             return Ok(new { success = true, reportId = report.Id });
