@@ -343,7 +343,9 @@
 
             for (const file of selectedFiles) fd.append('photos', file);
 
-            const res = await fetch(`/Product/Edit?id=${id}`, { method: 'POST', body: fd });
+            const res = await fetch(`/Product/Edit?id=${id}`, { method: 'POST',
+                                                                headers: { 'RequestVerificationToken': document.getElementById('afToken')?.value ?? '' },
+                                                                body: fd });
             if (res.ok) {
                 window.location.href = '/Product/My';
             } else {

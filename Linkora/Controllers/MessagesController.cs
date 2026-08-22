@@ -49,7 +49,6 @@ namespace Linkora.Controllers
             return View();
         }
         [HttpPost]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> StartSupportChat()
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -57,7 +56,6 @@ namespace Linkora.Controllers
             return Ok(new { conversationId = convId });
         }
         [HttpPost]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> Start([FromBody] StartMessageDto dto)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);

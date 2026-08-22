@@ -12,8 +12,7 @@ namespace Linkora.Controllers
         private readonly INotificationRepository _notificationRepository;
         private readonly INotificationPreferencesRepository _preferencesRepository;
 
-        public NotificationsController(INotificationRepository notificationRepository,
-            INotificationPreferencesRepository preferencesRepository)
+        public NotificationsController(INotificationRepository notificationRepository, INotificationPreferencesRepository preferencesRepository)
         {
             _notificationRepository = notificationRepository;
             _preferencesRepository = preferencesRepository;
@@ -44,7 +43,6 @@ namespace Linkora.Controllers
         }
 
         [HttpPost]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> SavePreferences([FromBody] NotificationPreferencesDto dto)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -81,7 +79,6 @@ namespace Linkora.Controllers
         }
 
         [HttpPost]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> MarkRead(int id)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
@@ -90,7 +87,6 @@ namespace Linkora.Controllers
         }
 
         [HttpPost]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> MarkAllRead()
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);

@@ -281,25 +281,24 @@ function togglePass(id, btn) {
     btn.style.opacity = input.type === 'text' ? '0.4' : '1';
 }
 
-function checkStrength(input) {
+function checkStrength(input, prefix = 'rule') {
     const v = input.value;
     const set = (id, ok) => {
         const el = document.getElementById(id);
         if (el) el.classList.toggle('auth-rule-ok', ok);
     };
-    set('rule-len', v.length >= 8);
-    set('rule-upper', /[A-Z]/.test(v));
-    set('rule-lower', /[a-z]/.test(v));
-    set('rule-digit', /[0-9]/.test(v));
+    set(`${prefix}-len`, v.length >= 8);
+    set(`${prefix}-upper`, /[A-Z]/.test(v));
+    set(`${prefix}-lower`, /[a-z]/.test(v));
+    set(`${prefix}-digit`, /[0-9]/.test(v));
 }
-
 function updateRegisterButton() {
     const username = document.getElementById('regUsername');
     const email = document.getElementById('regEmail');
     const phone = document.getElementById('regPhone');
     const password = document.getElementById('regPassword');
     const confirm = document.getElementById('regConfirm');
-    const checkbox = document.getElementById('chkTerms');
+    const checkbox = document.getElementById('modalChkTerms');
     const button = document.getElementById('registerBtn');
     const emailError = document.getElementById('emailError');
 
@@ -331,8 +330,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById(id)?.addEventListener('input', updateRegisterButton);
     });
 
-    document.getElementById('chkTerms')?.addEventListener('change', updateRegisterButton);
-});
+    document.getElementById('modalChkTerms')?.addEventListener('change', updateRegisterButton); });
 
 /* ---------- User dropdown ---------- */
 
@@ -864,7 +862,10 @@ async function handleNotifClick(id, url) {
 
     if (!item.isRead) {
         item.isRead = true;
-        await fetch(`/Notifications/MarkRead?id=${id}`, { method: 'POST' });
+        await fetch(`/Notifications/MarkRead?id=${id}`, {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': document.getElementById('afToken')?.value ?? '' }
+        });
         const unreadLeft = notifAllData.filter(n => !n.isRead).length;
         updateNotifBadge(unreadLeft);
 
@@ -934,7 +935,10 @@ function switchNotifTab(tab) {
 }
 
 async function markAllReadModal() {
-    await fetch('/Notifications/MarkAllRead', { method: 'POST' });
+    await fetch('/Notifications/MarkAllRead', {
+        method: 'POST',
+        headers: { 'RequestVerificationToken': document.getElementById('afToken')?.value ?? '' }
+    });
     notifAllData.forEach(n => n.isRead = true);
     updateNotifBadge(0);
     renderNotifList();

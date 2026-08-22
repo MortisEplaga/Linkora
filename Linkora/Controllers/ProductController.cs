@@ -73,7 +73,6 @@ namespace Linkora.Controllers
         }
 
         [HttpPost]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> VerifyRecaptcha([FromBody] RecaptchaDto dto)
         {
             var secret = _configuration["Recaptcha:SecretKey"]!;

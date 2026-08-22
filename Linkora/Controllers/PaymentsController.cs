@@ -33,7 +33,6 @@ namespace Linkora.Controllers
 
         [Authorize]
         [HttpPost]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> InitiatePromotion(int productId, string promotionType)
         {
             if (!PromotionPrices.TryGetValue(promotionType, out var price))
@@ -52,7 +51,6 @@ namespace Linkora.Controllers
 
         [Authorize]
         [HttpPost]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> InitiateSubscription(string subscriptionType)
         {
             if (!SubscriptionPrices.TryGetValue(subscriptionType, out var price))

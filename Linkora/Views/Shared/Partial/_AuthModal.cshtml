@@ -36,10 +36,10 @@
                    data-i18n-placeholder="auth_username_ph" />
         </div>
         <div class="auth-field auth-field-password">
-            <input type="password" class="auth-input" id="loginPassword"
+            <input type="password" class="auth-input" id="modalLoginPassword"
                    placeholder="Password"
                    data-i18n-placeholder="auth_password_ph" />
-            <button type="button" class="auth-eye" onclick="togglePass('loginPassword',this)">👁</button>
+            <button type="button" class="auth-eye" onclick="togglePass('modalLoginPassword',this)">👁</button>
         </div>
         <a class="auth-forgot" href="/Account/ForgotPassword" data-i18n="auth_forgot">Forgot password?</a>
         <button class="auth-submit" onclick="submitLogin()" data-i18n="auth_submit_login">Sign in</button>
@@ -88,26 +88,26 @@
                    data-i18n-placeholder="auth_phone_ph" />
         </div>
         <div class="auth-field auth-field-password">
-            <input type="password" class="auth-input" id="regPassword"
+            <input type="password" class="auth-input" id="modalRegPassword"
                    placeholder="Password"
                    data-i18n-placeholder="auth_password_ph"
-                   oninput="checkStrength(this)" />
-            <button type="button" class="auth-eye" onclick="togglePass('regPassword',this)">👁</button>
+                   oninput="checkStrength(this, 'modalRule')" />
+            <button type="button" class="auth-eye" onclick="togglePass('modalRegPassword',this)">👁</button>
         </div>
         <ul class="auth-rules">
-            <li id="rule-len" data-i18n="auth_rule_len">At least 8 characters</li>
-            <li id="rule-upper" data-i18n="auth_rule_upper">Uppercase letter</li>
-            <li id="rule-lower" data-i18n="auth_rule_lower">Lowercase letter</li>
-            <li id="rule-digit" data-i18n="auth_rule_digit">Digit</li>
+            <li id="modalRule-len" data-i18n="auth_rule_len">At least 8 characters</li>
+            <li id="modalRule-upper" data-i18n="auth_rule_upper">Uppercase letter</li>
+            <li id="modalRule-lower" data-i18n="auth_rule_lower">Lowercase letter</li>
+            <li id="modalRule-digit" data-i18n="auth_rule_digit">Digit</li>
         </ul>
         <div class="auth-field auth-field-password">
-            <input type="password" class="auth-input" id="regConfirm"
+            <input type="password" class="auth-input" id="modalRegConfirm"
                    placeholder="Confirm password"
                    data-i18n-placeholder="auth_confirm_ph" />
-            <button type="button" class="auth-eye" onclick="togglePass('regConfirm',this)">👁</button>
+            <button type="button" class="auth-eye" onclick="togglePass('modalRegConfirm',this)">👁</button>
         </div>
         <label class="auth-check-row">
-            <input type="checkbox" id="chkTerms" onchange="toggleRegisterButton()" />
+            <input type="checkbox" id="modalChkTerms" onchange="updateRegisterButton()" />
             <span data-i18n="auth_terms_prefix">I accept the </span>
             <a href="#" id="rulesLink" class="terms-link" onclick="openRulesModal(); return false;" data-i18n="auth_rules_link">Rules</a>
             <span> & </span>
@@ -117,17 +117,3 @@
         <button class="auth-submit" id="registerBtn" onclick="submitRegister()" data-i18n="auth_submit_register" disabled>Register</button>
     </div>
 </div>
-
-<!-- Hidden forms -->
-<form id="loginForm" method="post" action="/Account/Login" style="display:none">
-    <input type="hidden" name="username" id="fLoginUsername" />
-    <input type="hidden" name="password" id="fLoginPassword" />
-    <input type="hidden" name="returnUrl" id="fLoginReturn" />
-</form>
-<form id="registerForm" method="post" action="/Account/Register" style="display:none">
-    <input type="hidden" name="username" id="fRegUsername" />
-    <input type="hidden" name="email" id="fRegEmail" />
-    <input type="hidden" name="phone" id="fRegPhone" />
-    <input type="hidden" name="password" id="fRegPassword" />
-    <input type="hidden" name="confirm" id="fRegConfirm" />
-</form>

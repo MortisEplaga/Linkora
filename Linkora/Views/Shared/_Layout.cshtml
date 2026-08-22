@@ -45,12 +45,12 @@
     @await Html.PartialAsync("Partial/_SellerModal")
 
     <!-- Hidden forms -->
-    <form id="loginForm" method="post" action="/Account/Login" style="display:none">
+    <form id="loginForm" method="post" asp-controller="Account" asp-action="Login" style="display:none">
         <input type="hidden" name="username" id="fLoginUsername" />
         <input type="hidden" name="password" id="fLoginPassword" />
         <input type="hidden" name="returnUrl" id="fLoginReturn" />
     </form>
-    <form id="registerForm" method="post" action="/Account/Register" style="display:none">
+    <form id="registerForm" method="post" asp-controller="Account" asp-action="Register" style="display:none">
         <input type="hidden" name="username" id="fRegUsername" />
         <input type="hidden" name="email" id="fRegEmail" />
         <input type="hidden" name="phone" id="fRegPhone" />

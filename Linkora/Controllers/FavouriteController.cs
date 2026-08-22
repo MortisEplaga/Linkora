@@ -14,7 +14,6 @@ namespace Linkora.Controllers
         }
 
         [HttpPost]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> Toggle(int productId, bool can)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

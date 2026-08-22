@@ -310,7 +310,7 @@ namespace Linkora.Controllers
             await SignInAsync(user);
             return LocalRedirect(returnUrl);
         }
-        [HttpPost]
+        [HttpPost, IgnoreAntiforgeryToken]
         [Route("Account/FacebookDataDeletion")]
         public async Task<IActionResult> FacebookDataDeletion()
         {

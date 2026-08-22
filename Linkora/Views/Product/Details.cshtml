@@ -353,7 +353,7 @@
         if (!text) return;
         const res = await fetch('/Messages/Start', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''},
             body: JSON.stringify({
                 productId: @p.Id,
                 sellerId:  @(p.Seller?.Id ?? 0),
@@ -551,7 +551,7 @@
 
         const res = await fetch('/Product/VerifyRecaptcha', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''},
             body: JSON.stringify({ token })
         });
         const data = await res.json();

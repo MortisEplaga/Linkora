@@ -26,7 +26,6 @@ namespace Linkora.Controllers
 
         [HttpPost("Toggle/{followingId:int}")]
         [Authorize]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> Toggle(int followingId)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);

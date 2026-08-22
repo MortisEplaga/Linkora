@@ -53,7 +53,7 @@ namespace Linkora.Controllers
             return View();
         }
 
-        [HttpPost, IgnoreAntiforgeryToken]
+        [HttpPost]
         public async Task<IActionResult> SetProductStatus(int id, string status)
         {
             if (!IsAdmin()) return Forbid();
@@ -87,7 +87,7 @@ namespace Linkora.Controllers
             return View();
         }
 
-        [HttpPost, IgnoreAntiforgeryToken]
+        [HttpPost]
         public async Task<IActionResult> SetUserRole(int id, string role)
         {
             if (!IsAdmin()) return Forbid();
@@ -127,7 +127,7 @@ namespace Linkora.Controllers
             return Ok();
         }
 
-        [HttpPost, IgnoreAntiforgeryToken]
+        [HttpPost]
         public async Task<IActionResult> DeleteUser(int id)
         {
             if (!IsAdmin()) return Forbid();
@@ -138,7 +138,7 @@ namespace Linkora.Controllers
             return Ok();
         }
 
-        [HttpPost, IgnoreAntiforgeryToken]
+        [HttpPost]
         public async Task<IActionResult> DeleteProduct(int id)
         {
             if (!IsAdmin()) return Forbid();
@@ -165,7 +165,7 @@ namespace Linkora.Controllers
             return View();
         }
 
-        [HttpPost, IgnoreAntiforgeryToken]
+        [HttpPost]
         public async Task<IActionResult> ResolveReport(int id, string action)
         {
             if (!IsAdmin()) return Forbid();
@@ -228,7 +228,7 @@ namespace Linkora.Controllers
             return result.Success ? Ok() : BadRequest();
         }
 
-        [HttpPost, IgnoreAntiforgeryToken]
+        [HttpPost]
         public async Task<IActionResult> RejectProductWithReason(int id, int reasonId, string? comment = null)
         {
             if (!IsAdmin()) return Forbid();

@@ -283,7 +283,10 @@
                 fd.append('photos', file);
             }
 
-            const res = await fetch('/Product/Create', { method: 'POST', body: fd });
+            const res = await fetch('/Product/Create', { 
+                method: 'POST',
+                headers: { 'RequestVerificationToken': document.getElementById('afToken')?.value ?? '' },
+                body: fd });
             if (res.ok) {
                 const data = await res.json();
                 window.location.href = `/Product/Details/${data.id}`;

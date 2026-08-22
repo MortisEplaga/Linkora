@@ -235,7 +235,10 @@
         const isSupportChat = @(activeConv?.IsSupport == true ? "true" : "false");
 
         async function openSupportChat() {
-            const res = await fetch('/Messages/StartSupportChat', { method: 'POST' });
+            const res = await fetch('/Messages/StartSupportChat', { 
+                method: 'POST',
+                headers: { 'RequestVerificationToken': document.getElementById('afToken')?.value ?? '' }
+            });
             if (res.ok) {
                 const data = await res.json();
                 window.location.href = '/Messages/Index/' + data.conversationId;
