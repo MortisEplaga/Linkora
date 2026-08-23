@@ -129,7 +129,7 @@ namespace Linkora.Controllers
             var confirmUrl = Url.Action("ConfirmEmail", "Account", new { token }, Request.Scheme)!;
 
             try { await _emailService.SendConfirmationEmailAsync(email, username, confirmUrl); }
-            catch { }
+            catch (Exception ex) { Console.Error.WriteLine(ex); }
 
             return RedirectToAction(nameof(RegisterConfirmation), new { email });
         }
@@ -195,7 +195,7 @@ namespace Linkora.Controllers
                     UserName = username,
                     Email = email,
                     AvatarUrl = avatarUrl,
-                    EmailConfirmed = true, 
+                    EmailConfirmed = true,
                 };
 
                 var id = await _userRepository.CreateGoogleUserAsync(user);
@@ -236,10 +236,8 @@ namespace Linkora.Controllers
         {
             var sb = new StringBuilder();
             foreach (var ch in raw)
-            {
                 if (char.IsLetterOrDigit(ch)) sb.Append(ch);
                 else if (ch == ' ' || ch == '_') sb.Append('_');
-            }
             var result = sb.ToString().Trim('_');
             return string.IsNullOrEmpty(result) ? "user" : result;
         }
@@ -283,7 +281,7 @@ namespace Linkora.Controllers
                 {
                     UserName = username,
                     Email = !string.IsNullOrEmpty(fbUser.Email) ? fbUser.Email : null,
-                    EmailConfirmed = !string.IsNullOrEmpty(fbUser.Email), 
+                    EmailConfirmed = !string.IsNullOrEmpty(fbUser.Email),
                     AvatarUrl = avatarUrl,
                     IsCompany = false,
                 };
@@ -295,14 +293,13 @@ namespace Linkora.Controllers
                     return BadRequest("Failed to create user");
             }
             else
-            {
                 if (string.IsNullOrEmpty(user.AvatarUrl))
                 {
                     var avatarUrl = $"https://graph.facebook.com/{fbUser.Id}/picture?type=large";
                     await _userRepository.UpdateAvatarAsync(user.Id, avatarUrl);
                     user.AvatarUrl = avatarUrl;
                 }
-            }
+
             if (string.IsNullOrEmpty(user.FacebookId))
             {
                 await _userRepository.UpdateFacebookIdAsync(user.Id, fbUser.Id);
@@ -326,9 +323,7 @@ namespace Linkora.Controllers
 
             var user = await _userRepository.GetByFacebookIdAsync(facebookUserId);
             if (user == null)
-            {
                 return Ok(new { url = Url.Action("DeletionStatus", "Account", new { code = "not_found" }, Request.Scheme), confirmation_code = "not_found" });
-            }
 
             var confirmationCode = Guid.NewGuid().ToString("N");
 
@@ -355,7 +350,7 @@ namespace Linkora.Controllers
                 if (data != null && data.TryGetValue("user_id", out var userId))
                     return userId.ToString();
             }
-            catch { }
+            catch (Exception ex) { Console.Error.WriteLine(ex); }
             return null;
         }
         [HttpGet]
@@ -405,7 +400,7 @@ namespace Linkora.Controllers
 
                 var resetUrl = Url.Action("ResetPassword", "Account", new { token }, Request.Scheme)!;
                 try { await _emailService.SendPasswordResetEmailAsync(user.Email!, user.UserName, resetUrl, resolvedLang); }
-                catch { }
+                catch (Exception ex) { Console.Error.WriteLine(ex); }
             }
 
             ViewBag.Sent = true;

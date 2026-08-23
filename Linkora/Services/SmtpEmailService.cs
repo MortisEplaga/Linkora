@@ -20,7 +20,6 @@ namespace Linkora.Services
             _configuration = configuration;
             _logger = logger;
         }
-
         public async Task SendConfirmationEmailAsync(string toEmail, string username, string confirmUrl)
         {
             var section = _configuration.GetSection("Email");
