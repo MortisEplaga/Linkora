@@ -31,8 +31,9 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<INotificationRealTimeSender, SignalRNotificationSender>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
-builder.Services.AddScoped<Linkora.Services.IMaksekeskusService, Linkora.Services.MaksekeskusService>();
-builder.Services.AddHostedService<Linkora.Services.ArchiveOldProductsService>();
+builder.Services.AddScoped<IMaksekeskusService, MaksekeskusService>();
+builder.Services.AddHostedService<ArchiveOldProductsService>();
+builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddSignalR();
 
 builder.Services.Configure<FormOptions>(o =>

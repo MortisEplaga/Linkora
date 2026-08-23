@@ -4,7 +4,6 @@ using Linkora.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace Linkora.Controllers
@@ -13,11 +12,13 @@ namespace Linkora.Controllers
     {
         private readonly IUserRepository _userRepository;
         private readonly IEmailService _emailService;
+        private readonly IPasswordHasher _passwordHasher;
 
-        public AccountController(IUserRepository userRepository, IEmailService emailService)
+        public AccountController(IUserRepository userRepository, IEmailService emailService, IPasswordHasher passwordHasher)
         {
             _userRepository = userRepository;
             _emailService = emailService;
+            _passwordHasher = passwordHasher;
         }
         public IActionResult Login(string? returnUrl = null)
         {
@@ -34,11 +35,17 @@ namespace Linkora.Controllers
             if (user == null)
                 user = await _userRepository.GetByPhoneAsync(username);
 
-            if (user == null || user.PasswordHash != Hash(password))
+            if (user == null || user.PasswordHash == null || !_passwordHasher.Verify(password, user.PasswordHash))
             {
                 ViewBag.Error = "Invalid username or password";
                 ViewBag.ReturnUrl = returnUrl;
                 return View();
+            }
+
+            if (_passwordHasher.IsLegacyHash(user.PasswordHash))
+            {
+                var upgradedHash = _passwordHasher.Hash(password);
+                await _userRepository.UpdatePasswordHashAsync(user.Id, upgradedHash);
             }
 
             if (!user.EmailConfirmed)
@@ -117,7 +124,7 @@ namespace Linkora.Controllers
                 ConfirmationToken = token,
             };
 
-            await _userRepository.CreateAsync(user, Hash(password));
+            await _userRepository.CreateAsync(user, _passwordHasher.Hash(password));
 
             var confirmUrl = Url.Action("ConfirmEmail", "Account", new { token }, Request.Scheme)!;
 
@@ -224,11 +231,6 @@ namespace Linkora.Controllers
             var identity = new ClaimsIdentity(claims, "Cookies");
             var principal = new ClaimsPrincipal(identity);
             await HttpContext.SignInAsync("Cookies", principal);
-        }
-        private static string Hash(string input)
-        {
-            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
-            return Convert.ToHexString(bytes).ToLower();
         }
         private static string SanitizeUsername(string raw)
         {
@@ -452,7 +454,7 @@ namespace Linkora.Controllers
                 return View();
             }
 
-            await _userRepository.UpdatePasswordHashAsync(user.Id, Hash(password));
+            await _userRepository.UpdatePasswordHashAsync(user.Id, _passwordHasher.Hash(password));
             await _userRepository.ClearPasswordResetTokenAsync(user.Id);
 
             ViewBag.Success = true;

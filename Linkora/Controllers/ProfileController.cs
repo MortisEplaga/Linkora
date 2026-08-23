@@ -1,23 +1,25 @@
 ﻿using Linkora.Models;
 using Linkora.Repositories;
+using Linkora.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace Linkora.Controllers
 {
     [Authorize]
     public class ProfileController : Controller
     {
-        private readonly IUserRepository _userRepository;
         private static readonly int[] AllowedDurations = { 1, 3, 7, 14, 30 };
         private static readonly string[] AllowedSubscriptionTypes = { "Free", "Standard", "Premium" };
 
-        public ProfileController(IUserRepository userRepository, IConfiguration configuration)
+        private readonly IUserRepository _userRepository;
+        private readonly IPasswordHasher _passwordHasher;
+
+        public ProfileController(IUserRepository userRepository, IConfiguration configuration, IPasswordHasher passwordHasher)
         {
             _userRepository = userRepository;
+            _passwordHasher = passwordHasher;
         }
         public async Task<IActionResult> Edit()
         {
@@ -75,26 +77,23 @@ namespace Linkora.Controllers
                 if (string.IsNullOrWhiteSpace(dto.CurrentPassword))
                     return BadRequest(new { errors = new[] { "Current password is required" } });
 
-                if (Hash(dto.CurrentPassword) != user.PasswordHash)
+                if (user.PasswordHash == null || !_passwordHasher.Verify(dto.CurrentPassword, user.PasswordHash))
                     return BadRequest(new { errors = new[] { "Current password is incorrect" } });
-
                 if (dto.NewPassword.Length < 8 ||
                     !dto.NewPassword.Any(char.IsUpper) ||
                     !dto.NewPassword.Any(char.IsLower) ||
                     !dto.NewPassword.Any(char.IsDigit))
                     return BadRequest(new { errors = new[] { "Password must be at least 8 characters with uppercase, lowercase and digit" } });
 
-                newHash = Hash(dto.NewPassword);
+                newHash = _passwordHasher.Hash(dto.NewPassword);
             }
+
+            if (_passwordHasher.IsLegacyHash(user.PasswordHash) && string.IsNullOrWhiteSpace(dto.NewPassword))
+                newHash = _passwordHasher.Hash(dto.CurrentPassword);
 
             await _userRepository.UpdateProfileAsync(userId, dto.UserName, dto.Phone, duration, newHash, subscriptionType);
 
             return Ok(new { success = true });
-        }
-        private static string Hash(string input)
-        {
-            var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
-            return Convert.ToHexString(bytes).ToLower();
         }
 
         [HttpGet]
