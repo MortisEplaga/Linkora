@@ -27,7 +27,7 @@ public class MessageRepository : SqlRepositoryBase, IMessageRepository
     {
         return (await QueryAsync<string>(
             "SELECT Role FROM Users WHERE Id = @Id",
-            r => r.IsDBNull(0) ? null! : r.GetString(0),
+            r => r.GetStringOrNull(0)!,
             p => p.AddWithValue("@Id", userId))).FirstOrDefault() ?? "user";
     }
     public async Task<bool> CanReviewAsync(int conversationId, int userId)

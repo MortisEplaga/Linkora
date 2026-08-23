@@ -139,7 +139,7 @@ namespace Linkora.Repositories
         {
             return await QuerySingleAsync<string>(
                 "UPDATE Users SET Role = @R OUTPUT deleted.Role WHERE Id = @Id",
-                r => r.IsDBNull(0) ? null! : r.GetString(0),
+                r => r.GetStringOrNull(0)!,
                 p => { p.AddWithValue("@R", role); p.AddWithValue("@Id", id); });
         }
         public Task<List<int>> GetSubscriberIdsAsync(int userId)
