@@ -31,26 +31,25 @@ namespace Linkora.Repositories
                   ORDER BY f.Id",
                 r =>
                 {
-                    var catNameEn = r.IsDBNull(7) ? "" : r.GetString(7);
+                    var catNameEn = r.GetStringOrDefault(7);
                     return new CompareProduct
                     {
                         Id = r.GetInt32(0),
-                        Name = r.IsDBNull(1) ? "" : r.GetString(1),
-                        Address = r.IsDBNull(2) ? null : r.GetString(2),
-                        CreatedAt = r.IsDBNull(3) ? null : r.GetDateTime(3),
-                        AvatarUrl = r.IsDBNull(4) ? null : r.GetString(4),
-                        MediaCount = r.IsDBNull(5) ? 0 : r.GetInt32(5),
-                        Price = r.IsDBNull(6) ? null : r.GetDecimal(6),
+                        Name = r.GetStringOrDefault(1),
+                        Address = r.GetStringOrNull(2),
+                        CreatedAt = r.GetDateTimeOrNull(3),
+                        AvatarUrl = r.GetStringOrNull(4),
+                        MediaCount = r.GetInt32OrDefault(5),
+                        Price = r.GetDecimalOrNull(6),
                         CategoryName = Resolve(lang, catNameEn, r.IsDBNull(8) ? catNameEn : r.GetString(8), r.IsDBNull(9) ? catNameEn : r.GetString(9)),
-                        SellerName = r.IsDBNull(10) ? null : r.GetString(10),
+                        SellerName = r.GetStringOrNull(10),
                     };
                 },
                 p => p.AddWithValue("@U", userId));
 
             result.Products.AddRange(products);
 
-            if (result.Products.Count == 0)
-                return result;
+            if (result.Products.Count == 0) return result;
 
             var selectOptionsList = await QueryAsync(
                 "SELECT Id, Value, ValueLV, ValueRU FROM SelectOptions WHERE IsConf = 1",
@@ -82,11 +81,11 @@ namespace Linkora.Repositories
                     NameEn: r.GetString(2),
                     NameLv: r.IsDBNull(3) ? r.GetString(2) : r.GetString(3),
                     NameRu: r.IsDBNull(4) ? r.GetString(2) : r.GetString(4),
-                    ParamType: r.IsDBNull(5) ? (int?)null : r.GetInt32(5),
-                    RawValue: r.IsDBNull(6) ? "" : r.GetString(6),
-                    ColorNameEn: r.IsDBNull(7) ? null : r.GetString(7),
-                    ColorNameLv: r.IsDBNull(8) ? null : r.GetString(8),
-                    ColorNameRu: r.IsDBNull(9) ? null : r.GetString(9)
+                    ParamType: r.GetInt32OrNull(5),
+                    RawValue: r.GetStringOrDefault(6),
+                    ColorNameEn: r.GetStringOrNull(7),
+                    ColorNameLv: r.GetStringOrNull(8),
+                    ColorNameRu: r.GetStringOrNull(9)
                 ),
                 p =>
                 {
@@ -107,34 +106,24 @@ namespace Linkora.Repositories
                     var texts = new List<string>();
                     foreach (var idStr in ids)
                         if (int.TryParse(idStr.Trim(), out int optId) && selectOptionsDict.TryGetValue(optId, out var textsTuple))
-                        {
                             texts.Add(Resolve(lang, textsTuple.Value, textsTuple.ValueLV, textsTuple.ValueRU));
-                        }
-                        else
-                            texts.Add(idStr);
+                        else texts.Add(idStr);
 
                     value = string.Join(", ", texts);
                 }
                 else if (row.ParamType == 2 || row.ParamType == 8)
-                {
                     if (int.TryParse(rawValue, out int optId) && selectOptionsDict.TryGetValue(optId, out var textsTuple))
                         value = Resolve(lang, textsTuple.Value, textsTuple.ValueLV, textsTuple.ValueRU);
-                    else
-                        value = rawValue;
-                }
+                    else value = rawValue;
                 else if (row.ParamType == 6)
-                {
-                    if (row.ColorNameEn == null)
-                        value = rawValue;
+                    if (row.ColorNameEn == null) value = rawValue;
                     else
                     {
                         if (lang == "lv" && row.ColorNameLv != null) value = row.ColorNameLv;
                         else if (lang == "ru" && row.ColorNameRu != null) value = row.ColorNameRu;
                         else value = row.ColorNameEn;
                     }
-                }
-                else
-                    value = rawValue;
+                else value = rawValue;
 
                 if (!result.ParamMatrix.ContainsKey(row.ParamId))
                     result.ParamMatrix[row.ParamId] = [];

@@ -12,12 +12,12 @@ namespace Linkora.Repositories
                 r => new UserSummary
                 {
                     Id = r.GetInt32(0),
-                    UserName = r.IsDBNull(1) ? null : r.GetString(1),
-                    AvatarUrl = r.IsDBNull(2) ? null : r.GetString(2),
-                    Phone = r.IsDBNull(3) ? null : r.GetString(3),
-                    Email = r.IsDBNull(4) ? null : r.GetString(4),
-                    IsCompany = !r.IsDBNull(5) && r.GetBoolean(5),
-                    CreatedAt = r.IsDBNull(6) ? null : r.GetDateTime(6),
+                    UserName = r.GetStringOrNull(1),
+                    AvatarUrl = r.GetStringOrNull(2),
+                    Phone = r.GetStringOrNull(3),
+                    Email = r.GetStringOrNull(4),
+                    IsCompany = r.GetBooleanOrDefault(5),
+                    CreatedAt = r.GetDateTimeOrNull(6),
                 },
                 p => p.AddWithValue("@Id", id));
         }
@@ -27,7 +27,7 @@ namespace Linkora.Repositories
                 "SELECT COUNT(*), AVG(CAST(Rating AS float)) FROM Reviews WHERE TargetUserId = @Id",
                 r => (
                     r.GetInt32(0),
-                    r.IsDBNull(1) ? 0.0 : r.GetDouble(1)
+                    r.GetDoubleOrDefault(1)
                 ),
                 p => p.AddWithValue("@Id", userId));
 
@@ -43,10 +43,11 @@ namespace Linkora.Repositories
                     AND (p.Status = 'active' OR p.Status IS NULL)
                   GROUP BY c.Id, c.Name, c.NameLV, c.NameRU
                   ORDER BY Cnt DESC",
-                r => new CategoryCount {
-                        Id = r.GetInt32(0),
-                        Name = Resolve(lang, r.GetString(1), r.IsDBNull(2) ? null : r.GetString(2), r.IsDBNull(3) ? null : r.GetString(3)),
-                        Count = r.GetInt32(4)
+                r => new CategoryCount
+                {
+                    Id = r.GetInt32(0),
+                    Name = Resolve(lang, r.GetString(1), r.GetStringOrNull(2), r.GetStringOrNull(3)),
+                    Count = r.GetInt32(4)
                 },
                 p => p.AddWithValue("@UserId", userId));
         }
@@ -69,10 +70,10 @@ namespace Linkora.Repositories
 
             return await QueryAsync($@"
                 SELECT p.Id, p.Name, p.Address, p.CreatedAt, COALESCE(
-           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
-            WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-           p.AvatarUrl
-       ) AS AvatarUrl,
+                           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
+                            WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+                           p.AvatarUrl
+                       ) AS AvatarUrl,
                        (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
                         FROM MapperProductCategory m
                         JOIN Category c2 ON c2.Id = m.CategoryId AND c2.Name = 'Price, €'
@@ -85,11 +86,11 @@ namespace Linkora.Repositories
                 r => new Product
                 {
                     Id = r.GetInt32(0),
-                    Name = r.IsDBNull(1) ? "" : r.GetString(1),
-                    Address = r.IsDBNull(2) ? null : r.GetString(2),
-                    CreatedAt = r.IsDBNull(3) ? null : r.GetDateTime(3),
-                    AvatarUrl = r.IsDBNull(4) ? null : r.GetString(4),
-                    Price = r.IsDBNull(5) ? null : r.GetDecimal(5),
+                    Name = r.GetStringOrDefault(1),
+                    Address = r.GetStringOrNull(2),
+                    CreatedAt = r.GetDateTimeOrNull(3),
+                    AvatarUrl = r.GetStringOrNull(4),
+                    Price = r.GetDecimalOrNull(5),
                 },
                 p =>
                 {
@@ -112,10 +113,10 @@ namespace Linkora.Repositories
                 {
                     Id = r.GetInt32(0),
                     Rating = r.GetInt32(1),
-                    Comment = r.IsDBNull(2) ? "" : r.GetString(2),
+                    Comment = r.GetStringOrDefault(2),
                     CreatedAt = r.GetDateTime(3),
-                    AuthorName = r.IsDBNull(4) ? "Unknown" : r.GetString(4),
-                    AuthorAvatar = r.IsDBNull(5) ? null : r.GetString(5),
+                    AuthorName = r.GetStringOrDefault(4, "Unknown"),
+                    AuthorAvatar = r.GetStringOrNull(5),
                 },
                 p =>
                 {

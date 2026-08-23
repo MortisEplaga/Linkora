@@ -17,16 +17,14 @@ namespace Linkora.Repositories
         {
             Id = r.GetInt32(r.GetOrdinal("Id")),
             UserName = r.GetString(r.GetOrdinal("UserName")),
-            Email = r.IsDBNull(r.GetOrdinal("Email")) ? null : r.GetString(r.GetOrdinal("Email")),
-            Phone = r.IsDBNull(r.GetOrdinal("Phone")) ? null : r.GetString(r.GetOrdinal("Phone")),
-            Role = r.IsDBNull(r.GetOrdinal("Role")) ? null : r.GetString(r.GetOrdinal("Role")),
-            PasswordHash = r.IsDBNull(r.GetOrdinal("PasswordHash")) ? null : r.GetString(r.GetOrdinal("PasswordHash")),
-            AvatarUrl = r.IsDBNull(r.GetOrdinal("AvatarUrl")) ? null : r.GetString(r.GetOrdinal("AvatarUrl")),
-            EmailConfirmed = !r.IsDBNull(r.GetOrdinal("EmailConfirmed")) && r.GetBoolean(r.GetOrdinal("EmailConfirmed")),
-            PreferredAdDuration = r.IsDBNull(r.GetOrdinal("PreferredAdDuration")) ? null : r.GetInt32(r.GetOrdinal("PreferredAdDuration")),
-            SubscriptionType = HasColumn(r, "SubscriptionType") && !r.IsDBNull(r.GetOrdinal("SubscriptionType"))
-                ? r.GetString(r.GetOrdinal("SubscriptionType"))
-                : "Free"
+            Email = r.GetStringOrNull(r.GetOrdinal("Email")),
+            Phone = r.GetStringOrNull(r.GetOrdinal("Phone")),
+            Role = r.GetStringOrNull(r.GetOrdinal("Role")),
+            PasswordHash = r.GetStringOrNull(r.GetOrdinal("PasswordHash")),
+            AvatarUrl = r.GetStringOrNull(r.GetOrdinal("AvatarUrl")),
+            EmailConfirmed = r.GetBooleanOrDefault(r.GetOrdinal("EmailConfirmed")),
+            PreferredAdDuration = r.GetInt32OrNull(r.GetOrdinal("PreferredAdDuration")),
+            SubscriptionType = HasColumn(r, "SubscriptionType") ? r.GetStringOrDefault(r.GetOrdinal("SubscriptionType"), "Free") : "Free"
         };
         public async Task<User?> GetByPhoneAsync(string phone)
         {

@@ -21,7 +21,7 @@ namespace Linkora.Repositories
                 return new ReportReasonLocalized
                 {
                     Id = r.GetInt32(0),
-                    Text = Resolve(GetLang(), en, r.IsDBNull(2) ? en : r.GetString(2), r.IsDBNull(3) ? en : r.GetString(3))
+                    Text = Resolve(GetLang(), en, r.GetStringOrDefault(2, en), r.GetStringOrDefault(3, en))
                 };
             });
         }
@@ -34,9 +34,8 @@ namespace Linkora.Repositories
             {
                 Id = r.GetInt32(0),
                 ReasonText = r.GetString(1),
-                ReasonTextLV = r.IsDBNull(2) ? r.GetString(1) : r.GetString(2),
-                ReasonTextRU = r.IsDBNull(3) ? r.GetString(1) : r.GetString(3),
-                 
+                ReasonTextLV = r.GetStringOrDefault(2, r.GetString(1)),
+                ReasonTextRU = r.GetStringOrDefault(3, r.GetString(1)),
             }, p => p.AddWithValue("@Id", reasonId));
         }
         public async Task<Report> CreateReportAsync(int productId, int userId, int reportReasonId, string? comment)
@@ -107,7 +106,7 @@ namespace Linkora.Repositories
                 ProductId = reader.GetInt32(reader.GetOrdinal("ProductId")),
                 UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
                 ReportReasonId = reader.GetInt32(reader.GetOrdinal("ReportReasonId")),
-                Comment = reader.IsDBNull(reader.GetOrdinal("Comment")) ? null : reader.GetString(reader.GetOrdinal("Comment")),
+                Comment = reader.GetStringOrNull(reader.GetOrdinal("Comment")),
                 CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                 Status = Enum.Parse<ReportStatus>(reader.GetString(reader.GetOrdinal("Status")))
             };

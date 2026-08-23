@@ -27,7 +27,7 @@ namespace Linkora.Repositories
                 {
                     TargetParamId = reader.GetInt32(0),
                     TriggerParamId = reader.GetInt32(1),
-                    TriggerValue = reader.IsDBNull(2) ? null : reader.GetString(2),
+                    TriggerValue = reader.GetStringOrNull(2),
                     TriggerOperator = reader.GetString(3),
                     Action = reader.GetString(4)
                 });
@@ -37,10 +37,10 @@ namespace Linkora.Repositories
                 {
                     ParamId = reader.GetInt32(0),
                     RuleType = reader.GetString(1),
-                    RuleValue = reader.IsDBNull(2) ? null : reader.GetString(2),
-                    TriggerParamId = reader.IsDBNull(3) ? null : reader.GetInt32(3),
-                    TriggerValue = reader.IsDBNull(4) ? null : reader.GetString(4),
-                    ErrorMessageKey = reader.IsDBNull(5) ? null : reader.GetString(5)
+                    RuleValue = reader.GetStringOrNull(2),
+                    TriggerParamId = reader.GetInt32OrNull(3),
+                    TriggerValue = reader.GetStringOrNull(4),
+                    ErrorMessageKey = reader.GetStringOrNull(5)
                 });
             await reader.NextResultAsync();
             while (await reader.ReadAsync())
@@ -159,23 +159,23 @@ namespace Linkora.Repositories
                 r => new Product
                 {
                     Id = r.GetInt32(0),
-                    Name = r.IsDBNull(1) ? "" : r.GetString(1),
-                    Description = r.IsDBNull(2) ? null : r.GetString(2),
-                    Address = r.IsDBNull(3) ? null : r.GetString(3),
-                    CreatedAt = r.IsDBNull(4) ? null : r.GetDateTime(4),
-                    AvatarUrl = r.IsDBNull(5) ? null : r.GetString(5),
+                    Name = r.GetStringOrDefault(1),
+                    Description = r.GetStringOrNull(2),
+                    Address = r.GetStringOrNull(3),
+                    CreatedAt = r.GetDateTimeOrNull(4),
+                    AvatarUrl = r.GetStringOrNull(5),
                     Seller = new UserSummary
                     {
-                        Id = r.IsDBNull(12) ? 0 : r.GetInt32(12),
-                        UserName = r.IsDBNull(6) ? null : r.GetString(6),
-                        AvatarUrl = r.IsDBNull(7) ? null : r.GetString(7),
-                        IsCompany = !r.IsDBNull(8) && r.GetBoolean(8),
-                        Phone = r.IsDBNull(9) ? null : r.GetString(9),
-                        Email = r.IsDBNull(10) ? null : r.GetString(10),
-                        CreatedAt = r.IsDBNull(11) ? null : r.GetDateTime(11),
+                        Id = r.GetInt32OrDefault(12),
+                        UserName = r.GetStringOrNull(6),
+                        AvatarUrl = r.GetStringOrNull(7),
+                        IsCompany = r.GetBooleanOrDefault(8),
+                        Phone = r.GetStringOrNull(9),
+                        Email = r.GetStringOrNull(10),
+                        CreatedAt = r.GetDateTimeOrNull(11),
                     },
-                    Price = r.IsDBNull(14) ? null : r.GetDecimal(14),
-                    PromotionType = r.IsDBNull(13) ? "None" : r.GetString(13),
+                    Price = r.GetDecimalOrNull(14),
+                    PromotionType = r.GetStringOrDefault(13, "None"),
                 },
                 p =>
                 {
@@ -193,8 +193,8 @@ namespace Linkora.Repositories
                   WHERE m.ProductId = @ProductId",
                 r => (
                     CategoryId: r.GetInt32(0),
-                    Value: r.IsDBNull(1) ? "" : r.GetString(1),
-                    Type: r.IsDBNull(2) ? (int?)null : r.GetInt32(2)
+                    Value: r.GetStringOrDefault(1),
+                    Type: r.GetInt32OrNull(2)
                 ),
                 p => p.AddWithValue("@ProductId", productId));
             var result = new Dictionary<int, string>();
@@ -237,8 +237,8 @@ namespace Linkora.Repositories
                 r => (
                     Id: r.GetInt32(0),
                     Value: r.GetString(1),
-                    ValueLV: r.IsDBNull(2) ? r.GetString(1) : r.GetString(2),
-                    ValueRU: r.IsDBNull(3) ? r.GetString(1) : r.GetString(3)
+                    ValueLV: r.GetStringOrDefault(2, r.GetString(1)),
+                    ValueRU: r.GetStringOrDefault(3, r.GetString(1))
                 ));
             return data.ToDictionary(x => x.Id, x => (x.Value, x.ValueLV, x.ValueRU));
         }
@@ -248,8 +248,8 @@ namespace Linkora.Repositories
                 r => (
                     Id: r.GetInt32(0),
                     Name: r.GetString(1),
-                    NameLV: r.IsDBNull(2) ? r.GetString(1) : r.GetString(2),
-                    NameRU: r.IsDBNull(3) ? r.GetString(1) : r.GetString(3),
+                    NameLV: r.GetStringOrDefault(2, r.GetString(1)),
+                    NameRU: r.GetStringOrDefault(3, r.GetString(1)),
                     Hex: r.GetString(4)
                 ));
             return data.ToDictionary(x => x.Id, x => (x.Name, x.NameLV, x.NameRU, x.Hex));
@@ -268,26 +268,26 @@ namespace Linkora.Repositories
                 r => new Product
                 {
                     Id = r.GetInt32(0),
-                    Name = r.IsDBNull(1) ? "" : r.GetString(1),
-                    Description = r.IsDBNull(2) ? null : r.GetString(2),
-                    Address = r.IsDBNull(3) ? null : r.GetString(3),
-                    CreatedAt = r.IsDBNull(4) ? null : r.GetDateTime(4),
-                    AvatarUrl = r.IsDBNull(5) ? null : r.GetString(5),
-                    CategoryId = r.IsDBNull(6) ? null : r.GetInt32(6),
+                    Name = r.GetStringOrDefault(1),
+                    Description = r.GetStringOrNull(2),
+                    Address = r.GetStringOrNull(3),
+                    CreatedAt = r.GetDateTimeOrNull(4),
+                    AvatarUrl = r.GetStringOrNull(5),
+                    CategoryId = r.GetInt32OrNull(6),
                     Status = r.IsDBNull(7) ? ProductStatus.Active : Enum.Parse<ProductStatus>(r.GetString(7), true),
-                    Qty = r.IsDBNull(8) ? null : r.GetInt32(8),
-                    UserId = r.IsDBNull(14) ? null : r.GetInt32(14),
+                    Qty = r.GetInt32OrNull(8),
+                    UserId = r.GetInt32OrNull(14),
                     Seller = new UserSummary
                     {
-                        Id = r.IsDBNull(13) ? 0 : r.GetInt32(13),
-                        UserName = r.IsDBNull(9) ? null : r.GetString(9),
-                        AvatarUrl = r.IsDBNull(10) ? null : r.GetString(10),
-                        IsCompany = !r.IsDBNull(11) && r.GetBoolean(11),
-                        Phone = r.IsDBNull(12) ? null : r.GetString(12),
-                        Email = r.IsDBNull(15) ? null : r.GetString(15),
-                        CreatedAt = r.IsDBNull(16) ? null : r.GetDateTime(16),
+                        Id = r.GetInt32OrDefault(13),
+                        UserName = r.GetStringOrNull(9),
+                        AvatarUrl = r.GetStringOrNull(10),
+                        IsCompany = r.GetBooleanOrDefault(11),
+                        Phone = r.GetStringOrNull(12),
+                        Email = r.GetStringOrNull(15),
+                        CreatedAt = r.GetDateTimeOrNull(16),
                     },
-                    PromotionType = r.IsDBNull(17) ? "None" : r.GetString(17),
+                    PromotionType = r.GetStringOrDefault(17, "None"),
                 },
                 p => p.AddWithValue("@Id", id));
             if (product == null) return null;
@@ -296,7 +296,7 @@ namespace Linkora.Repositories
                   FROM MapperProductCategory m
                   JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
                   WHERE m.ProductId = @Id",
-                r => r.IsDBNull(0) ? (decimal?)null : r.GetDecimal(0),
+                r => r.GetDecimalOrNull(0),
                 p => p.AddWithValue("@Id", id));
             product.Price = priceVal.FirstOrDefault();
             product.Media = await GetMediaAsync(id);
@@ -321,11 +321,11 @@ namespace Linkora.Repositories
                 r => new Product
                 {
                     Id = r.GetInt32(0),
-                    Name = r.IsDBNull(1) ? "" : r.GetString(1),
-                    Address = r.IsDBNull(2) ? null : r.GetString(2),
-                    CreatedAt = r.IsDBNull(3) ? null : r.GetDateTime(3),
-                    AvatarUrl = r.IsDBNull(4) ? null : r.GetString(4),
-                    Price = r.IsDBNull(5) ? null : r.GetDecimal(5),
+                    Name = r.GetStringOrDefault(1),
+                    Address = r.GetStringOrNull(2),
+                    CreatedAt = r.GetDateTimeOrNull(3),
+                    AvatarUrl = r.GetStringOrNull(4),
+                    Price = r.GetDecimalOrNull(5),
                 },
                 p =>
                 {
@@ -355,12 +355,12 @@ namespace Linkora.Repositories
                 r => new Product
                 {
                     Id = r.GetInt32(0),
-                    Name = r.IsDBNull(1) ? "" : r.GetString(1),
-                    Address = r.IsDBNull(2) ? null : r.GetString(2),
-                    CreatedAt = r.IsDBNull(3) ? null : r.GetDateTime(3),
-                    AvatarUrl = r.IsDBNull(4) ? null : r.GetString(4),
+                    Name = r.GetStringOrDefault(1),
+                    Address = r.GetStringOrNull(2),
+                    CreatedAt = r.GetDateTimeOrNull(3),
+                    AvatarUrl = r.GetStringOrNull(4),
                     Status = r.IsDBNull(5) ? ProductStatus.Active : Enum.Parse<ProductStatus>(r.GetString(5), true),
-                    Price = r.IsDBNull(6) ? null : r.GetDecimal(6),
+                    Price = r.GetDecimalOrNull(6),
                     ViewCount = r.GetInt32(7),
                     FavCount = r.GetInt32(8),
                     CartCount = r.GetInt32(9),
@@ -424,7 +424,7 @@ namespace Linkora.Repositories
         {
             var data = await QueryAsync(
                 "SELECT CategoryId, Value FROM MapperProductCategory WHERE ProductId = @ProductId",
-                r => (CategoryId: r.GetInt32(0), Value: r.IsDBNull(1) ? "" : r.GetString(1)),
+                r => (CategoryId: r.GetInt32(0), Value: r.GetStringOrDefault(1)),
                 p => p.AddWithValue("@ProductId", productId));
             return data.ToDictionary(x => x.CategoryId, x => x.Value);
         }
@@ -462,10 +462,10 @@ namespace Linkora.Repositories
                         await transaction.RollbackAsync();
                         return false;
                     }
-                    imagePath = reader.IsDBNull(0) ? null : reader.GetString(0);
+                    imagePath = reader.GetStringOrNull(0);
                     qty = reader.GetInt32(1);
                     price = reader.IsDBNull(2) ? 0 : Convert.ToDecimal(reader[2]);
-                    delivery = reader.IsDBNull(3) ? "" : reader.GetString(3);
+                    delivery = reader.GetStringOrDefault(3);
                 }
                 if (!string.IsNullOrEmpty(imagePath))
                 {
@@ -555,16 +555,14 @@ namespace Linkora.Repositories
                 CategoryId = reader.GetInt32(reader.GetOrdinal("CategoryId")),
                 Address = reader.GetString(reader.GetOrdinal("Address")),
                 Name = reader.GetString(reader.GetOrdinal("Name")),
-                Description = reader.IsDBNull(reader.GetOrdinal("Description")) ? null : reader.GetString(reader.GetOrdinal("Description")),
+                Description = reader.GetStringOrNull(reader.GetOrdinal("Description")),
                 Price = reader.GetDecimal(reader.GetOrdinal("Price")),
-                AvatarUrl = reader.IsDBNull(reader.GetOrdinal("AvatarUrl")) ? null : reader.GetString(reader.GetOrdinal("AvatarUrl")),
+                AvatarUrl = reader.GetStringOrNull(reader.GetOrdinal("AvatarUrl")),
                 CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                 Status = reader.IsDBNull(reader.GetOrdinal("Status"))
                     ? ProductStatus.Active
                     : Enum.Parse<ProductStatus>(reader.GetString(reader.GetOrdinal("Status"))),
-                ArchivedAt = reader.IsDBNull(reader.GetOrdinal("ArchivedAt"))
-                    ? null
-                    : reader.GetDateTime(reader.GetOrdinal("ArchivedAt"))
+                ArchivedAt = reader.GetDateTimeOrNull(reader.GetOrdinal("ArchivedAt"))
             };
         }
         public async Task<bool> UpdateProductStatusAsync(int productId, ProductStatus status)
@@ -765,21 +763,21 @@ namespace Linkora.Repositories
                 items.Add(new AdminConfOptionRow
                 {
                     OptionId = r.GetInt32(0),
-                    OptionValue = r.IsDBNull(1) ? "" : r.GetString(1),
-                    OptionValueLV = r.IsDBNull(2) ? "" : r.GetString(2),
-                    OptionValueRU = r.IsDBNull(3) ? "" : r.GetString(3),
+                    OptionValue = r.GetStringOrDefault(1),
+                    OptionValueLV = r.GetStringOrDefault(2),
+                    OptionValueRU = r.GetStringOrDefault(3),
                     ProductId = r.GetInt32(4),
-                    ProductName = r.IsDBNull(5) ? "" : r.GetString(5),
-                    CreatedAt = r.IsDBNull(6) ? null : r.GetDateTime(6),
+                    ProductName = r.GetStringOrDefault(5),
+                    CreatedAt = r.GetDateTimeOrNull(6),
                     UserId = r.GetInt32(7),
-                    UserName = r.IsDBNull(8) ? "" : r.GetString(8),
+                    UserName = r.GetStringOrDefault(8),
                     CategoryId = r.GetInt32(9),
-                    CategoryName = r.IsDBNull(10) ? "" : r.GetString(10),
-                    ParameterName = r.IsDBNull(11) ? "" : r.GetString(11),
-                    CategoryNameLV = r.IsDBNull(12) ? "" : r.GetString(12),
-                    ParameterNameLV = r.IsDBNull(13) ? "" : r.GetString(13),
-                    CategoryNameRU = r.IsDBNull(14) ? "" : r.GetString(14),
-                    ParameterNameRU = r.IsDBNull(15) ? "" : r.GetString(15)
+                    CategoryName = r.GetStringOrDefault(10),
+                    ParameterName = r.GetStringOrDefault(11),
+                    CategoryNameLV = r.GetStringOrDefault(12),
+                    ParameterNameLV = r.GetStringOrDefault(13),
+                    CategoryNameRU = r.GetStringOrDefault(14),
+                    ParameterNameRU = r.GetStringOrDefault(15)
                 });
             }
             return (items, totalCount);
@@ -821,7 +819,7 @@ namespace Linkora.Repositories
                   FROM MapperProductCategory mpc
                   JOIN Category c ON c.Id = mpc.CategoryId AND c.Name = 'Price, €'
                   WHERE mpc.ProductId = @Id",
-                r => r.IsDBNull(0) ? (int?)null : r.GetInt32(0),
+                r => r.GetInt32OrNull(0),
                 p => p.AddWithValue("@Id", productId));
             return result.FirstOrDefault();
         }
@@ -878,12 +876,12 @@ namespace Linkora.Repositories
                 r => new Product
                 {
                     Id = r.GetInt32(0),
-                    Name = r.IsDBNull(1) ? "" : r.GetString(1),
-                    Address = r.IsDBNull(2) ? null : r.GetString(2),
-                    CreatedAt = r.IsDBNull(3) ? null : r.GetDateTime(3),
-                    AvatarUrl = r.IsDBNull(4) ? null : r.GetString(4),
+                    Name = r.GetStringOrDefault(1),
+                    Address = r.GetStringOrNull(2),
+                    CreatedAt = r.GetDateTimeOrNull(3),
+                    AvatarUrl = r.GetStringOrNull(4),
                     Status = ProductStatus.Succeeded,
-                    Price = r.IsDBNull(6) ? null : r.GetDecimal(6),
+                    Price = r.GetDecimalOrNull(6),
                 },
                 p => p.AddWithValue("@UserId", userId));
         }

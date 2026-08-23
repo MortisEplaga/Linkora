@@ -18,10 +18,10 @@ namespace Linkora.Repositories
             return new Category
             {
                 Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                ParentId = reader.IsDBNull(reader.GetOrdinal("ParentId")) ? null : reader.GetInt32(reader.GetOrdinal("ParentId")),
-                Name = Resolve(lang, nameEn, reader.IsDBNull(reader.GetOrdinal("NameLV")) ? null : reader.GetString(reader.GetOrdinal("NameLV")), reader.IsDBNull(reader.GetOrdinal("NameRU")) ? null : reader.GetString(reader.GetOrdinal("NameRU"))),
+                ParentId = reader.GetInt32OrNull(reader.GetOrdinal("ParentId")),
+                Name = Resolve(lang, nameEn, reader.GetStringOrNull(reader.GetOrdinal("NameLV")), reader.GetStringOrNull(reader.GetOrdinal("NameRU"))),
                 NameEn = nameEn,
-                Type = reader.IsDBNull(reader.GetOrdinal("Type")) ? null : reader.GetInt32(reader.GetOrdinal("Type")),
+                Type = reader.GetInt32OrNull(reader.GetOrdinal("Type")),
             };
         }
         public async Task<List<Category>> GetAllAsync()
@@ -121,7 +121,7 @@ namespace Linkora.Repositories
                         Option = new SelectOption
                         {
                             Id = r.GetInt32(1),
-                            Text = Resolve(lang, r.GetString(2), r.IsDBNull(3) ? null : r.GetString(3), r.IsDBNull(4) ? null : r.GetString(4))
+                            Text = Resolve(lang, r.GetString(2), r.GetStringOrNull(3), r.GetStringOrNull(4))
                         }
                     },
                     addParams);
@@ -141,9 +141,9 @@ namespace Linkora.Repositories
                     r => new
                     {
                         ParamId = r.GetInt32(0),
-                        Min = r.IsDBNull(1) ? null : (decimal?)r.GetDecimal(1),
-                        Max = r.IsDBNull(2) ? null : (decimal?)r.GetDecimal(2),
-                        Step = r.IsDBNull(3) ? null : (decimal?)r.GetDecimal(3)
+                        Min = r.GetDecimalOrNull(1),
+                        Max = r.GetDecimalOrNull(2),
+                        Step = r.GetDecimalOrNull(3)
                     },
                     addParams);
 
@@ -169,7 +169,7 @@ namespace Linkora.Repositories
                         Option = new ColorOption
                         {
                             Id = r.GetInt32(1),
-                            Name = Resolve(lang, r.GetString(2), r.IsDBNull(3) ? null : r.GetString(3), r.IsDBNull(4) ? null : r.GetString(4)),
+                            Name = Resolve(lang, r.GetString(2), r.GetStringOrNull(3), r.GetStringOrNull(4)),
                             HexValue = r.GetString(5)
                         }
                     },

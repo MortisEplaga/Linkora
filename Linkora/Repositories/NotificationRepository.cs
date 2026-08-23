@@ -59,15 +59,15 @@ namespace Linkora.Repositories
                 {
                     Id = r.GetInt32(0),
                     UserId = r.GetInt32(1),
-                    FromUserId = r.IsDBNull(2) ? null : r.GetInt32(2),
-                    ProductId = r.IsDBNull(3) ? null : r.GetInt32(3),
-                    Text = r.IsDBNull(4) ? "" : r.GetString(4),
+                    FromUserId = r.GetInt32OrNull(2),
+                    ProductId = r.GetInt32OrNull(3),
+                    Text = r.GetStringOrDefault(4),
                     IsRead = r.GetBoolean(5),
                     CreatedAt = r.GetDateTime(6),
-                    FromUserName = r.IsDBNull(7) ? null : r.GetString(7),
-                    FromUserAvatar = r.IsDBNull(8) ? null : r.GetString(8),
-                    ProductName = r.IsDBNull(9) ? null : r.GetString(9),
-                    ProductImage = r.IsDBNull(10) ? null : r.GetString(10),
+                    FromUserName = r.GetStringOrNull(7),
+                    FromUserAvatar = r.GetStringOrNull(8),
+                    ProductName = r.GetStringOrNull(9),
+                    ProductImage = r.GetStringOrNull(10),
                 },
                 p => p.AddWithValue("@UserId", userId));
         }
@@ -75,7 +75,7 @@ namespace Linkora.Repositories
         {
             return QueryAsync<string>(
                 "SELECT Text FROM Notifications WHERE UserId = @UserId AND IsRead = 0",
-                r => r.IsDBNull(0) ? "" : r.GetString(0),
+                r => r.GetStringOrDefault(0),
                 p => p.AddWithValue("@UserId", userId));
         }
         public Task MarkReadAsync(int notificationId, int userId)

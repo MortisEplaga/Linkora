@@ -16,10 +16,10 @@ namespace Linkora.Repositories
                 r => new UserSummary
                 {
                     Id = r.GetInt32(0),
-                    UserName = r.IsDBNull(1) ? null : r.GetString(1),
-                    AvatarUrl = r.IsDBNull(2) ? null : r.GetString(2),
-                    IsCompany = !r.IsDBNull(3) && r.GetBoolean(3),
-                    CreatedAt = r.IsDBNull(4) ? null : r.GetDateTime(4),
+                    UserName = r.GetStringOrNull(1),
+                    AvatarUrl = r.GetStringOrNull(2),
+                    IsCompany = r.GetBooleanOrDefault(3),
+                    CreatedAt = r.GetDateTimeOrNull(4),
                 },
                 p => p.AddWithValue("@FollowerId", followerId));
         }

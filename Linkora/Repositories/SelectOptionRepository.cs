@@ -18,7 +18,7 @@
                 $@"SELECT Id FROM SelectOptions
                    WHERE CategoryId = @ParamId
                      AND LTRIM(RTRIM({col})) = LTRIM(RTRIM(@Text))",
-                r => r.IsDBNull(0) ? (int?)null : r.GetInt32(0),
+                r => r.GetInt32OrNull(0),
                 p =>
                 {
                     p.AddWithValue("@ParamId", paramId);
@@ -52,7 +52,7 @@
                 $@"SELECT Id, {col}
                    FROM SelectOptions
                    WHERE CategoryId = @ParamId and IsConf = 1",
-                r => (r.GetInt32(0), r.IsDBNull(1) ? string.Empty : r.GetString(1)),
+                r => (r.GetInt32(0), r.GetStringOrDefault(1)),
                 p => p.AddWithValue("@ParamId", paramId));
         }
     }

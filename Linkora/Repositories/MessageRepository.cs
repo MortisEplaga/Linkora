@@ -75,8 +75,7 @@ public class MessageRepository : SqlRepositoryBase, IMessageRepository
         int targetUserId = (userId == buyerId) ? sellerId : (userId == sellerId ? buyerId : 0);
         return targetUserId == 0 ? null : targetUserId;
     }
-    public async Task<bool> HasUserReviewedAsync(int conversationId, int userId)
-        => !await CanReviewAsync(conversationId, userId);
+    public async Task<bool> HasUserReviewedAsync(int conversationId, int userId) => !await CanReviewAsync(conversationId, userId);
     public async Task<int> CreateReviewAsync(int authorId, int targetUserId, int productId, int rating, string? comment)
     {
         var result = await QueryAsync<int>(
@@ -108,8 +107,8 @@ public class MessageRepository : SqlRepositoryBase, IMessageRepository
             {
                 Id = r.GetInt32(0),
                 UserName = r.GetString(1),
-                AvatarUrl = r.IsDBNull(2) ? null : r.GetString(2),
-                IsCompany = !r.IsDBNull(3) && r.GetBoolean(3)
+                AvatarUrl = r.GetStringOrNull(2),
+                IsCompany = r.GetBooleanOrDefault(3)
             },
             p =>
             {
@@ -152,60 +151,60 @@ public class MessageRepository : SqlRepositoryBase, IMessageRepository
     {
         return await QueryAsync(
             @"WITH user_role AS (
-    SELECT Role FROM Users WHERE Id = @UserId
-)
-SELECT c.Id, c.ProductId, c.BuyerId, c.SellerId, c.IsSystem, c.IsSupport, c.CreatedAt,
-       p.Name,
-       COALESCE(
-           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-           p.AvatarUrl
-       ) AS AvatarUrl,
-       CASE 
-           WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN bu.UserName
-           WHEN c.IsSupport = 1 AND ur.Role != 'admin' THEN 'Tech Support'
-           WHEN c.BuyerId = @UserId THEN su.UserName ELSE bu.UserName 
-       END AS OtherUserName,
-       CASE 
-           WHEN c.IsSupport = 1 AND ur.Role != 'admin' THEN NULL
-           WHEN c.BuyerId = @UserId THEN su.AvatarUrl ELSE bu.AvatarUrl 
-       END AS OtherUserAvatar,
-       CASE 
-           WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN c.BuyerId
-           WHEN c.BuyerId = @UserId THEN c.SellerId ELSE c.BuyerId 
-       END AS OtherUserId,
-       CASE 
-            WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN CAST(0 AS BIT)
-            WHEN c.BuyerId = @UserId THEN CAST(IIF(su.Role = 'banned', 1, 0) AS BIT)
-            ELSE CAST(IIF(bu.Role = 'banned', 1, 0) AS BIT)
-        END AS OtherUserIsBanned,
-       (SELECT TOP 1 Text FROM Messages WHERE ConversationId = c.Id ORDER BY CreatedAt DESC) AS LastMessage,
-       (SELECT TOP 1 CreatedAt FROM Messages WHERE ConversationId = c.Id ORDER BY CreatedAt DESC) AS LastMessageAt,
-       (SELECT COUNT(*) FROM Messages WHERE ConversationId = c.Id AND IsRead = 0 AND SenderId != @UserId AND IsAdmin = 0) AS UnreadCount
-FROM Conversations c
-CROSS JOIN user_role ur
-LEFT JOIN Products p ON p.Id = c.ProductId
-LEFT JOIN Users bu ON bu.Id = c.BuyerId
-LEFT JOIN Users su ON su.Id = c.SellerId
-WHERE (c.BuyerId = @UserId OR c.SellerId = @UserId OR (c.IsSupport = 1 AND ur.Role = 'admin'))
-ORDER BY LastMessageAt DESC",
+                SELECT Role FROM Users WHERE Id = @UserId
+            )
+            SELECT c.Id, c.ProductId, c.BuyerId, c.SellerId, c.IsSystem, c.IsSupport, c.CreatedAt,
+                   p.Name,
+                   COALESCE(
+                       (SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+                       p.AvatarUrl
+                   ) AS AvatarUrl,
+                   CASE 
+                       WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN bu.UserName
+                       WHEN c.IsSupport = 1 AND ur.Role != 'admin' THEN 'Tech Support'
+                       WHEN c.BuyerId = @UserId THEN su.UserName ELSE bu.UserName 
+                   END AS OtherUserName,
+                   CASE 
+                       WHEN c.IsSupport = 1 AND ur.Role != 'admin' THEN NULL
+                       WHEN c.BuyerId = @UserId THEN su.AvatarUrl ELSE bu.AvatarUrl 
+                   END AS OtherUserAvatar,
+                   CASE 
+                       WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN c.BuyerId
+                       WHEN c.BuyerId = @UserId THEN c.SellerId ELSE c.BuyerId 
+                   END AS OtherUserId,
+                   CASE 
+                        WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN CAST(0 AS BIT)
+                        WHEN c.BuyerId = @UserId THEN CAST(IIF(su.Role = 'banned', 1, 0) AS BIT)
+                        ELSE CAST(IIF(bu.Role = 'banned', 1, 0) AS BIT)
+                    END AS OtherUserIsBanned,
+                   (SELECT TOP 1 Text FROM Messages WHERE ConversationId = c.Id ORDER BY CreatedAt DESC) AS LastMessage,
+                   (SELECT TOP 1 CreatedAt FROM Messages WHERE ConversationId = c.Id ORDER BY CreatedAt DESC) AS LastMessageAt,
+                   (SELECT COUNT(*) FROM Messages WHERE ConversationId = c.Id AND IsRead = 0 AND SenderId != @UserId AND IsAdmin = 0) AS UnreadCount
+            FROM Conversations c
+            CROSS JOIN user_role ur
+            LEFT JOIN Products p ON p.Id = c.ProductId
+            LEFT JOIN Users bu ON bu.Id = c.BuyerId
+            LEFT JOIN Users su ON su.Id = c.SellerId
+            WHERE (c.BuyerId = @UserId OR c.SellerId = @UserId OR (c.IsSupport = 1 AND ur.Role = 'admin'))
+            ORDER BY LastMessageAt DESC",
             r => new Conversation
             {
                 Id = r.GetInt32(0),
-                ProductId = r.IsDBNull(1) ? null : r.GetInt32(1),
+                ProductId = r.GetInt32OrNull(1),
                 BuyerId = r.GetInt32(2),
                 SellerId = r.GetInt32(3),
                 IsSystem = r.GetBoolean(4),
                 IsSupport = r.GetBoolean(5),
                 CreatedAt = r.GetDateTime(6),
-                ProductName = r.IsDBNull(7) ? null : r.GetString(7),
-                ProductImage = r.IsDBNull(8) ? null : r.GetString(8),
-                OtherUserName = r.IsDBNull(9) ? null : r.GetString(9),
-                OtherUserAvatar = r.IsDBNull(10) ? null : r.GetString(10),
-                OtherUserId = r.IsDBNull(11) ? 0 : r.GetInt32(11),
-                OtherUserIsBanned = r.IsDBNull(12) ? false : r.GetBoolean(12),
-                LastMessage = r.IsDBNull(13) ? null : r.GetString(13),
-                LastMessageAt = r.IsDBNull(14) ? null : r.GetDateTime(14),
-                UnreadCount = r.IsDBNull(15) ? 0 : r.GetInt32(15),
+                ProductName = r.GetStringOrNull(7),
+                ProductImage = r.GetStringOrNull(8),
+                OtherUserName = r.GetStringOrNull(9),
+                OtherUserAvatar = r.GetStringOrNull(10),
+                OtherUserId = r.GetInt32OrDefault(11),
+                OtherUserIsBanned = r.GetBooleanOrDefault(12),
+                LastMessage = r.GetStringOrNull(13),
+                LastMessageAt = r.GetDateTimeOrNull(14),
+                UnreadCount = r.GetInt32OrDefault(15),
             },
             p => p.AddWithValue("@UserId", userId));
     }
@@ -213,58 +212,58 @@ ORDER BY LastMessageAt DESC",
     {
         var data = await QueryAsync<(Conversation conv, string? productStatus)>(
             @"WITH user_role AS (
-    SELECT Role FROM Users WHERE Id = @UserId
-)
-SELECT c.Id, c.ProductId, c.BuyerId, c.SellerId, c.IsSystem, c.IsSupport, c.CreatedAt,
-       p.Name,
-       COALESCE(
-           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-           p.AvatarUrl
-       ) AS AvatarUrl,
-       p.Status,
-       CASE 
-           WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN bu.UserName
-           WHEN c.IsSupport = 1 AND ur.Role != 'admin' THEN 'Tech Support'
-           WHEN c.BuyerId = @UserId THEN su.UserName ELSE bu.UserName 
-       END AS OtherUserName,
-       CASE 
-           WHEN c.IsSupport = 1 AND ur.Role != 'admin' THEN NULL
-           WHEN c.BuyerId = @UserId THEN su.AvatarUrl ELSE bu.AvatarUrl 
-       END AS OtherUserAvatar,
-       CASE 
-           WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN c.BuyerId
-           WHEN c.BuyerId = @UserId THEN c.SellerId ELSE c.BuyerId 
-       END AS OtherUserId,
-       CASE 
-            WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN CAST(0 AS BIT)
-            WHEN c.BuyerId = @UserId THEN CAST(IIF(su.Role = 'banned', 1, 0) AS BIT)
-            ELSE CAST(IIF(bu.Role = 'banned', 1, 0) AS BIT)
-        END AS OtherUserIsBanned
-FROM Conversations c
-CROSS JOIN user_role ur
-LEFT JOIN Products p ON p.Id = c.ProductId
-LEFT JOIN Users bu ON bu.Id = c.BuyerId
-LEFT JOIN Users su ON su.Id = c.SellerId
-WHERE c.Id = @Id 
-  AND (c.BuyerId = @UserId OR c.SellerId = @UserId OR (c.IsSupport = 1 AND ur.Role = 'admin'))",
+                SELECT Role FROM Users WHERE Id = @UserId
+            )
+            SELECT c.Id, c.ProductId, c.BuyerId, c.SellerId, c.IsSystem, c.IsSupport, c.CreatedAt,
+                   p.Name,
+                   COALESCE(
+                       (SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+                       p.AvatarUrl
+                   ) AS AvatarUrl,
+                   p.Status,
+                   CASE 
+                       WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN bu.UserName
+                       WHEN c.IsSupport = 1 AND ur.Role != 'admin' THEN 'Tech Support'
+                       WHEN c.BuyerId = @UserId THEN su.UserName ELSE bu.UserName 
+                   END AS OtherUserName,
+                   CASE 
+                       WHEN c.IsSupport = 1 AND ur.Role != 'admin' THEN NULL
+                       WHEN c.BuyerId = @UserId THEN su.AvatarUrl ELSE bu.AvatarUrl 
+                   END AS OtherUserAvatar,
+                   CASE 
+                       WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN c.BuyerId
+                       WHEN c.BuyerId = @UserId THEN c.SellerId ELSE c.BuyerId 
+                   END AS OtherUserId,
+                   CASE 
+                        WHEN c.IsSupport = 1 AND ur.Role = 'admin' THEN CAST(0 AS BIT)
+                        WHEN c.BuyerId = @UserId THEN CAST(IIF(su.Role = 'banned', 1, 0) AS BIT)
+                        ELSE CAST(IIF(bu.Role = 'banned', 1, 0) AS BIT)
+                    END AS OtherUserIsBanned
+            FROM Conversations c
+            CROSS JOIN user_role ur
+            LEFT JOIN Products p ON p.Id = c.ProductId
+            LEFT JOIN Users bu ON bu.Id = c.BuyerId
+            LEFT JOIN Users su ON su.Id = c.SellerId
+            WHERE c.Id = @Id 
+              AND (c.BuyerId = @UserId OR c.SellerId = @UserId OR (c.IsSupport = 1 AND ur.Role = 'admin'))",
             r => (
                 new Conversation
                 {
                     Id = r.GetInt32(0),
-                    ProductId = r.IsDBNull(1) ? null : r.GetInt32(1),
+                    ProductId = r.GetInt32OrNull(1),
                     BuyerId = r.GetInt32(2),
                     SellerId = r.GetInt32(3),
                     IsSystem = r.GetBoolean(4),
                     IsSupport = r.GetBoolean(5),
                     CreatedAt = r.GetDateTime(6),
-                    ProductName = r.IsDBNull(7) ? null : r.GetString(7),
-                    ProductImage = r.IsDBNull(8) ? null : r.GetString(8),
-                    OtherUserName = r.IsDBNull(10) ? null : r.GetString(10),
-                    OtherUserAvatar = r.IsDBNull(11) ? null : r.GetString(11),
-                    OtherUserId = r.IsDBNull(12) ? 0 : r.GetInt32(12),
-                    OtherUserIsBanned = r.IsDBNull(13) ? false : r.GetBoolean(13)
+                    ProductName = r.GetStringOrNull(7),
+                    ProductImage = r.GetStringOrNull(8),
+                    OtherUserName = r.GetStringOrNull(10),
+                    OtherUserAvatar = r.GetStringOrNull(11),
+                    OtherUserId = r.GetInt32OrDefault(12),
+                    OtherUserIsBanned = r.GetBooleanOrDefault(13)
                 },
-                r.IsDBNull(9) ? null : r.GetString(9)
+                r.GetStringOrNull(9)
             ),
             p =>
             {
@@ -344,13 +343,13 @@ WHERE c.Id = @Id
             {
                 Id = r.GetInt32(0),
                 ConversationId = r.GetInt32(1),
-                SenderId = r.IsDBNull(2) ? null : r.GetInt32(2),
+                SenderId = r.GetInt32OrNull(2),
                 Text = r.GetString(3),
                 CreatedAt = r.GetDateTime(4),
                 IsRead = r.GetBoolean(5),
-                IsAdmin = r.IsDBNull(6) ? false : r.GetBoolean(6),
-                SenderName = r.IsDBNull(7) ? null : r.GetString(7),
-                SenderAvatar = r.IsDBNull(8) ? null : r.GetString(8),
+                IsAdmin = r.GetBooleanOrDefault(6),
+                SenderName = r.GetStringOrNull(7),
+                SenderAvatar = r.GetStringOrNull(8),
             },
             p => p.AddWithValue("@ConvId", conversationId));
     }

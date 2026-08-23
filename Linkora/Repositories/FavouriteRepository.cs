@@ -71,16 +71,16 @@ namespace Linkora.Repositories
                     Product: new Product
                     {
                         Id = r.GetInt32(1),
-                        Name = r.IsDBNull(2) ? "" : r.GetString(2),
-                        Price = r.IsDBNull(3) ? null : r.GetDecimal(3),
-                        Address = r.IsDBNull(4) ? null : r.GetString(4),
-                        CreatedAt = r.IsDBNull(5) ? null : r.GetDateTime(5),
-                        AvatarUrl = r.IsDBNull(6) ? null : r.GetString(6),
+                        Name = r.GetStringOrDefault(2),
+                        Price = r.GetDecimalOrNull(3),
+                        Address = r.GetStringOrNull(4),
+                        CreatedAt = r.GetDateTimeOrNull(5),
+                        AvatarUrl = r.GetStringOrNull(6),
                         Seller = new UserSummary
                         {
-                            UserName = r.IsDBNull(7) ? null : r.GetString(7),
-                            AvatarUrl = r.IsDBNull(8) ? null : r.GetString(8),
-                            IsCompany = !r.IsDBNull(9) && r.GetBoolean(9),
+                            UserName = r.GetStringOrNull(7),
+                            AvatarUrl = r.GetStringOrNull(8),
+                            IsCompany = r.GetBooleanOrDefault(9),
                         }
                     }
                 ),

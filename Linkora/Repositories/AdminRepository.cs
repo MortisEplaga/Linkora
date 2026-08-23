@@ -8,7 +8,7 @@ namespace Linkora.Repositories
         public async Task<AdminBadges> GetSidebarBadgesAsync()
         {
             var badges = await QuerySingleAsync<AdminBadges>(@"
-        SELECT 
+            SELECT 
             (SELECT COUNT(*) FROM Products WHERE Status = 'Moderation'),
             (SELECT COUNT(*) FROM Reports WHERE Status = 'Pending'),
             (SELECT COUNT(*) FROM SelectOptions WHERE IsConf = 0)",
@@ -55,10 +55,10 @@ namespace Linkora.Repositories
                 r => new AdminProductRow
                 {
                     Id = r.GetInt32(0),
-                    Name = r.IsDBNull(1) ? "" : r.GetString(1),
-                    Status = r.IsDBNull(2) ? "" : r.GetString(2),
-                    CreatedAt = r.IsDBNull(3) ? null : r.GetDateTime(3),
-                    UserName = r.IsDBNull(4) ? "" : r.GetString(4),
+                    Name = r.GetStringOrDefault(1),
+                    Status = r.GetStringOrDefault(2),
+                    CreatedAt = r.GetDateTimeOrNull(3),
+                    UserName = r.GetStringOrDefault(4),
                 }));
             return stats;
         }
@@ -89,20 +89,20 @@ namespace Linkora.Repositories
                 mapRow: r => new AdminProductRow
                 {
                     Id = r.GetInt32(0),
-                    Name = r.IsDBNull(1) ? "" : r.GetString(1),
-                    Status = r.IsDBNull(2) ? "" : r.GetString(2),
-                    CreatedAt = r.IsDBNull(3) ? null : r.GetDateTime(3),
-                    AvatarUrl = r.IsDBNull(4) ? null : r.GetString(4),
-                    UserName = r.IsDBNull(5) ? "" : r.GetString(5),
-                    UserId = r.IsDBNull(6) ? 0 : r.GetInt32(6),
-                    ReportCount = r.IsDBNull(7) ? 0 : r.GetInt32(7),
-                    Price = r.IsDBNull(8) ? null : r.GetDecimal(8),
+                    Name = r.GetStringOrDefault(1),
+                    Status = r.GetStringOrDefault(2),
+                    CreatedAt = r.GetDateTimeOrNull(3),
+                    AvatarUrl = r.GetStringOrNull(4),
+                    UserName = r.GetStringOrDefault(5),
+                    UserId = r.GetInt32OrDefault(6),
+                    ReportCount = r.GetInt32OrDefault(7),
+                    Price = r.GetDecimalOrNull(8),
                 });
         }
         public async Task<int?> SetProductStatusAsync(int id, string status)
         {
             return status != "Active" ? null : (await QueryAsync<int?>("UPDATE Products SET Status = @S OUTPUT inserted.UserId WHERE Id = @Id",
-                r => r.IsDBNull(0) ? (int?)null : r.GetInt32(0),
+                r => r.GetInt32OrNull(0),
                 p => { p.AddWithValue("@S", status); p.AddWithValue("@Id", id); })).FirstOrDefault();
         }
         public async Task<PagedResult<AdminUserRow>> GetUsersAsync(int page, string? search, string role)
@@ -125,14 +125,14 @@ namespace Linkora.Repositories
                 mapRow: r => new AdminUserRow
                 {
                     Id = r.GetInt32(0),
-                    UserName = r.IsDBNull(1) ? "" : r.GetString(1),
-                    Email = r.IsDBNull(2) ? null : r.GetString(2),
-                    Phone = r.IsDBNull(3) ? null : r.GetString(3),
-                    Role = r.IsDBNull(4) ? "user" : r.GetString(4),
-                    IsCompany = !r.IsDBNull(5) && r.GetBoolean(5),
-                    AvatarUrl = r.IsDBNull(6) ? null : r.GetString(6),
-                    CreatedAt = r.IsDBNull(7) ? null : r.GetDateTime(7),
-                    ProductCount = r.IsDBNull(8) ? 0 : r.GetInt32(8),
+                    UserName = r.GetStringOrDefault(1),
+                    Email = r.GetStringOrNull(2),
+                    Phone = r.GetStringOrNull(3),
+                    Role = r.GetStringOrDefault(4, "user"),
+                    IsCompany = r.GetBooleanOrDefault(5),
+                    AvatarUrl = r.GetStringOrNull(6),
+                    CreatedAt = r.GetDateTimeOrNull(7),
+                    ProductCount = r.GetInt32OrDefault(8),
                 });
         }
         public async Task<string?> UpdateUserRoleAsync(int id, string role)
@@ -164,8 +164,7 @@ namespace Linkora.Repositories
                 r => r.GetInt32(0),
                 p => p.AddWithValue("@UserId", userId));
         }
-        public async Task DeleteUserAsync(int id)
-            => await ExecuteAsync("DELETE FROM Users WHERE Id = @Id", p => p.AddWithValue("@Id", id));
+        public async Task DeleteUserAsync(int id) => await ExecuteAsync("DELETE FROM Users WHERE Id = @Id", p => p.AddWithValue("@Id", id));
         public async Task<PagedResult<AdminReportRow>> GetReportsAsync(string status, int page)
         {
             return await GetPagedDataAsync(
@@ -193,14 +192,14 @@ namespace Linkora.Repositories
                     Id = r.GetInt32(0),
                     ProductId = r.GetInt32(1),
                     UserId = r.GetInt32(2),
-                    Comment = r.IsDBNull(3) ? null : r.GetString(3),
+                    Comment = r.GetStringOrNull(3),
                     CreatedAt = r.GetDateTime(4),
                     Status = r.GetString(5),
-                    ProductName = r.IsDBNull(6) ? "" : r.GetString(6),
-                    ProductImage = r.IsDBNull(7) ? null : r.GetString(7),
-                    ProductStatus = r.IsDBNull(8) ? "" : r.GetString(8),
-                    ReporterName = r.IsDBNull(9) ? "" : r.GetString(9),
-                    ReasonText = r.IsDBNull(10) ? "" : r.GetString(10),
+                    ProductName = r.GetStringOrDefault(6),
+                    ProductImage = r.GetStringOrNull(7),
+                    ProductStatus = r.GetStringOrDefault(8),
+                    ReporterName = r.GetStringOrDefault(9),
+                    ReasonText = r.GetStringOrDefault(10),
                 });
         }
         public async Task<string> ResolveReportAsync(int id, string action)
@@ -241,8 +240,8 @@ namespace Linkora.Repositories
                 r =>
                 {
                     result.ProductId = r.GetInt32(0);
-                    result.UserId = r.IsDBNull(1) ? null : r.GetInt32(1);
-                    result.ParamName = r.IsDBNull(2) ? null : r.GetString(2);
+                    result.UserId = r.GetInt32OrNull(1);
+                    result.ParamName = r.GetStringOrNull(2);
                     result.ParamNameRu = r.IsDBNull(3) ? result.ParamName : r.GetString(3);
                     result.ParamNameLv = r.IsDBNull(4) ? result.ParamName : r.GetString(4);
                     return result;
@@ -267,8 +266,8 @@ namespace Linkora.Repositories
                 WHERE so.Id = @OptionId",
                 r =>
                 {
-                    result.UserId = r.IsDBNull(0) ? null : r.GetInt32(0);
-                    result.ParamName = r.IsDBNull(1) ? null : r.GetString(1);
+                    result.UserId = r.GetInt32OrNull(0);
+                    result.ParamName = r.GetStringOrNull(1);
                     result.ParamNameRu = r.IsDBNull(2) ? result.ParamName : r.GetString(2);
                     result.ParamNameLv = r.IsDBNull(3) ? result.ParamName : r.GetString(3);
                     return result;
@@ -288,7 +287,7 @@ namespace Linkora.Repositories
                 {
                     result.InvalidReason = false;
                     if (r.IsDBNull(3)) return result;
-                    result.ReasonEn = r.IsDBNull(0) ? "" : r.GetString(0);
+                    result.ReasonEn = r.GetStringOrDefault(0);
                     result.ReasonLv = r.IsDBNull(1) ? result.ReasonEn : r.GetString(1);
                     result.ReasonRu = r.IsDBNull(2) ? result.ReasonEn : r.GetString(2);
                     result.UserId = r.GetInt32(3);

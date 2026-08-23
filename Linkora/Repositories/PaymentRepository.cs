@@ -54,9 +54,9 @@ namespace Linkora.Repositories
                     Id = r.GetInt32(0),
                     Status = r.GetString(1),
                     PurposeType = r.GetString(2),
-                    ProductId = r.IsDBNull(3) ? null : r.GetInt32(3),
-                    PromotionType = r.IsDBNull(4) ? null : r.GetString(4),
-                    SubscriptionType = r.IsDBNull(5) ? null : r.GetString(5),
+                    ProductId = r.GetInt32OrNull(3),
+                    PromotionType = r.GetStringOrNull(4),
+                    SubscriptionType = r.GetStringOrNull(5),
                     UserId = r.GetInt32(6),
                 },
                 p => p.AddWithValue("@Reference", reference));
@@ -91,7 +91,7 @@ namespace Linkora.Repositories
         {
             var result = await QueryAsync<int?>(
                 "SELECT UserId FROM Products WHERE Id = @Id",
-                r => r.IsDBNull(0) ? null : r.GetInt32(0),
+                r => r.GetInt32OrNull(0),
                 p => p.AddWithValue("@Id", productId));
 
             return result.Count > 0 ? result[0] : null;

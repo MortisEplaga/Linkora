@@ -17,11 +17,11 @@ namespace Linkora.Repositories
                 r => new ReviewRow
                 {
                     Rating = r.GetInt32(0),
-                    Comment = r.IsDBNull(1) ? "" : r.GetString(1),
+                    Comment = r.GetStringOrDefault(1),
                     CreatedAt = r.GetDateTime(2),
                     UserId = r.GetInt32(3),
-                    UserName = r.IsDBNull(4) ? "Unknown" : r.GetString(4),
-                    AvatarUrl = r.IsDBNull(5) ? null : r.GetString(5),
+                    UserName = r.GetStringOrDefault(4, "Unknown"),
+                    AvatarUrl = r.GetStringOrNull(5),
                 },
                 p => p.AddWithValue("@UserId", userId));
         }
