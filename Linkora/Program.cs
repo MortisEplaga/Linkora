@@ -32,8 +32,9 @@ builder.Services.AddScoped<INotificationRealTimeSender, SignalRNotificationSende
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddScoped<IMaksekeskusService, MaksekeskusService>();
-builder.Services.AddHostedService<ArchiveOldProductsService>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+builder.Services.AddScoped<IMediaStorageService, MediaStorageService>();
+builder.Services.AddHostedService<ArchiveOldProductsService>();
 builder.Services.AddSignalR();
 
 builder.Services.Configure<FormOptions>(o =>

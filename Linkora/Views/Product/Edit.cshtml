@@ -158,13 +158,18 @@
             document.getElementById('selectedCategoryId').value = state.categoryId;
 
             const serverCatName = '@Html.Raw(ViewBag.CategoryName ?? "")';
-            if (String(state.categoryId) === String(@p.CategoryId) && serverCatName) document.getElementById('catSelectorText').textContent = serverCatName;
-            else document.getElementById('catSelectorText').textContent = state.categoryText || '';
+            if (String(state.categoryId) === String(@p.CategoryId) && serverCatName) {
+                document.getElementById('catSelectorText').textContent = serverCatName;
+            } else {
+                document.getElementById('catSelectorText').textContent = state.categoryText || '';
+            }
 
             await loadParams(state.categoryId, state.params || {});
         }
 
-        if (state.publishDays) setVal('pubDurationValue', state.publishDays);
+        if (state.publishDays) {
+            setVal('pubDurationValue', state.publishDays);
+        }
     }
 
     window.addEventListener('DOMContentLoaded', async () => {
@@ -182,7 +187,9 @@
 
         const catId = document.getElementById('selectedCategoryId').value;
         const catName = '@Html.Raw(ViewBag.CategoryName ?? "")';
-        if (catName) document.getElementById('catSelectorText').textContent = catName;
+        if (catName) {
+            document.getElementById('catSelectorText').textContent = catName;
+        }
 
         if (catId) {
             const valRes = await fetch(`/Product/ParamValues?productId=${productId}`);
@@ -193,7 +200,7 @@
         await loadExistingMedia(productId);
     });
 
-    window.beforeLangChange = function () {
+    window.beforeLangChange = async function () {
         const params = await collectParamValues();
         sessionStorage.setItem('linkora_edit_draft_' + @p.Id, JSON.stringify({
             title: document.getElementById('adTitle')?.value,
@@ -249,7 +256,9 @@
     function removeExisting(btn) {
         const wrap = btn.parentElement;
         const path = wrap.dataset.existingPath;
-        if (window.existingMediaPaths) window.existingMediaPaths = window.existingMediaPaths.filter(p => p !== path);
+        if (window.existingMediaPaths) {
+            window.existingMediaPaths = window.existingMediaPaths.filter(p => p !== path);
+        }
         wrap.remove();
     }
 
@@ -264,7 +273,9 @@
         if (res.ok) {
             const data = await res.json();
             window.location.href = data.redirectUrl;
-        } else alert('Payment initiation failed');
+        } else {
+            alert('Payment initiation failed');
+        }
     };
 
     async function submitEdit(id) {
@@ -308,8 +319,11 @@
                 body: fd
             });
 
-            if (res.ok) window.location.href = '/Product/My';
-            else alert('Error: ' + await res.text());
+            if (res.ok) {
+                window.location.href = '/Product/My';
+            } else {
+                alert('Error: ' + await res.text());
+            }
         } catch (e) {
             alert('Network error: ' + e.message);
         } finally {

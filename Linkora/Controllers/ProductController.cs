@@ -14,7 +14,8 @@ namespace Linkora.Controllers
         IMessageRepository messageRepository,
         INotificationService notifications,
         IUserRepository userRepository,
-        ISelectOptionRepository selectOptionRepository) : Controller
+        ISelectOptionRepository selectOptionRepository,
+        IMediaStorageService mediaStorage) : Controller
     {
         private readonly ICategoryRepository _categoryRepository = categoryRepository;
         private readonly IAddressRepository _addressRepository = addressRepository;
@@ -24,6 +25,7 @@ namespace Linkora.Controllers
         private readonly IUserRepository _userRepository = userRepository;
         private readonly ISelectOptionRepository _selectOptionRepository = selectOptionRepository;
         private readonly IConfiguration _configuration = configuration;
+        private readonly IMediaStorageService _mediaStorage = mediaStorage;
 
         private static int PromotionPoints(string? promotionType) => promotionType switch
         {
@@ -216,42 +218,39 @@ namespace Linkora.Controllers
 
         [Authorize]
         [HttpPost]
+        [RequestSizeLimit(MediaStorageService.MaxTotalBytes)]
+        [RequestFormLimits(MultipartBodyLengthLimit = MediaStorageService.MaxTotalBytes)]
         public async Task<IActionResult> Edit(int id, string title, string? description,
-                                        int? qty, string? address, int? categoryId,
-                                        string? paramsJson, List<IFormFile>? photos,
-                                        string? keepMediaJson = null, bool replaceMedia = false,
-                                        int? publishDays = null, string? promotionType = null)
+                                              int? qty, string? address, int? categoryId,
+                                              string? paramsJson, List<IFormFile>? photos,
+                                              string? keepMediaJson = null, bool replaceMedia = false,
+                                              int? publishDays = null, string? promotionType = null)
         {
+            var totalBytes = photos?.Sum(f => f.Length) ?? 0;
+            if (totalBytes > MediaStorageService.MaxTotalBytes) return BadRequest("Total media size exceeds 50 MB");
+
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             if (await _userRepository.IsBannedAsync(userId)) return Forbid();
             var existing = await _productRepository.GetByIdAsync(id);
             if (existing == null) return NotFound();
             if (existing.UserId != userId) return Forbid();
 
-            var totalBytes = photos?.Sum(f => f.Length) ?? 0;
-            if (totalBytes > 52_428_800)
-                return BadRequest("Total media size exceeds 50 MB");
-
             var paramValues = ParseParamsJson(paramsJson);
             var oldParamValues = await _productRepository.GetParamValuesAsync(id);
             var priceParamId = await _productRepository.GetPriceParamIdAsync(id);
             bool wasArchived = existing.Status == ProductStatus.Archived;
 
-            var keepPaths = string.IsNullOrEmpty(keepMediaJson)
-                ? []
-                : System.Text.Json.JsonSerializer.Deserialize<List<string>>(keepMediaJson) ?? [];
+            var keepPaths = string.IsNullOrEmpty(keepMediaJson) ? [] : System.Text.Json.JsonSerializer.Deserialize<List<string>>(keepMediaJson) ?? [];
 
             var currentMedia = await _productRepository.GetMediaAsync(id);
             var toDelete = currentMedia.Where(m => !keepPaths.Contains(m.FilePath)).ToList();
 
             if (toDelete.Any())
-            {
                 await _productRepository.DeleteSpecificMediaAsync(toDelete.Select(m => m.Id));
-            }
 
             if (photos?.Count > 0)
             {
-                var newMedia = await SaveUploadedFiles(photos);
+                var newMedia = await _mediaStorage.SaveUploadedFilesAsync(photos);
                 await _productRepository.SaveMediaAsync(id, newMedia);
             }
 
@@ -313,8 +312,7 @@ namespace Linkora.Controllers
             }
 
             var otherChanged = paramValues
-                .Where(kv => kv.Key != priceParamId &&
-                             (!oldParamValues.TryGetValue(kv.Key, out var ov) || ov != kv.Value))
+                .Where(kv => kv.Key != priceParamId && (!oldParamValues.TryGetValue(kv.Key, out var ov) || ov != kv.Value))
                 .Count()
                 + oldParamValues
                 .Where(kv => kv.Key != priceParamId && !paramValues.ContainsKey(kv.Key))
@@ -337,9 +335,7 @@ namespace Linkora.Controllers
             }
 
             if (publishDays.HasValue && new[] { 7, 14, 30, 60, 90 }.Contains(publishDays.Value))
-            {
                 await _productRepository.UpdatePublishDurationAsync(id, userId, publishDays.Value);
-            }
 
             if (wasArchived)
                 await _productRepository.ReactivateProductAsync(id, userId);
@@ -432,32 +428,27 @@ namespace Linkora.Controllers
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> Create(string title, string? description, int? qty,
-                                        string? address, int? categoryId,
-                                        List<IFormFile>? photos, string? paramsJson,
-                                        int? publishDays = null, string? promotionType = null)
+                                                string? address, int? categoryId,
+                                                List<IFormFile>? photos, string? paramsJson,
+                                                int? publishDays = null, string? promotionType = null)
         {
             if (string.IsNullOrWhiteSpace(title)) return BadRequest("Title is required");
 
             var totalBytes = photos?.Sum(f => f.Length) ?? 0;
-            if (totalBytes > 52_428_800)
-                return BadRequest("Total media size exceeds 50 MB");
+            if (totalBytes > MediaStorageService.MaxTotalBytes) return BadRequest("Total media size exceeds 50 MB");
 
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             if (await _userRepository.IsBannedAsync(userId)) return Forbid();
 
             int duration = 30;
-            if (publishDays.HasValue && new[] { 7, 14, 30, 60, 90 }.Contains(publishDays.Value))
-            {
-                duration = publishDays.Value;
-            }
+            if (publishDays.HasValue && new[] { 7, 14, 30, 60, 90 }.Contains(publishDays.Value)) duration = publishDays.Value;
             else
             {
                 var currentUser = await _userRepository.GetByIdAsync(userId);
-                if (currentUser?.PreferredAdDuration.HasValue == true)
-                    duration = currentUser.PreferredAdDuration.Value;
+                if (currentUser?.PreferredAdDuration.HasValue == true) duration = currentUser.PreferredAdDuration.Value;
             }
 
-            var media = photos?.Count > 0 ? await SaveUploadedFiles(photos) : [];
+            var media = photos?.Count > 0 ? await _mediaStorage.SaveUploadedFilesAsync(photos) : [];
             var paramValues = ParseParamsJson(paramsJson);
 
             var newId = await _productRepository.CreateAsync(new Product
@@ -472,11 +463,9 @@ namespace Linkora.Controllers
             }, paramValues, duration, promotionType ?? "None");
 
             var points = PromotionPoints(promotionType);
-            if (points > 0)
-                await _userRepository.AdjustPromotionPointsAsync(userId, points);
+            if (points > 0) await _userRepository.AdjustPromotionPointsAsync(userId, points);
 
-            if (media.Count > 0)
-                await _productRepository.SaveMediaAsync(newId, media);
+            if (media.Count > 0) await _productRepository.SaveMediaAsync(newId, media);
 
             await _productRepository.RecalculateModerationScoreAsync(newId);
 
@@ -484,28 +473,6 @@ namespace Linkora.Controllers
             await _notifications.NotifySubscribersAsync(userId, newId, title, userName);
 
             return Ok(new { id = newId });
-        }
-        private async Task<List<ProductMedia>> SaveUploadedFiles(List<IFormFile> files)
-        {
-            var result = new List<ProductMedia>();
-            var folder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "img", "products");
-            Directory.CreateDirectory(folder);
-
-            foreach (var file in files)
-            {
-                if (file.Length == 0) continue;
-                var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-                var isVideo = new[] { ".mp4", ".webm", ".mov", ".avi" }.Contains(ext);
-                var name = $"{Guid.NewGuid()}{ext}";
-                await using var stream = System.IO.File.Create(Path.Combine(folder, name));
-                await file.CopyToAsync(stream);
-                result.Add(new ProductMedia
-                {
-                    FilePath = $"/img/products/{name}",
-                    MediaType = isVideo ? "video" : "image",
-                });
-            }
-            return result;
         }
 
         [HttpGet]
