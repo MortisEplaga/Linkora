@@ -83,10 +83,7 @@ namespace Linkora.Services
                     CreatedAt = createdAt,
                 });
         }
-        private static bool IsAllowed(string text, NotificationPreferences prefs)
-        {
-            var category = NotificationCategorizer.Categorize(text);
-            return category switch
+        private static bool IsAllowed(string text, NotificationPreferences prefs) => NotificationCategorizer.Categorize(text) switch
             {
                 "Deals" => prefs.Deals,
                 "Reviews" => prefs.Reviews,
@@ -95,6 +92,5 @@ namespace Linkora.Services
                 "Favourites" => prefs.Favourites,
                 _ => prefs.NewListings,
             };
-        }
     }
 }

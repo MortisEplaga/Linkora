@@ -38,8 +38,8 @@ namespace Linkora.Services
             await connection.OpenAsync();
 
             using var command = new SqlCommand(@"
-        UPDATE Products SET Status = 'Archived' WHERE Status = 'Active' AND (
-        (ExpiresAt IS NOT NULL AND ExpiresAt < GETDATE()) OR (ExpiresAt IS NULL AND DATEADD(DAY, PublishDurationDays, CreatedAt) < GETDATE()))", connection);
+                UPDATE Products SET Status = 'Archived' WHERE Status = 'Active' AND 
+((ExpiresAt IS NOT NULL AND ExpiresAt < GETDATE()) OR (ExpiresAt IS NULL AND DATEADD(DAY, PublishDurationDays, CreatedAt) < GETDATE()))", connection);
 
             _logger.LogInformation("Archived {Count} expired products", await command.ExecuteNonQueryAsync());
         }

@@ -17,9 +17,7 @@ namespace Linkora.Services
             _hubContext = hubContext;
         }
 
-        public Task SendAsync(NotificationDispatch notification)
-        {
-            return _hubContext
+        public Task SendAsync(NotificationDispatch notification) => _hubContext
                 .Clients.Group($"user_{notification.TargetUserId}")
                 .SendAsync("NotificationReceived", new
                 {
@@ -33,6 +31,5 @@ namespace Linkora.Services
                     productName = notification.ProductName,
                     productImage = (string?)null,
                 });
-        }
     }
 }

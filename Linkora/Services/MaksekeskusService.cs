@@ -67,28 +67,19 @@ namespace Linkora.Services
 
             var response = await _http.SendAsync(request);
             var body = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode)
-                throw new InvalidOperationException($"MakeCommerce error {(int)response.StatusCode}: {body}");
+            if (!response.IsSuccessStatusCode) throw new InvalidOperationException($"MakeCommerce error {(int)response.StatusCode}: {body}");
 
             using var doc = JsonDocument.Parse(body);
             var root = doc.RootElement;
             var transactionId = root.GetProperty("id").GetString()!;
 
             string? redirectUrl = null;
-            if (root.TryGetProperty("payment_methods", out var pm) && pm.TryGetProperty("other", out var other) && other.GetArrayLength() > 0)
-                redirectUrl = other[0].GetProperty("url").GetString();
+            if (root.TryGetProperty("payment_methods", out var pm) && pm.TryGetProperty("other", out var other) && other.GetArrayLength() > 0) redirectUrl = other[0].GetProperty("url").GetString();
 
-            if (redirectUrl == null)
-                throw new InvalidOperationException("MakeCommerce response has no redirect URL");
+            if (redirectUrl == null) throw new InvalidOperationException("MakeCommerce response has no redirect URL");
 
             return (transactionId, redirectUrl);
         }
-        public bool VerifyMac(string json, string mac)
-        {
-            var input = json + _secretKey;
-            var hashBytes = SHA512.HashData(Encoding.UTF8.GetBytes(input));
-            var expected = Convert.ToHexString(hashBytes); // uppercase hex
-            return string.Equals(expected, mac, StringComparison.OrdinalIgnoreCase);
-        }
+        public bool VerifyMac(string json, string mac) => string.Equals(Convert.ToHexString(SHA512.HashData(Encoding.UTF8.GetBytes(json + _secretKey))), mac, StringComparison.OrdinalIgnoreCase);
     }
 }
