@@ -1,5 +1,6 @@
 ﻿using Linkora.Models;
 using Microsoft.Data.SqlClient;
+using System.Globalization;
 namespace Linkora.Repositories
 {
     public class ProductRepository : SqlRepositoryBase, IProductRepository
@@ -271,7 +272,7 @@ namespace Linkora.Repositories
                         if (!await reader.ReadAsync()) { await transaction.RollbackAsync(); return false; }
                         imagePath = reader.GetStringOrNull(0);
                         qty = reader.GetInt32(1);
-                        price = reader.IsDBNull(2) ? 0 : Convert.ToDecimal(reader[2]);
+                        price = reader.IsDBNull(2) ? 0 : decimal.Parse(reader.GetString(2), CultureInfo.InvariantCulture);
                         delivery = reader.GetStringOrDefault(3);
                     }
                 }
