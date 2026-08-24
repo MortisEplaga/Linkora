@@ -23,7 +23,6 @@ namespace Linkora.Controllers
             var breadcrumb = await _categoryRepository.GetBreadcrumbAsync(id);
             var children = await _categoryRepository.GetChildrenAsync(id);
             var parameters = await _categoryRepository.GetParametersAsync(breadcrumb.Select(c => c.Id));
-            var descendantIds = await _categoryRepository.GetDescendantIdsAsync(id);
 
             parameters = parameters.Where(p => p.Param.Type != 7).ToList();
 
@@ -55,8 +54,7 @@ namespace Linkora.Controllers
 
             int? priceParamId = parameters.FirstOrDefault(p => p.Param.Name == "Price")?.Param.Id;
 
-            var products = await _productRepository.GetByCategoryAsync(
-                descendantIds, sort, filters, rangeFrom, rangeTo, priceParamId, city, q);
+            var products = await _productRepository.GetByCategoryAsync(id, includeDescendants: true, sort, filters, rangeFrom, rangeTo, priceParamId, city, q);
             ViewBag.City = city;
             ViewBag.Category = category;
             ViewBag.Breadcrumb = breadcrumb;

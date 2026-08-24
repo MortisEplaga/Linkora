@@ -182,18 +182,5 @@ namespace Linkora.Repositories
 
             return resultDict.Values.ToList();
         }
-        public async Task<List<int>> GetDescendantIdsAsync(int categoryId)
-        {
-            return await QueryAsync(
-                @"WITH cte AS (
-                    SELECT Id FROM Category WHERE Id = @Id
-                    UNION ALL
-                    SELECT c.Id FROM Category c
-                    INNER JOIN cte ON c.ParentId = cte.Id
-                )
-                SELECT Id FROM cte",
-                r => r.GetInt32(0),
-                p => p.AddWithValue("@Id", categoryId));
-        }
     }
 }

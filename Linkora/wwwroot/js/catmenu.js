@@ -19,12 +19,10 @@ function getIcon(nameEn) {
     if (!nameEn) return null;
     const key = nameEn.toLowerCase().trim();
     if (CATEGORY_ICONS[key]) return CATEGORY_ICONS[key];
-    for (const [k, icon] of Object.entries(CATEGORY_ICONS)) {
+    for (const [k, icon] of Object.entries(CATEGORY_ICONS))
         if (key.includes(k) || k.includes(key)) return icon;
-    }
     return null;
 }
-
 function updateColumnsVisibility() {
     const container = document.getElementById('catMenuColumns');
     if (!container) return;
@@ -38,17 +36,14 @@ function updateColumnsVisibility() {
         const colWidth = 240; 
         totalWidth += colWidth;
 
-        if (totalWidth > availableWidth && i < columns.length - 1) {
-            columns[i].classList.add('catmenu-col-hidden');
-        } else {
-            columns[i].classList.remove('catmenu-col-hidden');
-        }
+        if (totalWidth > availableWidth && i < columns.length - 1) columns[i].classList.add('catmenu-col-hidden');
+        else columns[i].classList.remove('catmenu-col-hidden');
     }
 }
+
 window.addEventListener('resize', () => {
     updateColumnsVisibility();
 });
-
 function openCatMenu(mode = 'navigate', callback = null) {
     categoryMenuMode = mode;
     categoryMenuCallback = callback;
@@ -66,24 +61,20 @@ function openCatMenu(mode = 'navigate', callback = null) {
         showMenu();
     }
 }
-
 function showMenu() {
     document.getElementById('catMenu').classList.add('catmenu-open');
     document.getElementById('catMenuOverlay').classList.add('catmenu-overlay-open');
     setTimeout(updateColumnsVisibility, 50);
 }
-
 function closeCatMenu() {
     document.getElementById('catMenu').classList.remove('catmenu-open');
     document.getElementById('catMenuOverlay').classList.remove('catmenu-overlay-open');
 }
-
 function renderCol(colIndex, parentId) {
     const container = document.getElementById('catMenuColumns');
 
-    while (container.children.length > colIndex) {
+    while (container.children.length > colIndex)
         container.removeChild(container.lastChild);
-    }
 
     const items = allCategories.filter(c => c.parentId === parentId);
     if (!items.length) {
@@ -166,21 +157,19 @@ function renderCol(colIndex, parentId) {
                     window.location.href = '/Category/Index/' + item.id;
                     closeCatMenu();
                 } else if (categoryMenuMode === 'select') {
-                    if (typeof categoryMenuCallback === 'function') {
+                    if (typeof categoryMenuCallback === 'function')
                         categoryMenuCallback({ id: item.id, name: item.name });
-                    }
                     closeCatMenu();
                 }
             } else {
                 col.querySelectorAll('.catmenu-item').forEach(i => i.classList.remove('catmenu-item-active'));
                 el.classList.add('catmenu-item-active');
 
-                if (hasChildren) {
+                if (hasChildren)
                     renderCol(colIndex + 1, item.id);
-                } else {
-                    while (container.children.length > colIndex + 1) {
+                else {
+                    while (container.children.length > colIndex + 1)
                         container.removeChild(container.lastChild);
-                    }
                     updateColumnsVisibility();
                 }
             }
@@ -192,3 +181,12 @@ function renderCol(colIndex, parentId) {
     container.appendChild(col);
     updateColumnsVisibility();
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const catBtn = document.getElementById('categoriesBtn');
+    if (catBtn) {
+        catBtn.addEventListener('click', () => {
+            openCatMenu('navigate', null);
+        });
+    }
+});

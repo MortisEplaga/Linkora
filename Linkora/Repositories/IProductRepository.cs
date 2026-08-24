@@ -10,15 +10,9 @@ namespace Linkora.Repositories
         Task UpdateAsync(Product product, Dictionary<int, string> paramValues, string promotionType = "None");
         Task<Dictionary<int, string>> GetParamValuesAsync(int productId);
         Task<Dictionary<string, int>> GetCountsByStatusAsync(int userId);
-        Task<List<Product>> GetByCategoryAsync(
-                                                IEnumerable<int> categoryIds,
-                                                string sort = "new",
-                                                Dictionary<int, List<string>>? filters = null,
-                                                Dictionary<int, decimal>? rangeFrom = null,
-                                                Dictionary<int, decimal>? rangeTo = null,
-                                                int? priceParamId = null,
-                                                string? city = null,
-                                                string? search = null);
+        Task<List<Product>> GetByCategoryAsync(int rootCategoryId, bool includeDescendants = true, string sort = "new", Dictionary<int, List<string>>? filters = null, 
+                                               Dictionary<int, decimal>? rangeFrom = null, Dictionary<int, decimal>? rangeTo = null,
+                                               int? priceParamId = null, string? city = null, string? search = null); 
         Task<bool> CompleteDealAsync(int productId, int sellerId, int buyerId);
         Task<bool> ReactivateProductAsync(int productId, int userId);
         Task ArchiveProductsByUserAsync(int userId);

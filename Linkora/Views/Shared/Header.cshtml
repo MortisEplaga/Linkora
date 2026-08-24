@@ -170,7 +170,7 @@
                 <img id="siteLogo" src="/img/Logo.svg" alt="Linkora24" width="175" />
             </a>
 
-            <button type="button" class="categories-btn" onclick="openCatMenu()">
+            <button type="button" class="categories-btn" id="categoriesBtn">
                 <img src="/img/search_for.svg" alt="" class="categories-icon" />
                 <span data-i18n="all_categories">All categories</span>
             </button>
@@ -256,10 +256,6 @@
             } else {
                 window.location.href = '/Category/Index/3711?q=' + encodeURIComponent(q);
             }
-        }
-
-        function openCatMenu() {
-            console.warn('openCatMenu not implemented');
         }
 
         document.addEventListener('DOMContentLoaded', applyTranslations);

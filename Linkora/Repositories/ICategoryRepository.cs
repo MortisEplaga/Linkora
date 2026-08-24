@@ -10,6 +10,5 @@ namespace Linkora.Repositories
         Task<List<Parameter>> GetParametersAsync(int categoryId);
         Task<List<Category>> GetBreadcrumbAsync(int categoryId);
         Task<List<Parameter>> GetParametersAsync(IEnumerable<int> categoryIds);
-        Task<List<int>> GetDescendantIdsAsync(int categoryId);
     }
 }
