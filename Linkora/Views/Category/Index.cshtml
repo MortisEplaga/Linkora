@@ -179,8 +179,6 @@
                         @if (vm.Param.Type == 8)
                         {
                             var activeIds = activeFilters.TryGetValue(vm.Param.Id, out var fv) ? fv : new List<string>();
-                            var optionsJson = System.Text.Json.JsonSerializer.Serialize(
-                            vm.Options.Select(o => new { id = o.Id, text = o.Text }));
 
                             <div class="free-text-select" data-param="@vm.Param.Id" style="position:relative">
 
@@ -265,210 +263,42 @@
             }
         </div>
     </div>
-
-    <script>
-        // async function toggleFav(btn, productId, can) {
-        //     const res = await fetch('/Favourite/Toggle', {
-        //         method: 'POST',
-        //         headers: {
-        //             'Content-Type': 'application/json',
-        //             'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
-        //         },
-        //         body: JSON.stringify({ productId, can })
-        //     });
-
-        //     if (res.status === 401) {
-        //         openAuthModal('login');
-        //         return;
-        //     }
-
-        //     const data = await res.json();
-        //     btn.classList.toggle('product-card-action-active', data.active);
-        // }
-    </script>
-    <script>
-         function selectSwatch(row, paramId) {
-            const wrap = row.closest('.param-swatches');
-            const wasActive = row.classList.contains('param-swatch-active');
-            wrap.querySelectorAll('.param-swatch-row').forEach(r => r.classList.remove('param-swatch-active'));
-            const input = document.getElementById('swatch_' + paramId);
-            if (!wasActive) { row.classList.add('param-swatch-active'); input.value = row.dataset.id; }
-            else { input.value = ''; }
-        }
-
-        function setView(v) {
-            localStorage.setItem('listingView', v);
-            const c = document.getElementById('listingContainer');
-            c.className = v === 'grid' ? 'listing-grid' : 'listing-list';
-            document.getElementById('btnGrid').classList.toggle('active', v === 'grid');
-            document.getElementById('btnList').classList.toggle('active', v === 'list');
-        }
-
-        function toggleSort(e) {
-            e.stopPropagation();
-            document.getElementById('sortDrop').classList.toggle('open');
-        }
-
-        function setSortLabel() {
-            const sortLabel = document.getElementById('sortLabel');
-            if (!sortLabel) return;
-            const lang = localStorage.getItem('lang') || 'en';
-            const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
-            const sortMap = { new: dict.sort_newest, cheap: dict.sort_cheapest, expensive: dict.sort_expensive };
-            sortLabel.textContent = sortMap[sortLabel.dataset.sort || 'new'] || dict.sort_newest || 'Newest first';
-        }
-
-        document.addEventListener('click', e => {
-            if (!e.target.closest('.listing-sort-wrap'))
-                document.getElementById('sortDrop').classList.remove('open');
-        });
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            setView(localStorage.getItem('listingView') || 'grid');
-            setSortLabel();
-                if (typeof TRANSLATIONS === 'undefined') {
-            const checkTranslations = setInterval(() => {
-                if (typeof TRANSLATIONS !== 'undefined') {
-                    clearInterval(checkTranslations);
-                    initMoreButtons();
-                }
-            }, 50);
-        } else {
-            initMoreButtons();
-        }
-            const url = new URL(window.location.href);
-            const city = url.searchParams.get('city');
-            if (city) {
-                selectedRegion = { name: city };
-                document.querySelector('.regions-btn').innerHTML =
-                    '<img src="/img/marker_for_adv.svg" alt="" class="regions-icon" />' + city;
-            }
-
-            const res = await fetch('/Favourite/UserItems');
-            if (!res.ok) return;
-            const { favs, cart } = await res.json();
-            document.querySelectorAll('.product-card-action-btn').forEach(btn => {
-                const isFav = btn.getAttribute('onclick')?.includes('true');
-                const prodId = parseInt(btn.getAttribute('onclick')?.match(/\d+/)?.[0]);
-                if (isFav && favs.includes(prodId)) btn.classList.add('product-card-action-active');
-                if (!isFav && cart.includes(prodId)) btn.classList.add('product-card-action-active');
-            });
-
-        document.getElementById('filterForm')?.addEventListener('submit', async function (e) {
-            e.preventDefault();
-            const form = this;
-
-            const freeTextWraps = form.querySelectorAll('.free-text-select');
-            for (const wrap of freeTextWraps) {
-                const input = wrap.querySelector('.free-text-select-input');
-                const text = input.value.trim();
-                if (!text) continue;
-
-                const paramId = wrap.dataset.param;
-                try {
-                    const res = await fetch('/Product/ResolveSelectOption', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
-                        },
-                        body: JSON.stringify({ paramId: paramId, text: text, createIfNotFound: false })
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data && data.id) {
-                            addType8Chip(paramId, data.id, text);
-                        }
-                    }
-                } catch (err) {
-                    console.error('Failed to resolve filter option', err);
-                }
-            }
-
-            const inputs = form.querySelectorAll('input, select');
-            inputs.forEach(input => {
-                if (input.type === 'checkbox' && !input.checked) {
-                    input.disabled = true;
-                } else if (input.value.trim() === '') {
-                    input.disabled = true;
-                }
-            });
-
-            form.submit();
-        });
-
-        });
-                function initMoreButtons() {
-            const lang = localStorage.getItem('lang') || 'en';
-            const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
-
-            document.querySelectorAll('.param-show-more').forEach(btn => {
-                const block = btn.parentElement;
-                const hidden = block.querySelectorAll('.param-option-hidden');
-                const count = hidden.length;
-                btn.dataset.count = count; 
-                btn.textContent = (dict.more_btn || 'More') + ' ' + count;
-            });
-        }
-    </script>
 </div>
 
+<script src="~/js/param-utils.js"></script>
 <script>
-    function rangeSync(input, side) {
-        const wrap = input.closest('.param-range');
-        const min = parseFloat(wrap.dataset.min);
-        const max = parseFloat(wrap.dataset.max);
-        const step = parseFloat(wrap.dataset.step) || 1;
-        const from = wrap.querySelector('.param-range-from');
-        const to = wrap.querySelector('.param-range-to');
-
-        let val = parseFloat(input.value);
-        if (!isNaN(val)) {
-            val = Math.round((val - min) / step) * step + min;
-            val = Math.min(Math.max(val, min), max);
-            input.value = val;
-        }
-
-        if (side === 'from' && to.value !== '' && val > parseFloat(to.value))
-            from.value = to.value;
-        if (side === 'to' && from.value !== '' && val < parseFloat(from.value))
-            to.value = from.value;
+    function setView(v) {
+        localStorage.setItem('listingView', v);
+        const c = document.getElementById('listingContainer');
+        c.className = v === 'grid' ? 'listing-grid' : 'listing-list';
+        document.getElementById('btnGrid').classList.toggle('active', v === 'grid');
+        document.getElementById('btnList').classList.toggle('active', v === 'list');
     }
 
-    function pillClick(pill) {
-        const pills = pill.closest('.param-pills');
-        pills.querySelectorAll('.param-pill').forEach(p => p.classList.remove('param-pill-active'));
-        pill.classList.add('param-pill-active');
+    function toggleSort(e) {
+        e.stopPropagation();
+        document.getElementById('sortDrop').classList.toggle('open');
     }
 
-    function toggleOptions(btn) {
-        const block = btn.parentElement;
-        const hidden = block.querySelectorAll('.param-option-hidden');
-        const isHidden = hidden[0]?.style.display === 'none';
-        hidden.forEach(el => el.style.display = isHidden ? '' : 'none');
-
+    function setSortLabel() {
+        const sortLabel = document.getElementById('sortLabel');
+        if (!sortLabel) return;
         const lang = localStorage.getItem('lang') || 'en';
         const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
-
-        const count = btn.dataset.count || hidden.length;
-        btn.textContent = isHidden
-            ? (dict.hide_btn || 'Hide')
-            : (dict.more_btn || 'More') + ' ' + count;
+        const sortMap = { new: dict.sort_newest, cheap: dict.sort_cheapest, expensive: dict.sort_expensive };
+        sortLabel.textContent = sortMap[sortLabel.dataset.sort || 'new'] || dict.sort_newest || 'Newest first';
     }
-    function selectPill(pill, paramId) {
-        const pills = pill.closest('.param-pills');
-        const wasActive = pill.classList.contains('param-pill-active');
-        pills.querySelectorAll('.param-pill').forEach(p => p.classList.remove('param-pill-active'));
-        const input = document.getElementById('pill_' + paramId);
-        if (!wasActive) {
-            pill.classList.add('param-pill-active');
-            input.value = pill.dataset.id;
-        } else {
-            input.value = '';
-        }
-         if (window.ParamRulesEngine) {
-            window.ParamRulesEngine.triggerUpdate();
-        }
+
+    function initMoreButtons() {
+        const lang = localStorage.getItem('lang') || 'en';
+        const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
+        document.querySelectorAll('.param-show-more').forEach(btn => {
+            const block = btn.parentElement;
+            const hidden = block.querySelectorAll('.param-option-hidden');
+            const count = hidden.length;
+            btn.dataset.count = count;
+            btn.textContent = (dict.more_btn || 'More') + ' ' + count;
+        });
     }
 
     function resetFilters(categoryId) {
@@ -502,77 +332,95 @@
                 const db = b.querySelector('.product-card-date')?.textContent.trim() || '';
                 return db.localeCompare(da);
             }
-    const pa = parseFloat(a.querySelector('.product-card-price-tag .price-value')?.textContent.replace(/[^0-9.]/g, '')) || 0;
-    const pb = parseFloat(b.querySelector('.product-card-price-tag .price-value')?.textContent.replace(/[^0-9.]/g, '')) || 0;
-    return type === 'cheap' ? pa - pb : pb - pa;
+            const pa = parseFloat(a.querySelector('.product-card-price-tag .price-value')?.textContent.replace(/[^0-9.]/g, '')) || 0;
+            const pb = parseFloat(b.querySelector('.product-card-price-tag .price-value')?.textContent.replace(/[^0-9.]/g, '')) || 0;
+            return type === 'cheap' ? pa - pb : pb - pa;
         });
 
         cards.forEach(c => container.appendChild(c));
     }
 
-    function removeType8Chip(link) {
-        const chip = link.closest('.search-chip');
-        if (chip) {
-            chip.remove();
-        }
-    }
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.listing-sort-wrap'))
+            document.getElementById('sortDrop')?.classList.remove('open');
+    });
 
-    function addType8Chip(paramId, id, text) {
-        const chipsContainer = document.getElementById('chips_' + paramId);
-        if (!chipsContainer) return;
+    document.addEventListener('DOMContentLoaded', async () => {
+        setView(localStorage.getItem('listingView') || 'grid');
+        setSortLabel();
 
-        const exists = chipsContainer.querySelector(`[data-id="${id}"]`);
-        if (exists) return;
-
-        const chip = document.createElement('span');
-        chip.className = 'search-chip';
-        chip.style.margin = '0';
-        chip.setAttribute('data-id', id);
-        chip.innerHTML = `
-            ${text}
-            <a class="search-chip-remove" href="#" onclick="removeType8Chip(this); return false;">✕</a>
-            <input type="hidden" name="p_${paramId}" value="${id}" />
-        `;
-        chipsContainer.appendChild(chip);
-    }
-
-    async function handleType8Keydown(e, paramId) {
-        if (e.key === 'Enter') {
-            e.preventDefault(); 
-            const input = e.target;
-            const text = input.value.trim();
-            if (!text) return;
-
-            try {
-                const res = await fetch('/Product/ResolveSelectOption', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
-                    },
-                    body: JSON.stringify({ paramId: paramId, text: text, createIfNotFound: false })
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data && data.id) {
-                        addType8Chip(paramId, data.id, text);
-                        input.value = ''; 
-                    }
+        if (typeof TRANSLATIONS === 'undefined') {
+            const checkTranslations = setInterval(() => {
+                if (typeof TRANSLATIONS !== 'undefined') {
+                    clearInterval(checkTranslations);
+                    initMoreButtons();
                 }
-            } catch (err) {
-                console.error('Error resolving option:', err);
+            }, 50);
+        } else initMoreButtons();
+
+        const url = new URL(window.location.href);
+        const city = url.searchParams.get('city');
+        if (city) {
+            document.querySelector('.regions-btn').innerHTML =
+                '<img src="/img/marker_for_adv.svg" alt="" class="regions-icon" />' + city;
+        }
+
+        try {
+            const res = await fetch('/Favourite/UserItems');
+            if (res.ok) {
+                const { favs, cart } = await res.json();
+                document.querySelectorAll('.product-card-action-btn').forEach(btn => {
+                    const onclickAttr = btn.getAttribute('onclick') || '';
+                    const isFav = onclickAttr.includes('true');
+                    const prodId = parseInt(onclickAttr.match(/\d+/)?.[0]);
+                    if (isFav && favs.includes(prodId)) btn.classList.add('product-card-action-active');
+                    if (!isFav && cart.includes(prodId)) btn.classList.add('product-card-action-active');
+                });
             }
+        } catch (e) {
+            console.error('Failed to fetch user items', e);
         }
-    }
-        function submitFilterForm() {
-        const form = document.getElementById('filterForm');
-        if (form) {
+
+        document.getElementById('filterForm')?.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const form = this;
+
+            const freeTextWraps = form.querySelectorAll('.free-text-select');
+            for (const wrap of freeTextWraps) {
+                const input = wrap.querySelector('.free-text-select-input');
+                const text = input.value.trim();
+                if (!text) continue;
+
+                const paramId = wrap.dataset.param;
+                try {
+                    const res = await fetch('/Product/ResolveSelectOption', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
+                        },
+                        body: JSON.stringify({ paramId: paramId, text: text, createIfNotFound: false })
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && data.id) addType8Chip(paramId, data.id, text);
+                    }
+                } catch (err) {
+                    console.error('Failed to resolve filter option', err);
+                }
+            }
+
+            const inputs = form.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                if (input.type === 'checkbox' && !input.checked) input.disabled = true;
+                else if (input.value.trim() === '') input.disabled = true;
+            });
+
             form.submit();
-        }
-    }
-     document.addEventListener("DOMContentLoaded", function() {
+        });
+
         if (window.ParamRulesEngine) {
             ParamRulesEngine.loadRules(@category.Id);
         }
     });
-        </script>
+</script>

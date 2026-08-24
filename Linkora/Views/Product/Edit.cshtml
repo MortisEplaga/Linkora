@@ -135,6 +135,7 @@
 
 <script src="~/js/param-rules-engine.js"></script>
 <script src="~/js/product-form.js"></script>
+<script src="~/js/param-utils.js"></script>
 <script>
     async function restoreEditDraft(state) {
         const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
@@ -157,18 +158,13 @@
             document.getElementById('selectedCategoryId').value = state.categoryId;
 
             const serverCatName = '@Html.Raw(ViewBag.CategoryName ?? "")';
-            if (String(state.categoryId) === String(@p.CategoryId) && serverCatName) {
-                document.getElementById('catSelectorText').textContent = serverCatName;
-            } else {
-                document.getElementById('catSelectorText').textContent = state.categoryText || '';
-            }
+            if (String(state.categoryId) === String(@p.CategoryId) && serverCatName) document.getElementById('catSelectorText').textContent = serverCatName;
+            else document.getElementById('catSelectorText').textContent = state.categoryText || '';
 
             await loadParams(state.categoryId, state.params || {});
         }
 
-        if (state.publishDays) {
-            setVal('pubDurationValue', state.publishDays);
-        }
+        if (state.publishDays) setVal('pubDurationValue', state.publishDays);
     }
 
     window.addEventListener('DOMContentLoaded', async () => {
@@ -186,9 +182,7 @@
 
         const catId = document.getElementById('selectedCategoryId').value;
         const catName = '@Html.Raw(ViewBag.CategoryName ?? "")';
-        if (catName) {
-            document.getElementById('catSelectorText').textContent = catName;
-        }
+        if (catName) document.getElementById('catSelectorText').textContent = catName;
 
         if (catId) {
             const valRes = await fetch(`/Product/ParamValues?productId=${productId}`);
@@ -200,6 +194,7 @@
     });
 
     window.beforeLangChange = function () {
+        const params = await collectParamValues();
         sessionStorage.setItem('linkora_edit_draft_' + @p.Id, JSON.stringify({
             title: document.getElementById('adTitle')?.value,
             description: document.getElementById('adDescription')?.value,
@@ -213,7 +208,7 @@
             categoryId: document.getElementById('selectedCategoryId')?.value,
             categoryText: document.getElementById('catSelectorText')?.textContent,
             publishDays: document.getElementById('pubDurationValue')?.value,
-            params: collectParamValues(),
+            params: params,
         }));
     };
 
@@ -254,9 +249,7 @@
     function removeExisting(btn) {
         const wrap = btn.parentElement;
         const path = wrap.dataset.existingPath;
-        if (window.existingMediaPaths) {
-            window.existingMediaPaths = window.existingMediaPaths.filter(p => p !== path);
-        }
+        if (window.existingMediaPaths) window.existingMediaPaths = window.existingMediaPaths.filter(p => p !== path);
         wrap.remove();
     }
 
@@ -271,9 +264,7 @@
         if (res.ok) {
             const data = await res.json();
             window.location.href = data.redirectUrl;
-        } else {
-            alert('Payment initiation failed');
-        }
+        } else alert('Payment initiation failed');
     };
 
     async function submitEdit(id) {
@@ -291,6 +282,7 @@
                 alert('Total media size exceeds 50 MB. Please remove some files.');
                 return;
             }
+
             const addressParts = ['adCity', 'adStreet', 'adHouse']
                 .map(id => document.getElementById(id)?.value?.trim())
                 .filter(Boolean);
@@ -305,52 +297,19 @@
             fd.append('publishDays', document.getElementById('pubDurationValue').value || '30');
             fd.append('promotionType', document.getElementById('promotionValue').value || 'None');
 
-            const params = {};
-            const priceInput = document.getElementById('adPrice');
-            if (priceInput.dataset.paramId && priceInput.value)
-                params[priceInput.dataset.paramId] = priceInput.value;
-
-            document.querySelectorAll('input[data-param], textarea[data-param]').forEach(el => {
-                if (el.closest('.param-options')) return;
-
-                if (el.type === 'checkbox') {
-                    if (el.checked) {
-                        params[el.dataset.param] = "true";
-                    }
-                } else if (el.value) {
-                    params[el.dataset.param] = el.value;
-                }
-            });
-
-            document.querySelectorAll('.param-pills[data-param]').forEach(el => {
-                const active = el.querySelector('.param-pill-active');
-                if (active) params[el.dataset.param] = active.dataset.id;
-            });
-
-            document.querySelectorAll('.param-swatches[data-param]').forEach(el => {
-                const active = el.querySelector('.param-swatch-row.param-swatch-active');
-                if (active) params[el.dataset.param] = active.dataset.id;
-            });
-
-            const freeTextValues = await FreeTextSelect.resolveAll(document.getElementById('createParams'));
-            Object.assign(params, freeTextValues);
-
-            document.querySelectorAll('.param-options[data-param]').forEach(el => {
-                const vals = [...el.querySelectorAll('input[type=checkbox]:checked')].map(cb => cb.dataset.id);
-                if (vals.length) params[el.dataset.param] = vals.join(',');
-            });
+            const params = await collectParamValues(document.getElementById('createParams'));
             fd.append('paramsJson', JSON.stringify(params));
 
             for (const file of selectedFiles) fd.append('photos', file);
 
-            const res = await fetch(`/Product/Edit?id=${id}`, { method: 'POST',
-                                                                headers: { 'RequestVerificationToken': document.getElementById('afToken')?.value ?? '' },
-                                                                body: fd });
-            if (res.ok) {
-                window.location.href = '/Product/My';
-            } else {
-                alert('Error: ' + await res.text());
-            }
+            const res = await fetch(`/Product/Edit?id=${id}`, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': document.getElementById('afToken')?.value ?? '' },
+                body: fd
+            });
+
+            if (res.ok) window.location.href = '/Product/My';
+            else alert('Error: ' + await res.text());
         } catch (e) {
             alert('Network error: ' + e.message);
         } finally {
