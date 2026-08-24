@@ -4,6 +4,7 @@ using Linkora.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Linkora.Controllers
@@ -13,12 +14,14 @@ namespace Linkora.Controllers
         private readonly IUserRepository _userRepository;
         private readonly IEmailService _emailService;
         private readonly IPasswordHasher _passwordHasher;
+        private readonly IConfiguration _configuration;
 
-        public AccountController(IUserRepository userRepository, IEmailService emailService, IPasswordHasher passwordHasher)
+        public AccountController(IUserRepository userRepository, IEmailService emailService, IPasswordHasher passwordHasher, IConfiguration configuration)
         {
             _userRepository = userRepository;
             _emailService = emailService;
             _passwordHasher = passwordHasher;
+            _configuration = configuration;
         }
         public IActionResult Login(string? returnUrl = null)
         {
@@ -333,26 +336,46 @@ namespace Linkora.Controllers
 
             return Ok(new { url = statusUrl, confirmation_code = confirmationCode });
         }
-        private string DecodeSignedRequest(string signedRequest)
+        private string? DecodeSignedRequest(string signedRequest)
         {
             try
             {
                 var parts = signedRequest.Split('.');
                 if (parts.Length != 2) return null;
 
+                var encodedSig = parts[0];
                 var payload = parts[1];
-                payload = payload.Replace('-', '+').Replace('_', '/');
-                while (payload.Length % 4 != 0) payload += "=";
-                var jsonBytes = Convert.FromBase64String(payload);
+
+                var appSecret = _configuration["Facebook:AppSecret"];
+                if (string.IsNullOrEmpty(appSecret))
+                {
+                    Console.Error.WriteLine("Facebook:AppSecret is not configured");
+                    return null;
+                }
+
+                var sig = Base64UrlDecode(encodedSig);
+                var expectedSig = ComputeHmacSha256(payload, appSecret);
+
+                if (!CryptographicOperations.FixedTimeEquals(sig, expectedSig)) return null;
+
+                var payloadPadded = payload.Replace('-', '+').Replace('_', '/');
+                while (payloadPadded.Length % 4 != 0) payloadPadded += "=";
+                var jsonBytes = Convert.FromBase64String(payloadPadded);
                 var json = System.Text.Encoding.UTF8.GetString(jsonBytes);
 
                 var data = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(json);
-                if (data != null && data.TryGetValue("user_id", out var userId))
-                    return userId.ToString();
+                if (data != null && data.TryGetValue("user_id", out var userId)) return userId.ToString();
             }
             catch (Exception ex) { Console.Error.WriteLine(ex); }
             return null;
         }
+        private static byte[] Base64UrlDecode(string input)
+        {
+            var s = input.Replace('-', '+').Replace('_', '/');
+            while (s.Length % 4 != 0) s += "=";
+            return Convert.FromBase64String(s);
+        }
+        private static byte[] ComputeHmacSha256(string payload, string secret) => new HMACSHA256(Encoding.UTF8.GetBytes(secret)).ComputeHash(Encoding.UTF8.GetBytes(payload));
         [HttpGet]
         [Route("Account/DeletionStatus")]
         public async Task<IActionResult> DeletionStatus(string code)
