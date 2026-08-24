@@ -9,29 +9,17 @@
             "ru" => "ValueRU",
             _ => "Value"
         };
-        public async Task<int?> FindIdAsync(int paramId, string text, string lang)
-        {
-            var col = ValueColumn(lang);
-            var trimmed = text.Trim();
-
-            var result = await QueryAsync<int?>(
+        public async Task<int?> FindIdAsync(int paramId, string text, string lang) => (await QueryAsync<int?>(
                 $@"SELECT Id FROM SelectOptions
                    WHERE CategoryId = @ParamId
-                     AND LTRIM(RTRIM({col})) = LTRIM(RTRIM(@Text))",
+                     AND LTRIM(RTRIM({ValueColumn(lang)})) = LTRIM(RTRIM(@Text))",
                 r => r.GetInt32OrNull(0),
                 p =>
                 {
                     p.AddWithValue("@ParamId", paramId);
-                    p.AddWithValue("@Text", trimmed);
-                });
-
-            return result.FirstOrDefault();
-        }
-        public async Task<int> CreateAsync(int paramId, string text)
-        {
-            var trimmed = text.Trim();
-
-            var result = await QueryAsync<int>(
+                    p.AddWithValue("@Text", text.Trim());
+                })).FirstOrDefault();
+        public async Task<int> CreateAsync(int paramId, string text) => (await QueryAsync<int>(
                 @"INSERT INTO SelectOptions (CategoryId, Value, ValueLV, ValueRU, IsConf)
                   OUTPUT INSERTED.Id
                   VALUES (@ParamId, @Text, @Text, @Text, 0)",
@@ -39,21 +27,13 @@
                 p =>
                 {
                     p.AddWithValue("@ParamId", paramId);
-                    p.AddWithValue("@Text", trimmed);
-                });
-
-            return result[0];
-        }
-        public async Task<List<(int Id, string Text)>> GetConfirmedAsync(int paramId, string lang)
-        {
-            var col = ValueColumn(lang);
-
-            return await QueryAsync<(int Id, string Text)>(
-                $@"SELECT Id, {col}
+                    p.AddWithValue("@Text", text.Trim());
+                }))[0];
+        public async Task<List<(int Id, string Text)>> GetConfirmedAsync(int paramId, string lang) => await QueryAsync<(int Id, string Text)>(
+                $@"SELECT Id, {ValueColumn(lang)}
                    FROM SelectOptions
                    WHERE CategoryId = @ParamId and IsConf = 1",
                 r => (r.GetInt32(0), r.GetStringOrDefault(1)),
                 p => p.AddWithValue("@ParamId", paramId));
-        }
     }
 }

@@ -15,7 +15,7 @@ namespace Linkora.Controllers
         }
         public async Task<IActionResult> Index()
         {
-            var data = await _compareRepository.GetCompareDataAsync(User.GetUserId(), Request.Cookies["lang"] ?? "en");
+            var data = await _compareRepository.GetCompareDataAsync(User.GetUserId(), Request.GetLang());
 
             ViewBag.Products = data.Products;
             ViewBag.AllParamIds = data.AllParamIds;

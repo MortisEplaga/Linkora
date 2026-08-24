@@ -10,40 +10,29 @@ namespace Linkora.Repositories
         {
             _httpContextAccessor = httpContextAccessor;
         }
-        private string GetLang() => _httpContextAccessor.HttpContext?.Request.Cookies["lang"] ?? "en";
         private Category MapRow(SqlDataReader reader)
         {
             var nameEn = reader.GetString(reader.GetOrdinal("Name"));
-            var lang = GetLang();
             return new Category
             {
                 Id = reader.GetInt32(reader.GetOrdinal("Id")),
                 ParentId = reader.GetInt32OrNull(reader.GetOrdinal("ParentId")),
-                Name = Resolve(lang, nameEn, reader.GetStringOrNull(reader.GetOrdinal("NameLV")), reader.GetStringOrNull(reader.GetOrdinal("NameRU"))),
+                Name = Resolve(_httpContextAccessor.HttpContext.GetLang(), nameEn, reader.GetStringOrNull(reader.GetOrdinal("NameLV")), reader.GetStringOrNull(reader.GetOrdinal("NameRU"))),
                 NameEn = nameEn,
                 Type = reader.GetInt32OrNull(reader.GetOrdinal("Type")),
             };
         }
-        public async Task<List<Category>> GetAllAsync()
-        {
-            return await QueryAsync(
+        public async Task<List<Category>> GetAllAsync() => await QueryAsync(
                 "SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category",
                 MapRow);
-        }
-        public async Task<Category?> GetByIdAsync(int id)
-        {
-            return await QuerySingleAsync(
+        public async Task<Category?> GetByIdAsync(int id) => await QuerySingleAsync(
                 "SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE Id = @Id and Type = 1",
                 MapRow,
                 p => p.AddWithValue("@Id", id));
-        }
-        public async Task<List<Category>> GetChildrenAsync(int parentId)
-        {
-            return await QueryAsync(
+        public async Task<List<Category>> GetChildrenAsync(int parentId) => await QueryAsync(
                 "SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId = @ParentId and Type = 1",
                 MapRow,
                 p => p.AddWithValue("@ParentId", parentId));
-        }
         public async Task<List<Category>> GetBreadcrumbAsync(int categoryId)
         {
             var breadcrumb = await QueryAsync(
@@ -76,21 +65,15 @@ namespace Linkora.Repositories
 
             return await LoadParameterOptionsAsync(parameters);
         }
-        public async Task<List<Parameter>> GetParametersAsync(int categoryId)
-        {
-            var parameters = await QueryAsync(
+        public async Task<List<Parameter>> GetParametersAsync(int categoryId) => await LoadParameterOptionsAsync(await QueryAsync(
                 "SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId = @ParentId AND Type IN (2,3,4,5,6,7,8)",
                 MapRow,
-                p => p.AddWithValue("@ParentId", categoryId));
-
-            return await LoadParameterOptionsAsync(parameters);
-        }
+                p => p.AddWithValue("@ParentId", categoryId)));
         private async Task<List<Parameter>> LoadParameterOptionsAsync(List<Category> parameters)
         {
-            if (parameters == null || parameters.Count == 0)
-                return new List<Parameter>();
+            if (parameters == null || parameters.Count == 0) return new List<Parameter>();
 
-            var lang = GetLang();
+            var lang = _httpContextAccessor.HttpContext.GetLang();
 
             var resultDict = parameters.ToDictionary(p => p.Id, p => new Parameter { Param = p });
 
@@ -101,8 +84,7 @@ namespace Linkora.Repositories
 
                 Action<SqlParameterCollection> addParams = pr =>
                 {
-                    for (int i = 0; i < ids.Count; i++)
-                        pr.AddWithValue($"@id{i}", ids[i]);
+                    for (int i = 0; i < ids.Count; i++) pr.AddWithValue($"@id{i}", ids[i]);
                 };
 
                 return (inClause, addParams);
@@ -126,9 +108,7 @@ namespace Linkora.Repositories
                     },
                     addParams);
 
-                foreach (var item in options)
-                    if (resultDict.TryGetValue(item.CategoryId, out var param))
-                        param.Options.Add(item.Option);
+                foreach (var item in options) if (resultDict.TryGetValue(item.CategoryId, out var param)) param.Options.Add(item.Option);
             }
 
             var rangeIds = parameters.Where(p => p.Type == 5).Select(p => p.Id).ToList();
@@ -175,9 +155,7 @@ namespace Linkora.Repositories
                     },
                     addParams);
 
-                foreach (var item in colors)
-                    if (resultDict.TryGetValue(item.CategoryId, out var param))
-                        param.ColorOptions.Add(item.Option);
+                foreach (var item in colors) if (resultDict.TryGetValue(item.CategoryId, out var param)) param.ColorOptions.Add(item.Option);
             }
 
             return resultDict.Values.ToList();

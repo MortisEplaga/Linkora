@@ -35,8 +35,7 @@ namespace Linkora.Controllers
         [HttpPost]
         public async Task<IActionResult> InitiatePromotion(int productId, string promotionType)
         {
-            if (!PromotionPrices.TryGetValue(promotionType, out var price))
-                return BadRequest("Unknown promotion type");
+            if (!PromotionPrices.TryGetValue(promotionType, out var price)) return BadRequest("Unknown promotion type");
 
             var userId = User.GetUserId();
 
@@ -53,8 +52,7 @@ namespace Linkora.Controllers
         [HttpPost]
         public async Task<IActionResult> InitiateSubscription(string subscriptionType)
         {
-            if (!SubscriptionPrices.TryGetValue(subscriptionType, out var price))
-                return BadRequest("Unknown subscription type");
+            if (!SubscriptionPrices.TryGetValue(subscriptionType, out var price)) return BadRequest("Unknown subscription type");
 
             var userId = User.GetUserId();
             var reference = $"SUB{userId}{DateTime.UtcNow:HHmmss}";
@@ -77,15 +75,11 @@ namespace Linkora.Controllers
             var email = User.FindFirst(ClaimTypes.Email)?.Value;
             if (string.IsNullOrEmpty(email)) email = "noemail@vena.lv";
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
-            var lang = Request.Cookies["lang"] ?? "en";
-
             try
             {
-                var (transactionId, redirectUrl) = await _mk.CreateTransactionAsync(
-                    price, "EUR", reference, email, ip, lang, returnUrl, cancelUrl, notificationUrl);
+                var (transactionId, redirectUrl) = await _mk.CreateTransactionAsync(price, "EUR", reference, email, ip, Request.GetLang(), returnUrl, cancelUrl, notificationUrl);
 
                 await _paymentRepository.SetTransactionIdAsync(paymentId, transactionId);
-
                 return Ok(new { redirectUrl });
             }
             catch (Exception ex)

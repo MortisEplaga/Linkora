@@ -17,6 +17,20 @@ namespace Linkora.Repositories
     public static class ClaimsPrincipalExtensions
     {
         public static int GetUserId(this ClaimsPrincipal user) => int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-        public static bool TryGetUserId(this ClaimsPrincipal user, out int userId) =>  int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out userId);
+        public static bool TryGetUserId(this ClaimsPrincipal user, out int userId) => int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out userId);
+    }
+    public static class HttpRequestExtensions
+    {
+        public static string GetLang(this HttpRequest request)
+        {
+            var lang = request.Cookies["lang"] ?? "en";
+            if (lang != "lv" && lang != "ru") lang = "en";
+            return lang;
+        }
+        public static string GetLang(this HttpContext context)
+        {
+            if (context == null) return "en";
+            return context.Request.GetLang();
+        }
     }
 }

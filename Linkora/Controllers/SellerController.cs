@@ -14,15 +14,13 @@ namespace Linkora.Controllers
             _httpContextAccessor = httpContextAccessor;
         }
 
-        private string GetLang() => _httpContextAccessor.HttpContext?.Request.Cookies["lang"] ?? "en";
-
         public async Task<IActionResult> Index(int id, int? categoryId, string sort = "new")
         {
             var seller = await _sellerRepository.GetByIdAsync(id);
             if (seller == null) return NotFound();
 
             var (reviewCount, reviewAvg) = await _sellerRepository.GetRatingAsync(id);
-            var categories = await _sellerRepository.GetCategoriesAsync(id, GetLang());
+            var categories = await _sellerRepository.GetCategoriesAsync(id, Request.GetLang());
             var products = await _sellerRepository.GetProductsAsync(id, categoryId, sort);
             var reviews = await _sellerRepository.GetReviewsAsync(id);
 

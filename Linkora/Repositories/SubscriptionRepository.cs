@@ -5,9 +5,7 @@ namespace Linkora.Repositories
     public class SubscriptionRepository : SqlRepositoryBase, ISubscriptionRepository
     {
         public SubscriptionRepository(IConfiguration configuration) : base(configuration) { }
-        public async Task<List<UserSummary>> GetFollowingAsync(int followerId)
-        {
-            return await QueryAsync(
+        public async Task<List<UserSummary>> GetFollowingAsync(int followerId) => await QueryAsync(
                 @"SELECT u.Id, u.UserName, u.AvatarUrl, u.IsCompany, u.CreatedAt
                   FROM Subscriptions s
                   JOIN Users u ON u.Id = s.FollowingId
@@ -22,7 +20,6 @@ namespace Linkora.Repositories
                     CreatedAt = r.GetDateTimeOrNull(4),
                 },
                 p => p.AddWithValue("@FollowerId", followerId));
-        }
         public async Task<bool> IsSubscribedAsync(int followerId, int followingId)
         {
             var result = await QueryAsync<int>(

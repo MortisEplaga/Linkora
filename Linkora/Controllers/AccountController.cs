@@ -388,7 +388,7 @@ namespace Linkora.Controllers
                 return View();
             }
 
-            var resolvedLang = lang ?? Request.Cookies["lang"] ?? "en";
+            var resolvedLang = lang ?? Request.GetLang();
             if (resolvedLang != "lv" && resolvedLang != "ru") resolvedLang = "en";
 
             var user = await _userRepository.GetByEmailAsync(email.Trim());

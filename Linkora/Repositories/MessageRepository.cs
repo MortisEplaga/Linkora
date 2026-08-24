@@ -23,13 +23,10 @@ public class MessageRepository : SqlRepositoryBase, IMessageRepository
                 p.AddWithValue("@SystemId", 3);
             })).First();
     }
-    public async Task<string> GetUserStatusAsync(int userId)
-    {
-        return (await QueryAsync<string>(
+    public async Task<string> GetUserStatusAsync(int userId) => (await QueryAsync<string>(
             "SELECT Role FROM Users WHERE Id = @Id",
             r => r.GetStringOrNull(0)!,
             p => p.AddWithValue("@Id", userId))).FirstOrDefault() ?? "user";
-    }
     public async Task<bool> CanReviewAsync(int conversationId, int userId)
     {
         var convData = await QueryAsync<(int ProductId, int BuyerId, int SellerId)>(
@@ -76,9 +73,7 @@ public class MessageRepository : SqlRepositoryBase, IMessageRepository
         return targetUserId == 0 ? null : targetUserId;
     }
     public async Task<bool> HasUserReviewedAsync(int conversationId, int userId) => !await CanReviewAsync(conversationId, userId);
-    public async Task<int> CreateReviewAsync(int authorId, int targetUserId, int productId, int rating, string? comment)
-    {
-        var result = await QueryAsync<int>(
+    public async Task<int> CreateReviewAsync(int authorId, int targetUserId, int productId, int rating, string? comment) => (await QueryAsync<int>(
             @"INSERT INTO Reviews (AuthorId, TargetUserId, Rating, Comment, CreatedAt, ProductId)
               OUTPUT INSERTED.Id
               VALUES (@AuthorId, @TargetId, @Rating, @Comment, GETDATE(), @ProductId)",
@@ -90,13 +85,8 @@ public class MessageRepository : SqlRepositoryBase, IMessageRepository
                 p.AddWithValue("@Rating", rating);
                 p.AddWithValue("@Comment", comment ?? (object)DBNull.Value);
                 p.AddWithValue("@ProductId", productId);
-            });
-
-        return result[0];
-    }
-    public async Task<List<User>> GetConversationPartnersAsync(int productId, int userId)
-    {
-        return await QueryAsync(
+            }))[0];
+    public async Task<List<User>> GetConversationPartnersAsync(int productId, int userId) => await QueryAsync(
             @"SELECT DISTINCT u.Id, u.UserName, u.AvatarUrl, u.IsCompany
               FROM Conversations c
               JOIN Users u ON (u.Id = c.BuyerId OR u.Id = c.SellerId)
@@ -115,10 +105,7 @@ public class MessageRepository : SqlRepositoryBase, IMessageRepository
                 p.AddWithValue("@ProductId", productId);
                 p.AddWithValue("@UserId", userId);
             });
-    }
-    public async Task<int> CreateSystemConversationAsync(int productId, int user1Id, int user2Id)
-    {
-        var result = await QueryAsync<int>(
+    public async Task<int> CreateSystemConversationAsync(int productId, int user1Id, int user2Id) => (await QueryAsync<int>(
             @"INSERT INTO Conversations (ProductId, BuyerId, SellerId, CreatedAt, IsSystem)
               OUTPUT INSERTED.Id
               VALUES (@ProductId, @User1Id, @User2Id, GETDATE(), 1)",
@@ -128,13 +115,8 @@ public class MessageRepository : SqlRepositoryBase, IMessageRepository
                 p.AddWithValue("@ProductId", productId);
                 p.AddWithValue("@User1Id", user1Id);
                 p.AddWithValue("@User2Id", user2Id);
-            });
-
-        return result[0];
-    }
-    public async Task<int> SendSystemMessageAsync(int conversationId, string text)
-    {
-        var result = await QueryAsync<int>(
+            }))[0];
+    public async Task<int> SendSystemMessageAsync(int conversationId, string text) => (await QueryAsync<int>(
             @"INSERT INTO Messages (ConversationId, SenderId, Text, CreatedAt, IsRead)
               OUTPUT INSERTED.Id
               VALUES (@ConvId, NULL, @Text, GETDATE(), 0)",
@@ -143,13 +125,8 @@ public class MessageRepository : SqlRepositoryBase, IMessageRepository
             {
                 p.AddWithValue("@ConvId", conversationId);
                 p.AddWithValue("@Text", text);
-            });
-
-        return result[0];
-    }
-    public async Task<List<Conversation>> GetConversationsAsync(int userId)
-    {
-        return await QueryAsync(
+            }))[0];
+    public async Task<List<Conversation>> GetConversationsAsync(int userId) => await QueryAsync(
             @"WITH user_role AS (
                 SELECT Role FROM Users WHERE Id = @UserId
             )
@@ -207,7 +184,6 @@ public class MessageRepository : SqlRepositoryBase, IMessageRepository
                 UnreadCount = r.GetInt32OrDefault(15),
             },
             p => p.AddWithValue("@UserId", userId));
-    }
     public async Task<Conversation?> GetConversationAsync(int conversationId, int userId)
     {
         var data = await QueryAsync<(Conversation conv, string? productStatus)>(
@@ -330,9 +306,7 @@ public class MessageRepository : SqlRepositoryBase, IMessageRepository
                 p.AddWithValue("@SellerId", sellerId);
             })).First();
     }
-    public async Task<List<Message>> GetMessagesAsync(int conversationId, int userId)
-    {
-        return await QueryAsync(
+    public async Task<List<Message>> GetMessagesAsync(int conversationId, int userId) => await QueryAsync(
             @"SELECT m.Id, m.ConversationId, m.SenderId, m.Text, m.CreatedAt, m.IsRead, m.IsAdmin,
                      u.UserName, u.AvatarUrl
               FROM Messages m
@@ -352,10 +326,7 @@ public class MessageRepository : SqlRepositoryBase, IMessageRepository
                 SenderAvatar = r.GetStringOrNull(8),
             },
             p => p.AddWithValue("@ConvId", conversationId));
-    }
-    public async Task<int> SendMessageAsync(int conversationId, int senderId, string text)
-    {
-        var result = await QueryAsync<int>(
+    public async Task<int> SendMessageAsync(int conversationId, int senderId, string text) => (await QueryAsync<int>(
             @"INSERT INTO Messages (ConversationId, SenderId, Text, CreatedAt, IsRead)
               OUTPUT INSERTED.Id
               VALUES (@ConvId, @SenderId, @Text, GETDATE(), 0)",
@@ -365,13 +336,8 @@ public class MessageRepository : SqlRepositoryBase, IMessageRepository
                 p.AddWithValue("@ConvId", conversationId);
                 p.AddWithValue("@SenderId", senderId);
                 p.AddWithValue("@Text", text);
-            });
-
-        return result[0];
-    }
-    public async Task MarkReadAsync(int conversationId, int userId)
-    {
-        await ExecuteAsync(
+            }))[0];
+    public async Task MarkReadAsync(int conversationId, int userId) => await ExecuteAsync(
             @"UPDATE Messages SET IsRead = 1
               WHERE ConversationId = @ConvId AND SenderId != @UserId AND IsRead = 0",
             p =>
@@ -379,17 +345,11 @@ public class MessageRepository : SqlRepositoryBase, IMessageRepository
                 p.AddWithValue("@ConvId", conversationId);
                 p.AddWithValue("@UserId", userId);
             });
-    }
-    public async Task<int> GetUnreadCountAsync(int userId)
-    {
-        var result = await QueryAsync<int>(
+    public async Task<int> GetUnreadCountAsync(int userId) => (await QueryAsync<int>(
             @"SELECT COUNT(*) FROM Messages m
               JOIN Conversations c ON c.Id = m.ConversationId
               WHERE (c.BuyerId = @UserId OR c.SellerId = @UserId)
                 AND m.SenderId != @UserId AND m.IsRead = 0",
             r => r.GetInt32(0),
-            p => p.AddWithValue("@UserId", userId));
-
-        return result[0];
-    }
+            p => p.AddWithValue("@UserId", userId)))[0];
 }

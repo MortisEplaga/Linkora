@@ -25,11 +25,9 @@ namespace Linkora.Repositories
                 },
                 p => p.AddWithValue("@UserId", userId));
         }
-        public async Task<bool> CanReviewAsync(int authorId, int targetUserId, int productId)
-        {
-            return (await QueryAsync<int>(@"
-        SELECT COUNT(*) FROM Reviews
-        WHERE AuthorId = @AuthorId AND TargetUserId = @TargetId AND ProductId = @ProductId",
+        public async Task<bool> CanReviewAsync(int authorId, int targetUserId, int productId) => (await QueryAsync<int>(@"
+                    SELECT COUNT(*) FROM Reviews
+                    WHERE AuthorId = @AuthorId AND TargetUserId = @TargetId AND ProductId = @ProductId",
                 r => r.GetInt32(0),
                 p =>
                 {
@@ -37,6 +35,5 @@ namespace Linkora.Repositories
                     p.AddWithValue("@TargetId", targetUserId);
                     p.AddWithValue("@ProductId", productId);
                 })).FirstOrDefault() == 0;
-        }
     }
 }

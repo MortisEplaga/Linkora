@@ -5,9 +5,7 @@ namespace Linkora.Repositories
     public class SellerRepository : SqlRepositoryBase, ISellerRepository
     {
         public SellerRepository(IConfiguration configuration) : base(configuration) { }
-        public async Task<UserSummary?> GetByIdAsync(int id)
-        {
-            return await QuerySingleAsync(
+        public async Task<UserSummary?> GetByIdAsync(int id) => await QuerySingleAsync(
                 "SELECT Id, UserName, AvatarUrl, Phone, Email, IsCompany, CreatedAt FROM Users WHERE Id = @Id",
                 r => new UserSummary
                 {
@@ -20,7 +18,6 @@ namespace Linkora.Repositories
                     CreatedAt = r.GetDateTimeOrNull(6),
                 },
                 p => p.AddWithValue("@Id", id));
-        }
         public async Task<(int Count, double Avg)> GetRatingAsync(int userId)
         {
             var result = await QueryAsync<(int Count, double Avg)>(
@@ -33,9 +30,7 @@ namespace Linkora.Repositories
 
             return result.Count > 0 ? result[0] : (0, 0.0);
         }
-        public async Task<List<CategoryCount>> GetCategoriesAsync(int userId, string lang)
-        {
-            return await QueryAsync(
+        public async Task<List<CategoryCount>> GetCategoriesAsync(int userId, string lang) => await QueryAsync(
                 @"SELECT DISTINCT c.Id, c.Name, c.NameLV, c.NameRU, COUNT(p.Id) as Cnt
                   FROM Products p
                   JOIN Category c ON c.Id = p.CategoryId
@@ -50,7 +45,6 @@ namespace Linkora.Repositories
                     Count = r.GetInt32(4)
                 },
                 p => p.AddWithValue("@UserId", userId));
-        }
         public async Task<List<Product>> GetProductsAsync(int userId, int? categoryId, string sort)
         {
             var order = sort switch
@@ -99,9 +93,7 @@ namespace Linkora.Repositories
                         p.AddWithValue("@CatId", categoryId.Value);
                 });
         }
-        public async Task<List<dynamic>> GetReviewsAsync(int userId, int limit = 50)
-        {
-            return await QueryAsync<dynamic>(
+        public async Task<List<dynamic>> GetReviewsAsync(int userId, int limit = 50) => await QueryAsync<dynamic>(
                 @"SELECT r.Id, r.Rating, r.Comment, r.CreatedAt,
                          u.UserName, u.AvatarUrl
                   FROM Reviews r
@@ -123,6 +115,5 @@ namespace Linkora.Repositories
                     p.AddWithValue("@Id", userId);
                     p.AddWithValue("@Limit", limit);
                 });
-        }
     }
 }

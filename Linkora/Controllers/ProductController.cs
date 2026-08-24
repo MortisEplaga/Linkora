@@ -47,33 +47,22 @@ namespace Linkora.Controllers
             return result;
         }
 
-        private string GetLang() => Request.Cookies["lang"] ?? "en";
-
         public async Task<IActionResult> ResolveSelectOption([FromBody] ResolveSelectOptionDto dto)
         {
-            if (dto == null || string.IsNullOrWhiteSpace(dto.Text))
-                return BadRequest("Text is required");
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Text)) return BadRequest("Text is required");
 
-            var lang = GetLang();
-            var existingId = await _selectOptionRepository.FindIdAsync(dto.ParamId, dto.Text, lang);
+            var existingId = await _selectOptionRepository.FindIdAsync(dto.ParamId, dto.Text, Request.GetLang());
 
-            if (existingId.HasValue)
-                return Json(new { id = existingId.Value, created = false });
+            if (existingId.HasValue) return Json(new { id = existingId.Value, created = false });
 
-            if (!dto.CreateIfNotFound)
-                return Json(new { id = 0, created = false });
+            if (!dto.CreateIfNotFound) return Json(new { id = 0, created = false });
 
             var newId = await _selectOptionRepository.CreateAsync(dto.ParamId, dto.Text);
             return Json(new { id = newId, created = true });
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetSelectOptions([FromQuery] int paramId)
-        {
-            var lang = GetLang();
-            var options = await _selectOptionRepository.GetConfirmedAsync(paramId, lang);
-            return Json(options.Select(o => new { id = o.Id, text = o.Text }));
-        }
+        public async Task<IActionResult> GetSelectOptions([FromQuery] int paramId) => Json((await _selectOptionRepository.GetConfirmedAsync(paramId, Request.GetLang())).Select(o => new { id = o.Id, text = o.Text }));
 
         [HttpPost]
         public async Task<IActionResult> VerifyRecaptcha([FromBody] RecaptchaDto dto)
@@ -140,8 +129,7 @@ namespace Linkora.Controllers
             if (!User.TryGetUserId(out int currentUserId) || product.UserId != currentUserId) await _productRepository.IncrementViewCountAsync(id);
             var similar = product.CategoryId.HasValue ? await _productRepository.GetSimilarAsync(product.CategoryId.Value, id) : [];
 
-            var lang = GetLang();
-            var paramValues = await _productRepository.GetParamDisplayValuesAsync(id, lang);
+            var paramValues = await _productRepository.GetParamDisplayValuesAsync(id, Request.GetLang());
             List<Parameter> paramDefs = [];
             if (paramValues.Count > 0 && product.CategoryId.HasValue)
             {
@@ -372,12 +360,7 @@ namespace Linkora.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ParamValues(int productId)
-        {
-            var lang = GetLang();
-            var paramValues = await _productRepository.GetParamDisplayValuesAsync(productId, lang);
-            return Json(paramValues);
-        }
+        public async Task<IActionResult> ParamValues(int productId) => Json(await _productRepository.GetParamDisplayValuesAsync(productId, Request.GetLang()));
 
         [Authorize]
         [HttpPost]

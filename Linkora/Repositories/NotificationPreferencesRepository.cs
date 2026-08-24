@@ -5,9 +5,7 @@ namespace Linkora.Repositories
     public class NotificationPreferencesRepository : SqlRepositoryBase, INotificationPreferencesRepository
     {
         public NotificationPreferencesRepository(IConfiguration configuration) : base(configuration) { }
-        public async Task<NotificationPreferences> GetAsync(int userId)
-        {
-            var prefs = await QuerySingleAsync(
+        public async Task<NotificationPreferences> GetAsync(int userId) => (await QuerySingleAsync(
                 "SELECT Deals, Reviews, Moderation, Account, Favourites, NewListings FROM NotificationPreferences WHERE UserId = @UserId",
                 r => new NotificationPreferences
                 {
@@ -19,13 +17,8 @@ namespace Linkora.Repositories
                     Favourites = r.GetBoolean(4),
                     NewListings = r.GetBoolean(5),
                 },
-                p => p.AddWithValue("@UserId", userId));
-
-            return prefs ?? new NotificationPreferences { UserId = userId };
-        }
-        public async Task SaveAsync(NotificationPreferences prefs)
-        {
-            await ExecuteAsync(@"
+                p => p.AddWithValue("@UserId", userId))) ?? new NotificationPreferences { UserId = userId };
+        public async Task SaveAsync(NotificationPreferences prefs) => await ExecuteAsync(@"
                 MERGE NotificationPreferences AS target
                 USING (SELECT @UserId AS UserId) AS source
                 ON target.UserId = source.UserId
@@ -45,6 +38,5 @@ namespace Linkora.Repositories
                     p.AddWithValue("@Favourites", prefs.Favourites);
                     p.AddWithValue("@NewListings", prefs.NewListings);
                 });
-        }
     }
 }
