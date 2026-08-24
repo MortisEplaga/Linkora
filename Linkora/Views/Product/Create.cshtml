@@ -150,7 +150,8 @@
 <script>
     const DRAFT_KEY = 'linkora_create_draft';
 
-    function saveDraftState() {
+    async function saveDraftState() {
+        const params = await collectParamValues(); 
         const state = {
             title: document.getElementById('adTitle')?.value || '',
             description: document.getElementById('adDescription')?.value || '',
@@ -164,7 +165,7 @@
             categoryId: document.getElementById('selectedCategoryId')?.value || '',
             categoryText: document.getElementById('catSelectorText')?.textContent || '',
             publishDays: document.getElementById('pubDurationValue')?.value || '',
-            params: collectParamValues(),
+            params: params,
         };
         sessionStorage.setItem(DRAFT_KEY, JSON.stringify(state));
     }
@@ -253,7 +254,9 @@
             if (res.ok) {
                 const data = await res.json();
                 window.location.href = `/Product/Details/${data.id}`;
-            } else alert('Error: ' + await res.text());
+            } else {
+                alert('Error: ' + await res.text());
+            }
         } catch (e) {
             alert('Network error: ' + e.message);
         } finally {
@@ -261,4 +264,4 @@
             translateDynamicElement(btn);
         }
     }
-    </script>
+</script>
