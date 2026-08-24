@@ -75,12 +75,8 @@ namespace Linkora.Services
             var transactionId = root.GetProperty("id").GetString()!;
 
             string? redirectUrl = null;
-            if (root.TryGetProperty("payment_methods", out var pm) &&
-                pm.TryGetProperty("other", out var other) &&
-                other.GetArrayLength() > 0)
-            {
+            if (root.TryGetProperty("payment_methods", out var pm) && pm.TryGetProperty("other", out var other) && other.GetArrayLength() > 0)
                 redirectUrl = other[0].GetProperty("url").GetString();
-            }
 
             if (redirectUrl == null)
                 throw new InvalidOperationException("MakeCommerce response has no redirect URL");

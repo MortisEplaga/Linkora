@@ -8,9 +8,7 @@ namespace Linkora.Services
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly TimeSpan _interval = TimeSpan.FromHours(24);
 
-        public ArchiveOldProductsService(
-            ILogger<ArchiveOldProductsService> logger,
-            IServiceScopeFactory serviceScopeFactory)
+        public ArchiveOldProductsService(ILogger<ArchiveOldProductsService> logger, IServiceScopeFactory serviceScopeFactory)
         {
             _logger = logger;
             _serviceScopeFactory = serviceScopeFactory;
