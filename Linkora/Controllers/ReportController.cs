@@ -3,7 +3,6 @@ using Linkora.Repositories;
 using Linkora.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace Linkora.Controllers
 {
@@ -35,9 +34,7 @@ namespace Linkora.Controllers
         [HttpPost("create")]
         public async Task<IActionResult> CreateReport([FromBody] ReportRequest request)
         {
-            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!int.TryParse(userIdStr, out int userId))
-                return Unauthorized();
+            if (!User.TryGetUserId(out int userId)) return Unauthorized();
 
             var product = await _productRepository.GetByIdAsync(request.ProductId);
             if (product == null)

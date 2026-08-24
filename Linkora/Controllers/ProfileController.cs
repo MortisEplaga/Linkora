@@ -3,7 +3,6 @@ using Linkora.Repositories;
 using Linkora.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace Linkora.Controllers
 {
@@ -23,8 +22,7 @@ namespace Linkora.Controllers
         }
         public async Task<IActionResult> Edit()
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var user = await _userRepository.GetByIdAsync(userId);
+            var user = await _userRepository.GetByIdAsync(User.GetUserId());
             if (user == null) return NotFound();
             ViewBag.User = user;
             return View("~/Views/Account/ProfileEdit.cshtml");
@@ -33,7 +31,7 @@ namespace Linkora.Controllers
         [HttpPost]
         public async Task<IActionResult> Save([FromBody] ProfileSaveDto dto)
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var userId = User.GetUserId();
             var user = await _userRepository.GetByIdAsync(userId);
             if (user == null) return NotFound();
 
@@ -100,12 +98,9 @@ namespace Linkora.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> AdDurationPref()
         {
-            if (!User.Identity!.IsAuthenticated)
-                return Json(new { days = 30 });
+            if (!User.Identity!.IsAuthenticated) return Json(new { days = 30 });
 
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var user = await _userRepository.GetByIdAsync(userId);
-            return Json(new { days = user?.PreferredAdDuration ?? 30 });
+            return Json(new { days = (await _userRepository.GetByIdAsync(User.GetUserId()))?.PreferredAdDuration ?? 30 });
         }
     }
 }

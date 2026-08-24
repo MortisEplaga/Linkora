@@ -14,11 +14,10 @@ namespace Linkora.Controllers
         private readonly INotificationRepository _notificationRepository;
         private readonly IAdminService _adminService;
 
-        public AdminController(
-            IAdminRepository adminRepository,
-            IProductRepository productRepository,
-            INotificationRepository notificationRepository,
-            IAdminService adminService)
+        public AdminController(IAdminRepository adminRepository,
+                               IProductRepository productRepository,
+                               INotificationRepository notificationRepository,
+                               IAdminService adminService)
         {
             _adminRepository = adminRepository;
             _productRepository = productRepository;
@@ -98,8 +97,7 @@ namespace Linkora.Controllers
         public async Task<IActionResult> SetUserRole(int id, string role)
         {
             if (!IsAdmin()) return Forbid();
-            var myId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            if (id == myId) return BadRequest("Cannot change your own role");
+            if (id == User.GetUserId()) return BadRequest("Cannot change your own role");
 
             var (oldRole, banData) = await _adminService.SetUserRoleAsync(id, role);
 
@@ -138,8 +136,7 @@ namespace Linkora.Controllers
         public async Task<IActionResult> DeleteUser(int id)
         {
             if (!IsAdmin()) return Forbid();
-            var myId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            if (id == myId) return BadRequest("Cannot delete yourself");
+            if (id == User.GetUserId()) return BadRequest("Cannot delete yourself");
 
             await _adminService.DeleteUserCascadeAsync(id);
             return Ok();

@@ -3,7 +3,6 @@ using Linkora.Repositories;
 using Linkora.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace Linkora.Controllers
 {
@@ -16,8 +15,7 @@ namespace Linkora.Controllers
         private readonly INotificationService _notifications;
         private readonly IReviewRepository _reviewRepository;
 
-        public ReviewsController(IMessageRepository messageRepository,
-            INotificationService notifications, IReviewRepository reviewRepository)
+        public ReviewsController(IMessageRepository messageRepository, INotificationService notifications, IReviewRepository reviewRepository)
         {
             _messageRepository = messageRepository;
             _notifications = notifications;
@@ -27,7 +25,7 @@ namespace Linkora.Controllers
         [HttpPost("Create")]
         public async Task<IActionResult> Create([FromBody] CreateReviewDto dto)
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var userId = User.GetUserId();
             var reviewId = await _messageRepository.CreateReviewAsync(
                 authorId: userId,
                 targetUserId: dto.TargetUserId,
@@ -49,17 +47,11 @@ namespace Linkora.Controllers
         [HttpGet("CanReview")]
         public async Task<IActionResult> CanReview(int targetUserId, int productId)
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var canReview = await _reviewRepository.CanReviewAsync(userId, targetUserId, productId);
+            var canReview = await _reviewRepository.CanReviewAsync(User.GetUserId(), targetUserId, productId);
             return Ok(new { canReview });
         }
         [HttpGet("My")]
-        public async Task<IActionResult> My(string tab = "about")
-        {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var reviews = await _reviewRepository.GetUserReviewsAsync(userId, tab);
-
-            var result = reviews.Select(r => new
+        public async Task<IActionResult> My(string tab = "about") => Ok((await _reviewRepository.GetUserReviewsAsync(User.GetUserId(), tab)).Select(r => new
             {
                 rating = r.Rating,
                 comment = r.Comment,
@@ -67,9 +59,6 @@ namespace Linkora.Controllers
                 userId = r.UserId,
                 userName = r.UserName,
                 avatarUrl = (object?)r.AvatarUrl,
-            });
-
-            return Ok(result);
-        }
+            }));
     }
 }

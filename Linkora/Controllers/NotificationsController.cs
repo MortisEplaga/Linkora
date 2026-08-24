@@ -3,7 +3,6 @@ using Linkora.Repositories;
 using Linkora.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace Linkora.Controllers
 {
@@ -22,16 +21,14 @@ namespace Linkora.Controllers
         [HttpGet]
         public async Task<IActionResult> Count()
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var count = await _notifications.GetUnreadCountAsync(userId);
+            var count = await _notifications.GetUnreadCountAsync(User.GetUserId());
             return Json(new { count });
         }
 
         [HttpGet]
         public async Task<IActionResult> Preferences()
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var prefs = await _preferencesRepository.GetAsync(userId);
+            var prefs = await _preferencesRepository.GetAsync(User.GetUserId());
             return Json(new
             {
                 deals = prefs.Deals,
@@ -46,7 +43,7 @@ namespace Linkora.Controllers
         [HttpPost]
         public async Task<IActionResult> SavePreferences([FromBody] NotificationPreferencesDto dto)
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var userId = User.GetUserId();
             await _preferencesRepository.SaveAsync(new NotificationPreferences
             {
                 UserId = userId,
@@ -60,11 +57,7 @@ namespace Linkora.Controllers
             return Ok();
         }
         [HttpGet]
-        public async Task<IActionResult> List()
-        {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var notifications = await _notifications.GetByUserAsync(userId, 20);
-            return Json(notifications.Select(n => new
+        public async Task<IActionResult> List() => Json((await _notifications.GetByUserAsync(User.GetUserId(), 20)).Select(n => new
             {
                 id = n.Id,
                 text = n.Text,
@@ -77,21 +70,18 @@ namespace Linkora.Controllers
                 productName = n.ProductName,
                 productImage = n.ProductImage,
             }));
-        }
 
         [HttpPost]
         public async Task<IActionResult> MarkRead(int id)
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            await _notifications.MarkReadAsync(id, userId);
+            await _notifications.MarkReadAsync(id, User.GetUserId());
             return Ok();
         }
 
         [HttpPost]
         public async Task<IActionResult> MarkAllRead()
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            await _notifications.MarkAllReadAsync(userId);
+            await _notifications.MarkAllReadAsync(User.GetUserId());
             return Ok();
         }
     }

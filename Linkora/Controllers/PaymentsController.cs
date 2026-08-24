@@ -38,7 +38,7 @@ namespace Linkora.Controllers
             if (!PromotionPrices.TryGetValue(promotionType, out var price))
                 return BadRequest("Unknown promotion type");
 
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var userId = User.GetUserId();
 
             var owner = await GetProductOwnerAsync(productId);
             if (owner == null || owner != userId) return Forbid();
@@ -56,7 +56,7 @@ namespace Linkora.Controllers
             if (!SubscriptionPrices.TryGetValue(subscriptionType, out var price))
                 return BadRequest("Unknown subscription type");
 
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var userId = User.GetUserId();
             var reference = $"SUB{userId}{DateTime.UtcNow:HHmmss}";
             var paymentId = await _paymentRepository.CreateAsync(userId, "Subscription", null, null, subscriptionType, price, reference);
 

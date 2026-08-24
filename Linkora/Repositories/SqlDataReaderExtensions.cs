@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
+using System.Security.Claims;
 
 namespace Linkora.Repositories
 {
@@ -12,5 +13,10 @@ namespace Linkora.Repositories
         public static DateTime? GetDateTimeOrNull(this SqlDataReader r, int ordinal) => r.IsDBNull(ordinal) ? null : r.GetDateTime(ordinal);
         public static bool GetBooleanOrDefault(this SqlDataReader r, int ordinal, bool defaultValue = false) => r.IsDBNull(ordinal) ? defaultValue : r.GetBoolean(ordinal);
         public static double GetDoubleOrDefault(this SqlDataReader r, int ordinal, double defaultValue = 0.0) => r.IsDBNull(ordinal) ? defaultValue : r.GetDouble(ordinal);
+    }
+    public static class ClaimsPrincipalExtensions
+    {
+        public static int GetUserId(this ClaimsPrincipal user) => int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        public static bool TryGetUserId(this ClaimsPrincipal user, out int userId) =>  int.TryParse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value, out userId);
     }
 }

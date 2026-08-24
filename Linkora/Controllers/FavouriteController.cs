@@ -1,6 +1,5 @@
 ﻿using Linkora.Repositories;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace Linkora.Controllers
 {
@@ -16,30 +15,27 @@ namespace Linkora.Controllers
         [HttpPost]
         public async Task<IActionResult> Toggle(int productId, bool can)
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null) return Unauthorized();
+            if (!User.TryGetUserId(out int userId)) return Unauthorized();
 
-            var active = await _favouriteRepository.ToggleAsync(productId, int.Parse(userId), can);
+            var active = await _favouriteRepository.ToggleAsync(productId, userId, can);
             return Json(new { active });
         }
 
         [HttpGet]
         public async Task<IActionResult> UserItems()
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null) return Json(new { favs = Array.Empty<int>(), cart = Array.Empty<int>() });
+            if (!User.TryGetUserId(out int userId)) return Json(new { favs = Array.Empty<int>(), cart = Array.Empty<int>() });
 
-            var (favs, cart) = await _favouriteRepository.GetUserItemIdsAsync(int.Parse(userId));
+            var (favs, cart) = await _favouriteRepository.GetUserItemIdsAsync(userId);
             return Json(new { favs, cart });
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(string tab = "favs")
         {
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null) return RedirectToAction("Login", "Account");
+            if (!User.TryGetUserId(out int userId)) return RedirectToAction("Login", "Account");
 
-            var (favs, cart) = await _favouriteRepository.GetUserItemsAsync(int.Parse(userId));
+            var (favs, cart) = await _favouriteRepository.GetUserItemsAsync(userId);
 
             ViewBag.Favs = favs;
             ViewBag.Cart = cart;

@@ -1,7 +1,6 @@
 ﻿using Linkora.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Linkora.Models;
 
 namespace Linkora.Controllers
@@ -18,7 +17,7 @@ namespace Linkora.Controllers
 
         public async Task<IActionResult> Index(int? id)
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var userId = User.GetUserId();
             var conversations = await _messageRepository.GetConversationsAsync(userId);
 
             string userRole = await _messageRepository.GetUserStatusAsync(userId);
@@ -30,9 +29,7 @@ namespace Linkora.Controllers
             ViewBag.CurrentUserIsBanned = userRole == "banned";
             ViewBag.IsCurrentUserAdmin = userRole == "admin";
             if (ViewBag.CurrentUserIsBanned == true)
-            {
                 conversations = conversations.Where(c => c.IsSupport).ToList();
-            }
 
             if (id.HasValue)
             {
@@ -49,22 +46,14 @@ namespace Linkora.Controllers
             return View();
         }
         [HttpPost]
-        public async Task<IActionResult> StartSupportChat()
-        {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var convId = await _messageRepository.GetOrCreateSupportConversationAsync(userId);
-            return Ok(new { conversationId = convId });
-        }
+        public async Task<IActionResult> StartSupportChat() => Ok(new { conversationId = await _messageRepository.GetOrCreateSupportConversationAsync(User.GetUserId()) });
         [HttpPost]
         public async Task<IActionResult> Start([FromBody] StartMessageDto dto)
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var userId = User.GetUserId();
+            var convId = await _messageRepository.GetOrCreateConversationAsync(dto.ProductId, userId, dto.SellerId);
 
-            var convId = await _messageRepository.GetOrCreateConversationAsync(
-                dto.ProductId, userId, dto.SellerId);
-
-            if (!string.IsNullOrWhiteSpace(dto.Text))
-                await _messageRepository.SendMessageAsync(convId, userId, dto.Text);
+            if (!string.IsNullOrWhiteSpace(dto.Text)) await _messageRepository.SendMessageAsync(convId, userId, dto.Text);
 
             return Ok(new { conversationId = convId });
         }
@@ -72,8 +61,7 @@ namespace Linkora.Controllers
         [HttpGet]
         public async Task<IActionResult> UnreadCount()
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var count = await _messageRepository.GetUnreadCountAsync(userId);
+            var count = await _messageRepository.GetUnreadCountAsync(User.GetUserId());
             return Json(new { count });
         }
     }

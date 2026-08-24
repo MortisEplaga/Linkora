@@ -1,7 +1,6 @@
 ﻿using Linkora.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace Linkora.Controllers
 {
@@ -14,15 +13,9 @@ namespace Linkora.Controllers
         {
             _compareRepository = compareRepository;
         }
-
-        private string GetLang() => Request.Cookies["lang"] ?? "en";
-
         public async Task<IActionResult> Index()
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-            var lang = GetLang();
-
-            var data = await _compareRepository.GetCompareDataAsync(userId, lang);
+            var data = await _compareRepository.GetCompareDataAsync(User.GetUserId(), Request.Cookies["lang"] ?? "en");
 
             ViewBag.Products = data.Products;
             ViewBag.AllParamIds = data.AllParamIds;

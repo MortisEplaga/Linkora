@@ -137,13 +137,8 @@ namespace Linkora.Controllers
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null) return NotFound();
 
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId == null || product.UserId?.ToString() != userId)
-                await _productRepository.IncrementViewCountAsync(id);
-
-            var similar = product.CategoryId.HasValue
-                ? await _productRepository.GetSimilarAsync(product.CategoryId.Value, id)
-                : [];
+            if (!User.TryGetUserId(out int currentUserId) || product.UserId != currentUserId) await _productRepository.IncrementViewCountAsync(id);
+            var similar = product.CategoryId.HasValue ? await _productRepository.GetSimilarAsync(product.CategoryId.Value, id) : [];
 
             var lang = GetLang();
             var paramValues = await _productRepository.GetParamDisplayValuesAsync(id, lang);
@@ -165,7 +160,7 @@ namespace Linkora.Controllers
         [Authorize]
         public async Task<IActionResult> My(string tab = "Active")
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var userId = User.GetUserId();
             var counts = await _productRepository.GetCountsByStatusAsync(userId);
 
             if (tab == "Purchased")
@@ -192,7 +187,7 @@ namespace Linkora.Controllers
         {
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null) return NotFound();
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var userId = User.GetUserId();
             if (product.UserId != userId) return Forbid();
             if (await _userRepository.IsBannedAsync(userId)) return Forbid();
 
@@ -229,7 +224,7 @@ namespace Linkora.Controllers
             var totalBytes = photos?.Sum(f => f.Length) ?? 0;
             if (totalBytes > MediaStorageService.MaxTotalBytes) return BadRequest("Total media size exceeds 50 MB");
 
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var userId = User.GetUserId();
             if (await _userRepository.IsBannedAsync(userId)) return Forbid();
             var existing = await _productRepository.GetByIdAsync(id);
             if (existing == null) return NotFound();
@@ -347,7 +342,7 @@ namespace Linkora.Controllers
         [HttpPost]
         public async Task<IActionResult> Delete(int id)
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var userId = User.GetUserId();
             if (await _userRepository.IsBannedAsync(userId)) return Forbid();
             var isAdmin = User.IsInRole("admin");
 
@@ -363,7 +358,7 @@ namespace Linkora.Controllers
         [HttpPost]
         public async Task<IActionResult> Republish(int id)
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var userId = User.GetUserId();
             if (await _userRepository.IsBannedAsync(userId)) return Forbid();
 
             var product = await _productRepository.GetByIdAsync(id);
@@ -388,7 +383,7 @@ namespace Linkora.Controllers
         [HttpPost]
         public async Task<IActionResult> CompleteDeal(int id, int otherUserId)
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var userId = User.GetUserId();
             if (await _userRepository.IsBannedAsync(userId)) return Forbid();
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null) return NotFound();
@@ -420,7 +415,7 @@ namespace Linkora.Controllers
         [HttpGet]
         public async Task<IActionResult> GetConversationPartners(int productId)
         {
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var userId = User.GetUserId();
             var partners = await _messageRepository.GetConversationPartnersAsync(productId, userId);
             return Ok(partners.Select(p => new { p.Id, p.UserName, p.AvatarUrl, p.IsCompany }));
         }
@@ -437,7 +432,7 @@ namespace Linkora.Controllers
             var totalBytes = photos?.Sum(f => f.Length) ?? 0;
             if (totalBytes > MediaStorageService.MaxTotalBytes) return BadRequest("Total media size exceeds 50 MB");
 
-            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            var userId = User.GetUserId();
             if (await _userRepository.IsBannedAsync(userId)) return Forbid();
 
             int duration = 30;

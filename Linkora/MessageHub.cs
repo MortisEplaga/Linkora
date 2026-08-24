@@ -9,27 +9,15 @@ namespace Linkora.Hubs
     public class MessageHub : Hub
     {
         private readonly IMessageRepository _messageRepository;
-
         public MessageHub(IMessageRepository messageRepository)
         {
             _messageRepository = messageRepository;
         }
-
-        public async Task JoinConversation(int conversationId)
-        {
-            await Groups.AddToGroupAsync(Context.ConnectionId, $"conv_{conversationId}");
-        }
-
-        public async Task LeaveConversation(int conversationId)
-        {
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"conv_{conversationId}");
-        }
-
+        public async Task JoinConversation(int conversationId) => await Groups.AddToGroupAsync(Context.ConnectionId, $"conv_{conversationId}");
+        public async Task LeaveConversation(int conversationId) => await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"conv_{conversationId}");
         public async Task SendMessage(int conversationId, string text)
         {
-            var userIdStr = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userIdStr == null) return;
-            var userId = int.Parse(userIdStr);
+            if (!Context.User.TryGetUserId(out int userId)) return;
             var userName = Context.User?.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
 
             if (string.IsNullOrWhiteSpace(text)) return;
@@ -53,17 +41,13 @@ namespace Linkora.Hubs
         }
         public async Task MarkRead(int conversationId)
         {
-            var userIdStr = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userIdStr == null) return;
-            var userId = int.Parse(userIdStr);
+            if (!Context.User.TryGetUserId(out int userId)) return;
             await _messageRepository.MarkReadAsync(conversationId, userId);
             await Clients.User(userId.ToString()).SendAsync("UnreadCountChanged");
         }
         public override async Task OnConnectedAsync()
         {
-            var userIdStr = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userIdStr != null)
-                await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{userIdStr}");
+            if (!Context.User.TryGetUserId(out int userIdStr)) await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{userIdStr}");
             await base.OnConnectedAsync();
         }
     }
