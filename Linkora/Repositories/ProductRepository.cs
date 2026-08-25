@@ -98,30 +98,37 @@ namespace Linkora.Repositories
             }
             if (!string.IsNullOrEmpty(search))
             {
-                whereClauses.Add("p.Name LIKE '%' + @SearchTerm + '%'");
-                sqlParams.Add(new SqlParameter("@SearchTerm", search));
+                var fullTextQuery = string.Join(" AND ", search
+                    .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(t => t.Trim('"', '*'))
+                    .Where(t => t.Length > 0)
+                    .Select(t => $"\"{t}*\""));
+
+                if (fullTextQuery.Length > 0)
+                {
+                    whereClauses.Add("CONTAINS((p.Name, p.Description), @SearchTerm)");
+                    sqlParams.Add(new SqlParameter("@SearchTerm", fullTextQuery));
+                }
             }
 
             var extraWhere = whereClauses.Count > 0 ? $"AND (({string.Join(" AND ", whereClauses)}) OR p.PromotionType IN ('Top','Vip'))" : "";
 
-            var catCondition = includeDescendants
-                ? "INNER JOIN CategoryClosure cc ON cc.DescendantId = p.CategoryId AND cc.AncestorId = @RootCategoryId"
-                : "WHERE p.CategoryId = @RootCategoryId";
+            var catCondition = includeDescendants ? "INNER JOIN CategoryClosure cc ON cc.DescendantId = p.CategoryId AND cc.AncestorId = @RootCategoryId" : "WHERE p.CategoryId = @RootCategoryId";
 
             var whereKeyword = includeDescendants ? "WHERE" : "AND";
 
             var query = $@"SELECT p.Id, p.Name, p.Description, p.Address, p.CreatedAt,
-                      COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm 
-                                WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder), p.AvatarUrl) AS AvatarUrl,
-                      u.UserName, u.AvatarUrl, u.IsCompany, u.Phone, u.Email, u.CreatedAt, u.Id,
-                      p.PromotionType {priceSelect}
-                   FROM Products p
-                   LEFT JOIN Users u ON u.Id = p.UserId
-                   {priceJoin}
-                   {catCondition}
-                   {whereKeyword} (p.Status = 'active' OR p.Status IS NULL)
-                   {extraWhere}
-                   ORDER BY {order}";
+                           COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm 
+                           WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder), p.AvatarUrl) AS AvatarUrl,
+                           u.UserName, u.AvatarUrl, u.IsCompany, u.Phone, u.Email, u.CreatedAt, u.Id,
+                           p.PromotionType {priceSelect}
+                           FROM Products p
+                           LEFT JOIN Users u ON u.Id = p.UserId
+                           {priceJoin}
+                           {catCondition}
+                           {whereKeyword} (p.Status = 'active' OR p.Status IS NULL)
+                           {extraWhere}
+                           ORDER BY {order}";
 
             return await QueryAsync(query,
                 r => new Product
