@@ -8,7 +8,8 @@ namespace Linkora.Repositories
         Task<Category?> GetByIdAsync(int id);
         Task<List<Category>> GetChildrenAsync(int parentId);
         Task<List<Parameter>> GetParametersAsync(int categoryId);
-        Task<List<Category>> GetBreadcrumbAsync(int categoryId);
+        Task<List<Category>> GetBreadcrumbAsync(int rootCategoryId, bool includeSelf = false);
         Task<List<Parameter>> GetParametersAsync(IEnumerable<int> categoryIds);
+        Task RebuildClosureAsync();
     }
 }

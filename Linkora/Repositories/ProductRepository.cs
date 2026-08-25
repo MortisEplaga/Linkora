@@ -1,6 +1,7 @@
 ﻿using Linkora.Models;
 using Microsoft.Data.SqlClient;
 using System.Globalization;
+
 namespace Linkora.Repositories
 {
     public class ProductRepository : SqlRepositoryBase, IProductRepository
@@ -28,11 +29,9 @@ namespace Linkora.Repositories
                                                             Dictionary<int, decimal>? rangeFrom = null, Dictionary<int, decimal>? rangeTo = null,
                                                             int? priceParamId = null, string? city = null, string? search = null)
         {
-            var sqlParams = new List<SqlParameter> {new("@RootCategoryId", rootCategoryId)};
+            var sqlParams = new List<SqlParameter> { new("@RootCategoryId", rootCategoryId) };
 
-            var priceJoin = priceParamId.HasValue
-                ? "LEFT JOIN MapperProductCategory mpc ON mpc.ProductId = p.Id AND mpc.CategoryId = @PriceParamId"
-                : "";
+            var priceJoin = priceParamId.HasValue ? "LEFT JOIN MapperProductCategory mpc ON mpc.ProductId = p.Id AND mpc.CategoryId = @PriceParamId" : "";
             if (priceParamId.HasValue) sqlParams.Add(new SqlParameter("@PriceParamId", priceParamId.Value));
 
             var priceSelect = priceParamId.HasValue
@@ -48,9 +47,7 @@ namespace Linkora.Repositories
                 "expensive" => priceParamId.HasValue ? "TRY_CAST(mpc.Value AS decimal(18,2)) DESC" : "p.CreatedAt DESC",
                 _ => "p.CreatedAt DESC"
             };
-            var order = @"CASE WHEN p.PromotionType IN ('Top','Vip') THEN 0 
-                       WHEN p.PromotionType = 'Highlight' THEN 1 
-                       ELSE 2 END, " + baseOrder;
+            var order = @"CASE WHEN p.PromotionType IN ('Top','Vip') THEN 0 WHEN p.PromotionType = 'Highlight' THEN 1 ELSE 2 END, " + baseOrder;
 
             var whereClauses = new List<string>();
             int pIdx = 0;
@@ -61,11 +58,10 @@ namespace Linkora.Repositories
                     if (values is null || values.Count == 0) continue;
                     var fvNames = values.Select((_, i) => $"@fv{pIdx}_{i}").ToList();
                     whereClauses.Add($@"EXISTS (SELECT 1 FROM MapperProductCategory m 
-                WHERE m.ProductId = p.Id AND m.CategoryId = @fp{pIdx} 
-                  AND m.Value IN ({string.Join(",", fvNames)}))");
+                                        WHERE m.ProductId = p.Id AND m.CategoryId = @fp{pIdx} 
+                                        AND m.Value IN ({string.Join(",", fvNames)}))");
                     sqlParams.Add(new SqlParameter($"@fp{pIdx}", paramId));
-                    for (int i = 0; i < values.Count; i++)
-                        sqlParams.Add(new SqlParameter($"@fv{pIdx}_{i}", values[i]));
+                    for (int i = 0; i < values.Count; i++) sqlParams.Add(new SqlParameter($"@fv{pIdx}_{i}", values[i]));
                     pIdx++;
                 }
 
@@ -90,8 +86,8 @@ namespace Linkora.Repositories
                     }
                     whereClauses.Add($@"EXISTS (SELECT 1 FROM MapperProductCategory m 
                                         WHERE m.ProductId = p.Id AND m.CategoryId = @rp{pIdx} 
-                                          AND {string.Join(" AND ", conditions)})");
-                                            pIdx++;
+                                        AND {string.Join(" AND ", conditions)})");
+                    pIdx++;
                 }
             }
 
@@ -108,28 +104,24 @@ namespace Linkora.Repositories
 
             var extraWhere = whereClauses.Count > 0 ? $"AND (({string.Join(" AND ", whereClauses)}) OR p.PromotionType IN ('Top','Vip'))" : "";
 
-            var catJoin = includeDescendants ? @";WITH CatTree AS (
-                                                        SELECT Id FROM Category WHERE Id = @RootCategoryId
-                                                        UNION ALL
-                                                        SELECT c.Id FROM Category c JOIN CatTree t ON c.ParentId = t.Id
-                                                    )" : "";
-
-            var catCondition = includeDescendants ? "INNER JOIN CatTree ct ON ct.Id = p.CategoryId" : "WHERE p.CategoryId = @RootCategoryId";
+            var catCondition = includeDescendants
+                ? "INNER JOIN CategoryClosure cc ON cc.DescendantId = p.CategoryId AND cc.AncestorId = @RootCategoryId"
+                : "WHERE p.CategoryId = @RootCategoryId";
 
             var whereKeyword = includeDescendants ? "WHERE" : "AND";
 
-            var query = $@"{catJoin} SELECT p.Id, p.Name, p.Description, p.Address, p.CreatedAt,
-                                            COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm 
-                                                      WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder), p.AvatarUrl) AS AvatarUrl,
-                                            u.UserName, u.AvatarUrl, u.IsCompany, u.Phone, u.Email, u.CreatedAt, u.Id,
-                                            p.PromotionType {priceSelect}
-                                     FROM Products p
-                                     LEFT JOIN Users u ON u.Id = p.UserId
-                                     {priceJoin}
-                                     {catCondition}
-                                     {whereKeyword} (p.Status = 'active' OR p.Status IS NULL)
-                                     {extraWhere}
-                                     ORDER BY {order}";
+            var query = $@"SELECT p.Id, p.Name, p.Description, p.Address, p.CreatedAt,
+                      COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm 
+                                WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder), p.AvatarUrl) AS AvatarUrl,
+                      u.UserName, u.AvatarUrl, u.IsCompany, u.Phone, u.Email, u.CreatedAt, u.Id,
+                      p.PromotionType {priceSelect}
+                   FROM Products p
+                   LEFT JOIN Users u ON u.Id = p.UserId
+                   {priceJoin}
+                   {catCondition}
+                   {whereKeyword} (p.Status = 'active' OR p.Status IS NULL)
+                   {extraWhere}
+                   ORDER BY {order}";
 
             return await QueryAsync(query,
                 r => new Product

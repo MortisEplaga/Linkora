@@ -22,53 +22,23 @@ namespace Linkora.Repositories
                 Type = reader.GetInt32OrNull(reader.GetOrdinal("Type")),
             };
         }
-        public async Task<List<Category>> GetAllAsync() => await QueryAsync(
-                "SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category",
-                MapRow);
-        public async Task<Category?> GetByIdAsync(int id) => await QuerySingleAsync(
-                "SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE Id = @Id and Type = 1",
-                MapRow,
-                p => p.AddWithValue("@Id", id));
-        public async Task<List<Category>> GetChildrenAsync(int parentId) => await QueryAsync(
-                "SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId = @ParentId and Type = 1",
-                MapRow,
-                p => p.AddWithValue("@ParentId", parentId));
-        public async Task<List<Category>> GetBreadcrumbAsync(int categoryId)
-        {
-            var breadcrumb = await QueryAsync(
-                @"WITH cte AS (
-                    SELECT Id, ParentId, Name, Type, NameLV, NameRU
-                    FROM Category
-                    WHERE Id = @Id AND Type = 1
-                    UNION ALL
-                    SELECT c.Id, c.ParentId, c.Name, c.Type, c.NameLV, c.NameRU
-                    FROM Category c
-                    INNER JOIN cte ON c.Id = cte.ParentId
-                    WHERE c.Type = 1
-                )
-                SELECT Id, ParentId, Name, Type, NameLV, NameRU
-                FROM cte",
-                MapRow,
-                p => p.AddWithValue("@Id", categoryId));
-
-            breadcrumb.Reverse();
-            return breadcrumb;
-        }
+        public async Task<List<Category>> GetAllAsync() => await QueryAsync("SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category", MapRow);
+        public async Task<Category?> GetByIdAsync(int id) => await QuerySingleAsync("SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE Id = @Id and Type = 1", MapRow, p => p.AddWithValue("@Id", id));
+        public async Task<List<Category>> GetChildrenAsync(int parentId) => await QueryAsync("SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId = @ParentId and Type = 1", MapRow, p => p.AddWithValue("@ParentId", parentId));
+        public async Task<List<Category>> GetBreadcrumbAsync(int rootCategoryId, bool includeSelf = false) => await QueryAsync(@"SELECT c.Id, c.ParentId, c.Name, c.Type, c.NameLV, c.NameRU
+                                                                                                                                 FROM CategoryClosure cc
+                                                                                                                                 INNER JOIN Category c ON c.Id = cc.AncestorId
+                                                                                                                                 WHERE cc.DescendantId = @RootId AND c.Type = 1
+                                                                                                                                 ORDER BY cc.Depth DESC", MapRow, p => {p.AddWithValue("@RootId", rootCategoryId);});
         public async Task<List<Parameter>> GetParametersAsync(IEnumerable<int> categoryIds)
         {
             var ids = string.Join(",", categoryIds);
             if (string.IsNullOrEmpty(ids)) return new List<Parameter>();
-
-            var parameters = await QueryAsync(
-                $"SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId IN ({ids}) AND Type IN (2,3,4,5,6,7,8)",
-                MapRow);
-
-            return await LoadParameterOptionsAsync(parameters);
+            return await LoadParameterOptionsAsync(await QueryAsync($"SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId IN ({ids}) AND Type IN (2,3,4,5,6,7,8)", MapRow));
         }
         public async Task<List<Parameter>> GetParametersAsync(int categoryId) => await LoadParameterOptionsAsync(await QueryAsync(
                 "SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId = @ParentId AND Type IN (2,3,4,5,6,7,8)",
-                MapRow,
-                p => p.AddWithValue("@ParentId", categoryId)));
+                MapRow, p => p.AddWithValue("@ParentId", categoryId)));
         private async Task<List<Parameter>> LoadParameterOptionsAsync(List<Category> parameters)
         {
             if (parameters == null || parameters.Count == 0) return new List<Parameter>();
@@ -159,6 +129,19 @@ namespace Linkora.Repositories
             }
 
             return resultDict.Values.ToList();
+        }
+        public async Task RebuildClosureAsync()
+        {
+            await ExecuteAsync("DELETE FROM CategoryClosure");
+            await ExecuteAsync(@";WITH CatTree AS (
+                                    SELECT Id AS AncestorId, Id AS DescendantId, 0 AS Depth FROM Category
+                                    UNION ALL
+                                    SELECT ct.AncestorId, c.Id, ct.Depth + 1
+                                    FROM Category c
+                                    JOIN CatTree ct ON c.ParentId = ct.DescendantId
+                                )
+                                INSERT INTO CategoryClosure (AncestorId, DescendantId, Depth)
+                                SELECT AncestorId, DescendantId, Depth FROM CatTree");
         }
     }
 }
