@@ -34,7 +34,7 @@ namespace Linkora.Repositories
                     p.AddWithValue("@Text", text);
                 });
         public Task<List<NotificationViewModel>> GetByUserAsync(int userId) => QueryAsync(
-                @"SELECT
+                @"SELECT TOP (200)
                     n.Id, n.UserId, n.FromUserId, n.ProductId, n.Text, n.IsRead, n.CreatedAt,
                     u.UserName, u.AvatarUrl,
                     p.Name AS ProductName,
