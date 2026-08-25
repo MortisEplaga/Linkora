@@ -52,20 +52,21 @@ namespace Linkora.Repositories
         {
             var items = await QueryAsync(
                 @"SELECT f.Can, p.Id, p.Name,
-                         (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
-                          FROM MapperProductCategory m
-                          JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
-                          WHERE m.ProductId = p.Id) as Price,
-                         p.Address, p.CreatedAt,
-                         COALESCE(
-                         (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
-                          WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-                         p.AvatarUrl
-                     ) AS AvatarUrl, u.UserName, u.AvatarUrl, u.IsCompany
-                  FROM Favourites f
-                  JOIN Products p ON p.Id = f.ProductId
-                  LEFT JOIN Users u ON u.Id = p.UserId
-                  WHERE f.UserId = @U",
+                 (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
+                  FROM MapperProductCategory m
+                  JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
+                  WHERE m.ProductId = p.Id) as Price,
+                 p.Address, p.CreatedAt,
+                 COALESCE(
+                 (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
+                  WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+                 p.AvatarUrl
+             ) AS AvatarUrl, u.UserName, u.AvatarUrl, u.IsCompany,
+             u.Phone, u.Email, u.CreatedAt AS SellerCreatedAt
+          FROM Favourites f
+          JOIN Products p ON p.Id = f.ProductId
+          LEFT JOIN Users u ON u.Id = p.UserId
+          WHERE f.UserId = @U",
                 r => (
                     Can: r.GetBoolean(0),
                     Product: new Product
@@ -81,6 +82,9 @@ namespace Linkora.Repositories
                             UserName = r.GetStringOrNull(7),
                             AvatarUrl = r.GetStringOrNull(8),
                             IsCompany = r.GetBooleanOrDefault(9),
+                            Phone = r.GetStringOrNull(10),
+                            Email = r.GetStringOrNull(11),
+                            CreatedAt = r.GetDateTimeOrNull(12),
                         }
                     }
                 ),

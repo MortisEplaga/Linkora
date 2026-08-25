@@ -1041,28 +1041,6 @@ button.accept-policy {
         color: #ccc !important;
     }
 
-    .dark-theme .product-card {
-        background: #2a2a2a !important;
-        border-color: #3a3a3a !important;
-    }
-
-    .dark-theme .product-card-img {
-        background: #1e1e1e !important;
-    }
-
-    .dark-theme .product-card-name {
-        color: #e0e0e0 !important;
-    }
-
-    .dark-theme .product-card-price {
-        color: #fff !important;
-    }
-
-    .dark-theme .product-card-address,
-    .dark-theme .product-card-date {
-        color: #888 !important;
-    }
-
     .dark-theme .seller-badge {
         background: #1a3a5c !important;
         color: #5ba8e0 !important;
@@ -1095,9 +1073,9 @@ button.accept-policy {
     .dark-theme .reviews-modal,
     .dark-theme .seller-header,
     .dark-theme .listing-sidebar {
-        background: var(--bg-card) !important;
-        border-color: var(--border) !important;
-        color: var(--text-primary) !important;
+        background: var(--bg-card);
+        border-color: var(--border);
+        color: var(--text-primary);
     }
 
     .dark-theme .catmenu {
@@ -1119,11 +1097,6 @@ button.accept-policy {
             background: var(--bg-hover);
             color: #fff;
         }
-
-    .dark-theme .product-card {
-        background: var(--bg-card);
-        border-color: var(--border);
-    }
 
     .dark-theme .product-card-name,
     .dark-theme .product-card-price {
@@ -1562,33 +1535,3 @@ body {
             background: #ccc;
             border-radius: 4px;
         }
-/*.product-card-promoted {
-    border-color: #00b0a3;
-    box-shadow: 0 0 0 2px #00b0a3, 0 8px 20px rgba(0, 176, 163, 0.2);
-    background-image: linear-gradient(135deg, rgba(0, 176, 163, 0.05) 0%, rgba(255, 255, 255, 0) 60%);
-    transform: scale(1);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-    .product-card-promoted:hover {
-        transform: scale(1.03);
-        box-shadow: 0 0 0 2px #00b0a3, 0 12px 28px rgba(0, 176, 163, 0.35);
-    }
-
-    .product-card-promoted .product-card-name {
-        color: #00b0a3;
-        font-weight: 700;
-    }
-
-.dark-theme .product-card-promoted {
-    border-color: #00b0a3;
-    box-shadow: 0 0 0 2px #00b0a3, 0 0 18px rgba(0, 176, 163, 0.4), 0 8px 24px rgba(0, 0, 0, 0.4) !important;
-    background-image: linear-gradient(135deg, rgba(0, 176, 163, 0.1) 0%, rgba(30, 30, 30, 0) 60%);
-    transform: scale(1);
-}
-
-    .dark-theme .product-card-promoted:hover {
-        transform: scale(1.03);
-        box-shadow: 0 0 0 2px #00b0a3, 0 0 28px rgba(0, 176, 163, 0.55), 0 12px 32px rgba(0, 0, 0, 0.5);
-    }
-*/
