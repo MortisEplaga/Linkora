@@ -112,7 +112,7 @@ namespace Linkora.Repositories
                 var (inClause, addParams) = PrepareInClause(colorIds);
 
                 var colors = await QueryAsync(
-                    $"SELECT CategoryId, Id, Name, NameLV, NameRU, HexValue FROM ColorOptions WHERE CategoryId IN ({inClause}) AND IsConf = 1",
+                    $"SELECT CategoryId, Id, Name, NameLV, NameRU, HexValue, IsMain FROM ColorOptions WHERE CategoryId IN ({inClause}) AND IsConf = 1 ORDER BY IsMain DESC",
                     r => new
                     {
                         CategoryId = r.GetInt32(0),
@@ -120,7 +120,8 @@ namespace Linkora.Repositories
                         {
                             Id = r.GetInt32(1),
                             Name = Resolve(lang, r.GetString(2), r.GetStringOrNull(3), r.GetStringOrNull(4)),
-                            HexValue = r.GetString(5)
+                            HexValue = r.GetString(5),
+                            IsMain = r.GetBoolean(6),
                         }
                     },
                     addParams);

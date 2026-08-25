@@ -161,20 +161,38 @@
                         }
                         @if (vm.Param.Type == 6)
                         {
-                            <div class="param-swatches">
+                            activeFilters.TryGetValue(vm.Param.Id, out var sel6);
+                            var selectedIds6 = new HashSet<string>(sel6 ?? new List<string>());
+
+                            <div class="param-swatches" data-param="@vm.Param.Id">
                                 @foreach (var opt in vm.ColorOptions)
                                 {
-                                    var isActive = activeFilters.TryGetValue(vm.Param.Id, out var selVals)
-                                    && selVals.Contains(opt.Id.ToString());
-                                    <label class="param-swatch-row @(isActive ? "param-swatch-active" : "")"
-                                           data-id="@opt.Id" onclick="selectSwatch(this, '@vm.Param.Id')">
+                                    var isActive = selectedIds6.Contains(opt.Id.ToString());
+                                    var isHidden = !opt.IsMain && !isActive;
+
+                                    <label class="param-swatch-row @(isActive ? "param-swatch-active" : "") @(isHidden ? "param-swatch-hidden" : "")"
+                                           data-id="@opt.Id"
+                                           style="@(isHidden ? "display:none" : "")"
+                                           onclick="selectSwatch(this, '@vm.Param.Id')">
                                         <span class="param-swatch-circle" style="background-color:@opt.HexValue"></span>
                                         <span class="param-swatch-name">@opt.Name</span>
                                     </label>
                                 }
+
+                                @{
+                                    var hiddenCount6 = vm.ColorOptions.Count(c => !c.IsMain && !selectedIds6.Contains(c.Id.ToString()));
+                                }
+                                @if (hiddenCount6 > 0)
+                                {
+                                    <button type="button" class="param-show-more"
+                                            data-count="@hiddenCount6"
+                                            data-i18n="more_btn"
+                                            onclick="toggleOptions(this)"></button>
+                                }
                             </div>
+
                             <input type="hidden" name="p_@vm.Param.Id" id="swatch_@vm.Param.Id"
-                                   value="@(activeFilters.TryGetValue(vm.Param.Id, out var pv6) ? pv6.FirstOrDefault() : "")" />
+                                   value="@(sel6 != null && sel6.Count > 0 ? sel6.First() : "")" />
                         }
                         @if (vm.Param.Type == 8)
                         {

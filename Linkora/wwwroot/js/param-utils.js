@@ -88,7 +88,7 @@ function rangeSync(input, side) {
 }
 function toggleOptions(btn) {
     const block = btn.parentElement;
-    const hidden = block.querySelectorAll('.param-option-hidden');
+    const hidden = block.querySelectorAll('.param-option-hidden, .param-swatch-hidden');
     const isHidden = hidden[0]?.style.display === 'none';
     hidden.forEach(el => el.style.display = isHidden ? '' : 'none');
 

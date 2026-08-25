@@ -30,5 +30,6 @@ namespace Linkora.Models
     {
         public string Name { get; set; } = "";
         public string HexValue { get; set; } = "";
+        public bool IsMain { get; set; } = false;
     }
 }

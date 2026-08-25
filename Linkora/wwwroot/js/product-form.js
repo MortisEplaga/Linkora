@@ -161,13 +161,44 @@ function buildBlock(p, existingValues = {}) {
         }
         block.innerHTML += FreeTextSelect.buildHtml(p.id, initialText, val || '', p.options || []);
     } else if (p.type === 6) {
-        const rows = p.colorOptions.map(opt =>
-            `<label class="param-swatch-row ${String(val) === String(opt.id) ? 'param-swatch-active' : ''}" data-id="${opt.id}" onclick="swatchClick(this)">
-                <span class="param-swatch-circle" style="background-color:${opt.hex}"></span>
-                <span class="param-swatch-name">${opt.name}</span>
-            </label>`
-        ).join('');
+        const selectedVal = val != null ? String(val) : '';
+        const FALLBACK_VISIBLE = 5;
+
+        const visibleIds = new Set();
+        if (p.colorOptions.some(o => o.isMain)) {
+            p.colorOptions.forEach(o => { if (o.isMain) visibleIds.add(String(o.id)); });
+        } else {
+            p.colorOptions.slice(0, FALLBACK_VISIBLE).forEach(o => visibleIds.add(String(o.id)));
+        }
+        if (selectedVal) visibleIds.add(selectedVal);
+
+        const rows = p.colorOptions.map(opt => {
+            const isActive = selectedVal === String(opt.id);
+            const isHidden = !visibleIds.has(String(opt.id));
+            return `<label class="param-swatch-row ${isActive ? 'param-swatch-active' : ''}"
+                      data-id="${opt.id}"
+                      ${isHidden ? 'style="display:none"' : ''}
+                      onclick="swatchClick(this)">
+            <span class="param-swatch-circle" style="background-color:${opt.hex}"></span>
+            <span class="param-swatch-name">${opt.name}</span>
+        </label>`;
+        }).join('');
         block.innerHTML += `<div class="param-swatches" data-param="${p.id}">${rows}</div>`;
+
+        const hiddenCount = p.colorOptions.filter(o => !visibleIds.has(String(o.id))).length;
+        if (hiddenCount > 0) {
+            const btn = document.createElement('button');
+            btn.className = 'param-show-more';
+            btn.setAttribute('data-i18n', 'more_btn');
+            btn.setAttribute('data-count', hiddenCount);
+            btn.onclick = () => {
+                block.querySelectorAll('.param-swatch-row[style="display:none"]')
+                    .forEach(el => el.style.display = '');
+                btn.style.display = 'none';
+            };
+            block.appendChild(btn);
+            translateDynamicElement(btn);
+        }
     } else if (p.type === 4) {
         const selected = val ? String(val).split(',').map(s => s.trim()) : [];
         const LIMIT = 5;
