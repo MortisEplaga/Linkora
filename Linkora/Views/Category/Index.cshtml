@@ -312,7 +312,7 @@
         const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
         document.querySelectorAll('.param-show-more').forEach(btn => {
             const block = btn.parentElement;
-            const hidden = block.querySelectorAll('.param-option-hidden');
+            const hidden = block.querySelectorAll('.param-option-hidden, .param-swatch-hidden');
             const count = hidden.length;
             btn.dataset.count = count;
             btn.textContent = (dict.more_btn || 'More') + ' ' + count;
