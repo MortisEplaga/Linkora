@@ -36,13 +36,6 @@
     }
 
 .profile-error {
-    background: #fff0f0;
-    border: 1px solid #ffcccc;
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 14px;
-    color: #cc0000;
-    margin-bottom: 16px;
     display: none;
 }
 
@@ -160,15 +153,6 @@
     cursor: not-allowed;
     opacity: 0.6;
 }
-.auth-social {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    text-decoration: none;
-    line-height: 1;
-}
 
 .auth-social-facebook {
     padding: 0;
@@ -206,6 +190,7 @@
     margin: 0 0 24px;
 }
 
+.profile-error,
 .auth-error {
     background: #fff0f0;
     border: 1px solid #ffcccc;
@@ -321,6 +306,11 @@
 }
 
 .auth-social {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    line-height: 1;
     width: 44px;
     height: 44px;
     border-radius: 50%;
@@ -470,7 +460,6 @@
     flex-shrink: 0;
 }
 
-}
 #authModal,
 #regionModal {
     width: 420px;
