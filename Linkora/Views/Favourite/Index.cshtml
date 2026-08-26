@@ -42,9 +42,21 @@
     else
     {
         <div class="listing-list">
+            @{
+                var favIds = new HashSet<int>(favs.Select(p => p.Id));
+                var cartIds = new HashSet<int>(cart.Select(p => p.Id));
+            }
+
             @foreach (var p in products)
             {
-                await Html.RenderPartialAsync("_ProductCard", new ProductCardViewModel { Product = p });
+                var vm = new ProductCardViewModel
+                {
+                    Product = p,
+                    ShowFavActions = true,
+                    IsFav = favIds.Contains(p.Id),
+                    IsInCart = cartIds.Contains(p.Id)
+                };
+                await Html.RenderPartialAsync("_ProductCard", vm);
             }
         </div>
         @if (tab == "cart" && products.Count > 0)
