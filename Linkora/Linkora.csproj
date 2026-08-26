@@ -7,23 +7,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <Content Remove="wwwroot\img\DMiniLogo.svg" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="MailKit" Version="4.17.0" />
 		<PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.15" />
 		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.23" />
 		<PackageReference Include="MimeKit" Version="4.17.0" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <None Include="wwwroot\css\admin.css" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="wwwroot\img\products\" />
 	</ItemGroup>
 
 </Project>
