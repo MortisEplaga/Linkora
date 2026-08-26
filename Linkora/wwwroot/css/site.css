@@ -306,33 +306,32 @@ button.accept-policy {
 
 .terms-intro {
     font-style: italic;
-    font-weight: 300; 
-    color: #64748b;
-    margin-bottom: 24px;
+    font-weight: 300;
     padding-bottom: 16px;
     border-bottom: 1px solid #e2e8f0;
-}
-
-.terms-section {
-    margin-bottom: 32px;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 16px;
 }
 
 .terms-title {
-    font-weight: 800;
-    font-size: 19px;
-    color: #020617;
-    margin-bottom: 12px;
     padding-bottom: 8px;
-    border-bottom: 2px solid #020617; 
+    border-bottom: 2px solid #020617;
     letter-spacing: -0.3px;
-    text-transform: uppercase; 
+    text-transform: uppercase;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 8px;
 }
 
 .terms-section p {
     margin: 0 0 12px;
     font-weight: 400;
-    color: #334155; 
-    line-height: 1.5;
+    font-size: 14px;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 6px;
 }
 
     .terms-section p b {
@@ -422,23 +421,11 @@ button.accept-policy {
         display: block;
     }
 
-.terms-intro {
-    font-size: 14px;
-    color: #555;
-    line-height: 1.6;
-    margin-bottom: 16px;
-}
 
 .terms-section {
     margin-bottom: 16px;
 }
 
-.terms-title {
-    font-size: 14px;
-    font-weight: 700;
-    color: #1a1a1a;
-    margin-bottom: 8px;
-}
 
 .terms-section p {
     font-size: 14px;

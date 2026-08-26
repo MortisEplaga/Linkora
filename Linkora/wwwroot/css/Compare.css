@@ -1,14 +1,9 @@
-﻿/* ============================================================
-   Compare page — matches Linkora design system
-   ============================================================ */
-
-.compare-page {
+﻿.compare-page {
     max-width: 1280px;
     margin: 0 auto;
     padding: 24px 24px 56px;
 }
 
-/* ── Header ── */
 .compare-header {
     display: flex;
     align-items: center;
@@ -25,7 +20,6 @@
     margin: 0;
 }
 
-/* ── Toggle — matches .fav-tabs style ── */
 .compare-toggle-group {
     display: flex;
     gap: 0;
@@ -73,7 +67,6 @@
         border-color: #00b0a3;
     }
 
-/* ── Group label ── */
 .compare-group-label {
     display: flex;
     align-items: center;
@@ -92,7 +85,6 @@
     color: #aaa;
 }
 
-/* ── Scroll container ── */
 .compare-scroll {
     overflow-x: auto;
     overflow-y: visible;
@@ -118,13 +110,11 @@
         border-radius: 3px;
     }
 
-/* ── Grid table ── */
 .compare-table {
     display: grid;
     min-width: max-content;
 }
 
-/* ── Sticky label column ── */
 .compare-cell-label {
     position: sticky;
     left: 0;
@@ -143,7 +133,6 @@
     align-items: center;
 }
 
-/* ── Value cells ── */
 .compare-cell {
     padding: 13px 20px;
     font-size: 14px;
@@ -156,19 +145,16 @@
     border-left: 1px solid #f5f5f5;
 }
 
-    /* Highlight differing values — subtle teal tint */
     .compare-cell.diff {
         background: #f0faf9;
         color: #007a70;
         font-weight: 600;
     }
 
-/* Missing value placeholder */
 .compare-val-empty {
     color: #ccc;
 }
 
-/* ── Product header card ── */
 .compare-product-card {
     min-width: 220px;
     padding: 16px 20px 20px;
@@ -180,7 +166,6 @@
     border-left: 1px solid #f5f5f5;
 }
 
-/* Empty sticky corner cell */
 .compare-corner-cell {
     position: sticky;
     left: 0;
@@ -282,7 +267,6 @@
         border-color: #ffcccc;
     }
 
-/* ── Empty state ── */
 .compare-empty {
     display: flex;
     flex-direction: column;
@@ -318,7 +302,6 @@
         color: #fff;
     }
 
-/* ── Compare button in cart ── */
 .compare-go-btn {
     display: flex;
     align-items: center;
@@ -342,7 +325,6 @@
         color: #1a1a1a;
     }
 
-/* ── Dark theme ── */
 .dark-theme .compare-title {
     color: #e8e8e8 !important;
 }

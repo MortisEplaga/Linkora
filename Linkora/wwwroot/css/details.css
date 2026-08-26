@@ -51,7 +51,6 @@
     align-items: flex-start;
 }
 
-/* Галерея */
 .details-gallery {
     flex: 1;
     border-radius: 12px;
@@ -67,7 +66,6 @@
     display: block;
 }
 
-/* Инфо */
 .details-info {
     width: 320px;
     flex-shrink: 0;
@@ -137,7 +135,6 @@
         background: #f5f5f5;
     }
 
-/* Продавец */
 .details-seller {
     display: flex;
     align-items: center;
@@ -172,7 +169,6 @@
     color: #1a1a1a;
 }
 
-/* Секции */
 .details-section {
     display: flex;
     flex-direction: column;
@@ -192,8 +188,6 @@
     line-height: 1.6;
     white-space: pre-wrap;
 }
-
-/* Модалка */
 
 .msg-modal {
     display: none;
@@ -257,7 +251,7 @@
     gap: 10px;
     justify-content: flex-end;
 }
-/* Лайтбокс */
+
 .lb-overlay {
     display: none;
     position: fixed;
