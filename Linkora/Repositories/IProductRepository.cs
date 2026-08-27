@@ -37,5 +37,6 @@ namespace Linkora.Repositories
         Task DeleteSpecificMediaAsync(IEnumerable<int> mediaIds);
         Task UpdatePublishDurationAsync(int productId, int userId, int days);
         Task<List<int>> GetSubscriberIdsExcludingAsync(int sellerId, int excludeBuyerId);
+        Task<int> ArchiveExpiredProductsAsync();
     }
 }

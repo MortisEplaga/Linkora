@@ -462,5 +462,6 @@ namespace Linkora.Repositories
         }
         public async Task UpdatePublishDurationAsync(int productId, int userId, int days) => await ExecuteAsync(@"UPDATE Products SET PublishDurationDays = @D,ExpiresAt = DATEADD(DAY,@D,GETDATE()) WHERE Id = @Id AND UserId = @UserId", p => { p.AddWithValue("@D", days); p.AddWithValue("@Id", productId); p.AddWithValue("@UserId", userId); });
         public async Task<List<int>> GetSubscriberIdsExcludingAsync(int sellerId, int excludeBuyerId) => await QueryAsync("SELECT FollowerId FROM Subscriptions WHERE FollowingId = @SellerId AND FollowerId != @BuyerId", r => r.GetInt32(0), p => { p.AddWithValue("@SellerId", sellerId); p.AddWithValue("@BuyerId", excludeBuyerId); });
+        public async Task<int> ArchiveExpiredProductsAsync() => await ExecuteAsync(@"UPDATE Products SET Status = 'Archived' WHERE Status = 'Active' AND ((ExpiresAt IS NOT NULL AND ExpiresAt < GETDATE()) OR (ExpiresAt IS NULL AND DATEADD(DAY, PublishDurationDays, CreatedAt) < GETDATE()))");
     }
 }

@@ -15,15 +15,13 @@ namespace Linkora.Services
         private readonly IAdminRepository _admin;
         private readonly IProductRepository _products;
 
-        public AdminService(IAdminRepository admin, IProductRepository products)
-            => (_admin, _products) = (admin, products);
+        public AdminService(IAdminRepository admin, IProductRepository products) => (_admin, _products) = (admin, products);
 
         public async Task<(string? OldRole, BanUserResult? BanData)> SetUserRoleAsync(int id, string role)
         {
             var oldRole = await _admin.UpdateUserRoleAsync(id, role);
 
-            if (role != "banned" || oldRole == "banned")
-                return (oldRole, null);
+            if (role != "banned" || oldRole == "banned") return (oldRole, null);
 
             await _products.ArchiveProductsByUserAsync(id);
 
@@ -36,8 +34,7 @@ namespace Linkora.Services
         public async Task DeleteUserCascadeAsync(int id)
         {
             var productIds = await _admin.GetUserProductIdsAsync(id);
-            foreach (var productId in productIds)
-                await _products.DeleteAsync(productId);
+            foreach (var productId in productIds) await _products.DeleteAsync(productId);
             await _admin.DeleteUserAsync(id);
         }
 
