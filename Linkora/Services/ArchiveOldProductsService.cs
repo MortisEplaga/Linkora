@@ -13,7 +13,6 @@ namespace Linkora.Services
             _logger = logger;
             _serviceScopeFactory = serviceScopeFactory;
         }
-
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation("ArchiveOldProductsService started");
@@ -23,6 +22,7 @@ namespace Linkora.Services
                 try
                 {
                     await ArchiveExpiredProducts();
+                    await CleanupAsync();
                 }
                 catch (Exception ex)
                 {
@@ -33,5 +33,11 @@ namespace Linkora.Services
             }
         }
         private async Task ArchiveExpiredProducts() => _logger.LogInformation("Archived {Count} expired products", await _serviceScopeFactory.CreateScope().ServiceProvider.GetRequiredService<IProductRepository>().ArchiveExpiredProductsAsync());
+        private async Task CleanupAsync()
+        {
+            int deleted = await _serviceScopeFactory.CreateScope().ServiceProvider.GetRequiredService<IProductRepository>().ProcessMediaDeletionQueueAsync();
+            if (deleted > 0) _logger.LogInformation("Processed {Count} media files for deletion", deleted);
+            else _logger.LogInformation("No pending media files to delete.");
+        }
     }
 }

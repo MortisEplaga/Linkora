@@ -440,13 +440,17 @@ namespace Linkora.Repositories
         {
             var ids = mediaIds.ToList();
             if (ids.Count == 0) return;
+
             const int chunkSize = 2000;
-            var paths = new List<string>();
+            var allPaths = new List<string>();
+
             foreach (var chunk in ids.Chunk(chunkSize))
             {
                 var (sql, parameters) = BuildInClause(chunk, "@id");
-                paths.AddRange(await QueryAsync<string>($"SELECT FilePath FROM ProductMedia WHERE Id IN ({sql})", r => r.GetString(0), p => { foreach (var prm in parameters) p.Add(prm); }));
+                var paths = await QueryAsync<string>($"SELECT FilePath FROM ProductMedia WHERE Id IN ({sql})", r => r.GetString(0), p => { foreach (var prm in parameters) p.Add(prm); });
+                allPaths.AddRange(paths);
             }
+
             await ExecuteInTransactionAsync(async (conn, tx) =>
             {
                 foreach (var chunk in ids.Chunk(chunkSize))
@@ -456,9 +460,43 @@ namespace Linkora.Repositories
                     foreach (var prm in parameters) cmd.Parameters.Add(prm);
                     await cmd.ExecuteNonQueryAsync();
                 }
+
+                if (allPaths.Count > 0) await ExecuteBatchInsertAsync(conn, tx, "MediaDeletionQueue", ["FilePath"], allPaths.Select(p => new object?[] { p }));
             });
-            foreach (var path in paths)
-                try { var full = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", path.TrimStart('/')); if (File.Exists(full)) File.Delete(full); } catch (Exception ex) { Console.Error.WriteLine(ex); }
+        }
+        public async Task<int> ProcessMediaDeletionQueueAsync()
+        {
+            var pendingItems = new List<(int Id, string FilePath)>();
+
+            await ExecuteInTransactionAsync(async (conn, tx) =>
+            {
+                await using var selectCmd = new SqlCommand(@"SELECT Id, FilePath FROM MediaDeletionQueue WITH (UPDLOCK, ROWLOCK) WHERE Status = 0", conn, tx); 
+                await using var reader = await selectCmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync()) pendingItems.Add((reader.GetInt32(0), reader.GetString(1)));
+                await reader.CloseAsync();
+
+                if (pendingItems.Count == 0) return;
+
+                var ids = pendingItems.Select(x => x.Id).ToList();
+                var (inClause, parameters) = BuildInClause(ids, "@id");
+                await using var updateCmd = new SqlCommand($"UPDATE MediaDeletionQueue SET Status = 1, ProcessedAt = GETUTCDATE() WHERE Id IN ({inClause})", conn, tx);
+                foreach (var p in parameters) updateCmd.Parameters.Add(p);
+                await updateCmd.ExecuteNonQueryAsync();
+            });
+
+            int successCount = 0;
+            foreach (var (id, filePath) in pendingItems)
+                try
+                {
+                    var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", filePath.TrimStart('/'));
+                    if (File.Exists(fullPath)) File.Delete(fullPath);
+                    successCount++;
+                }
+                catch (Exception ex) {Console.Error.WriteLine(ex);}
+
+            await ExecuteAsync("DELETE FROM MediaDeletionQueue WHERE Status = 1");
+
+            return successCount;
         }
         public async Task UpdatePublishDurationAsync(int productId, int userId, int days) => await ExecuteAsync(@"UPDATE Products SET PublishDurationDays = @D,ExpiresAt = DATEADD(DAY,@D,GETDATE()) WHERE Id = @Id AND UserId = @UserId", p => { p.AddWithValue("@D", days); p.AddWithValue("@Id", productId); p.AddWithValue("@UserId", userId); });
         public async Task<List<int>> GetSubscriberIdsExcludingAsync(int sellerId, int excludeBuyerId) => await QueryAsync("SELECT FollowerId FROM Subscriptions WHERE FollowingId = @SellerId AND FollowerId != @BuyerId", r => r.GetInt32(0), p => { p.AddWithValue("@SellerId", sellerId); p.AddWithValue("@BuyerId", excludeBuyerId); });
