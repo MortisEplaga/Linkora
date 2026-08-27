@@ -1,13 +1,3 @@
-
-(function () {
-    const cookieLang = document.cookie.split(';')
-        .find(c => c.trim().startsWith('lang='))
-        ?.split('=')[1];
-    if (cookieLang) localStorage.setItem('lang', cookieLang);
-    if (localStorage.getItem('theme') === 'dark')
-        document.documentElement.classList.add('dark-theme');
-})();
-
 const TRANSLATIONS = {
     en: {
         'notif_empty_unread': 'No unread notifications',
@@ -1328,6 +1318,15 @@ const TRANSLATIONS = {
         'confirm_republish': 'Повторить публикацию этого объявления?',
     }
 };
+
+(function () {
+    const cookieLang = document.cookie.split(';')
+        .find(c => c.trim().startsWith('lang='))
+        ?.split('=')[1];
+    if (cookieLang) localStorage.setItem('lang', cookieLang);
+    if (localStorage.getItem('theme') === 'dark')
+        document.documentElement.classList.add('dark-theme');
+})();
 
 function translate(key) {
     const lang = localStorage.getItem('lang') || 'en';

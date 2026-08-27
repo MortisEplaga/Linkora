@@ -1,6 +1,7 @@
 ﻿using Linkora.Models;
 using Microsoft.Data.SqlClient;
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace Linkora.Repositories
 {
@@ -101,6 +102,8 @@ namespace Linkora.Repositories
                 var fullTextQuery = string.Join(" AND ", search
                     .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
                     .Select(t => t.Trim('"', '*'))
+                    .Where(t => t.Length > 0)
+                    .Select(t => Regex.Replace(t, @"[^\p{L}\p{N}_\-]", ""))
                     .Where(t => t.Length > 0)
                     .Select(t => $"\"{t}*\""));
 
