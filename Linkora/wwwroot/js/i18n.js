@@ -1,5 +1,10 @@
 const TRANSLATIONS = {
     en: {
+        'profile_social_contacts': 'Social contacts',
+        'profile_website_label': 'Website',
+        'profile_telegram_ph': 'https://t.me/username',
+        'profile_whatsapp_ph': 'https://wa.me/37120029854',
+        'profile_website_ph': 'https://example.com',
         'catmenu_back': 'Back',
         'catmenu_confirm_hint': 'Click again to confirm selection',
         'notif_empty_unread': 'No unread notifications',
@@ -435,6 +440,11 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'profile_social_contacts': 'Sociālie kontakti',
+        'profile_website_label': 'Tīmekļa vietne',
+        'profile_telegram_ph': 'https://t.me/lietotajvards',
+        'profile_whatsapp_ph': 'https://wa.me/37120029854',
+        'profile_website_ph': 'https://piemers.lv',
         'catmenu_back': 'Atpakaļ',
         'catmenu_confirm_hint': 'Noklikšķiniet vēlreiz, lai apstiprinātu izvēli',
         'notif_empty_unread': 'Nav nelasītu paziņojumu',
@@ -880,6 +890,11 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'profile_social_contacts': 'Социальные контакты',
+        'profile_website_label': 'Веб-сайт',
+        'profile_telegram_ph': 'https://t.me/username',
+        'profile_whatsapp_ph': 'https://wa.me/37120029854',
+        'profile_website_ph': 'https://example.com',
         'catmenu_back': 'Назад',
         'catmenu_confirm_hint': 'Нажмите второй раз, чтобы подтвердить выбор',
         'notif_empty_unread': 'Нет непрочитанных уведомлений',

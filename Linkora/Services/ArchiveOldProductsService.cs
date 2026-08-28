@@ -23,6 +23,7 @@ namespace Linkora.Services
                 {
                     await ArchiveExpiredProducts();
                     await CleanupAsync();
+                    await CleanupOldSessionsAsync();
                 }
                 catch (Exception ex)
                 {
@@ -38,6 +39,11 @@ namespace Linkora.Services
             int deleted = await _serviceScopeFactory.CreateScope().ServiceProvider.GetRequiredService<IProductRepository>().ProcessMediaDeletionQueueAsync();
             if (deleted > 0) _logger.LogInformation("Processed {Count} media files for deletion", deleted);
             else _logger.LogInformation("No pending media files to delete.");
+        }
+        private async Task CleanupOldSessionsAsync()
+        {
+            var deleted = await _serviceScopeFactory.CreateScope().ServiceProvider.GetRequiredService<IUserSessionRepository>().DeleteOldSessionsAsync(30);
+            if (deleted > 0) _logger.LogInformation("Deleted {Count} old user session records", deleted);
         }
     }
 }

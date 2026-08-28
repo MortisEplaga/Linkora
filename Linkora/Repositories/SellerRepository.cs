@@ -7,7 +7,7 @@ namespace Linkora.Repositories
     {
         public SellerRepository(IConfiguration configuration) : base(configuration) { }
         public async Task<UserSummary?> GetByIdAsync(int id) => await QuerySingleAsync(
-                "SELECT Id, UserName, AvatarUrl, Phone, Email, IsCompany, CreatedAt FROM Users WHERE Id = @Id",
+                "SELECT Id, UserName, AvatarUrl, Phone, Email, IsCompany, CreatedAt, TelegramUrl, WhatsAppUrl, WebsiteUrl FROM Users WHERE Id = @Id",
                 r => new UserSummary
                 {
                     Id = r.GetInt32(0),
@@ -17,8 +17,10 @@ namespace Linkora.Repositories
                     Email = r.GetStringOrNull(4),
                     IsCompany = r.GetBooleanOrDefault(5),
                     CreatedAt = r.GetDateTimeOrNull(6),
-                },
-                p => p.AddWithValue("@Id", id));
+                    TelegramUrl = r.GetStringOrNull(7),
+                    WhatsAppUrl = r.GetStringOrNull(8),
+                    WebsiteUrl = r.GetStringOrNull(9)
+                }, p => p.AddWithValue("@Id", id));
         public async Task<(int Count, double Avg)> GetRatingAsync(int userId)
         {
             var result = await QueryAsync<(int Count, double Avg)>(
@@ -26,8 +28,7 @@ namespace Linkora.Repositories
                 r => (
                     r.GetInt32(0),
                     r.GetDoubleOrDefault(1)
-                ),
-                p => p.AddWithValue("@Id", userId));
+                ), p => p.AddWithValue("@Id", userId));
 
             return result.Count > 0 ? result[0] : (0, 0.0);
         }
@@ -44,8 +45,7 @@ namespace Linkora.Repositories
                     Id = r.GetInt32(0),
                     Name = Resolve(lang, r.GetString(1), r.GetStringOrNull(2), r.GetStringOrNull(3)),
                     Count = r.GetInt32(4)
-                },
-                p => p.AddWithValue("@UserId", userId));
+                }, p => p.AddWithValue("@UserId", userId));
         public async Task<PagedResult<Product>> GetProductsPagedAsync(int userId, int? categoryId, string sort, int page)
         {
             if (page < 1) page = 1;

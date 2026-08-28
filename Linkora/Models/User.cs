@@ -38,6 +38,14 @@ namespace Linkora.Models
         public int? PreferredAdDuration { get; set; }
         public string SubscriptionType { get; set; } = "Free";
         public int PromotionPoints { get; set; }
+        [StringLength(500)]
+        public string? TelegramUrl { get; set; }
+
+        [StringLength(500)]
+        public string? WhatsAppUrl { get; set; }
+
+        [StringLength(500)]
+        public string? WebsiteUrl { get; set; }
 
     }
     public class FacebookLoginModel
@@ -51,5 +59,12 @@ namespace Linkora.Models
         public string Id { get; set; }
         public string Name { get; set; }
         public string Email { get; set; }
+    }
+    public class UserSession
+    {
+        public int Id { get; set; }
+        public int UserId { get; set; }
+        public DateTime LoginAt { get; set; }
+        public DateTime? LogoutAt { get; set; }
     }
 }

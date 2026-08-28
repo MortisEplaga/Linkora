@@ -37,8 +37,7 @@ namespace Linkora.Controllers
 
             var errors = new List<string>();
 
-            if (string.IsNullOrWhiteSpace(dto.UserName))
-                errors.Add("Username is required");
+            if (string.IsNullOrWhiteSpace(dto.UserName)) errors.Add("Username is required");
             else if (dto.UserName != user.UserName)
             {
                 var existing = await _userRepository.GetByUsernameAsync(dto.UserName);
@@ -54,29 +53,22 @@ namespace Linkora.Controllers
 
             int? duration = null;
             if (dto.PreferredAdDuration.HasValue)
-                if (!AllowedDurations.Contains(dto.PreferredAdDuration.Value))
-                    errors.Add("Invalid ad duration value");
-                else
-                    duration = dto.PreferredAdDuration.Value;
+                if (!AllowedDurations.Contains(dto.PreferredAdDuration.Value)) errors.Add("Invalid ad duration value");
+                else duration = dto.PreferredAdDuration.Value;
 
             string? subscriptionType = null;
             if (!string.IsNullOrWhiteSpace(dto.SubscriptionType))
-                if (!AllowedSubscriptionTypes.Contains(dto.SubscriptionType))
-                    errors.Add("Invalid subscription type");
-                else
-                    subscriptionType = dto.SubscriptionType;
+                if (!AllowedSubscriptionTypes.Contains(dto.SubscriptionType)) errors.Add("Invalid subscription type");
+                else subscriptionType = dto.SubscriptionType;
 
-            if (errors.Any())
-                return BadRequest(new { errors });
+            if (errors.Any()) return BadRequest(new { errors });
 
             string? newHash = null;
             if (!string.IsNullOrWhiteSpace(dto.NewPassword))
             {
-                if (string.IsNullOrWhiteSpace(dto.CurrentPassword))
-                    return BadRequest(new { errors = new[] { "Current password is required" } });
+                if (string.IsNullOrWhiteSpace(dto.CurrentPassword)) return BadRequest(new { errors = new[] { "Current password is required" } });
 
-                if (user.PasswordHash == null || !_passwordHasher.Verify(dto.CurrentPassword, user.PasswordHash))
-                    return BadRequest(new { errors = new[] { "Current password is incorrect" } });
+                if (user.PasswordHash == null || !_passwordHasher.Verify(dto.CurrentPassword, user.PasswordHash)) return BadRequest(new { errors = new[] { "Current password is incorrect" } });
                 if (dto.NewPassword.Length < 8 ||
                     !dto.NewPassword.Any(char.IsUpper) ||
                     !dto.NewPassword.Any(char.IsLower) ||
@@ -86,10 +78,9 @@ namespace Linkora.Controllers
                 newHash = _passwordHasher.Hash(dto.NewPassword);
             }
 
-            if (_passwordHasher.IsLegacyHash(user.PasswordHash) && string.IsNullOrWhiteSpace(dto.NewPassword))
-                newHash = _passwordHasher.Hash(dto.CurrentPassword);
+            if (_passwordHasher.IsLegacyHash(user.PasswordHash) && string.IsNullOrWhiteSpace(dto.NewPassword)) newHash = _passwordHasher.Hash(dto.CurrentPassword);
 
-            await _userRepository.UpdateProfileAsync(userId, dto.UserName, dto.Phone, duration, newHash, subscriptionType);
+            await _userRepository.UpdateProfileAsync(userId, dto.UserName, dto.Phone, duration, newHash, subscriptionType, dto.TelegramUrl, dto.WhatsAppUrl, dto.WebsiteUrl);
 
             return Ok(new { success = true });
         }

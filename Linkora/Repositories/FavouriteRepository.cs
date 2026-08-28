@@ -62,7 +62,7 @@ namespace Linkora.Repositories
                   WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
                  p.AvatarUrl
              ) AS AvatarUrl, u.UserName, u.AvatarUrl, u.IsCompany,
-             u.Phone, u.Email, u.CreatedAt AS SellerCreatedAt
+             u.Phone, u.Email, u.CreatedAt AS SellerCreatedAt, u.TelegramUrl, u.WhatsAppUrl, u.WebsiteUrl
           FROM Favourites f
           JOIN Products p ON p.Id = f.ProductId
           LEFT JOIN Users u ON u.Id = p.UserId
@@ -85,6 +85,9 @@ namespace Linkora.Repositories
                             Phone = r.GetStringOrNull(10),
                             Email = r.GetStringOrNull(11),
                             CreatedAt = r.GetDateTimeOrNull(12),
+                            TelegramUrl = r.GetStringOrNull(13),
+                            WhatsAppUrl = r.GetStringOrNull(14),
+                            WebsiteUrl = r.GetStringOrNull(15)
                         }
                     }
                 ),

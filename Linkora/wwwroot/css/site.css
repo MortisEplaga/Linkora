@@ -1217,7 +1217,14 @@ body {
     color: #333;
     padding: 6px 0;
 }
+    .seller-modal-row a {
+        color: #333;
+        text-decoration: none;
+    }
 
+        .seller-modal-row a:hover {
+            color: #00b0a3;
+        }
 .seller-modal-link {
     display: block;
     margin-top: 12px;

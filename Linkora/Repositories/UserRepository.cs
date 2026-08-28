@@ -22,11 +22,14 @@ namespace Linkora.Repositories
             AvatarUrl = r.GetStringOrNull(r.GetOrdinal("AvatarUrl")),
             EmailConfirmed = r.GetBooleanOrDefault(r.GetOrdinal("EmailConfirmed")),
             PreferredAdDuration = r.GetInt32OrNull(r.GetOrdinal("PreferredAdDuration")),
-            SubscriptionType = HasColumn(r, "SubscriptionType") ? r.GetStringOrDefault(r.GetOrdinal("SubscriptionType"), "Free") : "Free"
+            SubscriptionType = HasColumn(r, "SubscriptionType") ? r.GetStringOrDefault(r.GetOrdinal("SubscriptionType"), "Free") : "Free",
+            TelegramUrl = r.GetStringOrNull(r.GetOrdinal("TelegramUrl")),
+            WhatsAppUrl = r.GetStringOrNull(r.GetOrdinal("WhatsAppUrl")),
+            WebsiteUrl = r.GetStringOrNull(r.GetOrdinal("WebsiteUrl"))
         };
-        public async Task<User?> GetByPhoneAsync(string phone) => await QuerySingleAsync("SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration FROM Users WHERE Phone = @P", MapUser, p => p.AddWithValue("@P", phone));
-        public async Task<User?> GetByUsernameAsync(string username) => await QuerySingleAsync("SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration FROM Users WHERE UserName = @U", MapUser, p => p.AddWithValue("@U", username));
-        public async Task<User?> GetByIdAsync(int id) => await QuerySingleAsync("SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration, SubscriptionType FROM Users WHERE Id = @Id", MapUser, p => p.AddWithValue("@Id", id));
+        public async Task<User?> GetByPhoneAsync(string phone) => await QuerySingleAsync("SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration, SubscriptionType, TelegramUrl, WhatsAppUrl, WebsiteUrl FROM Users WHERE Phone = @P", MapUser, p => p.AddWithValue("@P", phone));
+        public async Task<User?> GetByUsernameAsync(string username) => await QuerySingleAsync("SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration, SubscriptionType, TelegramUrl, WhatsAppUrl, WebsiteUrl FROM Users WHERE UserName = @U", MapUser, p => p.AddWithValue("@U", username));
+        public async Task<User?> GetByIdAsync(int id) => await QuerySingleAsync("SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration, SubscriptionType, TelegramUrl, WhatsAppUrl, WebsiteUrl FROM Users WHERE Id = @Id", MapUser, p => p.AddWithValue("@Id", id));
         public async Task<int> CreateAsync(User user, string passwordHash) => (await QueryAsync<int>(
                 @"INSERT INTO Users (UserName, Email, Phone, Role, PasswordHash, IsCompany, ConfirmationToken, EmailConfirmed)
                   OUTPUT INSERTED.Id VALUES (@U, @E, @P, 'user', @H, @IC, @Token, 0)",
@@ -41,7 +44,7 @@ namespace Linkora.Repositories
                     p.AddWithValue("@Token", (object?)user.ConfirmationToken ?? DBNull.Value);
                 }))[0];
         public async Task<User?> GetByEmailAsync(string email) => await QuerySingleAsync(
-                "SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration FROM Users WHERE Email = @E",
+                "SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration, SubscriptionType, TelegramUrl, WhatsAppUrl, WebsiteUrl FROM Users WHERE Email = @E",
                 MapUser, p => p.AddWithValue("@E", email));
         public async Task<int> CreateGoogleUserAsync(User user) => (await QueryAsync<int>(
                 @"INSERT INTO Users (UserName, Email, Role, AvatarUrl, PasswordHash)
@@ -71,7 +74,7 @@ namespace Linkora.Repositories
             }
         }
         public async Task<User?> GetByConfirmationTokenAsync(string token) => await QuerySingleAsync(
-                "SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration FROM Users WHERE ConfirmationToken = @T",
+                "SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration, SubscriptionType, TelegramUrl, WhatsAppUrl, WebsiteUrl FROM Users WHERE ConfirmationToken = @T",
                 MapUser, p => p.AddWithValue("@T", token));
         public async Task ConfirmEmailAsync(string token) => await ExecuteAsync("UPDATE Users SET EmailConfirmed = 1, ConfirmationToken = NULL WHERE ConfirmationToken = @T", p => p.AddWithValue("@T", token));
         public async Task<int> CreateExternalUserAsync(User user) => (await QueryAsync<int>(
@@ -91,11 +94,11 @@ namespace Linkora.Repositories
         public async Task MarkForDeletionAsync(int userId, string deletionRequestCode) => await ExecuteAsync("UPDATE Users SET DeletionRequestCode = @Code, DeletionRequestedAt = GETUTCDATE() WHERE Id = @Id",
                                                                                                              p => {p.AddWithValue("@Code", deletionRequestCode); p.AddWithValue("@Id", userId);});
         public async Task<User?> GetByDeletionCodeAsync(string code) => await QuerySingleAsync("SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, IsCompany," +
-                                                                                                "FacebookId, PreferredAdDuration FROM Users WHERE DeletionRequestCode = @Code",
+                                                                                                "FacebookId, PreferredAdDuration, SubscriptionType, TelegramUrl, WhatsAppUrl, WebsiteUrl FROM Users WHERE DeletionRequestCode = @Code",
                                                                                                 MapUser, p => p.AddWithValue("@Code", code));
         public async Task SetPasswordResetTokenAsync(int userId, string token, DateTime expiry) => await ExecuteAsync( "UPDATE Users SET PasswordResetToken = @T, PasswordResetExpiry = @E WHERE Id = @Id",
                                                                                                                         p => {p.AddWithValue("@T", token); p.AddWithValue("@E", expiry); p.AddWithValue("@Id", userId);});
-        public async Task<User?> GetByPasswordResetTokenAsync(string token) => await QuerySingleAsync("SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration FROM Users WHERE PasswordResetToken = @T AND PasswordResetExpiry > GETUTCDATE()", MapUser, p => p.AddWithValue("@T", token));
+        public async Task<User?> GetByPasswordResetTokenAsync(string token) => await QuerySingleAsync("SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration, SubscriptionType, TelegramUrl, WhatsAppUrl, WebsiteUrl FROM Users WHERE PasswordResetToken = @T AND PasswordResetExpiry > GETUTCDATE()", MapUser, p => p.AddWithValue("@T", token));
         public async Task ClearPasswordResetTokenAsync(int userId) => await ExecuteAsync("UPDATE Users SET PasswordResetToken = NULL, PasswordResetExpiry = NULL WHERE Id = @Id", p => p.AddWithValue("@Id", userId));
         public async Task UpdatePasswordHashAsync(int userId, string passwordHash) => await ExecuteAsync("UPDATE Users SET PasswordHash = @H WHERE Id = @Id", p => {p.AddWithValue("@H", passwordHash); p.AddWithValue("@Id", userId);});
         public async Task AdjustPromotionPointsAsync(int userId, int delta)
@@ -104,13 +107,16 @@ namespace Linkora.Repositories
             await ExecuteAsync("UPDATE Users SET PromotionPoints = PromotionPoints + @Delta WHERE Id = @Id", p => {p.AddWithValue("@Delta", delta); p.AddWithValue("@Id", userId);});
         }
         public async Task<bool> IsBannedAsync(int userId) => (await QueryAsync<string>("SELECT Role FROM Users WHERE Id = @Id", r => r.GetStringOrNull(0)!, p => p.AddWithValue("@Id", userId))).FirstOrDefault() == "banned";
-        public async Task UpdateProfileAsync(int userId, string userName, string? phone, int? duration, string? newHash, string? subscriptionType)
+        public async Task UpdateProfileAsync(int userId, string userName, string? phone, int? duration, string? newHash, string? subscriptionType, string? telegramUrl, string? whatsAppUrl, string? websiteUrl)
         {
             var setParts = new List<string>
             {
                 "UserName = @U",
                 "Phone = @P",
-                "PreferredAdDuration = @D"
+                "PreferredAdDuration = @D",
+                "TelegramUrl = @T",
+                "WhatsAppUrl = @W",
+                "WebsiteUrl = @S2"
             };
             if (newHash != null) setParts.Add("PasswordHash = @H");
             if (subscriptionType != null) setParts.Add("SubscriptionType = @S");
@@ -120,6 +126,9 @@ namespace Linkora.Repositories
                 p.AddWithValue("@U", userName);
                 p.AddWithValue("@P", (object?)phone ?? DBNull.Value);
                 p.AddWithValue("@D", (object?)duration ?? DBNull.Value);
+                p.AddWithValue("@T", (object?)telegramUrl ?? DBNull.Value);
+                p.AddWithValue("@W", (object?)whatsAppUrl ?? DBNull.Value);
+                p.AddWithValue("@S2", (object?)websiteUrl ?? DBNull.Value);
                 if (newHash != null) p.AddWithValue("@H", newHash);
                 if (subscriptionType != null) p.AddWithValue("@S", subscriptionType);
                 p.AddWithValue("@Id", userId);

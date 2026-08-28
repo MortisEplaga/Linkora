@@ -124,7 +124,7 @@
                     }
                 </div>
                 <button class="details-btn details-btn-secondary"
-                        onclick="checkAuthAndOpenSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarUrl', '@p.Seller?.Phone', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0))">
+                        onclick="checkAuthAndOpenSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarUrl', '@p.Seller?.Phone', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0), '@p.Seller?.TelegramUrl', '@p.Seller?.WhatsAppUrl', '@p.Seller?.WebsiteUrl')">
                     <span data-i18n="seller_show_contact">Show contact</span>
                 </button>
             </div>
@@ -573,9 +573,9 @@
         pendingPhone = null;
     }
     
-    function checkAuthAndOpenSellerModal(userName, avatarUrl, phone, isCompany, email, createdAt, sellerId) {
+    function checkAuthAndOpenSellerModal(userName, avatarUrl, phone, isCompany, email, createdAt, sellerId, telegramUrl, whatsAppUrl, websiteUrl) {
         if (isUserAuthenticated) {
-            openSellerModal(userName, avatarUrl, phone, isCompany, email, createdAt, sellerId);
+            openSellerModal(userName, avatarUrl, phone, isCompany, email, createdAt, sellerId, telegramUrl, whatsAppUrl, websiteUrl);
         } else {
             if (typeof openAuthModal === 'function') {
                 openAuthModal('login');

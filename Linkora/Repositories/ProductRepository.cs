@@ -137,7 +137,7 @@ namespace Linkora.Repositories
             var dataQuery = $@"SELECT p.Id, p.Name, p.Description, p.Address, p.CreatedAt, COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm 
                                WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder), p.AvatarUrl) AS AvatarUrl,
                                u.UserName, u.AvatarUrl, u.IsCompany, u.Phone, u.Email, u.CreatedAt, u.Id,
-                               p.PromotionType {priceSelect}
+                               p.PromotionType, u.TelegramUrl, u.WhatsAppUrl, u.WebsiteUrl {priceSelect}
                                FROM Products p
                                LEFT JOIN Users u ON u.Id = p.UserId
                                {priceJoin}
@@ -169,9 +169,12 @@ namespace Linkora.Repositories
                         IsCompany = r.GetBooleanOrDefault(8),
                         Phone = r.GetStringOrNull(9),
                         Email = r.GetStringOrNull(10),
-                        CreatedAt = r.GetDateTimeOrNull(11)
+                        CreatedAt = r.GetDateTimeOrNull(11),
+                        TelegramUrl = r.GetStringOrNull(14),
+                        WhatsAppUrl = r.GetStringOrNull(15),
+                        WebsiteUrl = r.GetStringOrNull(16)
                     },
-                    Price = r.GetDecimalOrNull(14),
+                    Price = r.GetDecimalOrNull(17),
                     PromotionType = r.GetStringOrDefault(13, "None")
                 },
                 p => { foreach (var sp in dataParams) p.Add(sp); });
@@ -250,8 +253,7 @@ namespace Linkora.Repositories
         }
         public async Task<Product?> GetByIdAsync(int id)
         {
-            var product = await QuerySingleAsync(@"SELECT p.Id,p.Name,p.Description,p.Address,p.CreatedAt,COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),p.AvatarUrl) AS AvatarUrl,p.CategoryId,p.Status,p.Qty,u.UserName,u.AvatarUrl,u.IsCompany,u.Phone,u.Id,p.UserId,u.Email,u.CreatedAt,p.PromotionType FROM Products p LEFT JOIN Users u ON u.Id = p.UserId WHERE p.Id = @Id", r => new Product { Id = r.GetInt32(0), Name = r.GetStringOrDefault(1), Description = r.GetStringOrNull(2), Address = r.GetStringOrNull(3), CreatedAt = r.GetDateTimeOrNull(4), AvatarUrl = r.GetStringOrNull(5), CategoryId = r.GetInt32OrNull(6), Status = r.IsDBNull(7) ? ProductStatus.Active : Enum.Parse<ProductStatus>(r.GetString(7), true), Qty = r.GetInt32OrNull(8), UserId = r.GetInt32OrNull(14), Seller = new UserSummary { Id = r.GetInt32OrDefault(13), UserName = r.GetStringOrNull(9), AvatarUrl = r.GetStringOrNull(10), IsCompany = r.GetBooleanOrDefault(11), Phone = r.GetStringOrNull(12), Email = r.GetStringOrNull(15), CreatedAt = r.GetDateTimeOrNull(16) }, PromotionType = r.GetStringOrDefault(17, "None") }, p => p.AddWithValue("@Id", id));
-            if (product == null) return null;
+            var product = await QuerySingleAsync(@"SELECT p.Id,p.Name,p.Description,p.Address,p.CreatedAt,COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),p.AvatarUrl) AS AvatarUrl,p.CategoryId,p.Status,p.Qty,u.UserName,u.AvatarUrl,u.IsCompany,u.Phone,u.Id,p.UserId,u.Email,u.CreatedAt,p.PromotionType,u.TelegramUrl,u.WhatsAppUrl,u.WebsiteUrl FROM Products p LEFT JOIN Users u ON u.Id = p.UserId WHERE p.Id = @Id", r => new Product { Id = r.GetInt32(0), Name = r.GetStringOrDefault(1), Description = r.GetStringOrNull(2), Address = r.GetStringOrNull(3), CreatedAt = r.GetDateTimeOrNull(4), AvatarUrl = r.GetStringOrNull(5), CategoryId = r.GetInt32OrNull(6), Status = r.IsDBNull(7) ? ProductStatus.Active : Enum.Parse<ProductStatus>(r.GetString(7), true), Qty = r.GetInt32OrNull(8), UserId = r.GetInt32OrNull(14), Seller = new UserSummary { Id = r.GetInt32OrDefault(13), UserName = r.GetStringOrNull(9), AvatarUrl = r.GetStringOrNull(10), IsCompany = r.GetBooleanOrDefault(11), Phone = r.GetStringOrNull(12), Email = r.GetStringOrNull(15), CreatedAt = r.GetDateTimeOrNull(16), TelegramUrl = r.GetStringOrNull(18), WhatsAppUrl = r.GetStringOrNull(19), WebsiteUrl = r.GetStringOrNull(20) }, PromotionType = r.GetStringOrDefault(17, "None") }, p => p.AddWithValue("@Id", id)); if (product == null) return null;
             var priceVal = await QueryAsync<decimal?>(@"SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2)) FROM MapperProductCategory m JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €' WHERE m.ProductId = @Id", r => r.GetDecimalOrNull(0), p => p.AddWithValue("@Id", id));
             product.Price = priceVal.FirstOrDefault();
             product.Media = await GetMediaAsync(id);

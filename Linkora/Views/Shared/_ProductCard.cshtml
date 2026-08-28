@@ -42,7 +42,7 @@
     {
         <div class="product-card-seller">
             <div class="seller-avatar" style="cursor:pointer"
-                 onclick="event.preventDefault(); openSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarUrl', '@p.Seller?.Phone', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0))">
+                 onclick="event.preventDefault(); openSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarUrl', '@p.Seller?.Phone', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0), '@p.Seller?.TelegramUrl', '@p.Seller?.WhatsAppUrl', '@p.Seller?.WebsiteUrl')" )">
                 @if (p.Seller?.AvatarUrl != null)
                 {
                     <img src="@p.Seller?.AvatarUrl" style="width:40px;height:40px;border-radius:50%;object-fit:cover"
@@ -59,7 +59,7 @@
             {
                 <div class="seller-badge">Company</div>
             }
-            <div class="seller-btn" onclick="event.preventDefault(); openSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarUrl', '@p.Seller?.Phone', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0))" data-i18n="seller_show_contact">
+            <div class="seller-btn" onclick="event.preventDefault(); openSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarUrl', '@p.Seller?.Phone', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0), '@p.Seller?.TelegramUrl', '@p.Seller?.WhatsAppUrl', '@p.Seller?.WebsiteUrl')" )" data-i18n="seller_show_contact">
                 Show contact
             </div>
         </div>

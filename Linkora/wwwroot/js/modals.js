@@ -432,7 +432,7 @@ async function toggleFav(btn, productId, can) {
 
 /* ---------- Seller modal ---------- */
 
-function openSellerModal(name, avatar, phone, isCompany, email, date, sellerId) {
+function openSellerModal(name, avatar, phone, isCompany, email, date, sellerId, telegramUrl, whatsAppUrl, websiteUrl) {
     const avatarEl = document.getElementById('smAvatar');
     avatarEl.innerHTML = avatar
         ? `<img src="${avatar}" onerror="this.src='/img/no-photo.svg'" />`
@@ -451,6 +451,36 @@ function openSellerModal(name, avatar, phone, isCompany, email, date, sellerId) 
     const emailEl = document.getElementById('smEmail');
     if (email) { emailEl.textContent = email; emailRow.style.display = 'flex'; }
     else { emailRow.style.display = 'none'; }
+
+    const telegramRow = document.getElementById('smTelegramRow');
+    const telegramEl = document.getElementById('smTelegram');
+    if (telegramUrl) {
+        telegramEl.href = telegramUrl;
+        telegramEl.textContent = telegramUrl.replace(/^https?:\/\/(t\.me\/|telegram\.me\/)?/i, '@');
+        telegramRow.style.display = 'flex';
+    } else {
+        telegramRow.style.display = 'none';
+    }
+
+    const whatsAppRow = document.getElementById('smWhatsAppRow');
+    const whatsAppEl = document.getElementById('smWhatsApp');
+    if (whatsAppUrl) {
+        whatsAppEl.href = whatsAppUrl;
+        whatsAppEl.textContent = 'WhatsApp';
+        whatsAppRow.style.display = 'flex';
+    } else {
+        whatsAppRow.style.display = 'none';
+    }
+
+    const websiteRow = document.getElementById('smWebsiteRow');
+    const websiteEl = document.getElementById('smWebsite');
+    if (websiteUrl) {
+        websiteEl.href = websiteUrl;
+        websiteEl.textContent = websiteUrl.replace(/^https?:\/\//i, '');
+        websiteRow.style.display = 'flex';
+    } else {
+        websiteRow.style.display = 'none';
+    }
 
     const dateRow = document.getElementById('smDateRow');
     const dateEl = document.getElementById('smDate');
@@ -488,7 +518,6 @@ function openSellerModal(name, avatar, phone, isCompany, email, date, sellerId) 
     document.getElementById('sellerOverlay').classList.add('open');
     document.getElementById('sellerModal').classList.add('open');
 }
-
 function closeSellerModal() {
     document.getElementById('sellerOverlay').classList.remove('open');
     document.getElementById('sellerModal').classList.remove('open');

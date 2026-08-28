@@ -12,13 +12,15 @@ namespace Linkora.Controllers
     public class AccountController : Controller
     {
         private readonly IUserRepository _userRepository;
+        private readonly IUserSessionRepository _userSessionRepository;
         private readonly IEmailService _emailService;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IConfiguration _configuration;
 
-        public AccountController(IUserRepository userRepository, IEmailService emailService, IPasswordHasher passwordHasher, IConfiguration configuration)
+        public AccountController(IUserRepository userRepository, IUserSessionRepository userSessionRepository, IEmailService emailService, IPasswordHasher passwordHasher, IConfiguration configuration)
         {
             _userRepository = userRepository;
+            _userSessionRepository = userSessionRepository;
             _emailService = emailService;
             _passwordHasher = passwordHasher;
             _configuration = configuration;
@@ -217,19 +219,22 @@ namespace Linkora.Controllers
         }
         public async Task<IActionResult> Logout()
         {
+            if (int.TryParse(User.FindFirst("SessionId")?.Value, out int sessionId)) await _userSessionRepository.CloseSessionAsync(sessionId);
             await HttpContext.SignOutAsync("Cookies");
             return RedirectToAction("Index", "Home");
         }
         private async Task SignInAsync(User user)
         {
+            var sessionId = await _userSessionRepository.StartSessionAsync(user.Id);
+
             var claims = new List<Claim>
             {
-                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new(ClaimTypes.Name,           user.UserName),
-                new(ClaimTypes.Role,           user.Role ?? "user"),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name,           user.UserName),
+                new Claim(ClaimTypes.Role,           user.Role ?? "user"),
+                new Claim("SessionId",               sessionId.ToString()),
             };
-            if (!string.IsNullOrEmpty(user.AvatarUrl))
-                claims.Add(new Claim("Avatar", user.AvatarUrl));
+            if (!string.IsNullOrEmpty(user.AvatarUrl)) claims.Add(new Claim("Avatar", user.AvatarUrl));
 
             var identity = new ClaimsIdentity(claims, "Cookies");
             var principal = new ClaimsPrincipal(identity);

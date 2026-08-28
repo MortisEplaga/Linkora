@@ -6,7 +6,7 @@ namespace Linkora.Repositories
     {
         public SubscriptionRepository(IConfiguration configuration) : base(configuration) { }
         public async Task<List<UserSummary>> GetFollowingAsync(int followerId) => await QueryAsync(
-                @"SELECT u.Id, u.UserName, u.AvatarUrl, u.IsCompany, u.CreatedAt
+                @"SELECT u.Id, u.UserName, u.AvatarUrl, u.IsCompany, u.CreatedAt, u.TelegramUrl, u.WhatsAppUrl, u.WebsiteUrl
                   FROM Subscriptions s
                   JOIN Users u ON u.Id = s.FollowingId
                   WHERE s.FollowerId = @FollowerId
@@ -18,6 +18,9 @@ namespace Linkora.Repositories
                     AvatarUrl = r.GetStringOrNull(2),
                     IsCompany = r.GetBooleanOrDefault(3),
                     CreatedAt = r.GetDateTimeOrNull(4),
+                    TelegramUrl = r.GetStringOrNull(5),
+                    WhatsAppUrl = r.GetStringOrNull(6),
+                    WebsiteUrl = r.GetStringOrNull(7)
                 },
                 p => p.AddWithValue("@FollowerId", followerId));
         public async Task<bool> IsSubscribedAsync(int followerId, int followingId)

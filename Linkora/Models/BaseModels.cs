@@ -20,6 +20,9 @@
         public string? Email { get; set; }
         public bool IsCompany { get; set; }
         public DateTime? CreatedAt { get; set; }
+        public string? TelegramUrl { get; set; }
+        public string? WhatsAppUrl { get; set; }
+        public string? WebsiteUrl { get; set; }
     }
 
     public abstract class ReportBase : Base
