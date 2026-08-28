@@ -1,5 +1,6 @@
 @using Linkora.Models
-
+@using Microsoft.AspNetCore.WebUtilities
+@using Microsoft.Extensions.Primitives
 @{
     var category = (Category)ViewBag.Category;
     var breadcrumb = (List<Category>)ViewBag.Breadcrumb;
@@ -19,7 +20,7 @@
 <div class="category-header">
     <h1 class="category-title">
         @category.Name
-        <span class="category-count">@products.Count</span>
+        <span class="category-count">@ViewBag.Total</span>
     </h1>
     @if (ViewBag.Search != null)
     {
@@ -280,7 +281,97 @@
                 await Html.RenderPartialAsync("_ProductCard", new ProductCardViewModel { Product = p });
             }
         </div>
-    </div>
+        @if ((int)ViewBag.TotalPages > 1)
+{
+    var currentPage = (int)ViewBag.Page;
+    var totalPages = (int)ViewBag.TotalPages;
+    var queryDict = new Dictionary<string, StringValues>(Context.Request.Query);
+    queryDict.Remove("page");
+
+    string GetPageUrl(int page)
+    {
+        queryDict["page"] = page.ToString();
+        return Url.Action("Index", "Category", new { id = category.Id }) + QueryString.Create(queryDict).ToString();
+    }
+
+    <nav class="pagination">
+        <ul class="pagination-list">
+            @if (currentPage > 1)
+            {
+                <li><a class="page-link" href="@GetPageUrl(currentPage - 1)">←</a></li>
+            }
+
+            @{
+                int around = 1;
+
+                if (totalPages <= 2 * around)
+                {
+                    for (int i = 1; i <= totalPages; i++)
+                    {
+                        if (i == currentPage)
+                        {
+                            <li><span class="page-link active">@i</span></li>
+                        }
+                        else
+                        {
+                            <li><a class="page-link" href="@GetPageUrl(i)">@i</a></li>
+                        }
+                    }
+                }
+                else
+                {
+                    if (currentPage == 1)
+                    {
+                        <li><span class="page-link active">1</span></li>
+                    }
+                    else
+                    {
+                        <li><a class="page-link" href="@GetPageUrl(1)">1</a></li>
+                    }
+
+                    if (currentPage > around + 2)
+                    {
+                        <li><span class="page-link dots">…</span></li>
+                    }
+
+                    int left = Math.Max(2, currentPage - around);
+                    int right = Math.Min(totalPages - 1, currentPage + around);
+                    for (int i = left; i <= right; i++)
+                    {
+                        if (i == currentPage)
+                            {
+                                <li><span class="page-link active">@i</span></li>
+                            }
+                        else
+                            {
+                                <li><a class="page-link" href="@GetPageUrl(i)">@i</a></li>
+                            }
+                    }
+
+                    if (currentPage < totalPages - around - 1)
+                    {
+                        <li><span class="page-link dots">…</span></li>
+                    }
+                    if (currentPage == totalPages)
+                    {
+                        <li><span class="page-link active">@totalPages</span></li>
+                    }
+                    else
+                    {
+                        <li><a class="page-link" href="@GetPageUrl(totalPages)">@totalPages</a></li>
+                    }
+                }
+            }
+
+            <!-- Кнопка "Вперёд" -->
+            @if (currentPage < totalPages)
+            {
+                <li><a class="page-link" href="@GetPageUrl(currentPage + 1)">→</a></li>
+            }
+        </ul>
+    </nav>
+}
+</div>
 </div>
 
 <script src="~/js/param-utils.js"></script>

@@ -1,5 +1,6 @@
 using Linkora.Repositories;
 using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
 
 namespace Linkora.Controllers
 {
@@ -15,7 +16,7 @@ namespace Linkora.Controllers
             _productRepository = productRepository;
         }
 
-        public async Task<IActionResult> Index(int id, string sort = "new", string? q = null, string? city = null)
+        public async Task<IActionResult> Index(int id, string sort = "new", string? q = null, string? city = null, int page = 1)
         {
             var category = await _categoryRepository.GetByIdAsync(id);
             if (category == null) return NotFound();
@@ -23,7 +24,6 @@ namespace Linkora.Controllers
             var breadcrumb = await _categoryRepository.GetBreadcrumbAsync(id);
             var children = await _categoryRepository.GetChildrenAsync(id);
             var parameters = await _categoryRepository.GetParametersAsync(breadcrumb.Select(c => c.Id));
-
             parameters = parameters.Where(p => p.Param.Type != 7).ToList();
 
             var filters = new Dictionary<int, List<string>>();
@@ -34,7 +34,6 @@ namespace Linkora.Controllers
             {
                 if (!key.StartsWith("p_")) continue;
                 var parts = key.Split('_');
-
                 if (parts.Length == 2 && int.TryParse(parts[1], out int paramId))
                 {
                     var vals = Request.Query[key].Where(v => !string.IsNullOrEmpty(v)).ToList();
@@ -43,24 +42,25 @@ namespace Linkora.Controllers
                 else if (parts.Length == 3 && int.TryParse(parts[1], out int rangeId))
                 {
                     var raw = Request.Query[key].FirstOrDefault();
-                    if (decimal.TryParse(raw, System.Globalization.NumberStyles.Any,
-                        System.Globalization.CultureInfo.InvariantCulture, out decimal dval))
-                    {
+                    if (decimal.TryParse(raw, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal dval))
                         if (parts[2] == "from") rangeFrom[rangeId] = dval;
                         else if (parts[2] == "to") rangeTo[rangeId] = dval;
-                    }
                 }
             }
 
             int? priceParamId = parameters.FirstOrDefault(p => p.Param.Name == "Price")?.Param.Id;
 
-            var products = await _productRepository.GetByCategoryAsync(id, includeDescendants: true, sort, filters, rangeFrom, rangeTo, priceParamId, city, q);
+            var result = await _productRepository.GetByCategoryAsync(id, includeDescendants: true, sort, filters, rangeFrom, rangeTo, priceParamId, city, q, page);
+
             ViewBag.City = city;
             ViewBag.Category = category;
             ViewBag.Breadcrumb = breadcrumb;
             ViewBag.Children = children;
             ViewBag.Parameters = parameters;
-            ViewBag.Products = products;
+            ViewBag.Products = result.Items;
+            ViewBag.Page = result.CurrentPage;
+            ViewBag.TotalPages = result.TotalPages;
+            ViewBag.Total = result.Total;
             ViewBag.Sort = sort;
             ViewBag.Search = q;
             ViewBag.HasPriceSort = priceParamId.HasValue;

@@ -14,28 +14,30 @@ namespace Linkora.Controllers
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<IActionResult> Index(int id, int? categoryId, string sort = "new")
+        public async Task<IActionResult> Index(int id, int? categoryId, string sort = "new", int page = 1)
         {
             var seller = await _sellerRepository.GetByIdAsync(id);
             if (seller == null) return NotFound();
 
             var (reviewCount, reviewAvg) = await _sellerRepository.GetRatingAsync(id);
             var categories = await _sellerRepository.GetCategoriesAsync(id, Request.GetLang());
-            var products = await _sellerRepository.GetProductsAsync(id, categoryId, sort);
+            var pagedResult = await _sellerRepository.GetProductsPagedAsync(id, categoryId, sort, page);
             var reviews = await _sellerRepository.GetReviewsAsync(id);
 
             ViewBag.Seller = seller;
             ViewBag.ReviewCount = reviewCount;
             ViewBag.ReviewAvg = reviewAvg;
             ViewBag.Categories = categories;
-            ViewBag.Products = products;
+            ViewBag.Products = pagedResult.Items;
             ViewBag.Reviews = reviews;
             ViewBag.Sort = sort;
             ViewBag.CategoryId = categoryId;
+            ViewBag.Page = pagedResult.CurrentPage;
+            ViewBag.TotalPages = pagedResult.TotalPages;
+            ViewBag.Total = pagedResult.Total;
 
             return View();
         }
-
         [HttpGet]
         public async Task<IActionResult> Rating(int id)
         {

@@ -25,15 +25,14 @@ namespace Linkora.Repositories
             while (await reader.ReadAsync()) result.CustomScriptPaths.Add(reader.GetString(0));
             return result;
         }
-        public async Task<List<Product>> GetByCategoryAsync(int rootCategoryId, bool includeDescendants = true,
-                                                            string sort = "new", Dictionary<int, List<string>>? filters = null,
-                                                            Dictionary<int, decimal>? rangeFrom = null, Dictionary<int, decimal>? rangeTo = null,
-                                                            int? priceParamId = null, string? city = null, string? search = null)
+        public async Task<PagedResult<Product>> GetByCategoryAsync(int rootCategoryId, bool includeDescendants = true, string sort = "new",
+                                                                   Dictionary<int, List<string>>? filters = null, Dictionary<int, decimal>? rangeFrom = null, Dictionary<int, decimal>? rangeTo = null, 
+                                                                   int? priceParamId = null, string? city = null, string? search = null, int page = 1)
         {
-            var sqlParams = new List<SqlParameter> { new("@RootCategoryId", rootCategoryId) };
+            if (page < 1) page = 1;
+            int offset = (page - 1) * 20;
 
             var priceJoin = priceParamId.HasValue ? "LEFT JOIN MapperProductCategory mpc ON mpc.ProductId = p.Id AND mpc.CategoryId = @PriceParamId" : "";
-            if (priceParamId.HasValue) sqlParams.Add(new SqlParameter("@PriceParamId", priceParamId.Value));
 
             var priceSelect = priceParamId.HasValue
                 ? ", TRY_CAST(mpc.Value AS decimal(18,2)) AS Price"
@@ -48,46 +47,51 @@ namespace Linkora.Repositories
                 "expensive" => priceParamId.HasValue ? "TRY_CAST(mpc.Value AS decimal(18,2)) DESC" : "p.CreatedAt DESC",
                 _ => "p.CreatedAt DESC"
             };
-            var order = @"CASE WHEN p.PromotionType IN ('Top','Vip') THEN 0 WHEN p.PromotionType = 'Highlight' THEN 1 ELSE 2 END, " + baseOrder;
+            var order = @"CASE WHEN p.PromotionType IN ('Top','Vip') THEN 0 WHEN p.PromotionType = 'Highlight' THEN 1 ELSE 2 END, " + baseOrder + ", p.Id";
 
             var whereClauses = new List<string>();
+            var commonParams = new List<SqlParameter>();
             int pIdx = 0;
 
             if (filters != null)
+            {
                 foreach (var (paramId, values) in filters)
                 {
                     if (values is null || values.Count == 0) continue;
                     var fvNames = values.Select((_, i) => $"@fv{pIdx}_{i}").ToList();
                     whereClauses.Add($@"EXISTS (SELECT 1 FROM MapperProductCategory m 
-                                        WHERE m.ProductId = p.Id AND m.CategoryId = @fp{pIdx} 
-                                        AND m.Value IN ({string.Join(",", fvNames)}))");
-                    sqlParams.Add(new SqlParameter($"@fp{pIdx}", paramId));
-                    for (int i = 0; i < values.Count; i++) sqlParams.Add(new SqlParameter($"@fv{pIdx}_{i}", values[i]));
+                                WHERE m.ProductId = p.Id AND m.CategoryId = @fp{pIdx} 
+                                AND m.Value IN ({string.Join(",", fvNames)}))");
+                    commonParams.Add(new SqlParameter($"@fp{pIdx}", paramId));
+                    for (int i = 0; i < values.Count; i++)
+                        commonParams.Add(new SqlParameter($"@fv{pIdx}_{i}", values[i]));
                     pIdx++;
                 }
+            }
 
             if (rangeFrom != null || rangeTo != null)
             {
                 var rangeIds = new HashSet<int>();
                 if (rangeFrom != null) foreach (var k in rangeFrom.Keys) rangeIds.Add(k);
                 if (rangeTo != null) foreach (var k in rangeTo.Keys) rangeIds.Add(k);
+
                 foreach (var paramId in rangeIds)
                 {
                     var conditions = new List<string>();
-                    sqlParams.Add(new SqlParameter($"@rp{pIdx}", paramId));
+                    commonParams.Add(new SqlParameter($"@rp{pIdx}", paramId));
                     if (rangeFrom != null && rangeFrom.TryGetValue(paramId, out var from))
                     {
                         conditions.Add($"TRY_CAST(m.Value AS decimal(18,2)) >= @rf{pIdx}");
-                        sqlParams.Add(new SqlParameter($"@rf{pIdx}", from));
+                        commonParams.Add(new SqlParameter($"@rf{pIdx}", from));
                     }
                     if (rangeTo != null && rangeTo.TryGetValue(paramId, out var to))
                     {
                         conditions.Add($"TRY_CAST(m.Value AS decimal(18,2)) <= @rt{pIdx}");
-                        sqlParams.Add(new SqlParameter($"@rt{pIdx}", to));
+                        commonParams.Add(new SqlParameter($"@rt{pIdx}", to));
                     }
                     whereClauses.Add($@"EXISTS (SELECT 1 FROM MapperProductCategory m 
-                                        WHERE m.ProductId = p.Id AND m.CategoryId = @rp{pIdx} 
-                                        AND {string.Join(" AND ", conditions)})");
+                                WHERE m.ProductId = p.Id AND m.CategoryId = @rp{pIdx} 
+                                AND {string.Join(" AND ", conditions)})");
                     pIdx++;
                 }
             }
@@ -95,8 +99,9 @@ namespace Linkora.Repositories
             if (!string.IsNullOrEmpty(city))
             {
                 whereClauses.Add("p.Address = @City");
-                sqlParams.Add(new SqlParameter("@City", city));
+                commonParams.Add(new SqlParameter("@City", city));
             }
+
             if (!string.IsNullOrEmpty(search))
             {
                 var fullTextQuery = string.Join(" AND ", search
@@ -106,11 +111,10 @@ namespace Linkora.Repositories
                     .Select(t => Regex.Replace(t, @"[^\p{L}\p{N}_\-]", ""))
                     .Where(t => t.Length > 0)
                     .Select(t => $"\"{t}*\""));
-
                 if (fullTextQuery.Length > 0)
                 {
                     whereClauses.Add("CONTAINS((p.Name, p.Description), @SearchTerm)");
-                    sqlParams.Add(new SqlParameter("@SearchTerm", fullTextQuery));
+                    commonParams.Add(new SqlParameter("@SearchTerm", fullTextQuery));
                 }
             }
 
@@ -119,21 +123,36 @@ namespace Linkora.Repositories
             var catCondition = includeDescendants ? "INNER JOIN CategoryClosure cc ON cc.DescendantId = p.CategoryId AND cc.AncestorId = @RootCategoryId" : "WHERE p.CategoryId = @RootCategoryId";
 
             var whereKeyword = includeDescendants ? "WHERE" : "AND";
+            var statusCondition = $"(p.Status = 'active' OR p.Status IS NULL) {extraWhere}";
+            var fullWhere = $"{whereKeyword} {statusCondition}";
 
-            var query = $@"SELECT p.Id, p.Name, p.Description, p.Address, p.CreatedAt,
-                           COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm 
-                           WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder), p.AvatarUrl) AS AvatarUrl,
-                           u.UserName, u.AvatarUrl, u.IsCompany, u.Phone, u.Email, u.CreatedAt, u.Id,
-                           p.PromotionType {priceSelect}
-                           FROM Products p
-                           LEFT JOIN Users u ON u.Id = p.UserId
-                           {priceJoin}
-                           {catCondition}
-                           {whereKeyword} (p.Status = 'active' OR p.Status IS NULL)
-                           {extraWhere}
-                           ORDER BY {order}";
+            var countQuery = $@"SELECT COUNT(*) FROM Products p LEFT JOIN Users u ON u.Id = p.UserId {priceJoin} {catCondition} {fullWhere}";
 
-            return await QueryAsync(query,
+            var countParams = new List<SqlParameter> { new SqlParameter("@RootCategoryId", rootCategoryId) };
+            if (priceParamId.HasValue) countParams.Add(new SqlParameter("@PriceParamId", priceParamId.Value));
+            countParams.AddRange(commonParams);
+
+            var totalItems = (await QueryAsync(countQuery, r => r.GetInt32(0), p => { foreach (var sp in countParams) p.Add(sp); })).FirstOrDefault();
+
+            var dataQuery = $@"SELECT p.Id, p.Name, p.Description, p.Address, p.CreatedAt, COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm 
+                               WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder), p.AvatarUrl) AS AvatarUrl,
+                               u.UserName, u.AvatarUrl, u.IsCompany, u.Phone, u.Email, u.CreatedAt, u.Id,
+                               p.PromotionType {priceSelect}
+                               FROM Products p
+                               LEFT JOIN Users u ON u.Id = p.UserId
+                               {priceJoin}
+                               {catCondition}
+                               {fullWhere}
+                               ORDER BY {order}
+                               OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
+
+            var dataParams = new List<SqlParameter> { new SqlParameter("@RootCategoryId", rootCategoryId) };
+            if (priceParamId.HasValue) dataParams.Add(new SqlParameter("@PriceParamId", priceParamId.Value));
+            dataParams.AddRange(commonParams.Select(p => new SqlParameter(p.ParameterName, p.Value)));
+            dataParams.Add(new SqlParameter("@Offset", offset));
+            dataParams.Add(new SqlParameter("@PageSize", 20));
+
+            var items = await QueryAsync(dataQuery,
                 r => new Product
                 {
                     Id = r.GetInt32(0),
@@ -155,7 +174,15 @@ namespace Linkora.Repositories
                     Price = r.GetDecimalOrNull(14),
                     PromotionType = r.GetStringOrDefault(13, "None")
                 },
-                p => { foreach (var sp in sqlParams) p.Add(sp); });
+                p => { foreach (var sp in dataParams) p.Add(sp); });
+
+            return new PagedResult<Product>
+            {
+                Items = items,
+                CurrentPage = page,
+                TotalPages = (int)Math.Ceiling(totalItems / (double)20),
+                Total = totalItems
+            };
         }
         public async Task<Dictionary<int, string>> GetParamDisplayValuesAsync(int productId, string lang)
         {

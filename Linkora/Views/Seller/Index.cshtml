@@ -124,11 +124,14 @@
                 </button>
                 <div class="listing-sort-drop" id="sortDrop">
                     <a class="listing-sort-item @(sort == "new" ? "active" : "")"
-                       href="/Seller/Index/@seller.Id?@(activeCatId.HasValue ? $"categoryId={activeCatId}&" : "")sort=new" data-i18n="sort_newest"></a>
+                       href="@Url.Action("Index", "Seller", new { id = seller.Id, categoryId = activeCatId, sort = "new", page = 1 })"
+                       data-i18n="sort_newest"></a>
                     <a class="listing-sort-item @(sort == "cheap" ? "active" : "")"
-                       href="/Seller/Index/@seller.Id?@(activeCatId.HasValue ? $"categoryId={activeCatId}&" : "")sort=cheap" data-i18n="sort_cheapest"></a>
+                       href="@Url.Action("Index", "Seller", new { id = seller.Id, categoryId = activeCatId, sort = "cheap", page = 1 })"
+                       data-i18n="sort_cheapest"></a>
                     <a class="listing-sort-item @(sort == "expensive" ? "active" : "")"
-                       href="/Seller/Index/@seller.Id?@(activeCatId.HasValue ? $"categoryId={activeCatId}&" : "")sort=expensive" data-i18n="sort_expensive"></a>
+                       href="@Url.Action("Index", "Seller", new { id = seller.Id, categoryId = activeCatId, sort = "expensive", page = 1 })"
+                       data-i18n="sort_expensive"></a>
                 </div>
             </div>
         </div>
@@ -139,6 +142,94 @@
                 await Html.RenderPartialAsync("_ProductCard", new ProductCardViewModel { Product = p, ShowFavActions = false, ShowSeller = false });
             }
         </div>
+        @if (ViewBag.TotalPages > 1)
+        {
+            var currentPage = (int)ViewBag.Page;
+            var totalPages = (int)ViewBag.TotalPages;
+            sort = ViewBag.Sort as string;
+            var categoryId = ViewBag.CategoryId as int?;
+
+            string GetPageUrl(int page)
+            {
+                return Url.Action("Index", "Seller", new { id = seller.Id, categoryId = categoryId, sort = sort, page = page });
+            }
+
+            <nav class="pagination">
+                <ul class="pagination-list">
+                    @if (currentPage > 1)
+                    {
+                        <li><a class="page-link" href="@GetPageUrl(currentPage - 1)">←</a></li>
+                    }
+
+                    @{
+                        int around = 1;
+
+                        if (totalPages <= 2 * around)
+                        {
+                            for (int i = 1; i <= totalPages; i++)
+                            {
+                                if (i == currentPage)
+                                {
+                                    <li><span class="page-link active">@i</span></li>
+                                }
+                                else
+                                {
+                                    <li><a class="page-link" href="@GetPageUrl(i)">@i</a></li>
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (currentPage == 1)
+                            {
+                                <li><span class="page-link active">1</span></li>
+                            }
+                            else
+                            {
+                                <li><a class="page-link" href="@GetPageUrl(1)">1</a></li>
+                            }
+
+                            if (currentPage > around + 2)
+                            {
+                                <li><span class="page-link dots">…</span></li>
+                            }
+
+                            int left = Math.Max(2, currentPage - around);
+                            int right = Math.Min(totalPages - 1, currentPage + around);
+                            for (int i = left; i <= right; i++)
+                            {
+                                if (i == currentPage)
+                                {
+                                    <li><span class="page-link active">@i</span></li>
+                                }
+                                else
+                                {
+                                    <li><a class="page-link" href="@GetPageUrl(i)">@i</a></li>
+                                }
+                            }
+
+                            if (currentPage < totalPages - around - 1)
+                            {
+                                <li><span class="page-link dots">…</span></li>
+                            }
+                            if (currentPage == totalPages)
+                            {
+                                <li><span class="page-link active">@totalPages</span></li>
+                            }
+                            else
+                            {
+                                <li><a class="page-link" href="@GetPageUrl(totalPages)">@totalPages</a></li>
+                            }
+                        }
+                    }
+
+                    @if (currentPage < totalPages)
+                    {
+                        <li><a class="page-link" href="@GetPageUrl(currentPage + 1)">→</a></li>
+                    }
+                </ul>
+            </nav>
+        }
     </div>
 </div>
 

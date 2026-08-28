@@ -1,4 +1,5 @@
 ﻿using Linkora.Models;
+using Microsoft.Data.SqlClient;
 
 namespace Linkora.Repositories
 {
@@ -45,53 +46,72 @@ namespace Linkora.Repositories
                     Count = r.GetInt32(4)
                 },
                 p => p.AddWithValue("@UserId", userId));
-        public async Task<List<Product>> GetProductsAsync(int userId, int? categoryId, string sort)
+        public async Task<PagedResult<Product>> GetProductsPagedAsync(int userId, int? categoryId, string sort, int page)
         {
-            var order = sort switch
+            if (page < 1) page = 1;
+            int offset = (page - 1) * 20;
+
+            string orderBy = sort switch
             {
-                "cheap" => @"(SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
-                                  FROM MapperProductCategory m
-                                  JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
-                                  WHERE m.ProductId = p.Id) ASC",
-                "expensive" => @"(SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
-                                  FROM MapperProductCategory m
-                                  JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
-                                  WHERE m.ProductId = p.Id) DESC",
+                "cheap" => @"(SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2)) 
+                      FROM MapperProductCategory m 
+                      JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €' 
+                      WHERE m.ProductId = p.Id) ASC",
+                "expensive" => @"(SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2)) 
+                          FROM MapperProductCategory m 
+                          JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €' 
+                          WHERE m.ProductId = p.Id) DESC",
                 _ => "p.CreatedAt DESC"
             };
 
-            var catFilter = categoryId.HasValue ? "AND p.CategoryId = @CatId" : "";
+            string catFilter = categoryId.HasValue ? "AND p.CategoryId = @CategoryId" : "";
 
-            return await QueryAsync($@"
-                SELECT p.Id, p.Name, p.Address, p.CreatedAt, COALESCE(
-                           (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
-                            WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-                           p.AvatarUrl
-                       ) AS AvatarUrl,
-                       (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
-                        FROM MapperProductCategory m
-                        JOIN Category c2 ON c2.Id = m.CategoryId AND c2.Name = 'Price, €'
-                        WHERE m.ProductId = p.Id) as Price
-                FROM Products p
-                WHERE p.UserId = @UserId
-                  AND (p.Status = 'active' OR p.Status IS NULL)
-                  {catFilter}
-                ORDER BY {order}",
-                r => new Product
-                {
-                    Id = r.GetInt32(0),
-                    Name = r.GetStringOrDefault(1),
-                    Address = r.GetStringOrNull(2),
-                    CreatedAt = r.GetDateTimeOrNull(3),
-                    AvatarUrl = r.GetStringOrNull(4),
-                    Price = r.GetDecimalOrNull(5),
-                },
-                p =>
-                {
-                    p.AddWithValue("@UserId", userId);
-                    if (categoryId.HasValue)
-                        p.AddWithValue("@CatId", categoryId.Value);
-                });
+            var countSql = $@"SELECT COUNT(*) FROM Products p WHERE p.UserId = @UserId AND (p.Status = 'active' OR p.Status IS NULL) {catFilter}";
+            var countParams = new List<SqlParameter> { new SqlParameter("@UserId", userId) };
+            if (categoryId.HasValue) countParams.Add(new SqlParameter("@CategoryId", categoryId.Value));
+
+            var totalItems = (await QueryAsync(countSql, r => r.GetInt32(0), p => { foreach (var sp in countParams) p.Add(sp); })).FirstOrDefault();
+
+            var dataSql = $@"SELECT p.Id, p.Name, p.Address, p.CreatedAt, 
+                                    COALESCE(
+                                        (SELECT TOP 1 pm.FilePath FROM ProductMedia pm 
+                                         WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
+                                        p.AvatarUrl
+                                    ) AS AvatarUrl,
+                                    (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
+                                     FROM MapperProductCategory m
+                                     JOIN Category c2 ON c2.Id = m.CategoryId AND c2.Name = 'Price, €'
+                                     WHERE m.ProductId = p.Id) as Price
+                             FROM Products p
+                             WHERE p.UserId = @UserId
+                               AND (p.Status = 'active' OR p.Status IS NULL)
+                               {catFilter}
+                             ORDER BY {orderBy}
+                             OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
+
+            var items = await QueryAsync(dataSql, r => new Product
+            {
+                Id = r.GetInt32(0),
+                Name = r.GetStringOrDefault(1),
+                Address = r.GetStringOrNull(2),
+                CreatedAt = r.GetDateTimeOrNull(3),
+                AvatarUrl = r.GetStringOrNull(4),
+                Price = r.GetDecimalOrNull(5)
+            }, p =>
+            {
+                p.AddWithValue("@UserId", userId);
+                if (categoryId.HasValue) p.AddWithValue("@CategoryId", categoryId.Value);
+                p.AddWithValue("@Offset", offset);
+                p.AddWithValue("@PageSize", 20);
+            });
+
+            return new PagedResult<Product>
+            {
+                Items = items,
+                CurrentPage = page,
+                TotalPages = (int)Math.Ceiling(totalItems / (double)20),
+                Total = totalItems
+            };
         }
         public async Task<List<dynamic>> GetReviewsAsync(int userId, int limit = 50) => await QueryAsync<dynamic>(
                 @"SELECT r.Id, r.Rating, r.Comment, r.CreatedAt,

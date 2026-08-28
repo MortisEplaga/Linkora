@@ -7,7 +7,7 @@ namespace Linkora.Repositories
         Task<UserSummary?> GetByIdAsync(int id);
         Task<(int Count, double Avg)> GetRatingAsync(int userId);
         Task<List<CategoryCount>> GetCategoriesAsync(int userId, string lang);
-        Task<List<Product>> GetProductsAsync(int userId, int? categoryId, string sort);
+        Task<PagedResult<Product>> GetProductsPagedAsync(int userId, int? categoryId, string sort, int page);
         Task<List<dynamic>> GetReviewsAsync(int userId, int limit = 50);
     }
 }
