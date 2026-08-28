@@ -1,5 +1,7 @@
 const TRANSLATIONS = {
     en: {
+        'catmenu_back': 'Back',
+        'catmenu_confirm_hint': 'Click again to confirm selection',
         'notif_empty_unread': 'No unread notifications',
         'notif_empty_all': 'No notifications yet',
         'notif_subscription_sold': '{0} sold their listing',
@@ -433,6 +435,8 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'catmenu_back': 'Atpakaļ',
+        'catmenu_confirm_hint': 'Noklikšķiniet vēlreiz, lai apstiprinātu izvēli',
         'notif_empty_unread': 'Nav nelasītu paziņojumu',
         'notif_empty_all': 'Nav paziņojumu',
         'notif_subscription_sold': "{0} pārdeva savu sludinājumu",
@@ -876,6 +880,8 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'catmenu_back': 'Назад',
+        'catmenu_confirm_hint': 'Нажмите второй раз, чтобы подтвердить выбор',
         'notif_empty_unread': 'Нет непрочитанных уведомлений',
         'notif_empty_all': 'Пока нет уведомлений',
         'notif_subscription_sold': "{0} продал своё объявление",

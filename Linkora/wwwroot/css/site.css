@@ -3811,3 +3811,20 @@ body {
         border-color: #e53935;
         color: #fff;
     }
+
+.catmenu-tooltip {
+    position: fixed;
+    background-color: #333;
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 400;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    transform: translateX(-50%);
+    transition: opacity 0.15s ease;
+    opacity: 1;
+}

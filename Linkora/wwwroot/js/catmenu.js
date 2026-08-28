@@ -1,6 +1,9 @@
 ﻿let allCategories = [];
 let categoryMenuMode = 'navigate';
 let categoryMenuCallback = null;
+let tooltipTimer = null;
+let tooltipElement = null;
+let activeItem = null;
 
 const CATEGORY_ICONS = {
     'transport': `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-car-front-icon lucide-car-front"><path d="m21 8-2 2-1.5-3.7A2 2 0 0 0 15.646 5H8.4a2 2 0 0 0-1.903 1.257L5 10 3 8"/><path d="M7 14h.01"/><path d="M17 14h.01"/><rect width="18" height="8" x="3" y="10" rx="2"/><path d="M5 18v2"/><path d="M19 18v2"/></svg>`,
@@ -69,6 +72,9 @@ function showMenu() {
 function closeCatMenu() {
     document.getElementById('catMenu').classList.remove('catmenu-open');
     document.getElementById('catMenuOverlay').classList.remove('catmenu-overlay-open');
+    clearTimeout(tooltipTimer);
+    removeTooltip();
+    activeItem = null;
 }
 function renderCol(colIndex, parentId) {
     const container = document.getElementById('catMenuColumns');
@@ -100,14 +106,16 @@ function renderCol(colIndex, parentId) {
 
         const backLabel = document.createElement('span');
         backLabel.className = 'catmenu-label';
-        backLabel.textContent = 'Назад';
-
+        backLabel.textContent = translate('catmenu_back');
         backLink.appendChild(backIcon);
         backLink.appendChild(backLabel);
         backItem.appendChild(backLink);
 
         backItem.addEventListener('click', (e) => {
             e.stopPropagation();
+            clearTimeout(tooltipTimer);
+            removeTooltip();
+            activeItem = null;
             container.removeChild(col);
             updateColumnsVisibility();
         });
@@ -153,6 +161,9 @@ function renderCol(colIndex, parentId) {
             const isAlreadyActive = el.classList.contains('catmenu-item-active');
 
             if (isAlreadyActive) {
+                clearTimeout(tooltipTimer);
+                removeTooltip();
+
                 if (categoryMenuMode === 'navigate') {
                     window.location.href = '/Category/Index/' + item.id;
                     closeCatMenu();
@@ -161,25 +172,63 @@ function renderCol(colIndex, parentId) {
                         categoryMenuCallback({ id: item.id, name: item.name });
                     closeCatMenu();
                 }
-            } else {
-                col.querySelectorAll('.catmenu-item').forEach(i => i.classList.remove('catmenu-item-active'));
-                el.classList.add('catmenu-item-active');
+                return;
+            }
 
-                if (hasChildren)
-                    renderCol(colIndex + 1, item.id);
-                else {
-                    while (container.children.length > colIndex + 1)
-                        container.removeChild(container.lastChild);
-                    updateColumnsVisibility();
+            col.querySelectorAll('.catmenu-item').forEach(i => i.classList.remove('catmenu-item-active'));
+            el.classList.add('catmenu-item-active');
+            activeItem = el;
+
+            clearTimeout(tooltipTimer);
+            removeTooltip();
+
+            tooltipTimer = setTimeout(() => {
+                if (activeItem === el && el.classList.contains('catmenu-item-active')) {
+                    showTooltip(el, translate('catmenu_confirm_hint'));
                 }
+            }, 1000);
+
+            if (hasChildren) {
+                renderCol(colIndex + 1, item.id);
+            } else {
+                while (container.children.length > colIndex + 1)
+                    container.removeChild(container.lastChild);
+                updateColumnsVisibility();
             }
         });
-
         col.appendChild(el);
     });
 
     container.appendChild(col);
     updateColumnsVisibility();
+}
+
+document.getElementById('catMenuColumns').addEventListener('mouseenter', function (e) {
+    const item = e.target.closest('.catmenu-item');
+    if (!item) return;
+
+    if (activeItem && item !== activeItem) {
+        clearTimeout(tooltipTimer);
+        removeTooltip();
+        activeItem = null;
+    }
+}, true);
+function showTooltip(element, text) {
+    removeTooltip();
+
+    const rect = element.getBoundingClientRect();
+    tooltipElement = document.createElement('div');
+    tooltipElement.className = 'catmenu-tooltip';
+    tooltipElement.textContent = text;
+    tooltipElement.style.left = (rect.left + rect.width / 2) + 'px';
+    tooltipElement.style.top = (rect.bottom + 8) + 'px';
+    document.body.appendChild(tooltipElement);
+}
+function removeTooltip() {
+    if (tooltipElement) {
+        tooltipElement.remove();
+        tooltipElement = null;
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
