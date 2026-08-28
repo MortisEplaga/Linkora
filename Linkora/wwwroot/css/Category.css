@@ -651,6 +651,7 @@
     color: #0077cc;
     font-size: 11px;
     font-weight: 600;
+    margin-bottom: 4px;
 }
 :root {
     --card-transition: 0.18s ease;

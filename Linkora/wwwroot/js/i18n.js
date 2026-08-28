@@ -794,7 +794,7 @@ const TRANSLATIONS = {
         'cancel_btn': 'Atcelt',
         'msg_ph': 'Jūsu ziņojums...',
         'send_btn': 'Nosūtīt',
-        'price_on_request': 'Cena pēc pieprasījuma',
+        'price_on_request': 'Jautāt cenu',
         'link_copied': 'Saite nokopēta!',
         'my_ads_title': 'Mani sludinājumi',
         'tab_active': 'Aktīvie',
