@@ -1,5 +1,8 @@
 const TRANSLATIONS = {
     en: {
+        'captcha_title': "Verify you're human",
+        'captcha_desc': 'Complete the verification to see the phone number.',
+        'captcha_confirm_btn': 'Confirm',
         'support_form_required': 'Please fill all required fields (name, email, message).',
         'support_form_success': 'Thank you! Your message has been sent.',
         'phone_required': 'Phone number is required.',
@@ -454,6 +457,9 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'captcha_title': 'Apstipriniet, ka esat cilvēks',
+        'captcha_desc': 'Pabeidziet verifikāciju, lai redzētu tālruņa numuru.',
+        'captcha_confirm_btn': 'Apstiprināt',
         'support_form_required': 'Lūdzu, aizpildiet visus obligātos laukus (vārds, e-pasts, ziņa).',
         'support_form_success': 'Paldies! Jūsu ziņojums ir nosūtīts.',
         'phone_required': 'Tālruņa numurs ir obligāts.',
@@ -918,6 +924,9 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'captcha_title': 'Подтвердите, что вы не робот',
+        'captcha_desc': 'Завершите проверку, чтобы увидеть номер телефона.',
+        'captcha_confirm_btn': 'Подтвердить',
         'support_form_required': 'Пожалуйста, заполните все обязательные поля (имя, email, сообщение).',
         'support_form_success': 'Спасибо! Ваше сообщение отправлено.',
         'phone_required': 'Номер телефона обязателен.',

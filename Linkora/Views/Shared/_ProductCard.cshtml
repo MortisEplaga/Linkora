@@ -52,7 +52,7 @@
                  data-seller-telegram="@p.Seller?.TelegramUrl"
                  data-seller-whatsapp="@p.Seller?.WhatsAppUrl"
                  data-seller-website="@p.Seller?.WebsiteUrl"
-                 onclick="event.preventDefault(); openSellerModalFromEl(this)">
+                 onclick="event.preventDefault(); checkAuthAndOpenSellerModalFromEl(this)">
                 @if (p.Seller?.AvatarUrl != null)
                 {
                     <img src="@p.Seller?.AvatarUrl" style="width:40px;height:40px;border-radius:50%;object-fit:cover"
@@ -80,7 +80,7 @@
                  data-seller-telegram="@p.Seller?.TelegramUrl"
                  data-seller-whatsapp="@p.Seller?.WhatsAppUrl"
                  data-seller-website="@p.Seller?.WebsiteUrl"
-                 onclick="event.preventDefault(); openSellerModalFromEl(this)"
+                 onclick="event.preventDefault(); checkAuthAndOpenSellerModalFromEl(this)"
                  data-i18n="seller_show_contact">
                 Show contact
             </div>
