@@ -46,6 +46,10 @@ namespace Linkora.Models
 
         [StringLength(500)]
         public string? WebsiteUrl { get; set; }
+        [StringLength(500)]
+        public string? HomeAddress { get; set; }
+        public decimal? HomeLat { get; set; }
+        public decimal? HomeLng { get; set; }
 
     }
     public class FacebookLoginModel

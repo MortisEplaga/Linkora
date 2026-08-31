@@ -29,6 +29,7 @@ builder.Services.AddScoped<ICompareRepository, CompareRepository>();
 builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 builder.Services.AddScoped<IUserSessionRepository, UserSessionRepository>();
 
+builder.Services.AddScoped<IGeocodingService, GoogleGeocodingService>();
 builder.Services.AddScoped<IAdminService, AdminService>(); 
 builder.Services.AddScoped<INotificationRealTimeSender, SignalRNotificationSender>();
 builder.Services.AddScoped<INotificationService, NotificationService>();

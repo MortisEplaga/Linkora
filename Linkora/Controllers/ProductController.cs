@@ -15,7 +15,8 @@ namespace Linkora.Controllers
         INotificationService notifications,
         IUserRepository userRepository,
         ISelectOptionRepository selectOptionRepository,
-        IMediaStorageService mediaStorage) : Controller
+        IMediaStorageService mediaStorage,
+        IGeocodingService geocodingService) : Controller
     {
         private readonly ICategoryRepository _categoryRepository = categoryRepository;
         private readonly IAddressRepository _addressRepository = addressRepository;
@@ -26,6 +27,7 @@ namespace Linkora.Controllers
         private readonly ISelectOptionRepository _selectOptionRepository = selectOptionRepository;
         private readonly IConfiguration _configuration = configuration;
         private readonly IMediaStorageService _mediaStorage = mediaStorage;
+        private readonly IGeocodingService _geocodingService = geocodingService;
 
         private static int PromotionPoints(string? promotionType) => promotionType switch
         {
@@ -41,9 +43,7 @@ namespace Linkora.Controllers
             if (string.IsNullOrEmpty(json)) return result;
             var raw = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(json);
             if (raw == null) return result;
-            foreach (var (k, v) in raw)
-                if (int.TryParse(k, out var pid) && !string.IsNullOrWhiteSpace(v))
-                    result[pid] = v;
+            foreach (var (k, v) in raw) if (int.TryParse(k, out var pid) && !string.IsNullOrWhiteSpace(v)) result[pid] = v;
             return result;
         }
 
@@ -69,9 +69,7 @@ namespace Linkora.Controllers
         {
             var secret = _configuration["Recaptcha:SecretKey"]!;
             using var http = new HttpClient();
-            var resp = await http.PostAsync(
-                $"https://www.google.com/recaptcha/api/siteverify?secret={secret}&response={dto.Token}",
-                null);
+            var resp = await http.PostAsync($"https://www.google.com/recaptcha/api/siteverify?secret={secret}&response={dto.Token}", null);
             var json = await resp.Content.ReadAsStringAsync();
             var result = System.Text.Json.JsonDocument.Parse(json);
             var success = result.RootElement.GetProperty("success").GetBoolean();
@@ -81,28 +79,23 @@ namespace Linkora.Controllers
         public class RecaptchaDto { public string Token { get; set; } = ""; }
 
         [HttpGet]
-        public async Task<IActionResult> Cities()
-        {
-            var list = await _addressRepository.GetCitiesAsync();
-            return Json(list.Select(x => new { id = x.Id, name = x.Name }));
-        }
+        public async Task<IActionResult> Cities() => Json((await _addressRepository.GetCitiesAsync()).Select(x => new { id = x.Id, name = x.Name }));
 
         [HttpGet]
-        public async Task<IActionResult> Streets(int cityId)
-        {
-            var list = await _addressRepository.GetStreetsAsync(cityId);
-            return Json(list.Select(x => new { id = x.Id, name = x.Name }));
-        }
+        public async Task<IActionResult> Streets(int cityId) => Json((await _addressRepository.GetStreetsAsync(cityId)).Select(x => new { id = x.Id, name = x.Name }));
 
         [HttpGet]
-        public async Task<IActionResult> Houses(int streetId)
+        public async Task<IActionResult> Houses(int streetId) => Json((await _addressRepository.GetHousesAsync(streetId)).Select(x => new { id = x.Id, name = x.Name }));
+
+        public async Task<IActionResult> Create()
         {
-            var list = await _addressRepository.GetHousesAsync(streetId);
-            return Json(list.Select(x => new { id = x.Id, name = x.Name }));
+            if (User.Identity!.IsAuthenticated)
+            {
+                var user = await _userRepository.GetByIdAsync(User.GetUserId());
+                ViewBag.UserHomeAddress = user?.HomeAddress;
+            }
+            return View();
         }
-
-        public IActionResult Create() => View();
-
         [HttpGet]
         public async Task<IActionResult> Parameters(int categoryId)
         {
@@ -193,11 +186,7 @@ namespace Linkora.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> MediaFiles(int productId)
-        {
-            var media = await _productRepository.GetMediaAsync(productId);
-            return Json(media.Select(m => new { filePath = m.FilePath, mediaType = m.MediaType }));
-        }
+        public async Task<IActionResult> MediaFiles(int productId) => Json((await _productRepository.GetMediaAsync(productId)).Select(m => new { filePath = m.FilePath, mediaType = m.MediaType }));
 
         [Authorize]
         [HttpPost]
@@ -218,6 +207,22 @@ namespace Linkora.Controllers
             if (existing == null) return NotFound();
             if (existing.UserId != userId) return Forbid();
 
+            decimal? lat = existing.Lat, lng = existing.Lng;
+            if (!string.Equals(existing.Address ?? "", address ?? "", StringComparison.Ordinal))
+            {
+                if (string.IsNullOrWhiteSpace(address))
+                {
+                    lat = null;
+                    lng = null;
+                }
+                else
+                {
+                    var geocoded = await _geocodingService.GeocodeAsync(address);
+                    if (geocoded.HasValue) (lat, lng) = geocoded.Value;
+                    else { lat = null; lng = null; }
+                }
+            }
+
             var paramValues = ParseParamsJson(paramsJson);
             var oldParamValues = await _productRepository.GetParamValuesAsync(id);
             var priceParamId = await _productRepository.GetPriceParamIdAsync(id);
@@ -228,8 +233,7 @@ namespace Linkora.Controllers
             var currentMedia = await _productRepository.GetMediaAsync(id);
             var toDelete = currentMedia.Where(m => !keepPaths.Contains(m.FilePath)).ToList();
 
-            if (toDelete.Any())
-                await _productRepository.DeleteSpecificMediaAsync(toDelete.Select(m => m.Id));
+            if (toDelete.Any()) await _productRepository.DeleteSpecificMediaAsync(toDelete.Select(m => m.Id));
 
             if (photos?.Count > 0)
             {
@@ -252,16 +256,16 @@ namespace Linkora.Controllers
                 Address = address,
                 CategoryId = categoryId,
                 AvatarUrl = newAvatar,
+                Lat = lat,
+                Lng = lng
             }, paramValues, promotionType ?? "None");
 
             await _productRepository.RecalculateModerationScoreAsync(id);
 
-            if (newPoints != oldPoints)
-                await _userRepository.AdjustPromotionPointsAsync(userId, newPoints - oldPoints);
+            if (newPoints != oldPoints) await _userRepository.AdjustPromotionPointsAsync(userId, newPoints - oldPoints);
 
             var changes = new List<object>();
-            if (!string.Equals(existing.Name, title, StringComparison.Ordinal))
-                changes.Add(new { type = "title_changed" });
+            if (!string.Equals(existing.Name, title, StringComparison.Ordinal)) changes.Add(new { type = "title_changed" });
 
             if (!string.Equals(existing.Address ?? "", address ?? "", StringComparison.Ordinal))
                 changes.Add(new
@@ -277,8 +281,7 @@ namespace Linkora.Controllers
                     oldQty = existing.Qty?.ToString() ?? "—",
                     newQty = qty?.ToString() ?? "—"
                 });
-            if (!string.Equals(existing.Description ?? "", description ?? "", StringComparison.Ordinal))
-                changes.Add(new { type = "description_updated" });
+            if (!string.Equals(existing.Description ?? "", description ?? "", StringComparison.Ordinal)) changes.Add(new { type = "description_updated" });
             if (priceParamId.HasValue)
             {
                 paramValues.TryGetValue(priceParamId.Value, out var newPriceStr);
@@ -312,16 +315,13 @@ namespace Linkora.Controllers
                         type = "favourite_updated",
                         changes = changes.Take(3).ToList()
                     };
-                    foreach (var favUid in favUserIds)
-                        await _notifications.CreateAsync(favUid, null, id, System.Text.Json.JsonSerializer.Serialize(payload));
+                    foreach (var favUid in favUserIds) await _notifications.CreateAsync(favUid, null, id, System.Text.Json.JsonSerializer.Serialize(payload));
                 }
             }
 
-            if (publishDays.HasValue && new[] { 7, 14, 30, 60, 90 }.Contains(publishDays.Value))
-                await _productRepository.UpdatePublishDurationAsync(id, userId, publishDays.Value);
+            if (publishDays.HasValue && new[] { 7, 14, 30, 60, 90 }.Contains(publishDays.Value)) await _productRepository.UpdatePublishDurationAsync(id, userId, publishDays.Value);
 
-            if (wasArchived)
-                await _productRepository.ReactivateProductAsync(id, userId);
+            if (wasArchived) await _productRepository.ReactivateProductAsync(id, userId);
 
             return Ok();
         }
@@ -408,7 +408,8 @@ namespace Linkora.Controllers
         public async Task<IActionResult> Create(string title, string? description, int? qty,
                                                 string? address, int? categoryId,
                                                 List<IFormFile>? photos, string? paramsJson,
-                                                int? publishDays = null, string? promotionType = null)
+                                                int? publishDays = null, string? promotionType = null,
+                                                bool useHomeAddress = false)
         {
             if (string.IsNullOrWhiteSpace(title)) return BadRequest("Title is required");
 
@@ -416,15 +417,27 @@ namespace Linkora.Controllers
             if (totalBytes > MediaStorageService.MaxTotalBytes) return BadRequest("Total media size exceeds 50 MB");
 
             var userId = User.GetUserId();
-            if (await _userRepository.IsBannedAsync(userId)) return Forbid();
+            var currentUser = await _userRepository.GetByIdAsync(userId);
+            if (currentUser == null) return NotFound();
+            if (currentUser.Role == "banned") return Forbid();
+
+            decimal? lat = null, lng = null;
+
+            if (useHomeAddress && !string.IsNullOrWhiteSpace(currentUser.HomeAddress))
+            {
+                address = currentUser.HomeAddress;
+                lat = currentUser.HomeLat;
+                lng = currentUser.HomeLng;
+            }
+            else if (!string.IsNullOrWhiteSpace(address))
+            {
+                var geocoded = await _geocodingService.GeocodeAsync(address);
+                if (geocoded.HasValue) (lat, lng) = geocoded.Value;
+            }
 
             int duration = 30;
             if (publishDays.HasValue && new[] { 7, 14, 30, 60, 90 }.Contains(publishDays.Value)) duration = publishDays.Value;
-            else
-            {
-                var currentUser = await _userRepository.GetByIdAsync(userId);
-                if (currentUser?.PreferredAdDuration.HasValue == true) duration = currentUser.PreferredAdDuration.Value;
-            }
+            else if (currentUser.PreferredAdDuration.HasValue) duration = currentUser.PreferredAdDuration.Value;
 
             var media = photos?.Count > 0 ? await _mediaStorage.SaveUploadedFilesAsync(photos) : [];
             var paramValues = ParseParamsJson(paramsJson);
@@ -438,6 +451,8 @@ namespace Linkora.Controllers
                 Address = address,
                 CategoryId = categoryId,
                 AvatarUrl = media.FirstOrDefault()?.FilePath,
+                Lat = lat,
+                Lng = lng,
             }, paramValues, duration, promotionType ?? "None");
 
             var points = PromotionPoints(promotionType);
@@ -452,7 +467,6 @@ namespace Linkora.Controllers
 
             return Ok(new { id = newId });
         }
-
         [HttpGet]
         public async Task<IActionResult> CategoryRules(int categoryId)
         {

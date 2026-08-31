@@ -11,6 +11,6 @@
         public string? TelegramUrl { get; set; }
         public string? WhatsAppUrl { get; set; }
         public string? WebsiteUrl { get; set; }
+        public string? HomeAddress { get; set; }
     }
-
 }

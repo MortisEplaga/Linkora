@@ -70,6 +70,15 @@
                     <input type="hidden" id="adHouseId" />
                     <div class="create-dropdown" id="adHouseDrop"></div>
                 </div>
+                @if (!string.IsNullOrEmpty((string)ViewBag.UserHomeAddress))
+                {
+                    <div class="create-field" style="flex-direction:row;align-items:center;gap:8px">
+                        <input type="checkbox" id="useHomeAddress" checked onchange="toggleHomeAddress()" />
+                        <label for="useHomeAddress" style="margin:0" data-i18n="use_home_address_label">
+                            Use my saved address: @ViewBag.UserHomeAddress
+                        </label>
+                    </div>
+                }
             </div>
 
             <div class="create-section" id="paramsSection" style="display:none">
@@ -148,6 +157,15 @@
 <script src="~/js/product-form.js"></script>
 <script src="~/js/param-utils.js"></script>
 <script>
+    function toggleHomeAddress() {
+        const checked = document.getElementById('useHomeAddress')?.checked;
+        ['adCity', 'adStreet', 'adHouse'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = checked;
+        });
+    }
+    document.addEventListener('DOMContentLoaded', toggleHomeAddress);
+
     const DRAFT_KEY = 'linkora_create_draft';
 
     async function saveDraftState() {
@@ -207,6 +225,16 @@
         if (!ParamRulesEngine.validateAll()) return;
         const title = document.getElementById('adTitle').value.trim();
         if (!title) { alert('Please enter a title'); return; }
+
+        const useHome = document.getElementById('useHomeAddress')?.checked === true;
+        fd.append('useHomeAddress', useHome);
+
+        if (!useHome) {
+            const parts = ['adCity', 'adStreet', 'adHouse']
+                .map(id => document.getElementById(id)?.value?.trim())
+                .filter(Boolean);
+            fd.append('address', parts.join(', '));
+        }
 
         const totalBytes = selectedFiles.reduce((s, f) => s + f.size, 0);
         if (totalBytes > MAX_BYTES) {

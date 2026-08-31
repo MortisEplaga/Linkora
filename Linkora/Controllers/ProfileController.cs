@@ -14,11 +14,13 @@ namespace Linkora.Controllers
 
         private readonly IUserRepository _userRepository;
         private readonly IPasswordHasher _passwordHasher;
+        private readonly IGeocodingService _geocodingService;
 
-        public ProfileController(IUserRepository userRepository, IPasswordHasher passwordHasher)
+        public ProfileController(IUserRepository userRepository, IPasswordHasher passwordHasher, IGeocodingService geocodingService)
         {
             _userRepository = userRepository;
             _passwordHasher = passwordHasher;
+            _geocodingService = geocodingService;
         }
         public async Task<IActionResult> Edit()
         {
@@ -78,9 +80,34 @@ namespace Linkora.Controllers
                 newHash = _passwordHasher.Hash(dto.NewPassword);
             }
 
+            decimal? homeLat = user.HomeLat, homeLng = user.HomeLng;
+
+            if (!string.Equals(dto.HomeAddress ?? "", user.HomeAddress ?? "", StringComparison.Ordinal))
+            {
+                if (string.IsNullOrWhiteSpace(dto.HomeAddress))
+                {
+                    homeLat = null;
+                    homeLng = null;
+                }
+                else
+                {
+                    var geocoded = await _geocodingService.GeocodeAsync(dto.HomeAddress);
+                    if (geocoded.HasValue)
+                    {
+                        homeLat = geocoded.Value.Lat;
+                        homeLng = geocoded.Value.Lng;
+                    }
+                    else
+                    {
+                        homeLat = null;
+                        homeLng = null;
+                    }
+                }
+            }
+
             if (_passwordHasher.IsLegacyHash(user.PasswordHash) && string.IsNullOrWhiteSpace(dto.NewPassword)) newHash = _passwordHasher.Hash(dto.CurrentPassword);
 
-            await _userRepository.UpdateProfileAsync(userId, dto.UserName, dto.Phone, duration, newHash, subscriptionType, dto.TelegramUrl, dto.WhatsAppUrl, dto.WebsiteUrl);
+            await _userRepository.UpdateProfileAsync(userId, dto.UserName, dto.Phone, duration, newHash, subscriptionType, dto.TelegramUrl, dto.WhatsAppUrl, dto.WebsiteUrl, dto.HomeAddress, homeLat, homeLng);
 
             return Ok(new { success = true });
         }

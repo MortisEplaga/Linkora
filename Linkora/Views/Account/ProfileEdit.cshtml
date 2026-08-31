@@ -12,6 +12,7 @@
         <h1 class="profile-title" data-i18n="profile_edit_title">Edit profile</h1>
 
         <div class="profile-error" id="profileError"></div>
+
         <div class="profile-success" id="profileSuccess" data-i18n="profile_saved">Saved successfully</div>
 
         <div class="profile-section-title" data-i18n="profile_basic_info">Basic information</div>
@@ -31,6 +32,17 @@
             <label class="auth-label" data-i18n="profile_email_label">Email</label>
             <input type="email" class="auth-input" value="@(user.Email ?? "")" disabled
                    style="opacity:0.5;cursor:default" />
+        </div>
+
+        <div class="profile-section-title" data-i18n="profile_address_title">Address</div>
+
+        <div class="auth-field">
+            <label class="auth-label" data-i18n="profile_home_address_label">Home address</label>
+            <input type="text" class="auth-input" id="fieldHomeAddress" value="@(user.HomeAddress ?? "")"
+                   placeholder="City, street, house" data-i18n-placeholder="profile_home_address_ph" />
+            <div class="duration-hint" data-i18n="profile_home_address_hint">
+                Applied by default to new listings. You can choose a different address for any individual listing.
+            </div>
         </div>
 
         <div class="profile-section-title" data-i18n="profile_social_contacts">Social contacts</div>
@@ -122,6 +134,7 @@
             </div>
             <input type="hidden" id="fieldAdDuration" value="@(user.PreferredAdDuration?.ToString() ?? "")" />
         </div>
+
         <div class="profile-section-title" data-i18n="profile_subscription_title">Subscription</div>
 
         <div class="auth-field">
@@ -273,6 +286,7 @@
                 telegramUrl:  document.getElementById('fieldTelegram').value.trim() || null,
                 whatsAppUrl:  document.getElementById('fieldWhatsApp').value.trim() || null,
                 websiteUrl:   document.getElementById('fieldWebsite').value.trim() || null,
+                homeAddress: document.getElementById('fieldHomeAddress').value.trim() || null,
             };
 
             const res = await fetch('/Profile/Save', {

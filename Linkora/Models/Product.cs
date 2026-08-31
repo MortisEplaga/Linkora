@@ -30,6 +30,8 @@ namespace Linkora.Models
         [NotMapped] public int ViewCount { get; set; }
         [NotMapped] public int FavCount { get; set; }
         [NotMapped] public int CartCount { get; set; }
+        public decimal? Lat { get; set; }
+        public decimal? Lng { get; set; }
     }
 
     public class CategoryRulesDto

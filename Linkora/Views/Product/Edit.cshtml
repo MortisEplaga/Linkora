@@ -68,7 +68,17 @@
                     <div class="create-dropdown" id="adHouseDrop"></div>
                 </div>
             </div>
-
+            @if (!string.IsNullOrEmpty((string)ViewBag.UserHomeAddress))
+            {
+                <div class="create-field" style="flex-direction:row;align-items:center;gap:8px">
+                    <input type="checkbox" id="useHomeAddress"
+                           checked="@((bool)ViewBag.IsUsingHomeAddress)"
+                           onchange="toggleHomeAddress()" />
+                    <label for="useHomeAddress" style="margin:0" data-i18n="use_home_address_label">
+                        Use my saved address: @ViewBag.UserHomeAddress
+                    </label>
+                </div>
+            }
             <div class="create-section" id="paramsSection" style="display:none">
                 <h2 class="create-section-title" data-i18n="params_section">Parameters</h2>
                 <div class="create-params" id="createParams"></div>
@@ -176,7 +186,7 @@
         const productId = @p.Id;
         const draftKey = 'linkora_edit_draft_' + productId;
         const draftRaw = sessionStorage.getItem(draftKey);
-
+        toggleHomeAddress();
         if (draftRaw) {
             sessionStorage.removeItem(draftKey);
             window.draftRestored = true;
@@ -294,15 +304,24 @@
                 return;
             }
 
-            const addressParts = ['adCity', 'adStreet', 'adHouse']
-                .map(id => document.getElementById(id)?.value?.trim())
-                .filter(Boolean);
+            const useHome = document.getElementById('useHomeAddress')?.checked === true;
+            let addressValue;
+
+            if (useHome) {
+                addressValue = '@Html.Raw(System.Text.Json.JsonSerializer.Serialize((string)ViewBag.UserHomeAddress ?? ""))';
+            } else {
+                const addressParts = ['adCity', 'adStreet', 'adHouse']
+                    .map(id => document.getElementById(id)?.value?.trim())
+                    .filter(Boolean);
+                addressValue = addressParts.join(', ');
+            }
 
             const fd = new FormData();
             fd.append('title', document.getElementById('adTitle').value);
             fd.append('description', document.getElementById('adDescription').value);
             fd.append('qty', document.getElementById('adQty').value || '1');
-            fd.append('address', addressParts.join(', '));
+            fd.append('address', addressValue);
+            fd.append('useHomeAddress', useHome);
             fd.append('categoryId', document.getElementById('selectedCategoryId').value);
             fd.append('keepMediaJson', JSON.stringify(window.existingMediaPaths || []));
             fd.append('publishDays', document.getElementById('pubDurationValue').value || '30');
@@ -330,5 +349,12 @@
             btn.disabled = false;
             translateDynamicElement(btn);
         }
+    }
+        function toggleHomeAddress() {
+        const checked = document.getElementById('useHomeAddress')?.checked;
+        ['adCity', 'adStreet', 'adHouse'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = checked;
+        });
     }
 </script>

@@ -7,13 +7,14 @@ namespace Linkora.Controllers
     public class CategoryController : Controller
     {
         private readonly ICategoryRepository _categoryRepository;
-
         private readonly IProductRepository _productRepository;
+        private readonly IConfiguration _configuration;
 
-        public CategoryController(ICategoryRepository categoryRepository, IProductRepository productRepository)
+        public CategoryController(ICategoryRepository categoryRepository, IProductRepository productRepository, IConfiguration configuration)
         {
             _categoryRepository = categoryRepository;
             _productRepository = productRepository;
+            _configuration = configuration;
         }
 
         public async Task<IActionResult> Index(int id, string sort = "new", string? q = null, string? city = null, int page = 1)
@@ -67,16 +68,11 @@ namespace Linkora.Controllers
             ViewBag.Filters = filters;
             ViewBag.RangeFrom = rangeFrom;
             ViewBag.RangeTo = rangeTo;
+            ViewBag.GoogleMapsApiKey = _configuration["GoogleMaps:ApiKey"];
             return View();
         }
+
         [HttpGet]
-        public async Task<IActionResult> All()
-        {
-            var all = await _categoryRepository.GetAllAsync();
-            var result = all
-                .Where(c => c.Type == 1 || c.Type == null)
-                .Select(c => new { c.Id, c.ParentId, c.Name, nameEn = c.NameEn ?? c.Name });
-            return Json(result);
-        }
+        public async Task<IActionResult> All() => Json((await _categoryRepository.GetAllAsync()).Where(c => c.Type == 1 || c.Type == null).Select(c => new { c.Id, c.ParentId, c.Name, nameEn = c.NameEn ?? c.Name }));
     }
 }
