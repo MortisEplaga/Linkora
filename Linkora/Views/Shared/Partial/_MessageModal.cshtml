@@ -1,0 +1,30 @@
+﻿@model Linkora.Models.Product
+
+<div class="msg-modal-overlay" id="msgOverlay" onclick="closeMessageModal()"></div>
+<div class="msg-modal" id="msgModal"
+     data-product-id="@Model.Id"
+     data-seller-id="@(Model.Seller?.Id ?? 0)">
+    <div class="msg-modal-header">
+        <div class="msg-modal-seller">
+            <div class="details-seller-avatar" style="width:48px;height:48px">
+                @if (Model.Seller?.AvatarUrl != null)
+                {
+                    <img src="@Model.Seller.AvatarUrl" onerror="this.src='/img/no-photo.svg'" />
+                }
+                else
+                {
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                }
+            </div>
+            <div>
+                <div class="details-seller-name">@(Model.Seller?.UserName ?? "Unknown")</div>
+            </div>
+        </div>
+        <button class="msg-modal-close" onclick="closeMessageModal()">✕</button>
+    </div>
+    <textarea class="msg-modal-textarea" placeholder="Your message..." data-i18n-placeholder="msg_ph"></textarea>
+    <div class="msg-modal-footer">
+        <button class="details-btn details-btn-secondary" onclick="closeMessageModal()" data-i18n="cancel_btn">Cancel</button>
+        <button class="details-btn details-btn-primary" onclick="sendMessageToSeller()" data-i18n="send_btn">Send</button>
+    </div>
+</div>

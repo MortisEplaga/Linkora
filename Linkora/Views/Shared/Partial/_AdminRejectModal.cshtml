@@ -1,0 +1,19 @@
+﻿<div class="modal-overlay" id="rejectOverlay" onclick="closeRejectModal()"></div>
+<div class="modal" id="rejectModal">
+    <button class="modal-close" onclick="closeRejectModal()">✕</button>
+    <h2 class="auth-title" data-i18n="admin_reject_modal_title">Reject listing</h2>
+    <div class="auth-field">
+        <label class="auth-label" data-i18n="report_reason_label">Reason</label>
+        <select class="auth-input" id="rejectReasonSelect">
+            <option value="" data-i18n="report_reason_ph">Select a reason</option>
+        </select>
+    </div>
+    <div class="auth-field">
+        <label class="auth-label" data-i18n="report_comment_label">Comment (optional)</label>
+        <textarea class="auth-input" id="rejectComment" rows="3"></textarea>
+    </div>
+    <div class="auth-actions" style="display:flex; gap:12px;">
+        <button class="admin-btn admin-btn-reject" onclick="submitRejectProduct()" data-i18n="admin_reject">Reject</button>
+        <button class="admin-btn admin-btn-view" onclick="closeRejectModal()" data-i18n="admin_cancel_btn">Cancel</button>
+    </div>
+</div>

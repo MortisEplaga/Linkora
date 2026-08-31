@@ -233,98 +233,7 @@
     </div>
 </div>
 
-<div class="reviews-overlay" id="reviewsOverlay" onclick="closeReviews()"></div>
-<div class="reviews-modal" id="reviewsModal">
-    <div class="reviews-modal-header">
-        <span class="reviews-modal-title" data-i18n="reviews_title">Reviews</span>
-        <button class="reviews-modal-close" onclick="closeReviews()">✕</button>
-    </div>
-
-    @if (reviewCount > 0)
-    {
-        <div class="reviews-summary">
-            <div class="reviews-avg">@reviewAvg.ToString("F0")</div>
-            <div>
-                <div class="reviews-stars-big">
-                    @for (int i = 1; i <= 5; i++)
-                    {
-                        <svg width="22" height="22" viewBox="0 0 24 24"
-                             fill="@(i <= Math.Round(reviewAvg) ? "#f5a623" : "none")"
-                             stroke="#f5a623" stroke-width="2">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                        </svg>
-                    }
-                </div>
-                <div class="reviews-total">@reviewCount <span data-i18n="ratings_count">ratings</span></div>
-            </div>
-            <div class="reviews-bars">
-                @{
-                    var allReviews = (IEnumerable<dynamic>)ViewBag.Reviews;
-                    var ratingGroups = allReviews
-                    .GroupBy((dynamic r) => (int)r.Rating)
-                    .ToDictionary(g => g.Key, g => g.Count());
-                }
-                @for (int star = 5; star >= 1; star--)
-                {
-                    var cnt = ratingGroups.TryGetValue(star, out var c) ? c : 0;
-                    var pct = reviewCount > 0 ? (int)(cnt * 100.0 / reviewCount) : 0;
-                    <div class="reviews-bar-row">
-                        <div class="reviews-bar-track">
-                            <div class="reviews-bar-fill" style="width:@pct%"></div>
-                        </div>
-                        <span class="reviews-bar-count">@cnt</span>
-                    </div>
-                }
-            </div>
-        </div>
-    }
-
-    <div class="reviews-list">
-        @foreach (var r in (IEnumerable<dynamic>)ViewBag.Reviews)
-        {
-            <div class="review-item" data-review-id="@r.Id">
-                <div class="review-author">
-                    @if (r.AuthorAvatar != null)
-                    {
-                        <img src="@r.AuthorAvatar" class="review-author-avatar"
-                             onerror="this.src='/img/no-photo.svg'" />
-                    }
-                    else
-                    {
-                        <div class="review-author-avatar review-author-placeholder">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                                <circle cx="12" cy="7" r="4" />
-                            </svg>
-                        </div>
-                    }
-                    <div>
-                        <div class="review-author-name">@r.AuthorName</div>
-                        <div class="review-date">@(((DateTime)r.CreatedAt).ToString("dd.MM.yyyy"))</div>
-                    </div>
-                </div>
-                <div class="review-stars">
-                    @for (int i = 1; i <= 5; i++)
-                    {
-                        <svg width="14" height="14" viewBox="0 0 24 24"
-                             fill="@(i <= (int)r.Rating ? "#f5a623" : "none")"
-                             stroke="#f5a623" stroke-width="2">
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                        </svg>
-                    }
-                </div>
-                @if (!string.IsNullOrEmpty((string)r.Comment))
-                {
-                    <div class="review-comment">@r.Comment</div>
-                }
-            </div>
-        }
-        @if (reviewCount == 0)
-        {
-            <div class="reviews-empty" data-i18n="no_reviews_yet">No reviews yet</div>
-        }
-    </div>
-</div>
+@await Html.PartialAsync("Partial/_SellerReviewsModal")
 
 <script>
     function t(key) {
@@ -380,16 +289,6 @@
         setSortLabel();
     }
 
-    function openReviews() {
-        document.getElementById('reviewsOverlay').classList.add('open');
-        document.getElementById('reviewsModal').classList.add('open');
-    }
-
-    function closeReviews() {
-        document.getElementById('reviewsOverlay').classList.remove('open');
-        document.getElementById('reviewsModal').classList.remove('open');
-    }
-
     function applySubscriptionState(subscribed, count) {
         const btn      = document.getElementById('subscribeBtn');
         const iconEl   = btn.querySelector('.sub-icon');
@@ -417,12 +316,12 @@
     }
 
     async function toggleSubscription(sellerId) {
-        const isAuth = @(User.Identity!.IsAuthenticated ? "true" : "false");
-        if (!isAuth) {
-            openAuthModal('login');
+        if (!window.isUserAuthenticated) {
+            if (typeof openAuthModal === 'function') {
+                openAuthModal('login');
+            }
             return;
         }
-
         const btn = document.getElementById('subscribeBtn');
         btn.disabled = true;
 

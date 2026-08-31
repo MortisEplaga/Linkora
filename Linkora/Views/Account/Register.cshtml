@@ -103,16 +103,16 @@
                 <input type="password"
                        class="auth-input"
                        name="confirm"
-                       id="regConfirm"
+                       id="modalRegConfirm"
                        placeholder="Confirm password"
                        autocomplete="new-password"
                        required
                        data-i18n-placeholder="confirm_placeholder" />
-                <button type="button" class="auth-eye" onclick="togglePass('regConfirm', this)">👁</button>
+                <button type="button" class="auth-eye" onclick="togglePass('modalRegConfirm', this)">👁</button>
             </div>
 
             <label class="auth-check-row">
-                <input type="checkbox" id="chkTerms" required />
+                <input type="checkbox" id="modalChkTerms" required />
                 <span data-i18n="accept_terms_prefix">I accept the </span>
                 <a href="#" onclick="openTermsModal(); return false;" data-i18n="terms_link">Terms of Service</a>
             </label>

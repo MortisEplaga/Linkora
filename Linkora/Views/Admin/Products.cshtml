@@ -128,8 +128,8 @@
                                             }
                                             @if (status == "Moderation" || status == "Active")
                                             {
-                                                <button class="admin-btn admin-btn-reject"
-                                                        onclick="openRejectModal(@p.Id)">
+                                                <button class="admin-btn admin-btn-reject js-reject-product"
+                                                        data-product-id="@p.Id">
                                                     <span data-i18n="admin_reject">Reject</span>
                                                 </button>
                                             }
@@ -140,8 +140,9 @@
                                                     <span data-i18n="admin_restore">Restore</span>
                                                 </button>
                                             }
-                                            <button class="admin-btn admin-btn-danger"
-                                                    onclick="confirmDelete(@p.Id, '@p.Name.Replace("'", "\\'")')">
+                                            <button class="admin-btn admin-btn-danger js-delete-product"
+                                                    data-product-id="@p.Id"
+                                                    data-product-name="@p.Name">
                                                 <span data-i18n="admin_delete">Delete</span>
                                             </button>
                                         </div>
@@ -174,154 +175,13 @@
         </div>
     </main>
 </div>
-
-<div class="admin-confirm-overlay" id="confirmOverlay">
-    <div class="admin-confirm-box">
-        <div class="admin-confirm-title" data-i18n="admin_confirm_delete_listing">Delete listing?</div>
-        <div class="admin-confirm-text" id="confirmText"></div>
-        <div class="admin-confirm-actions">
-            <button class="admin-btn admin-btn-view" onclick="closeConfirm()" data-i18n="admin_cancel_btn">Cancel</button>
-            <button class="admin-btn admin-btn-danger" id="confirmOk" data-i18n="admin_delete">Delete</button>
-        </div>
-    </div>
-</div>
-<div class="modal-overlay" id="rejectOverlay" onclick="closeRejectModal()"></div>
-<div class="modal" id="rejectModal">
-    <button class="modal-close" onclick="closeRejectModal()">✕</button>
-    <h2 class="auth-title" data-i18n="admin_reject_modal_title">Reject listing</h2>
-    <div class="auth-field">
-        <label class="auth-label" data-i18n="report_reason_label">Reason</label>
-        <select class="auth-input" id="rejectReasonSelect">
-            <option value="" data-i18n="report_reason_ph">Select a reason</option>
-        </select>
-    </div>
-    <div class="auth-field">
-        <label class="auth-label" data-i18n="report_comment_label">Comment (optional)</label>
-        <textarea class="auth-input" id="rejectComment" rows="3"></textarea>
-    </div>
-    <div class="auth-actions" style="display:flex; gap:12px;">
-        <button class="admin-btn admin-btn-reject" onclick="submitRejectProduct()" data-i18n="admin_reject">Reject</button>
-        <button class="admin-btn admin-btn-view" onclick="closeRejectModal()" data-i18n="admin_cancel_btn">Cancel</button>
-    </div>
-</div>
+@await Html.PartialAsync("Partial/_AdminConfirmModal")
+@await Html.PartialAsync("Partial/_AdminRejectModal")
 <div class="admin-toast" id="toast"></div>
 
 @section Scripts {
+    <script src="~/js/modals.js" asp-append-version="true"></script>
     <script>
-        let rejectReasons = [];
-        let currentRejectProductId = null;
-
-        async function openRejectModal(productId) {
-            currentRejectProductId = productId;
-            if (!rejectReasons.length) {
-                const res = await fetch('/api/Report/reasons');
-                if (res.ok) rejectReasons = await res.json();
-            }
-            const select = document.getElementById('rejectReasonSelect');
-            select.innerHTML = `<option value="">${translate('report_reason_ph')}</option>`;
-            rejectReasons.forEach(r => {
-                const opt = document.createElement('option');
-                opt.value = r.id;
-                opt.textContent = r.text;
-                select.appendChild(opt);
-            });
-            document.getElementById('rejectComment').value = '';
-            document.getElementById('rejectOverlay').classList.add('modal-open');
-            document.getElementById('rejectModal').classList.add('modal-open');
-        }
-
-        function closeRejectModal() {
-            document.getElementById('rejectOverlay').classList.remove('modal-open');
-            document.getElementById('rejectModal').classList.remove('modal-open');
-        }
-
-        async function submitRejectProduct() {
-            const reasonId = document.getElementById('rejectReasonSelect').value;
-            if (!reasonId) return;
-
-            const comment = document.getElementById('rejectComment').value;
-            const res = await fetch(
-                `/Admin/RejectProductWithReason?id=${currentRejectProductId}&reasonId=${reasonId}&comment=${encodeURIComponent(comment)}`,
-                { method: 'POST', headers: { 'RequestVerificationToken': afToken } }
-            );
-
-            if (res.ok) {
-                closeRejectModal();
-                document.getElementById('row-' + currentRejectProductId)?.remove();
-                showToast(getJsText('status_updated', jsLangs) + 'Rejected', 'success');
-            } else {
-                showToast(getJsText('err_status', jsLangs), 'error');
-            }
-        }
-
-        const jsLangs = {
-            en: {
-                status_updated: 'Status updated to ',
-                err_status: 'Error updating status',
-                confirm_question: 'Are you sure you want to delete "{name}"? This cannot be undone.',
-                deleted_success: 'Listing deleted',
-                err_delete: 'Error deleting listing'
-            },
-            lv: {
-                status_updated: 'Statuss atjaunots uz ',
-                err_status: 'Kļūda, atjaunojot statusu',
-                confirm_question: 'Vai tiešām vēlaties dzēst "{name}"? Šo darbību nevarēs atcelt.',
-                deleted_success: 'Sludinājums izdzēsts',
-                err_delete: 'Kļūda, dzēšot sludinājumu'
-            },
-            ru: {
-                status_updated: 'Статус обновлен на ',
-                err_status: 'Ошибка обновления статуса',
-                confirm_question: 'Вы уверены, что хотите удалить "{name}"? Это действие нельзя отменить.',
-                deleted_success: 'Sludinājums izdzēsts',
-                err_delete: 'Ошибка удаления объявления'
-            }
-        };
-
-        async function setStatus(id, status, btn) {
-            btn.disabled = true;
-            const res = await fetch(`/Admin/SetProductStatus?id=${id}&status=${status}`, {
-                method: 'POST',
-                headers: { 'RequestVerificationToken': afToken }
-            });
-            if (res.ok) {
-                document.getElementById('row-' + id)?.remove();
-                showToast(getJsText('status_updated', jsLangs) + status, 'success');
-            } else {
-                showToast(getJsText('err_status', jsLangs), 'error');
-                btn.disabled = false;
-            }
-        }
-
-        let deleteId = null;
-        function confirmDelete(id, name) {
-            deleteId = id;
-            document.getElementById('confirmText').textContent = getJsText('confirm_question', jsLangs).replace('{name}', name);
-            document.getElementById('confirmOverlay').classList.add('open');
-            document.getElementById('confirmOk').onclick = doDelete;
-        }
-
-        function closeConfirm() {
-            document.getElementById('confirmOverlay').classList.remove('open');
-        }
-
-        async function doDelete() {
-            closeConfirm();
-            const res = await fetch(`/Product/Delete?id=${deleteId}`, {
-                method: 'POST',
-                headers: { 'RequestVerificationToken': afToken }
-            });
-            if (res.ok) {
-                document.getElementById('row-' + deleteId)?.remove();
-                showToast(getJsText('deleted_success', jsLangs), 'success');
-            } else {
-                showToast(getJsText('err_delete', jsLangs), 'error');
-            }
-        }
-
-        document.getElementById('confirmOverlay').addEventListener('click', e => {
-            if (e.target === e.currentTarget) closeConfirm();
-        });
         document.addEventListener('DOMContentLoaded', applyTranslations);
     </script>
 }

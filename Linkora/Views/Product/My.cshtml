@@ -93,9 +93,7 @@
                     <div class="myads-card-actions">
                         @if (p.Status == ProductStatus.Active)
                         {
-                            <button class="myads-action-btn myads-action-complete"
-                                    title="Complete deal"
-                                    onclick="openPartnerModal(@p.Id)">
+                            <button class="myads-action-btn myads-action-complete js-open-partner" title="Complete deal" data-i18n-title="complete_deal" data-product-id="@p.Id">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <polyline points="20 6 9 17 4 12" />
                                 </svg>
@@ -120,71 +118,8 @@
         </div>
     }
 </div>
-<div class="modal-overlay" id="partnerOverlay" onclick="closePartnerModal()"></div>
-<div class="modal" id="partnerModal">
-    <button class="modal-close" onclick="closePartnerModal()">✕</button>
-    <h2 class="auth-title" data-i18n="select_user">Select user</h2>
-    <div class="partner-list" id="partnerList"></div>
-    <div class="auth-actions" style="margin-top:16px;">
-        <button class="auth-submit" onclick="closePartnerModal()">Cancel</button>
-    </div>
-</div>
+@await Html.PartialAsync("Partial/_PartnerModal")
 <script>
-    let currentProductId = null;
-
-    function openPartnerModal(productId) {
-        currentProductId = productId;
-        fetch(`/Product/GetConversationPartners?productId=${productId}`)
-            .then(res => res.json())
-            .then(partners => {
-                const list = document.getElementById('partnerList');
-                list.innerHTML = '';
-                if (partners.length === 0) {
-                    list.innerHTML = `<div class="partner-item">${translate('no_partners')}</div>`;
-                    return;
-                }
-                partners.forEach(p => {
-                    const item = document.createElement('div');
-                    item.className = 'partner-item';
-                    item.onclick = () => selectPartner(p.id);
-                    item.innerHTML = `
-                        <img class="partner-item-avatar" src="${p.avatarUrl || '/img/no-photo.svg'}" onerror="this.src='/img/no-photo.svg'">
-                        <span class="partner-item-name">${p.userName}</span>
-                        ${p.isCompany ? '<span class="partner-item-badge">Company</span>' : ''}
-                    `;
-                    list.appendChild(item);
-                });
-            });
-        document.getElementById('partnerOverlay').classList.add('modal-open');
-        document.getElementById('partnerModal').classList.add('modal-open');
-    }
-
-    function closePartnerModal() {
-        document.getElementById('partnerOverlay').classList.remove('modal-open');
-        document.getElementById('partnerModal').classList.remove('modal-open');
-    }
-
-    async function selectPartner(otherUserId) {
-        closePartnerModal();
-        try {
-            const res = await fetch(`/Product/CompleteDeal?id=${currentProductId}&otherUserId=${otherUserId}`, {
-                method: 'POST',
-                headers: {
-                    'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
-                }
-            });
-            if (res.ok) {
-                location.reload();
-            } else {
-                const err = await res.text();
-                console.error('Ошибка:', err);
-                alert('Error: ' + err);
-            }
-        } catch (e) {
-            console.error('Ошибка сети:', e);
-        }
-    }
-
     async function completeDeal(id) {
         try {
             const res = await fetch(`/Product/CompleteDeal?id=${id}`, {

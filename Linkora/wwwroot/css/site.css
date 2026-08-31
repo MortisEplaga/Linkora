@@ -3835,3 +3835,12 @@ body {
     transition: opacity 0.15s ease;
     opacity: 1;
 }
+#authModal,
+#partnerModal,
+#captchaModal,
+#rejectModal,
+#supportModal {
+    height: auto !important;
+    min-height: unset !important;
+    max-height: 90vh;
+}
