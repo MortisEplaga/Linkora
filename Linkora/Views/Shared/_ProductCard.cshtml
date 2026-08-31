@@ -42,7 +42,17 @@
     {
         <div class="product-card-seller">
             <div class="seller-avatar" style="cursor:pointer"
-                 onclick="event.preventDefault(); openSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarUrl', '@p.Seller?.Phone', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0), '@p.Seller?.TelegramUrl', '@p.Seller?.WhatsAppUrl', '@p.Seller?.WebsiteUrl')" )">
+                 data-seller-username="@p.Seller?.UserName"
+                 data-seller-avatar="@p.Seller?.AvatarUrl"
+                 data-seller-phone="@p.Seller?.Phone"
+                 data-seller-company="@((p.Seller?.IsCompany == true).ToString().ToLower())"
+                 data-seller-email="@p.Seller?.Email"
+                 data-seller-created="@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))"
+                 data-seller-id="@(p.Seller?.Id ?? 0)"
+                 data-seller-telegram="@p.Seller?.TelegramUrl"
+                 data-seller-whatsapp="@p.Seller?.WhatsAppUrl"
+                 data-seller-website="@p.Seller?.WebsiteUrl"
+                 onclick="event.preventDefault(); openSellerModalFromEl(this)">
                 @if (p.Seller?.AvatarUrl != null)
                 {
                     <img src="@p.Seller?.AvatarUrl" style="width:40px;height:40px;border-radius:50%;object-fit:cover"
@@ -59,7 +69,19 @@
             {
                 <div class="seller-badge">Company</div>
             }
-            <div class="seller-btn" onclick="event.preventDefault(); openSellerModal('@p.Seller?.UserName', '@p.Seller?.AvatarUrl', '@p.Seller?.Phone', @((p.Seller?.IsCompany == true).ToString().ToLower()), '@p.Seller?.Email', '@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))', @(p.Seller?.Id ?? 0), '@p.Seller?.TelegramUrl', '@p.Seller?.WhatsAppUrl', '@p.Seller?.WebsiteUrl')" )" data-i18n="seller_show_contact">
+            <div class="seller-btn"
+                 data-seller-username="@p.Seller?.UserName"
+                 data-seller-avatar="@p.Seller?.AvatarUrl"
+                 data-seller-phone="@p.Seller?.Phone"
+                 data-seller-company="@((p.Seller?.IsCompany == true).ToString().ToLower())"
+                 data-seller-email="@p.Seller?.Email"
+                 data-seller-created="@(p.Seller?.CreatedAt?.ToString("dd MMM yyyy"))"
+                 data-seller-id="@(p.Seller?.Id ?? 0)"
+                 data-seller-telegram="@p.Seller?.TelegramUrl"
+                 data-seller-whatsapp="@p.Seller?.WhatsAppUrl"
+                 data-seller-website="@p.Seller?.WebsiteUrl"
+                 onclick="event.preventDefault(); openSellerModalFromEl(this)"
+                 data-i18n="seller_show_contact">
                 Show contact
             </div>
         </div>

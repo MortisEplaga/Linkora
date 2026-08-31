@@ -432,6 +432,15 @@ async function toggleFav(btn, productId, can) {
 
 /* ---------- Seller modal ---------- */
 
+function openSellerModalFromEl(el) {
+    const d = el.dataset;
+    openSellerModal(
+        d.sellerUsername, d.sellerAvatar, d.sellerPhone,
+        d.sellerCompany === 'true', d.sellerEmail, d.sellerCreated,
+        parseInt(d.sellerId, 10) || 0,
+        d.sellerTelegram, d.sellerWhatsapp, d.sellerWebsite
+    );
+}
 function openSellerModal(name, avatar, phone, isCompany, email, date, sellerId, telegramUrl, whatsAppUrl, websiteUrl) {
     const avatarEl = document.getElementById('smAvatar');
     avatarEl.innerHTML = avatar
