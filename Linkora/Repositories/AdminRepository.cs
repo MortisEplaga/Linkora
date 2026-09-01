@@ -1,12 +1,17 @@
 ﻿using Linkora.Models;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Linkora.Repositories
 {
     public class AdminRepository : SqlRepositoryBase, IAdminRepository
     {
-        public AdminRepository(IConfiguration configuration) : base(configuration) { }
+        private readonly IMemoryCache _cache;
+        public AdminRepository(IConfiguration configuration, IMemoryCache cache) : base(configuration) { _cache = cache; }
         public async Task<AdminBadges> GetSidebarBadgesAsync()
         {
+            const string cacheKey = "admin_sidebar_badges";
+            if (_cache.TryGetValue(cacheKey, out AdminBadges? cached) && cached != null) return cached;
+
             var badges = await QuerySingleAsync<AdminBadges>(@"
             SELECT 
             (SELECT COUNT(*) FROM Products WHERE Status = 'Moderation'),
@@ -18,6 +23,8 @@ namespace Linkora.Repositories
                     PendingReports = r.GetInt32(1),
                     PendingOptions = r.GetInt32(2)
                 });
+            _cache.Set(cacheKey, badges, TimeSpan.FromSeconds(15));
+
             return badges ?? new AdminBadges();
         }
         public async Task<AdminDashboardViewModel> GetDashboardStatsAsync()

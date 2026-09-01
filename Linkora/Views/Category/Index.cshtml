@@ -383,6 +383,7 @@
 </div>
 
 <script src="https://maps.googleapis.com/maps/api/js?key=@Html.Raw(ViewBag.GoogleMapsApiKey)"></script>
+<script src="~/js/markerclusterer.js"></script>
 <script src="~/js/param-utils.js"></script>
 <script>
     var mapProducts = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
@@ -391,12 +392,29 @@
             lat = p.Lat, lng = p.Lng
         })
     ));
+
+    let mapsScriptLoading = null;
+    function ensureMapsLoaded() {
+        if (window.google && window.google.maps) return Promise.resolve();
+        if (mapsScriptLoading) return mapsScriptLoading;
+        mapsScriptLoading = new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'https://maps.googleapis.com/maps/api/js?key=@Html.Raw(ViewBag.GoogleMapsApiKey)';
+            script.onload = resolve;
+            document.head.appendChild(script);
+        });
+    return mapsScriptLoading;
+}
+
     function setView(v) {
         localStorage.setItem('listingView', v);
         const c = document.getElementById('listingContainer');
         c.className = v === 'grid' ? 'listing-grid' : 'listing-list';
         document.getElementById('btnGrid').classList.toggle('active', v === 'grid');
         document.getElementById('btnList').classList.toggle('active', v === 'list');
+        if (v === 'map') {
+        ensureMapsLoaded().then(loadProductsMap);
+    }
     }
 
     function toggleSort(e) {
@@ -424,7 +442,11 @@
             btn.textContent = (dict.more_btn || 'More') + ' ' + count;
         });
     }
-    function loadProductsMap() {
+
+let markerCluster = null;
+let googleMap = null;
+let productMarkers = [];
+function loadProductsMap() {
     if (typeof google === 'undefined' || !google.maps) {
         setTimeout(loadProductsMap, 300);
         return;
@@ -437,9 +459,15 @@
         });
     }
 
+    if (markerCluster) {
+        markerCluster.clearMarkers();
+        markerCluster = null;
+    }
+
     productMarkers.forEach(m => m.setMap(null));
     productMarkers = [];
 
+    const markers = [];
     const bounds = new google.maps.LatLngBounds();
     let hasAny = false;
 
@@ -448,7 +476,11 @@
         hasAny = true;
         const position = { lat: p.lat, lng: p.lng };
 
-        const marker = new google.maps.Marker({ position, map: googleMap, title: p.name });
+        const marker = new google.maps.AdvancedMarkerElement({ 
+            position, 
+            title: p.name,
+        });
+
         const priceText = p.price ? p.price.toFixed(2) + ' €' : translate('price_on_request');
         const info = new google.maps.InfoWindow({
             content: `<a href="/Product/Details/${p.id}" style="text-decoration:none;color:#1a1a1a;display:block;width:140px">
@@ -457,16 +489,33 @@
                 <div style="font-size:13px;color:#00b0a3">${priceText}</div>
             </a>`
         });
-
         marker.addListener('click', () => info.open(googleMap, marker));
+
+        markers.push(marker);
         productMarkers.push(marker);
         bounds.extend(position);
     });
 
-    if (hasAny) googleMap.fitBounds(bounds);
-}
+    if (!hasAny) return;
 
-    function resetFilters(categoryId) {
+    markerCluster = new MarkerClusterer({
+        map: googleMap,
+        markers: markers,
+        gridSize: 60,           
+        maxZoom: 16,            
+        styles: [{
+            url: '/img/cluster-icon.png', 
+            height: 40,
+            width: 40,
+            textColor: '#fff',
+            textSize: 14
+        }]
+    });
+
+    googleMap.fitBounds(bounds);
+}  
+
+function resetFilters(categoryId) {
         window.location.href = '/Category/Index/' + categoryId;
     }
 

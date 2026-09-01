@@ -1,18 +1,26 @@
 ﻿using Linkora.Models;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Linkora.Repositories
 {
     public class ReportRepository : SqlRepositoryBase, IReportRepository
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
-        public ReportRepository(IConfiguration configuration, IHttpContextAccessor httpContextAccessor) : base(configuration)
+        private readonly IMemoryCache _cache;
+        public ReportRepository(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IMemoryCache cache) : base(configuration)
         {
             _httpContextAccessor = httpContextAccessor;
+            _cache = cache;
         }
-        public async Task<List<ReportReasonLocalized>> GetActiveReasonsLocalizedAsync() => await QueryAsync(@"
-                SELECT Id, ReasonText, ReasonTextLV, ReasonTextRU
-                FROM ReportReasons WHERE IsActive = 1 ORDER BY ReasonText", r =>
+        public async Task<List<ReportReasonLocalized>> GetActiveReasonsLocalizedAsync()
+        {
+            var cacheKey = $"report_reasons_active_{_httpContextAccessor.HttpContext.GetLang()}";
+
+            if (_cache.TryGetValue(cacheKey, out List<ReportReasonLocalized>? cached) && cached != null) return cached;
+
+            var result = await QueryAsync(@"SELECT Id, ReasonText, ReasonTextLV, ReasonTextRU
+                                            FROM ReportReasons WHERE IsActive = 1 ORDER BY ReasonText", r =>
             {
                 var en = r.GetString(1);
                 return new ReportReasonLocalized
@@ -21,16 +29,27 @@ namespace Linkora.Repositories
                     Text = Resolve(_httpContextAccessor.HttpContext.GetLang(), en, r.GetStringOrDefault(2, en), r.GetStringOrDefault(3, en))
                 };
             });
-        public async Task<ReportReason?> GetReasonByIdAsync(int reasonId) => await QuerySingleAsync(@"
-                SELECT Id, ReasonText, ReasonTextLV, ReasonTextRU
-                FROM ReportReasons
-                WHERE Id = @Id", r => new ReportReason
+            _cache.Set(cacheKey, result, TimeSpan.FromHours(1));
+            return result;
+        }
+        public async Task<ReportReason?> GetReasonByIdAsync(int reasonId)
+        {
+            var cacheKey = $"report_reason_{reasonId}";
+            if (_cache.TryGetValue(cacheKey, out ReportReason? cached) && cached != null) return cached;
+
+            var result = await QuerySingleAsync(@"SELECT Id, ReasonText, ReasonTextLV, ReasonTextRU
+                                                  FROM ReportReasons
+                                                  WHERE Id = @Id", r => new ReportReason
             {
                 Id = r.GetInt32(0),
                 ReasonText = r.GetString(1),
                 ReasonTextLV = r.GetStringOrDefault(2, r.GetString(1)),
                 ReasonTextRU = r.GetStringOrDefault(3, r.GetString(1)),
             }, p => p.AddWithValue("@Id", reasonId));
+
+            if (result != null) _cache.Set(cacheKey, result, TimeSpan.FromHours(1));
+            return result;
+        }
         public async Task<Report> CreateReportAsync(int productId, int userId, int reportReasonId, string? comment)
         {
             var ids = await QueryAsync<int>(
@@ -92,5 +111,11 @@ namespace Linkora.Repositories
                 CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt")),
                 Status = Enum.Parse<ReportStatus>(reader.GetString(reader.GetOrdinal("Status")))
             };
+        private async Task InvalidateReportReasonsCache()
+        {
+            _cache.Remove("report_reasons_active_en");
+            _cache.Remove("report_reasons_active_lv");
+            _cache.Remove("report_reasons_active_ru");
+        }
     }
 }

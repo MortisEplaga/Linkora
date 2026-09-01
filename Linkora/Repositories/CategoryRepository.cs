@@ -1,14 +1,19 @@
 using Linkora.Models;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Linkora.Repositories
 {
     public class CategoryRepository : SqlRepositoryBase, ICategoryRepository
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
-        public CategoryRepository(IConfiguration configuration, IHttpContextAccessor httpContextAccessor) : base(configuration)
+        private readonly IMemoryCache _cache;
+        private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(30);
+
+        public CategoryRepository(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IMemoryCache cache) : base(configuration)
         {
             _httpContextAccessor = httpContextAccessor;
+            _cache = cache;
         }
         private Category MapRow(SqlDataReader reader)
         {
@@ -22,23 +27,59 @@ namespace Linkora.Repositories
                 Type = reader.GetInt32OrNull(reader.GetOrdinal("Type")),
             };
         }
-        public async Task<List<Category>> GetAllAsync() => await QueryAsync("SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category", MapRow);
+        public async Task<List<Category>> GetAllAsync()
+        {
+            var cacheKey = $"categories_all_{_httpContextAccessor.HttpContext.GetLang()}";
+            if (_cache.TryGetValue(cacheKey, out List<Category> cached)) return cached;
+
+            var result = await QueryAsync("SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category", MapRow);
+            _cache.Set(cacheKey, result, TimeSpan.FromMinutes(30));
+            return result;
+        }
         public async Task<Category?> GetByIdAsync(int id) => await QuerySingleAsync("SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE Id = @Id and Type = 1", MapRow, p => p.AddWithValue("@Id", id));
         public async Task<List<Category>> GetChildrenAsync(int parentId) => await QueryAsync("SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId = @ParentId and Type = 1", MapRow, p => p.AddWithValue("@ParentId", parentId));
-        public async Task<List<Category>> GetBreadcrumbAsync(int rootCategoryId, bool includeSelf = false) => await QueryAsync(@"SELECT c.Id, c.ParentId, c.Name, c.Type, c.NameLV, c.NameRU
-                                                                                                                                 FROM CategoryClosure cc
-                                                                                                                                 INNER JOIN Category c ON c.Id = cc.AncestorId
-                                                                                                                                 WHERE cc.DescendantId = @RootId AND c.Type = 1
-                                                                                                                                 ORDER BY cc.Depth DESC", MapRow, p => {p.AddWithValue("@RootId", rootCategoryId);});
+        public async Task<List<Category>> GetBreadcrumbAsync(int rootCategoryId, bool includeSelf = false)
+        {
+            var cacheKey = $"cat_breadcrumb_{rootCategoryId}_{_httpContextAccessor.HttpContext.GetLang()}";
+
+            if (_cache.TryGetValue(cacheKey, out List<Category>? cached) && cached != null) return cached;
+
+            var result = await QueryAsync(@"SELECT c.Id, c.ParentId, c.Name, c.Type, c.NameLV, c.NameRU
+                                            FROM CategoryClosure cc
+                                            INNER JOIN Category c ON c.Id = cc.AncestorId
+                                            WHERE cc.DescendantId = @RootId AND c.Type = 1
+                                            ORDER BY cc.Depth DESC", MapRow, p => { p.AddWithValue("@RootId", rootCategoryId); });
+
+            _cache.Set(cacheKey, result, CacheDuration);
+            return result;
+        }
         public async Task<List<Parameter>> GetParametersAsync(IEnumerable<int> categoryIds)
         {
-            var ids = string.Join(",", categoryIds);
-            if (string.IsNullOrEmpty(ids)) return new List<Parameter>();
-            return await LoadParameterOptionsAsync(await QueryAsync($"SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId IN ({ids}) AND Type IN (2,3,4,5,6,7,8)", MapRow));
+            var idList = categoryIds.OrderBy(x => x).ToList();
+            if (idList.Count == 0) return [];
+
+            var cacheKey = $"cat_params_{string.Join(",", idList)}_{_httpContextAccessor.HttpContext.GetLang()}";
+
+            if (_cache.TryGetValue(cacheKey, out List<Parameter>? cached) && cached != null) return cached;
+
+            var result = await LoadParameterOptionsAsync(await QueryAsync($"SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId IN ({string.Join(",", idList)}) AND Type IN (2,3,4,5,6,7,8)", MapRow));
+
+            _cache.Set(cacheKey, result, CacheDuration);
+            return result;
         }
-        public async Task<List<Parameter>> GetParametersAsync(int categoryId) => await LoadParameterOptionsAsync(await QueryAsync(
+        public async Task<List<Parameter>> GetParametersAsync(int categoryId)
+        {
+            var cacheKey = $"cat_params_single_{categoryId}_{_httpContextAccessor.HttpContext.GetLang()}";
+
+            if (_cache.TryGetValue(cacheKey, out List<Parameter>? cached) && cached != null) return cached;
+
+            var result = await LoadParameterOptionsAsync(await QueryAsync(
                 "SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId = @ParentId AND Type IN (2,3,4,5,6,7,8)",
                 MapRow, p => p.AddWithValue("@ParentId", categoryId)));
+
+            _cache.Set(cacheKey, result, CacheDuration);
+            return result;
+        }
         private async Task<List<Parameter>> LoadParameterOptionsAsync(List<Category> parameters)
         {
             if (parameters == null || parameters.Count == 0) return new List<Parameter>();
@@ -143,6 +184,10 @@ namespace Linkora.Repositories
                                 )
                                 INSERT INTO CategoryClosure (AncestorId, DescendantId, Depth)
                                 SELECT AncestorId, DescendantId, Depth FROM CatTree");
+        }
+        private void InvalidateAll()
+        {
+            if (_cache is MemoryCache mc) mc.Compact(1.0);
         }
     }
 }

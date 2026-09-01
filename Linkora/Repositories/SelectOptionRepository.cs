@@ -1,8 +1,14 @@
-﻿namespace Linkora.Repositories
+﻿using Microsoft.Extensions.Caching.Memory;
+
+namespace Linkora.Repositories
 {
     public class SelectOptionRepository : SqlRepositoryBase, ISelectOptionRepository
     {
-        public SelectOptionRepository(IConfiguration configuration) : base(configuration) { }
+        private readonly IMemoryCache _cache;
+        public SelectOptionRepository(IConfiguration configuration, IMemoryCache cache) : base(configuration)
+        {
+            _cache = cache;
+        }
         private static string ValueColumn(string lang) => lang switch
         {
             "lv" => "ValueLV",
@@ -29,11 +35,22 @@
                     p.AddWithValue("@ParamId", paramId);
                     p.AddWithValue("@Text", text.Trim());
                 }))[0];
-        public async Task<List<(int Id, string Text)>> GetConfirmedAsync(int paramId, string lang) => await QueryAsync<(int Id, string Text)>(
-                $@"SELECT Id, {ValueColumn(lang)}
-                   FROM SelectOptions
-                   WHERE CategoryId = @ParamId and IsConf = 1",
-                r => (r.GetInt32(0), r.GetStringOrDefault(1)),
-                p => p.AddWithValue("@ParamId", paramId));
+        public async Task<List<(int Id, string Text)>> GetConfirmedAsync(int paramId, string lang)
+        {
+            string cacheKey = $"select_options_{paramId}_{lang}";
+
+            if (_cache.TryGetValue(cacheKey, out List<(int Id, string Text)>? cached) && cached != null) return cached;
+
+            var result = await QueryAsync<(int Id, string Text)>($@"SELECT Id, {ValueColumn(lang)} FROM SelectOptions WHERE CategoryId = @ParamId AND IsConf = 1",
+                                                                    r => (r.GetInt32(0), r.GetStringOrDefault(1)), p => p.AddWithValue("@ParamId", paramId));
+
+            _cache.Set(cacheKey, result, TimeSpan.FromMinutes(30));
+
+            return result;
+        }
+        private void InvalidateCache(int paramId, string lang)
+        {
+            _cache.Remove($"select_options_{paramId}_{lang}");
+        }
     }
 }
