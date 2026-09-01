@@ -163,7 +163,7 @@
                 }
                 applyAllVisibility();
             } catch (e) {
-                console.error("Engine Error:", e);
+                console.error(translate('engine_error'), e);
             }
         },
         triggerUpdate: function () {

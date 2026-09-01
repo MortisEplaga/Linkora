@@ -792,11 +792,11 @@ function loginWithFacebook(returnUrl) {
                     }
                 })
                 .catch(err => {
-                    console.error('Facebook login failed', err);
-                    alert('Ошибка входа через Facebook. Попробуйте позже.');
+                    console.error(translate('facebook_login_failed'), err);
+                    alert(translate('facebook_login_error'));
                 });
         } else {
-            console.log('Пользователь отменил вход');
+            console.log(translate('user_cancelled_login'));
         }
     }, { scope: 'public_profile,email' });
 }

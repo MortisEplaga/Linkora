@@ -127,8 +127,8 @@
                 headers: { 'RequestVerificationToken': document.getElementById('afToken')?.value ?? '' }
             });
             if (res.ok) location.reload();
-            else console.error('Ошибка:', await res.text());
-        } catch (e) { console.error('Ошибка сети:', e); }
+            else console.error(translate('error'), await res.text());
+        } catch (e) { console.error(translate('network_error'), e); }
     }
 
     async function republishAd(id) {
@@ -143,11 +143,11 @@
                 location.reload();
             } else {
                 const err = await res.text();
-                console.error('Ошибка:', err);
-                alert('Error: ' + err);
+                console.error(translate('error'), err);
+                alert(translate('error') + ': ' + err);
             }
         } catch (e) {
-            console.error('Ошибка сети:', e);
+            console.error(translate('network_error'), e);
         }
     }
 

@@ -233,10 +233,10 @@
                         const data = await res.json();
                         window.location.href = data.redirectUrl;
                     } else {
-                        alert('Payment initiation failed');
+                        alert(translate('payment_failed'));
                     }
                 } catch (e) {
-                    alert('Network error: ' + e.message);
+                    alert(translate('network_error') + ': ' + e.message);
                 }
             } else if (!agreed && pendingSubBtn) {
                 document.querySelectorAll('#subscriptionPills .duration-pill')

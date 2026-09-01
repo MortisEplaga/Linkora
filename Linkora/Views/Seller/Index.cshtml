@@ -335,7 +335,7 @@
             });
 
             if (!res.ok) {
-                console.error('Subscription toggle failed', res.status);
+                console.error(translate('subscription_toggle_failed'), res.status);
                 return;
             }
 
@@ -347,7 +347,7 @@
             setTimeout(() => icon.style.transform = '', 200);
 
         } catch (e) {
-            console.error('Subscription error:', e);
+            console.error(translate('subscription_error'), e);
         } finally {
             btn.disabled = false;
         }

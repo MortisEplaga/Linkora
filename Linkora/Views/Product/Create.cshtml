@@ -224,7 +224,7 @@
     async function submitAd() {
         if (!ParamRulesEngine.validateAll()) return;
         const title = document.getElementById('adTitle').value.trim();
-        if (!title) { alert('Please enter a title'); return; }
+        if (!title) { alert(translate('title_required')); return; }
 
         const useHome = document.getElementById('useHomeAddress')?.checked === true;
         fd.append('useHomeAddress', useHome);
@@ -238,7 +238,7 @@
 
         const totalBytes = selectedFiles.reduce((s, f) => s + f.size, 0);
         if (totalBytes > MAX_BYTES) {
-            alert('Total media size exceeds 50 MB. Please remove some files.');
+            alert(translate('media_size_exceeded'));
             return;
         }
 
@@ -283,10 +283,10 @@
                 const data = await res.json();
                 window.location.href = `/Product/Details/${data.id}`;
             } else {
-                alert('Error: ' + await res.text());
+                alert(translate('error') + ': ' + await res.text());
             }
         } catch (e) {
-            alert('Network error: ' + e.message);
+            alert(translate('network_error') + ': ' + e.message);
         } finally {
             btn.disabled = false;
             translateDynamicElement(btn);

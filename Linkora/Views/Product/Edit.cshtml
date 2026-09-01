@@ -259,7 +259,7 @@
 
             window.existingMediaPaths = media.map(m => m.filePath);
         } catch (e) {
-            console.error('Failed to load media:', e);
+            console.error(translate('failed_load_media'), e);
         }
     }
 
@@ -300,7 +300,7 @@
         try {
             const totalBytes = selectedFiles.reduce((s, f) => s + f.size, 0);
             if (totalBytes > MAX_BYTES) {
-                alert('Total media size exceeds 50 MB. Please remove some files.');
+                alert(translate('media_size_exceeded'));
                 return;
             }
 
@@ -341,10 +341,10 @@
             if (res.ok) {
                 window.location.href = '/Product/My';
             } else {
-                alert('Error: ' + await res.text());
+                alert(translate('error') + ': ' + await res.text());
             }
         } catch (e) {
-            alert('Network error: ' + e.message);
+            alert(translate('network_error') + ': ' + e.message);
         } finally {
             btn.disabled = false;
             translateDynamicElement(btn);

@@ -372,7 +372,6 @@
                 }
             }
 
-            <!-- Кнопка "Вперёд" -->
             @if (currentPage < totalPages)
             {
                 <li><a class="page-link" href="@GetPageUrl(currentPage + 1)">→</a></li>
@@ -450,7 +449,7 @@
         const position = { lat: p.lat, lng: p.lng };
 
         const marker = new google.maps.Marker({ position, map: googleMap, title: p.name });
-        const priceText = p.price ? p.price.toFixed(2) + ' €' : 'Price on request';
+        const priceText = p.price ? p.price.toFixed(2) + ' €' : translate('price_on_request');
         const info = new google.maps.InfoWindow({
             content: `<a href="/Product/Details/${p.id}" style="text-decoration:none;color:#1a1a1a;display:block;width:140px">
                 <img src="${p.image}" style="width:100%;height:90px;object-fit:cover;border-radius:6px" onerror="this.src='/img/no-photo.svg'" />
@@ -544,7 +543,7 @@
                 });
             }
         } catch (e) {
-            console.error('Failed to fetch user items', e);
+            console.error(translate('failed_fetch_user_items'), e);
         }
 
         document.getElementById('filterForm')?.addEventListener('submit', async function (e) {
@@ -572,7 +571,7 @@
                         if (data && data.id) addType8Chip(paramId, data.id, text);
                     }
                 } catch (err) {
-                    console.error('Failed to resolve filter option', err);
+                    console.error(translate('failed_resolve_filter'), err);
                 }
             }
 

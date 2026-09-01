@@ -146,7 +146,7 @@ async function handleType8Keydown(e, paramId) {
                 }
             }
         } catch (err) {
-            console.error('Error resolving option:', err);
+            console.error(translate('error_resolving_option'), err);
         }
     }
 }
