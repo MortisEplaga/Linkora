@@ -11,8 +11,7 @@ namespace Linkora.Repositories
         Task<Dictionary<int, string>> GetParamValuesAsync(int productId);
         Task<Dictionary<string, int>> GetCountsByStatusAsync(int userId);
         Task<PagedResult<Product>> GetByCategoryAsync(int rootCategoryId, bool includeDescendants = true, string sort = "new", Dictionary<int, List<string>>? filters = null, 
-                                               Dictionary<int, decimal>? rangeFrom = null, Dictionary<int, decimal>? rangeTo = null,
-                                               int? priceParamId = null, string? city = null, string? search = null, int page = 1); 
+                                               Dictionary<int, decimal>? rangeFrom = null, Dictionary<int, decimal>? rangeTo = null, string? city = null, string? search = null, int page = 1); 
         Task<bool> CompleteDealAsync(int productId, int sellerId, int buyerId);
         Task<bool> ReactivateProductAsync(int productId, int userId);
         Task ArchiveProductsByUserAsync(int userId);
@@ -29,7 +28,6 @@ namespace Linkora.Repositories
         Task<(List<AdminConfOptionRow> Items, int TotalCount)> GetUnconfirmedOptionsAsync();
         Task<bool> ApproveSelectOptionAsync(int optionId);
         Task<bool> RejectProductAndOptionAsync(int optionId, int productId);
-        Task<int?> GetPriceParamIdAsync(int productId);
         Task<int> RecalculateModerationScoreAsync(int productId);
         Task<List<int>> GetFavouriteSubscriberIdsAsync(int productId, int excludeUserId);
         Task<List<Product>> GetPurchasedByUserAsync(int userId);

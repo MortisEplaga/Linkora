@@ -49,9 +49,7 @@ namespace Linkora.Controllers
                 }
             }
 
-            int? priceParamId = parameters.FirstOrDefault(p => p.Param.Name == "Price")?.Param.Id;
-
-            var result = await _productRepository.GetByCategoryAsync(id, includeDescendants: true, sort, filters, rangeFrom, rangeTo, priceParamId, city, q, page);
+            var result = await _productRepository.GetByCategoryAsync(id, includeDescendants: true, sort, filters, rangeFrom, rangeTo, city, q, page);
 
             ViewBag.City = city;
             ViewBag.Category = category;

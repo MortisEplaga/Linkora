@@ -225,7 +225,6 @@ namespace Linkora.Controllers
 
             var paramValues = ParseParamsJson(paramsJson);
             var oldParamValues = await _productRepository.GetParamValuesAsync(id);
-            var priceParamId = await _productRepository.GetPriceParamIdAsync(id);
             bool wasArchived = existing.Status == ProductStatus.Archived;
 
             var keepPaths = string.IsNullOrEmpty(keepMediaJson) ? [] : System.Text.Json.JsonSerializer.Deserialize<List<string>>(keepMediaJson) ?? [];
