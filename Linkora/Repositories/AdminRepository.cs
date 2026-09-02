@@ -82,7 +82,7 @@ namespace Linkora.Repositories
                            u.UserName, u.Id AS UserId,
                            (SELECT COUNT(*) FROM Reports WHERE ProductId = p.Id) AS ReportCount,
                            (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
-                            FROM MapperProductCategory m
+                            FROM MapperProductParam m
                             JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
                             WHERE m.ProductId = p.Id) AS Price",
                 fromWhereClause: $"FROM Products p LEFT JOIN Users u ON u.Id = p.UserId WHERE p.Status = @Status {searchClause}",
@@ -240,7 +240,7 @@ namespace Linkora.Repositories
             await QueryAsync<ApproveOptionResult>(@"
                 SELECT TOP 1 p.Id, p.UserId, c.Name, c.NameRU, c.NameLV
                 FROM SelectOptions so
-                JOIN MapperProductCategory mpc ON ',' + mpc.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%'
+                JOIN MapperProductParam mpc ON ',' + mpc.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%'
                 JOIN Products p ON mpc.ProductId = p.Id
                 JOIN Category c ON so.CategoryId = c.Id
                 WHERE so.Id = @OptionId",

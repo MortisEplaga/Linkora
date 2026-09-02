@@ -7,7 +7,7 @@ namespace Linkora.Models
     public class Parameter
     {
         [Required]
-        public Category Param { get; set; } = null!;
+        public Param Param { get; set; } = null!;
         public List<SelectOption> Options { get; set; } = [];
         public List<ColorOption> ColorOptions { get; set; } = [];
 

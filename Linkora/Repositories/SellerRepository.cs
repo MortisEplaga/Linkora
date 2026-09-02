@@ -54,11 +54,11 @@ namespace Linkora.Repositories
             string orderBy = sort switch
             {
                 "cheap" => @"(SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2)) 
-                      FROM MapperProductCategory m 
+                      FROM MapperProductParam m 
                       JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €' 
                       WHERE m.ProductId = p.Id) ASC",
                 "expensive" => @"(SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2)) 
-                          FROM MapperProductCategory m 
+                          FROM MapperProductParam m 
                           JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €' 
                           WHERE m.ProductId = p.Id) DESC",
                 _ => "p.CreatedAt DESC"
@@ -79,7 +79,7 @@ namespace Linkora.Repositories
                                         p.AvatarUrl
                                     ) AS AvatarUrl,
                                     (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
-                                     FROM MapperProductCategory m
+                                     FROM MapperProductParam m
                                      JOIN Category c2 ON c2.Id = m.CategoryId AND c2.Name = 'Price, €'
                                      WHERE m.ProductId = p.Id) as Price
                              FROM Products p

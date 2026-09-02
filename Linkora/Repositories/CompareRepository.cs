@@ -18,7 +18,7 @@ namespace Linkora.Repositories
                ) AS AvatarUrl,
                (SELECT COUNT(*) FROM ProductMedia pm2 WHERE pm2.ProductId = p.Id) AS MediaCount,
                (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
-                FROM MapperProductCategory m
+                FROM MapperProductParam m
                 JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
                 WHERE m.ProductId = p.Id) AS Price,
                 cat.Name AS CategoryName, cat.NameLV AS CategoryNameLV, cat.NameRU AS CategoryNameRU,
@@ -57,7 +57,7 @@ namespace Linkora.Repositories
             var paramRows = await QueryAsync(
                 $@"SELECT mpc.ProductId, c.Id AS ParamId, c.Name, c.NameLV, c.NameRU, c.Type, mpc.Value,
                   co.Name AS ColorName, co.NameLV AS ColorNameLV, co.NameRU AS ColorNameRU
-           FROM MapperProductCategory mpc
+           FROM MapperProductParam mpc
            JOIN Category c ON c.Id = mpc.CategoryId
            LEFT JOIN ColorOptions co ON c.Type = 6 AND TRY_CAST(mpc.Value AS int) = co.Id
            WHERE mpc.ProductId IN ({productInClause})

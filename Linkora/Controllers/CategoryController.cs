@@ -73,6 +73,6 @@ namespace Linkora.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> All() => Json((await _categoryRepository.GetAllAsync()).Where(c => c.Type == 1 || c.Type == null).Select(c => new { c.Id, c.ParentId, c.Name, nameEn = c.NameEn ?? c.Name }));
+        public async Task<IActionResult> All() => Json((await _categoryRepository.GetAllAsync()).Select(c => new { c.Id, c.ParentId, c.Name, nameEn = c.NameEn ?? c.Name }));
     }
 }

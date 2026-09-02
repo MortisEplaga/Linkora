@@ -24,30 +24,43 @@ namespace Linkora.Repositories
                 ParentId = reader.GetInt32OrNull(reader.GetOrdinal("ParentId")),
                 Name = Resolve(_httpContextAccessor.HttpContext.GetLang(), nameEn, reader.GetStringOrNull(reader.GetOrdinal("NameLV")), reader.GetStringOrNull(reader.GetOrdinal("NameRU"))),
                 NameEn = nameEn,
-                Type = reader.GetInt32OrNull(reader.GetOrdinal("Type")),
+                HasPrice = reader.GetBooleanOrDefault(reader.GetOrdinal("HasPrice")),
             };
         }
+        private Param MapPRow(SqlDataReader reader)
+        {
+            var nameEn = reader.GetString(reader.GetOrdinal("Name"));
+            return new Param
+            {
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                CategoryId = reader.GetInt32OrNull(reader.GetOrdinal("CategoryId")),
+                Name = Resolve(_httpContextAccessor.HttpContext.GetLang(), nameEn, reader.GetStringOrNull(reader.GetOrdinal("NameLV")), reader.GetStringOrNull(reader.GetOrdinal("NameRU"))),
+                NameEn = nameEn,
+                Type = reader.GetInt32OrDefault(reader.GetOrdinal("Type")),
+            };
+        }
+
         public async Task<List<Category>> GetAllAsync()
         {
             var cacheKey = $"categories_all_{_httpContextAccessor.HttpContext.GetLang()}";
             if (_cache.TryGetValue(cacheKey, out List<Category> cached)) return cached;
 
-            var result = await QueryAsync("SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category", MapRow);
+            var result = await QueryAsync("SELECT Id, ParentId, Name, HasPrice, NameLV, NameRU FROM Category", MapRow);
             _cache.Set(cacheKey, result, TimeSpan.FromMinutes(30));
             return result;
         }
-        public async Task<Category?> GetByIdAsync(int id) => await QuerySingleAsync("SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE Id = @Id and Type = 1", MapRow, p => p.AddWithValue("@Id", id));
-        public async Task<List<Category>> GetChildrenAsync(int parentId) => await QueryAsync("SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId = @ParentId and Type = 1", MapRow, p => p.AddWithValue("@ParentId", parentId));
+        public async Task<Category?> GetByIdAsync(int id) => await QuerySingleAsync("SELECT Id, ParentId, Name, HasPrice, NameLV, NameRU FROM Category WHERE Id = @Id", MapRow, p => p.AddWithValue("@Id", id));
+        public async Task<List<Category>> GetChildrenAsync(int parentId) => await QueryAsync("SELECT Id, ParentId, Name, HasPrice, NameLV, NameRU FROM Category WHERE ParentId = @ParentId", MapRow, p => p.AddWithValue("@ParentId", parentId));
         public async Task<List<Category>> GetBreadcrumbAsync(int rootCategoryId, bool includeSelf = false)
         {
             var cacheKey = $"cat_breadcrumb_{rootCategoryId}_{_httpContextAccessor.HttpContext.GetLang()}";
 
             if (_cache.TryGetValue(cacheKey, out List<Category>? cached) && cached != null) return cached;
 
-            var result = await QueryAsync(@"SELECT c.Id, c.ParentId, c.Name, c.Type, c.NameLV, c.NameRU
+            var result = await QueryAsync(@"SELECT c.Id, c.ParentId, c.Name, c.HasPrice, c.NameLV, c.NameRU
                                             FROM CategoryClosure cc
                                             INNER JOIN Category c ON c.Id = cc.AncestorId
-                                            WHERE cc.DescendantId = @RootId AND c.Type = 1
+                                            WHERE cc.DescendantId = @RootId
                                             ORDER BY cc.Depth DESC", MapRow, p => { p.AddWithValue("@RootId", rootCategoryId); });
 
             _cache.Set(cacheKey, result, CacheDuration);
@@ -62,7 +75,7 @@ namespace Linkora.Repositories
 
             if (_cache.TryGetValue(cacheKey, out List<Parameter>? cached) && cached != null) return cached;
 
-            var result = await LoadParameterOptionsAsync(await QueryAsync($"SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId IN ({string.Join(",", idList)}) AND Type IN (2,3,4,5,6,7,8)", MapRow));
+            var result = await LoadParameterOptionsAsync(await QueryAsync($"SELECT Id, CategoryId, Name, Type, NameLV, NameRU FROM Parameters WHERE CategoryId IN ({string.Join(",", idList)})", MapPRow));
 
             _cache.Set(cacheKey, result, CacheDuration);
             return result;
@@ -73,14 +86,12 @@ namespace Linkora.Repositories
 
             if (_cache.TryGetValue(cacheKey, out List<Parameter>? cached) && cached != null) return cached;
 
-            var result = await LoadParameterOptionsAsync(await QueryAsync(
-                "SELECT Id, ParentId, Name, Type, NameLV, NameRU FROM Category WHERE ParentId = @ParentId AND Type IN (2,3,4,5,6,7,8)",
-                MapRow, p => p.AddWithValue("@ParentId", categoryId)));
+            var result = await LoadParameterOptionsAsync(await QueryAsync("SELECT Id, CategoryId, Name, Type, NameLV, NameRU FROM Parameters WHERE CategoryId = @CategoryId", MapPRow, p => p.AddWithValue("@CategoryId", categoryId)));
 
             _cache.Set(cacheKey, result, CacheDuration);
             return result;
         }
-        private async Task<List<Parameter>> LoadParameterOptionsAsync(List<Category> parameters)
+        private async Task<List<Parameter>> LoadParameterOptionsAsync(List<Param> parameters)
         {
             if (parameters == null || parameters.Count == 0) return new List<Parameter>();
 
@@ -107,10 +118,10 @@ namespace Linkora.Repositories
                 var (inClause, addParams) = PrepareInClause(selectIds);
 
                 var options = await QueryAsync(
-                    $"SELECT CategoryId, Id, Value, ValueLV, ValueRU FROM SelectOptions WHERE CategoryId IN ({inClause}) AND IsConf = 1",
+                    $"SELECT ParamId, Id, Value, ValueLV, ValueRU FROM SelectOptions WHERE ParamId IN ({inClause}) AND IsConf = 1",
                     r => new
                     {
-                        CategoryId = r.GetInt32(0),
+                        ParamId = r.GetInt32(0),
                         Option = new SelectOption
                         {
                             Id = r.GetInt32(1),
@@ -119,7 +130,7 @@ namespace Linkora.Repositories
                     },
                     addParams);
 
-                foreach (var item in options) if (resultDict.TryGetValue(item.CategoryId, out var param)) param.Options.Add(item.Option);
+                foreach (var item in options) if (resultDict.TryGetValue(item.ParamId, out var param)) param.Options.Add(item.Option);
             }
 
             var rangeIds = parameters.Where(p => p.Type == 5).Select(p => p.Id).ToList();
@@ -153,10 +164,10 @@ namespace Linkora.Repositories
                 var (inClause, addParams) = PrepareInClause(colorIds);
 
                 var colors = await QueryAsync(
-                    $"SELECT CategoryId, Id, Name, NameLV, NameRU, HexValue, IsMain FROM ColorOptions WHERE CategoryId IN ({inClause}) AND IsConf = 1 ORDER BY IsMain DESC",
+                    $"SELECT ParamId, Id, Name, NameLV, NameRU, HexValue, IsMain FROM ColorOptions WHERE ParamId IN ({inClause}) AND IsConf = 1 ORDER BY IsMain DESC",
                     r => new
                     {
-                        CategoryId = r.GetInt32(0),
+                        ParamId = r.GetInt32(0),
                         Option = new ColorOption
                         {
                             Id = r.GetInt32(1),
@@ -167,7 +178,7 @@ namespace Linkora.Repositories
                     },
                     addParams);
 
-                foreach (var item in colors) if (resultDict.TryGetValue(item.CategoryId, out var param)) param.ColorOptions.Add(item.Option);
+                foreach (var item in colors) if (resultDict.TryGetValue(item.ParamId, out var param)) param.ColorOptions.Add(item.Option);
             }
 
             return resultDict.Values.ToList();
