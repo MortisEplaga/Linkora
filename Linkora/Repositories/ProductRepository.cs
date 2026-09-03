@@ -1,6 +1,5 @@
 ﻿using Linkora.Models;
 using Microsoft.Data.SqlClient;
-using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Linkora.Repositories
@@ -225,7 +224,7 @@ namespace Linkora.Repositories
         {
             var (inClause, parameters) = BuildInClause(paramIds, "@pid");
             var data = await QueryAsync(
-                $"SELECT Id,Value,ValueLV,ValueRU FROM SelectOptions WHERE IsConf = 1 AND CategoryId IN ({inClause})",
+                $"SELECT Id,Value,ValueLV,ValueRU FROM SelectOptions WHERE IsConf = 1 AND Id IN ({inClause})",
                 r => (Id: r.GetInt32(0), Value: r.GetString(1), ValueLV: r.GetStringOrDefault(2, r.GetString(1)), ValueRU: r.GetStringOrDefault(3, r.GetString(1))),
                 p => { foreach (var prm in parameters) p.Add(prm); });
             return data.ToDictionary(x => x.Id, x => (x.Value, x.ValueLV, x.ValueRU));
@@ -234,7 +233,7 @@ namespace Linkora.Repositories
         {
             var (inClause, parameters) = BuildInClause(paramIds, "@pid");
             var data = await QueryAsync(
-                $"SELECT Id,Name,NameLV,NameRU,HexValue FROM ColorOptions WHERE IsConf = 1 AND CategoryId IN ({inClause})",
+                $"SELECT Id,Name,NameLV,NameRU,HexValue FROM ColorOptions WHERE IsConf = 1 AND Id IN ({inClause})",
                 r => (Id: r.GetInt32(0), Name: r.GetString(1), NameLV: r.GetStringOrDefault(2, r.GetString(1)), NameRU: r.GetStringOrDefault(3, r.GetString(1)), Hex: r.GetString(4)),
                 p => { foreach (var prm in parameters) p.Add(prm); });
             return data.ToDictionary(x => x.Id, x => (x.Name, x.NameLV, x.NameRU, x.Hex));
@@ -286,8 +285,7 @@ namespace Linkora.Repositories
             return product;
         }
         public async Task<List<Product>> GetSimilarAsync(int categoryId, int excludeId, int count = 8) => await QueryAsync(@"
-                SELECT TOP (@Count) p.Id,p.Name,p.Address,p.CreatedAt,
-                       COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),p.AvatarUrl) AS AvatarUrl, p.Price
+                SELECT TOP (@Count) p.Id,p.Name,p.Address,p.CreatedAt, COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),p.AvatarUrl) AS AvatarUrl, p.Price
                 FROM Products p
                 WHERE p.CategoryId = @CatId AND p.Id != @ExcId
                 ORDER BY p.CreatedAt DESC",
@@ -522,7 +520,7 @@ namespace Linkora.Repositories
         public async Task<int> RecalculateModerationScoreAsync(int productId)
         {
             await using var conn = await OpenConnectionAsync();
-            await using var cmd = new SqlCommand(@";WITH UnconfirmedCount AS (SELECT COUNT(*) AS Cnt FROM MapperProductParam mpc JOIN SelectOptions so ON TRY_CAST(mpc.Value AS int) = so.Id JOIN Category c ON c.Id = mpc.CategoryId AND c.Type IN (2,4,8) WHERE mpc.ProductId = @Id AND so.IsConf = 0) UPDATE p SET ModerationScore = (SELECT Cnt FROM UnconfirmedCount),Status = CASE WHEN (SELECT Cnt FROM UnconfirmedCount) >= 5 THEN 'Moderation' ELSE Status END OUTPUT INSERTED.ModerationScore FROM Products p WHERE p.Id = @Id;", conn);
+            await using var cmd = new SqlCommand(@";WITH UnconfirmedCount AS (SELECT COUNT(*) AS Cnt FROM MapperProductParam mpp JOIN SelectOptions so ON TRY_CAST(mpp.Value AS int) = so.Id JOIN Parameters pa ON pa.Id = mpp.ParamId AND pa.Type IN (2,4,8) WHERE mpp.ProductId = @Id AND so.IsConf = 0) UPDATE p SET ModerationScore = (SELECT Cnt FROM UnconfirmedCount),Status = CASE WHEN (SELECT Cnt FROM UnconfirmedCount) >= 5 THEN 'Moderation' ELSE Status END OUTPUT INSERTED.ModerationScore FROM Products p WHERE p.Id = @Id;", conn);
             cmd.Parameters.AddWithValue("@Id", productId);
             await using var reader = await cmd.ExecuteReaderAsync();
             if (await reader.ReadAsync()) return reader.GetInt32(0);
