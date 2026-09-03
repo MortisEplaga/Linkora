@@ -6,8 +6,7 @@ namespace Linkora.Repositories
     public class SellerRepository : SqlRepositoryBase, ISellerRepository
     {
         public SellerRepository(IConfiguration configuration) : base(configuration) { }
-        public async Task<UserSummary?> GetByIdAsync(int id) => await QuerySingleAsync(
-                "SELECT Id, UserName, AvatarUrl, Phone, Email, IsCompany, CreatedAt, TelegramUrl, WhatsAppUrl, WebsiteUrl FROM Users WHERE Id = @Id",
+        public async Task<UserSummary?> GetByIdAsync(int id) => await QuerySingleAsync("SELECT Id, UserName, AvatarUrl, Phone, Email, IsCompany, CreatedAt, TelegramUrl, WhatsAppUrl, WebsiteUrl FROM Users WHERE Id = @Id",
                 r => new UserSummary
                 {
                     Id = r.GetInt32(0),
@@ -53,14 +52,8 @@ namespace Linkora.Repositories
 
             string orderBy = sort switch
             {
-                "cheap" => @"(SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2)) 
-                      FROM MapperProductParam m 
-                      JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €' 
-                      WHERE m.ProductId = p.Id) ASC",
-                "expensive" => @"(SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2)) 
-                          FROM MapperProductParam m 
-                          JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €' 
-                          WHERE m.ProductId = p.Id) DESC",
+                "cheap" => "p.Price ASC",
+                "expensive" => "p.Price DESC",
                 _ => "p.CreatedAt DESC"
             };
 
@@ -73,15 +66,8 @@ namespace Linkora.Repositories
             var totalItems = (await QueryAsync(countSql, r => r.GetInt32(0), p => { foreach (var sp in countParams) p.Add(sp); })).FirstOrDefault();
 
             var dataSql = $@"SELECT p.Id, p.Name, p.Address, p.CreatedAt, 
-                                    COALESCE(
-                                        (SELECT TOP 1 pm.FilePath FROM ProductMedia pm 
-                                         WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-                                        p.AvatarUrl
-                                    ) AS AvatarUrl,
-                                    (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
-                                     FROM MapperProductParam m
-                                     JOIN Category c2 ON c2.Id = m.CategoryId AND c2.Name = 'Price, €'
-                                     WHERE m.ProductId = p.Id) as Price
+                                    COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder), p.AvatarUrl) AS AvatarUrl,
+                                     p.Price
                              FROM Products p
                              WHERE p.UserId = @UserId
                                AND (p.Status = 'active' OR p.Status IS NULL)
@@ -114,8 +100,7 @@ namespace Linkora.Repositories
             };
         }
         public async Task<List<dynamic>> GetReviewsAsync(int userId, int limit = 50) => await QueryAsync<dynamic>(
-                @"SELECT r.Id, r.Rating, r.Comment, r.CreatedAt,
-                         u.UserName, u.AvatarUrl
+                @"SELECT r.Id, r.Rating, r.Comment, r.CreatedAt, u.UserName, u.AvatarUrl
                   FROM Reviews r
                   JOIN Users u ON u.Id = r.AuthorId
                   WHERE r.TargetUserId = @Id
