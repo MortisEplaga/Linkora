@@ -62,7 +62,7 @@ namespace Linkora.Controllers
             ViewBag.Total = result.Total;
             ViewBag.Sort = sort;
             ViewBag.Search = q;
-            ViewBag.HasPriceSort = priceParamId.HasValue;
+            ViewBag.HasPriceSort = category.HasPrice;
             ViewBag.Filters = filters;
             ViewBag.RangeFrom = rangeFrom;
             ViewBag.RangeTo = rangeTo;

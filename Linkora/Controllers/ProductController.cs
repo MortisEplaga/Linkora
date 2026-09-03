@@ -192,9 +192,8 @@ namespace Linkora.Controllers
         [HttpPost]
         [RequestSizeLimit(MediaStorageService.MaxTotalBytes)]
         [RequestFormLimits(MultipartBodyLengthLimit = MediaStorageService.MaxTotalBytes)]
-        public async Task<IActionResult> Edit(int id, string title, string? description,
-                                              int? qty, string? address, int? categoryId,
-                                              string? paramsJson, List<IFormFile>? photos,
+        public async Task<IActionResult> Edit(int id, string title, string? description, int? qty, string? address, int? categoryId,
+                                              string? paramsJson, List<IFormFile>? photos, decimal? price = null,
                                               string? keepMediaJson = null, bool replaceMedia = false,
                                               int? publishDays = null, string? promotionType = null)
         {
@@ -209,7 +208,6 @@ namespace Linkora.Controllers
 
             decimal? lat = existing.Lat, lng = existing.Lng;
             if (!string.Equals(existing.Address ?? "", address ?? "", StringComparison.Ordinal))
-            {
                 if (string.IsNullOrWhiteSpace(address))
                 {
                     lat = null;
@@ -221,7 +219,6 @@ namespace Linkora.Controllers
                     if (geocoded.HasValue) (lat, lng) = geocoded.Value;
                     else { lat = null; lng = null; }
                 }
-            }
 
             var paramValues = ParseParamsJson(paramsJson);
             var oldParamValues = await _productRepository.GetParamValuesAsync(id);
@@ -256,7 +253,8 @@ namespace Linkora.Controllers
                 CategoryId = categoryId,
                 AvatarUrl = newAvatar,
                 Lat = lat,
-                Lng = lng
+                Lng = lng,
+                Price = price,
             }, paramValues, promotionType ?? "None");
 
             await _productRepository.RecalculateModerationScoreAsync(id);
@@ -281,26 +279,20 @@ namespace Linkora.Controllers
                     newQty = qty?.ToString() ?? "—"
                 });
             if (!string.Equals(existing.Description ?? "", description ?? "", StringComparison.Ordinal)) changes.Add(new { type = "description_updated" });
-            if (priceParamId.HasValue)
-            {
-                paramValues.TryGetValue(priceParamId.Value, out var newPriceStr);
-                decimal? newPrice = decimal.TryParse(newPriceStr,
-                    System.Globalization.NumberStyles.Any,
-                    System.Globalization.CultureInfo.InvariantCulture, out var np) ? np : null;
-                if (existing.Price != newPrice)
-                    changes.Add(new
-                    {
-                        type = "price_changed",
-                        oldPrice = existing.Price?.ToString("N2") ?? "—",
-                        newPrice = newPrice?.ToString("N2") ?? "—"
-                    });
-            }
+
+            if (existing.Price != price)
+                changes.Add(new
+                {
+                    type = "price_changed",
+                    oldPrice = existing.Price?.ToString("N2") ?? "—",
+                    newPrice = price?.ToString("N2") ?? "—"
+                });
 
             var otherChanged = paramValues
-                .Where(kv => kv.Key != priceParamId && (!oldParamValues.TryGetValue(kv.Key, out var ov) || ov != kv.Value))
+                .Where(kv => !oldParamValues.TryGetValue(kv.Key, out var ov) || ov != kv.Value)
                 .Count()
                 + oldParamValues
-                .Where(kv => kv.Key != priceParamId && !paramValues.ContainsKey(kv.Key))
+                .Where(kv => !paramValues.ContainsKey(kv.Key))
                 .Count();
             if (otherChanged > 0) changes.Add(new { type = "characteristics_updated" });
 
@@ -324,7 +316,6 @@ namespace Linkora.Controllers
 
             return Ok();
         }
-
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> Delete(int id)
@@ -404,11 +395,9 @@ namespace Linkora.Controllers
 
         [Authorize]
         [HttpPost]
-        public async Task<IActionResult> Create(string title, string? description, int? qty,
-                                                string? address, int? categoryId,
-                                                List<IFormFile>? photos, string? paramsJson,
-                                                int? publishDays = null, string? promotionType = null,
-                                                bool useHomeAddress = false)
+        public async Task<IActionResult> Create(string title, string? description, int? qty, string? address, int? categoryId,
+                                                List<IFormFile>? photos, string? paramsJson, decimal? price = null,
+                                                int? publishDays = null, string? promotionType = null, bool useHomeAddress = false)
         {
             if (string.IsNullOrWhiteSpace(title)) return BadRequest("Title is required");
 
@@ -452,6 +441,7 @@ namespace Linkora.Controllers
                 AvatarUrl = media.FirstOrDefault()?.FilePath,
                 Lat = lat,
                 Lng = lng,
+                Price = price,
             }, paramValues, duration, promotionType ?? "None");
 
             var points = PromotionPoints(promotionType);

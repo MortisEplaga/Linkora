@@ -39,7 +39,6 @@ namespace Linkora.Repositories
                 Type = reader.GetInt32OrDefault(reader.GetOrdinal("Type")),
             };
         }
-
         public async Task<List<Category>> GetAllAsync()
         {
             var cacheKey = $"categories_all_{_httpContextAccessor.HttpContext.GetLang()}";
@@ -117,8 +116,7 @@ namespace Linkora.Repositories
             {
                 var (inClause, addParams) = PrepareInClause(selectIds);
 
-                var options = await QueryAsync(
-                    $"SELECT ParamId, Id, Value, ValueLV, ValueRU FROM SelectOptions WHERE ParamId IN ({inClause}) AND IsConf = 1",
+                var options = await QueryAsync($"SELECT ParamId, Id, Value, ValueLV, ValueRU FROM SelectOptions WHERE ParamId IN ({inClause}) AND IsConf = 1",
                     r => new
                     {
                         ParamId = r.GetInt32(0),
@@ -138,8 +136,7 @@ namespace Linkora.Repositories
             {
                 var (inClause, addParams) = PrepareInClause(rangeIds);
 
-                var ranges = await QueryAsync(
-                    $"SELECT ParamId, MinValue, MaxValue, Step FROM ParameterRange WHERE ParamId IN ({inClause})",
+                var ranges = await QueryAsync($"SELECT ParamId, MinValue, MaxValue, Step FROM ParameterRange WHERE ParamId IN ({inClause})",
                     r => new
                     {
                         ParamId = r.GetInt32(0),

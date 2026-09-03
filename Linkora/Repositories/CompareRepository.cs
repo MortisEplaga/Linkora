@@ -50,8 +50,8 @@ namespace Linkora.Repositories
                    co.Name AS ColorName, co.NameLV AS ColorNameLV, co.NameRU AS ColorNameRU
                    FROM MapperProductParam mpp
                    JOIN Parameters p ON p.Id = mpp.ParamId
-                   LEFT JOIN ColorOptions co ON c.Type = 6 AND TRY_CAST(mpp.Value AS int) = co.Id
-                   WHERE mpp.ProductId IN ({productInClause}) AND p.Type IN (2,3,4,5,6,7,8)
+                   LEFT JOIN ColorOptions co ON p.Type = 6 AND TRY_CAST(mpp.Value AS int) = co.Id
+                   WHERE mpp.ProductId IN ({productInClause})
                    ORDER BY p.Name",
                 r => (
                     ProductId: r.GetInt32(0),

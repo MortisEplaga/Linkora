@@ -12,11 +12,10 @@ namespace Linkora.Repositories
             const string cacheKey = "admin_sidebar_badges";
             if (_cache.TryGetValue(cacheKey, out AdminBadges? cached) && cached != null) return cached;
 
-            var badges = await QuerySingleAsync<AdminBadges>(@"
-            SELECT 
-            (SELECT COUNT(*) FROM Products WHERE Status = 'Moderation'),
-            (SELECT COUNT(*) FROM Reports WHERE Status = 'Pending'),
-            (SELECT COUNT(*) FROM SelectOptions WHERE IsConf = 0)",
+            var badges = await QuerySingleAsync(@"SELECT 
+                                                (SELECT COUNT(*) FROM Products WHERE Status = 'Moderation'),
+                                                (SELECT COUNT(*) FROM Reports WHERE Status = 'Pending'),
+                                                (SELECT COUNT(*) FROM SelectOptions WHERE IsConf = 0)",
                 r => new AdminBadges
                 {
                     PendingModeration = r.GetInt32(0),
