@@ -304,6 +304,12 @@
                 return;
             }
 
+            const priceWrap = document.getElementById('priceFieldWrap');
+            if (priceWrap.style.display !== 'none') {
+                const priceVal = document.getElementById('adPrice').value;
+                if (priceVal) fd.append('price', priceVal);
+            }
+
             const useHome = document.getElementById('useHomeAddress')?.checked === true;
             let addressValue;
 

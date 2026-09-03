@@ -61,33 +61,27 @@ function openCatMenuForEdit() {
 
 async function loadParams(categoryId, existingValues = {}) {
     const res = await fetch(`/Product/Parameters?categoryId=${categoryId}`);
-    const params = await res.json();
+    const data = await res.json();
+    const params = data.parameters;
+    const hasPrice = data.hasPrice;
     const container = document.getElementById('createParams');
     const section = document.getElementById('paramsSection');
     container.innerHTML = '';
-
-    const priceParam = params.find(p => {
-        const nameLower = p.name.toLowerCase();
-        return nameLower === 'price, €' || nameLower === 'цена, €' || nameLower === 'cena, €';
-    });
     const priceWrap = document.getElementById('priceFieldWrap');
     const priceInput = document.getElementById('adPrice');
     const qtyWrap = document.getElementById('qtyFieldWrap');
 
-    if (priceParam) {
-        priceInput.value = existingValues[priceParam.id] ?? '';
-        priceInput.dataset.paramId = priceParam.id;
+    if (hasPrice) {
+        priceInput.value = existingValues.price ?? '';
         priceWrap.style.display = '';
         qtyWrap.style.gridColumn = '';
     } else {
         priceWrap.style.display = 'none';
         priceInput.value = '';
-        delete priceInput.dataset.paramId;
         qtyWrap.style.gridColumn = '1 / -1';
     }
 
-    const otherParams = params.filter(p => p.id !== (priceParam ? priceParam.id : null));
-    if (!otherParams.length) { section.style.display = 'none'; return; }
+    if (!params.length) { section.style.display = 'none'; return; }
     section.style.display = 'block';
 
     function estimateHeight(p) {
@@ -101,7 +95,7 @@ async function loadParams(categoryId, existingValues = {}) {
 
     const col1 = [], col2 = [];
     let h1 = 0, h2 = 0;
-    otherParams.forEach(p => {
+    params.forEach(p => {
         const h = estimateHeight(p);
         if (h1 <= h2) { col1.push(p); h1 += h; }
         else { col2.push(p); h2 += h; }

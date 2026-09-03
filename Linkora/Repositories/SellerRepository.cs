@@ -67,7 +67,7 @@ namespace Linkora.Repositories
 
             var dataSql = $@"SELECT p.Id, p.Name, p.Address, p.CreatedAt, 
                                     COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder), p.AvatarUrl) AS AvatarUrl,
-                                     p.Price
+                                     p.Price, p.Description
                              FROM Products p
                              WHERE p.UserId = @UserId
                                AND (p.Status = 'active' OR p.Status IS NULL)
@@ -82,7 +82,8 @@ namespace Linkora.Repositories
                 Address = r.GetStringOrNull(2),
                 CreatedAt = r.GetDateTimeOrNull(3),
                 AvatarUrl = r.GetStringOrNull(4),
-                Price = r.GetDecimalOrNull(5)
+                Price = r.GetDecimalOrNull(5),
+                Description = r.GetStringOrDefault(6),
             }, p =>
             {
                 p.AddWithValue("@UserId", userId);

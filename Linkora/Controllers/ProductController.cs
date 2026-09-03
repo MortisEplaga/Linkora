@@ -101,17 +101,24 @@ namespace Linkora.Controllers
         {
             var breadcrumb = await _categoryRepository.GetBreadcrumbAsync(categoryId);
             var parameters = await _categoryRepository.GetParametersAsync(breadcrumb.Select(c => c.Id));
-            return Json(parameters.Select(p => new
+            bool hasPrice = (await _categoryRepository.GetByIdAsync(categoryId))?.HasPrice ?? false;
+            var result = new
             {
-                id = p.Param.Id,
-                name = p.Param.Name,
-                type = p.Param.Type,
-                options = p.Options.Select(o => new { id = o.Id, text = o.Text }),
-                colorOptions = p.ColorOptions.Select(c => new { id = c.Id, name = c.Name, hex = c.HexValue, isMain = c.IsMain }),
-                min = p.Min,
-                max = p.Max,
-                step = p.Step
-            }));
+                hasPrice,
+                parameters = parameters.Select(p => new
+                {
+                    id = p.Param.Id,
+                    name = p.Param.Name,
+                    type = p.Param.Type,
+                    options = p.Options.Select(o => new { id = o.Id, text = o.Text }),
+                    colorOptions = p.ColorOptions.Select(c => new { id = c.Id, name = c.Name, hex = c.HexValue, isMain = c.IsMain }),
+                    min = p.Min,
+                    max = p.Max,
+                    step = p.Step
+                })
+            };
+
+            return Ok(result);
         }
 
         public async Task<IActionResult> Details(int id)

@@ -225,16 +225,6 @@
         const title = document.getElementById('adTitle').value.trim();
         if (!title) { alert(translate('title_required')); return; }
 
-        const useHome = document.getElementById('useHomeAddress')?.checked === true;
-        fd.append('useHomeAddress', useHome);
-
-        if (!useHome) {
-            const parts = ['adCity', 'adStreet', 'adHouse']
-                .map(id => document.getElementById(id)?.value?.trim())
-                .filter(Boolean);
-            fd.append('address', parts.join(', '));
-        }
-
         const totalBytes = selectedFiles.reduce((s, f) => s + f.size, 0);
         if (totalBytes > MAX_BYTES) {
             alert(translate('media_size_exceeded'));
@@ -257,9 +247,11 @@
             fd.append('publishDays', document.getElementById('pubDurationValue').value || '30');
             fd.append('promotionType', document.getElementById('promotionValue').value || 'None');
 
-            const adPriceInput = document.getElementById('adPrice');
-            if (adPriceInput && adPriceInput.value)
-                fd.append('price', adPriceInput.value);
+            const priceWrap = document.getElementById('priceFieldWrap');
+                if (priceWrap.style.display !== 'none') {
+                    const priceVal = document.getElementById('adPrice').value;
+                    if (priceVal) fd.append('price', priceVal);
+                }
 
             const parts = ['adCity', 'adStreet', 'adHouse']
                 .map(id => document.getElementById(id)?.value?.trim())
@@ -271,6 +263,17 @@
 
             for (const file of selectedFiles)
                 fd.append('photos', file);
+
+
+            const useHome = document.getElementById('useHomeAddress')?.checked === true;
+                fd.append('useHomeAddress', useHome);
+
+            if (!useHome) {
+                const parts = ['adCity', 'adStreet', 'adHouse']
+                    .map(id => document.getElementById(id)?.value?.trim())
+                    .filter(Boolean);
+                fd.append('address', parts.join(', '));
+            }
 
             const res = await fetch('/Product/Create', {
                 method: 'POST',

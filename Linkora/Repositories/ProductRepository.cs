@@ -179,13 +179,13 @@ namespace Linkora.Repositories
         public async Task<Dictionary<int, string>> GetParamDisplayValuesAsync(int productId, string lang)
         {
             var rawValues = await QueryAsync(
-                @"SELECT p.CategoryId, m.Value, p.Type FROM MapperProductParam m
+                @"SELECT m.ParamId, m.Value, p.Type FROM MapperProductParam m
                   JOIN Parameters p ON p.Id = m.ParamId WHERE m.ProductId = @ProductId",
-                r => (CategoryId: r.GetInt32(0), Value: r.GetStringOrDefault(1), Type: r.GetInt32OrNull(2)),
+                r => (ParamId: r.GetInt32(0), Value: r.GetStringOrDefault(1), Type: r.GetInt32OrNull(2)),
                 p => p.AddWithValue("@ProductId", productId));
 
-            var selectParamIds = rawValues.Where(x => x.Type == 2 || x.Type == 4 || x.Type == 8).Select(x => x.CategoryId).Distinct().ToList(); 
-            var colorParamIds = rawValues.Where(x => x.Type == 6).Select(x => x.CategoryId).Distinct().ToList();
+            var selectParamIds = rawValues.Where(x => x.Type == 2 || x.Type == 4 || x.Type == 8).Select(x => x.ParamId).Distinct().ToList(); 
+            var colorParamIds = rawValues.Where(x => x.Type == 6).Select(x => x.ParamId).Distinct().ToList();
 
             var options = selectParamIds.Count > 0
                 ? await LoadSelectOptionsDictionaryAsync(selectParamIds)
@@ -224,7 +224,7 @@ namespace Linkora.Repositories
         {
             var (inClause, parameters) = BuildInClause(paramIds, "@pid");
             var data = await QueryAsync(
-                $"SELECT Id,Value,ValueLV,ValueRU FROM SelectOptions WHERE IsConf = 1 AND Id IN ({inClause})",
+                $"SELECT Id,Value,ValueLV,ValueRU FROM SelectOptions WHERE IsConf = 1 AND ParamId IN ({inClause})",
                 r => (Id: r.GetInt32(0), Value: r.GetString(1), ValueLV: r.GetStringOrDefault(2, r.GetString(1)), ValueRU: r.GetStringOrDefault(3, r.GetString(1))),
                 p => { foreach (var prm in parameters) p.Add(prm); });
             return data.ToDictionary(x => x.Id, x => (x.Value, x.ValueLV, x.ValueRU));
@@ -233,7 +233,7 @@ namespace Linkora.Repositories
         {
             var (inClause, parameters) = BuildInClause(paramIds, "@pid");
             var data = await QueryAsync(
-                $"SELECT Id,Name,NameLV,NameRU,HexValue FROM ColorOptions WHERE IsConf = 1 AND Id IN ({inClause})",
+                $"SELECT Id,Name,NameLV,NameRU,HexValue FROM ColorOptions WHERE IsConf = 1 AND ParamId IN ({inClause})",
                 r => (Id: r.GetInt32(0), Name: r.GetString(1), NameLV: r.GetStringOrDefault(2, r.GetString(1)), NameRU: r.GetStringOrDefault(3, r.GetString(1)), Hex: r.GetString(4)),
                 p => { foreach (var prm in parameters) p.Add(prm); });
             return data.ToDictionary(x => x.Id, x => (x.Name, x.NameLV, x.NameRU, x.Hex));
