@@ -7,8 +7,7 @@ namespace Linkora.Repositories
         public FavouriteRepository(IConfiguration config) : base(config) { }
         public async Task<bool> ToggleAsync(int productId, int userId, bool can)
         {
-            var existingIds = await QueryAsync(
-                "SELECT TOP 1 Id FROM Favourites WHERE ProductId = @P AND UserId = @U AND Can = @C",
+            var existingIds = await QueryAsync("SELECT TOP 1 Id FROM Favourites WHERE ProductId = @P AND UserId = @U AND Can = @C",
                 r => r.GetInt32(0),
                 p =>
                 {
@@ -20,9 +19,7 @@ namespace Linkora.Repositories
             var existingId = existingIds.FirstOrDefault();
             if (existingId > 0)
             {
-                await ExecuteAsync(
-                    "DELETE FROM Favourites WHERE Id = @Id",
-                    p => p.AddWithValue("@Id", existingId));
+                await ExecuteAsync("DELETE FROM Favourites WHERE Id = @Id", p => p.AddWithValue("@Id", existingId));
                 return false;
             }
 
@@ -38,8 +35,7 @@ namespace Linkora.Repositories
         }
         public async Task<(List<int> Favs, List<int> Cart)> GetUserItemIdsAsync(int userId)
         {
-            var items = await QueryAsync(
-                "SELECT ProductId, Can FROM Favourites WHERE UserId = @U",
+            var items = await QueryAsync("SELECT ProductId, Can FROM Favourites WHERE UserId = @U",
                 r => (ProductId: r.GetInt32(0), Can: r.GetBoolean(1)),
                 p => p.AddWithValue("@U", userId));
 
@@ -51,22 +47,13 @@ namespace Linkora.Repositories
         public async Task<(List<Product> Favs, List<Product> Cart)> GetUserItemsAsync(int userId)
         {
             var items = await QueryAsync(
-                @"SELECT f.Can, p.Id, p.Name,
-                 (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
-                  FROM MapperProductParam m
-                  JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
-                  WHERE m.ProductId = p.Id) as Price,
-                 p.Address, p.CreatedAt,
-                 COALESCE(
-                 (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
-                  WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-                 p.AvatarUrl
-             ) AS AvatarUrl, u.UserName, u.AvatarUrl, u.IsCompany,
-             u.Phone, u.Email, u.CreatedAt AS SellerCreatedAt, u.TelegramUrl, u.WhatsAppUrl, u.WebsiteUrl
-          FROM Favourites f
-          JOIN Products p ON p.Id = f.ProductId
-          LEFT JOIN Users u ON u.Id = p.UserId
-          WHERE f.UserId = @U",
+                @"SELECT f.Can, p.Id, p.Name, p.Price, p.Address, p.CreatedAt,
+                  COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder), p.AvatarUrl) AS AvatarUrl, 
+                  u.UserName, u.AvatarUrl, u.IsCompany, u.Phone, u.Email, u.CreatedAt AS SellerCreatedAt, u.TelegramUrl, u.WhatsAppUrl, u.WebsiteUrl
+                  FROM Favourites f
+                  JOIN Products p ON p.Id = f.ProductId
+                  LEFT JOIN Users u ON u.Id = p.UserId
+                  WHERE f.UserId = @U",
                 r => (
                     Can: r.GetBoolean(0),
                     Product: new Product

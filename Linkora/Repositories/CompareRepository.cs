@@ -11,24 +11,15 @@ namespace Linkora.Repositories
 
             var products = await QueryAsync(
                 @"SELECT p.Id, p.Name, p.Address, p.CreatedAt,
-               COALESCE(
-                   (SELECT TOP 1 pm.FilePath FROM ProductMedia pm
-                    WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),
-                   p.AvatarUrl
-               ) AS AvatarUrl,
-               (SELECT COUNT(*) FROM ProductMedia pm2 WHERE pm2.ProductId = p.Id) AS MediaCount,
-               (SELECT TOP 1 TRY_CAST(m.Value AS decimal(18,2))
-                FROM MapperProductParam m
-                JOIN Category c ON c.Id = m.CategoryId AND c.Name = 'Price, €'
-                WHERE m.ProductId = p.Id) AS Price,
-                cat.Name AS CategoryName, cat.NameLV AS CategoryNameLV, cat.NameRU AS CategoryNameRU,
-                u.UserName
-          FROM Favourites f
-          JOIN Products p ON p.Id = f.ProductId
-          LEFT JOIN Category cat ON cat.Id = p.CategoryId
-          LEFT JOIN Users u ON u.Id = p.UserId
-          WHERE f.UserId = @U AND f.Can = 0
-          ORDER BY f.Id",
+                  COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),p.AvatarUrl) AS AvatarUrl,
+                  (SELECT COUNT(*) FROM ProductMedia pm2 WHERE pm2.ProductId = p.Id) AS MediaCount, p.Price,
+                  cat.Name AS CategoryName, cat.NameLV AS CategoryNameLV, cat.NameRU AS CategoryNameRU, u.UserName
+                  FROM Favourites f
+                  JOIN Products p ON p.Id = f.ProductId
+                  LEFT JOIN Category cat ON cat.Id = p.CategoryId
+                  LEFT JOIN Users u ON u.Id = p.UserId
+                  WHERE f.UserId = @U AND f.Can = 0
+                  ORDER BY f.Id",
                 r =>
                 {
                     var catNameEn = r.GetStringOrDefault(7);
@@ -55,15 +46,13 @@ namespace Linkora.Repositories
             var (productInClause, productParams) = BuildInClause(productIds, "@p");
 
             var paramRows = await QueryAsync(
-                $@"SELECT mpc.ProductId, c.Id AS ParamId, c.Name, c.NameLV, c.NameRU, c.Type, mpc.Value,
-                  co.Name AS ColorName, co.NameLV AS ColorNameLV, co.NameRU AS ColorNameRU
-           FROM MapperProductParam mpc
-           JOIN Category c ON c.Id = mpc.CategoryId
-           LEFT JOIN ColorOptions co ON c.Type = 6 AND TRY_CAST(mpc.Value AS int) = co.Id
-           WHERE mpc.ProductId IN ({productInClause})
-             AND c.Name != 'Price, €'
-             AND c.Type IN (2,3,4,5,6,7,8)
-           ORDER BY c.Name",
+                $@"SELECT mpp.ProductId, p.Id AS ParamId, p.Name, p.NameLV, p.NameRU, p.Type, mpp.Value,
+                   co.Name AS ColorName, co.NameLV AS ColorNameLV, co.NameRU AS ColorNameRU
+                   FROM MapperProductParam mpp
+                   JOIN Parameters p ON p.Id = mpp.ParamId
+                   LEFT JOIN ColorOptions co ON c.Type = 6 AND TRY_CAST(mpp.Value AS int) = co.Id
+                   WHERE mpp.ProductId IN ({productInClause}) AND p.Type IN (2,3,4,5,6,7,8)
+                   ORDER BY p.Name",
                 r => (
                     ProductId: r.GetInt32(0),
                     ParamId: r.GetInt32(1),
@@ -132,7 +121,7 @@ namespace Linkora.Repositories
         {
             var (inClause, parameters) = BuildInClause(paramIds, "@pid");
             var data = await QueryAsync(
-                $"SELECT Id,Value,ValueLV,ValueRU FROM SelectOptions WHERE IsConf = 1 AND CategoryId IN ({inClause})",
+                $"SELECT Id,Value,ValueLV,ValueRU FROM SelectOptions WHERE IsConf = 1 AND ParamId IN ({inClause})",
                 r => (Id: r.GetInt32(0), Value: r.GetString(1), ValueLV: r.GetStringOrDefault(2, r.GetString(1)), ValueRU: r.GetStringOrDefault(3, r.GetString(1))),
                 p => { foreach (var prm in parameters) p.Add(prm); });
             return data.ToDictionary(x => x.Id, x => (x.Value, x.ValueLV, x.ValueRU));

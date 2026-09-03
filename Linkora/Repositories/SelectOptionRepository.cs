@@ -17,7 +17,7 @@ namespace Linkora.Repositories
         };
         public async Task<int?> FindIdAsync(int paramId, string text, string lang) => (await QueryAsync<int?>(
                 $@"SELECT Id FROM SelectOptions
-                   WHERE CategoryId = @ParamId
+                   WHERE ParamId = @ParamId
                      AND LTRIM(RTRIM({ValueColumn(lang)})) = LTRIM(RTRIM(@Text))",
                 r => r.GetInt32OrNull(0),
                 p =>
@@ -26,7 +26,7 @@ namespace Linkora.Repositories
                     p.AddWithValue("@Text", text.Trim());
                 })).FirstOrDefault();
         public async Task<int> CreateAsync(int paramId, string text) => (await QueryAsync<int>(
-                @"INSERT INTO SelectOptions (CategoryId, Value, ValueLV, ValueRU, IsConf)
+                @"INSERT INTO SelectOptions (ParamId, Value, ValueLV, ValueRU, IsConf)
                   OUTPUT INSERTED.Id
                   VALUES (@ParamId, @Text, @Text, @Text, 0)",
                 r => r.GetInt32(0),
@@ -41,7 +41,7 @@ namespace Linkora.Repositories
 
             if (_cache.TryGetValue(cacheKey, out List<(int Id, string Text)>? cached) && cached != null) return cached;
 
-            var result = await QueryAsync<(int Id, string Text)>($@"SELECT Id, {ValueColumn(lang)} FROM SelectOptions WHERE CategoryId = @ParamId AND IsConf = 1",
+            var result = await QueryAsync<(int Id, string Text)>($@"SELECT Id, {ValueColumn(lang)} FROM SelectOptions WHERE ParamId = @ParamId AND IsConf = 1",
                                                                     r => (r.GetInt32(0), r.GetStringOrDefault(1)), p => p.AddWithValue("@ParamId", paramId));
 
             _cache.Set(cacheKey, result, TimeSpan.FromMinutes(30));

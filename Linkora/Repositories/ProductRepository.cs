@@ -311,11 +311,10 @@ namespace Linkora.Repositories
 
             await ExecuteInTransactionAsync(async (conn, tx) =>
             {
-                await using (var updateCmd = new SqlCommand(@"
-                    UPDATE Products
-                    SET Name = @Name, Description = @Description, Qty = @Qty, Address = @Address,
-                        CategoryId = @CategoryId, PromotionType = @PromotionType, Lat = @Lat, Lng = @Lng, Price = @Price
-                    WHERE Id = @Id AND UserId = @UserId", conn, tx))
+                await using (var updateCmd = new SqlCommand(@"UPDATE Products
+                                                              SET Name = @Name, Description = @Description, Qty = @Qty, Address = @Address,
+                                                                  CategoryId = @CategoryId, PromotionType = @PromotionType, Lat = @Lat, Lng = @Lng, Price = @Price
+                                                              WHERE Id = @Id AND UserId = @UserId", conn, tx))
                 {
                     updateCmd.Parameters.AddWithValue("@Name", product.Name);
                     updateCmd.Parameters.AddWithValue("@Description", (object?)product.Description ?? DBNull.Value);
