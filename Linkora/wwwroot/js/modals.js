@@ -467,7 +467,7 @@ function openSellerModal(name, avatar, phone, isCompany, email, date, sellerId, 
     const avatarEl = document.getElementById('smAvatar');
     avatarEl.innerHTML = avatar
         ? `<img src="${avatar}" onerror="this.src='/img/no-photo.svg'" />`
-        : `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+        : Icons.get('avatarPlaceholder', { s: 40 });
 
     document.getElementById('smName').textContent = name || translate('unknown_seller');
     const badge = document.getElementById('smBadge');
@@ -534,12 +534,7 @@ function openSellerModal(name, avatar, phone, isCompany, email, date, sellerId, 
                 const avg = data.avg;
                 ratingEl.innerHTML = [1, 2, 3, 4, 5].map(i => {
                     const fill = i <= Math.floor(avg) ? '#f5a623' : 'none';
-                    const partial = i === Math.ceil(avg) && avg % 1 > 0;
-                    if (partial) {
-                        const pct = Math.round((avg % 1) * 100);
-                        return `<svg width="18" height="18" viewBox="0 0 24 24"><defs><linearGradient id="sg${i}"><stop offset="${pct}%" stop-color="#f5a623"/><stop offset="${pct}%" stop-color="none"/></linearGradient></defs><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="url(#sg${i})" stroke="#f5a623" stroke-width="2"/></svg>`;
-                    }
-                    return `<svg width="18" height="18" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="${fill}" stroke="#f5a623" stroke-width="2"/></svg>`;
+                    return Icons.get('star', { s: 18, fill });
                 }).join('') + `<span class="sm-rating-text">${avg.toFixed(1)} · ${data.count}</span>`;
                 ratingEl.style.display = 'flex';
             })
@@ -576,7 +571,6 @@ function applySettingsUI() {
     const themeToggle = document.getElementById('themeToggle');
     if (themeToggle) themeToggle.classList.toggle('settings-toggle-on', dark);
 }
-
 function toggleTheme() {
     const isDark = document.documentElement.classList.toggle('dark-theme');
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
@@ -584,7 +578,7 @@ function toggleTheme() {
     if (themeToggleBtn) themeToggleBtn.classList.toggle('settings-toggle-on', isDark);
 
     const logo = document.getElementById('siteLogo');
-    if (logo) logo.src = isDark ? '/img/DLogo.svg' : '/img/Logo.svg';
+    if (logo) Icons.applyAsset(logo, isDark ? 'logoDark' : 'logo');
 }
 
 /* ---------- Reviews modal ---------- */
@@ -624,11 +618,11 @@ async function loadReviewTab(tab) {
             return;
         }
         list.innerHTML = data.map(r => `
-            <div class="review-item">
-                <div class="review-author">
-                    <img src="${r.avatarUrl || '/img/no-photo.svg'}"
-                         class="review-author-avatar"
-                         onerror="this.src='/img/no-photo.svg'" />
+        <div class="review-item">
+            <div class="review-author">
+                <img src="${r.avatarUrl || ''}"
+                     class="review-author-avatar"
+                     onerror="this.onerror=null; Icons.getAsset('noPhoto').then(u => this.src = u)" />
                     <div>
                         <a class="review-author-name" href="/Seller/Index/${r.userId}"
                            onclick="closeMyReviewsModal()">
@@ -897,12 +891,12 @@ function renderNotifList() {
     }
 
     list.innerHTML = data.map(n => `
-        <div class="notif-item ${n.isRead ? '' : 'unread'}"
-             id="notif-item-${n.id}"
-             onclick="handleNotifClick(${n.id}, '${n.productId ? '/Product/Details/' + n.productId : ''}')">
-            <img class="notif-item-avatar"
-                 src="${n.fromUserAvatar || '/img/no-photo.svg'}"
-                 onerror="this.src='/img/no-photo.svg'" />
+    <div class="notif-item ${n.isRead ? '' : 'unread'}"
+         id="notif-item-${n.id}"
+         onclick="handleNotifClick(${n.id}, '${n.productId ? '/Product/Details/' + n.productId : ''}')">
+        <img class="notif-item-avatar"
+             src="${n.fromUserAvatar || ''}"
+             onerror="this.onerror=null; Icons.getAsset('noPhoto').then(u => this.src = u)" />
             <div class="notif-item-body">
                 <div class="notif-item-msg">${escapeHtml(translateNotificationMessage(n.text, n))}</div>
                 <div class="notif-item-time">${n.createdAt}</div>

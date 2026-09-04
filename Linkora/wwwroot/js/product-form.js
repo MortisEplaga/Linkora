@@ -400,16 +400,6 @@ function selectPubDuration(days, btn) {
     document.getElementById('pubDurationValue').value = days;
 }
 
-function selectPromotion(type, btn) {
-    if (type === 'None') {
-        applyPromotionSelection(type, btn);
-        return;
-    }
-    pendingPromoType = type;
-    pendingPromoBtn = btn;
-    openPromoRulesModal();
-}
-
 function applyPromotionSelection(type, btn) {
     document.querySelectorAll('#promotionPills .duration-pill').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');

@@ -5,7 +5,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Vena</title>
-    <link rel="icon" type="image/x-icon" href="~/img/MiniLogo.svg" />
+    <link rel="icon" type="image/x-icon" href="~/img/MiniLogo.svg" id="faviconLink" />
+    <script src="~/js/icons.js"></script>
+    <script> Icons.applyAsset(document.getElementById('faviconLink'), 'favicon') </script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/Category.css" />
@@ -23,6 +25,7 @@
     <script src="~/js/param-rules-engine.js"></script>
     <script src="~/js/free-text-select.js"></script>
     <script src="~/js/modals.js"></script>
+
     @if (User.Identity!.IsAuthenticated)
     {
         <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
@@ -79,8 +82,8 @@
     @await Html.PartialAsync("Partial/_SupportModal")
     @await Html.PartialAsync("Partial/_ContactsModal")
     @await Html.PartialAsync("Partial/_NotificationModal")
-
     <script src="~/js/catmenu.js"></script>
+
     @await RenderSectionAsync("Scripts", required: false)
 
     <button id="scrollTopBtn" class="scroll-top-btn" aria-label="Up">

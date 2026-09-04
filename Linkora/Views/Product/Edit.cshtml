@@ -304,12 +304,6 @@
                 return;
             }
 
-            const priceWrap = document.getElementById('priceFieldWrap');
-            if (priceWrap.style.display !== 'none') {
-                const priceVal = document.getElementById('adPrice').value;
-                if (priceVal) fd.append('price', priceVal);
-            }
-
             const useHome = document.getElementById('useHomeAddress')?.checked === true;
             let addressValue;
 
@@ -332,6 +326,12 @@
             fd.append('keepMediaJson', JSON.stringify(window.existingMediaPaths || []));
             fd.append('publishDays', document.getElementById('pubDurationValue').value || '30');
             fd.append('promotionType', document.getElementById('promotionValue').value || 'None');
+
+            const priceWrap = document.getElementById('priceFieldWrap');
+            if (priceWrap.style.display !== 'none') {
+                const priceVal = document.getElementById('adPrice').value;
+                if (priceVal) fd.append('price', priceVal);
+            }
 
             const params = await collectParamValues(document.getElementById('createParams'));
             fd.append('paramsJson', JSON.stringify(params));
@@ -356,7 +356,8 @@
             translateDynamicElement(btn);
         }
     }
-        function toggleHomeAddress() {
+    
+    function toggleHomeAddress() {
         const checked = document.getElementById('useHomeAddress')?.checked;
         ['adCity', 'adStreet', 'adHouse'].forEach(id => {
             const el = document.getElementById(id);

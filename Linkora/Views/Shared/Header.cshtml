@@ -228,13 +228,7 @@
         (function() {
             const isDark = localStorage.getItem('theme') === 'dark';
             const logo = document.getElementById('siteLogo');
-
-            if (isDark) {
-                document.documentElement.classList.add('dark-theme');
-                if (logo) logo.src = '/img/DLogo.svg';
-            } else if (logo) {
-                logo.src = '/img/Logo.svg';
-            }
+            if (logo) Icons.applyAsset(logo, isDark ? 'logoDark' : 'logo');
 
             const currentLang = localStorage.getItem('lang') || 'en';
             if (currentLang === 'en') document.getElementById('headerLangEN')?.classList.add('active');

@@ -217,7 +217,7 @@
                     const img = document.createElement('img');
                     img.id = 'lbImg'; img.className = 'lb-img';
                     img.src = item.path;
-                    img.onerror = () => img.src = '/img/no-photo.svg';
+                    img.onerror = () => { Icons.getAsset('noPhoto').then(u => img.src = u); };
                     lbMain.insertBefore(img, document.querySelector('.lb-next'));
                 }
 
