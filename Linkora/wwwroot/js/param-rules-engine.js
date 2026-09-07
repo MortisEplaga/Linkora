@@ -146,8 +146,14 @@
     window.ParamRulesEngine = {
         loadRules: async function (categoryId) {
             try {
-                var res = await fetch('/Product/CategoryRules?categoryId=' + categoryId);
-                var data = await res.json();
+                var response = await fetch('/Product/CategoryRules?categoryId=' + categoryId);
+                if (!response.ok) {
+                    console.error(translate('engine_error'), 'HTTP ' + response.status);
+                    _visibilityRules = [];
+                    _validationRules = [];
+                    return;
+                }
+                var data = await response.json();
                 _visibilityRules = data.visibilityRules || [];
                 _validationRules = data.validationRules || [];
 
@@ -164,6 +170,8 @@
                 applyAllVisibility();
             } catch (e) {
                 console.error(translate('engine_error'), e);
+                _visibilityRules = [];
+                _validationRules = [];
             }
         },
         triggerUpdate: function () {

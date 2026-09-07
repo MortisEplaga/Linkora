@@ -382,7 +382,6 @@
 </div>
 </div>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=@Html.Raw(ViewBag.GoogleMapsApiKey)"></script>
 <script src="~/js/markerclusterer.js"></script>
 <script src="~/js/param-utils.js"></script>
 <script>
@@ -393,30 +392,38 @@
         })
     ));
 
-    let mapsScriptLoading = null;
-    function ensureMapsLoaded() {
-        if (window.google && window.google.maps) return Promise.resolve();
-        if (mapsScriptLoading) return mapsScriptLoading;
-        mapsScriptLoading = new Promise((resolve) => {
-            const script = document.createElement('script');
-            script.src = 'https://maps.googleapis.com/maps/api/js?key=@Html.Raw(ViewBag.GoogleMapsApiKey)';
-            script.onload = resolve;
-            document.head.appendChild(script);
-        });
+let mapsScriptLoading = null;
+function ensureMapsLoaded() {
+    if (window.google && window.google.maps) return Promise.resolve();
+    if (mapsScriptLoading) return mapsScriptLoading;
+    mapsScriptLoading = new Promise((resolve) => {
+        window.__mapsReady = resolve;
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent('@Html.Raw(ViewBag.GoogleMapsApiKey)')}&loading=async&callback=__mapsReady`;
+        document.head.appendChild(script);
+    });
     return mapsScriptLoading;
 }
 
-    function setView(v) {
-        localStorage.setItem('listingView', v);
-        const c = document.getElementById('listingContainer');
-        c.className = v === 'grid' ? 'listing-grid' : 'listing-list';
-        document.getElementById('btnGrid').classList.toggle('active', v === 'grid');
-        document.getElementById('btnList').classList.toggle('active', v === 'list');
-        if (v === 'map') {
-        ensureMapsLoaded().then(loadProductsMap);
-    }
-    }
+function setView(v) {
+    localStorage.setItem('listingView', v);
+    const c = document.getElementById('listingContainer');
+    const mapWrap = document.getElementById('listingMap');
 
+    document.getElementById('btnGrid').classList.toggle('active', v === 'grid');
+    document.getElementById('btnList').classList.toggle('active', v === 'list');
+    document.getElementById('btnMap').classList.toggle('active', v === 'map');
+
+    if (v === 'map') {
+        c.style.display = 'none';
+        mapWrap.style.display = 'block';
+        ensureMapsLoaded().then(loadProductsMap);
+    } else {
+        c.className = v === 'grid' ? 'listing-grid' : 'listing-list';
+        c.style.display = '';
+        mapWrap.style.display = 'none';
+    }
+}
     function toggleSort(e) {
         e.stopPropagation();
         document.getElementById('sortDrop').classList.toggle('open');
