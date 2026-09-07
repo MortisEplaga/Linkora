@@ -382,7 +382,7 @@
 </div>
 </div>
 
-<script src="~/js/markerclusterer.js"></script>
+<script src="https://unpkg.com/@@googlemaps/markerclusterer/dist/index.min.js"></script>
 <script src="~/js/param-utils.js"></script>
 <script>
     var mapProducts = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
@@ -399,7 +399,7 @@ function ensureMapsLoaded() {
     mapsScriptLoading = new Promise((resolve) => {
         window.__mapsReady = resolve;
         const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent('@Html.Raw(ViewBag.GoogleMapsApiKey)')}&loading=async&callback=__mapsReady`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent('@Html.Raw(ViewBag.GoogleMapsApiKey)')}&loading=async&libraries=marker&callback=__mapsReady`;
         document.head.appendChild(script);
     });
     return mapsScriptLoading;
@@ -462,8 +462,9 @@ function loadProductsMap() {
     if (!googleMap) {
         googleMap = new google.maps.Map(document.getElementById('productsMapCanvas'), {
             zoom: 12,
-            center: { lat: 56.9496, lng: 24.1052 }
-        });
+            center: { lat: 56.9496, lng: 24.1052 },
+            mapId: '912f598a043983cbfa58c256'
+        });    
     }
 
     if (markerCluster) {
@@ -478,6 +479,10 @@ function loadProductsMap() {
     const bounds = new google.maps.LatLngBounds();
     let hasAny = false;
 
+    // Локализация для InfoWindow
+    const lang = localStorage.getItem('lang') || 'en';
+    const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
+
     mapProducts.forEach(p => {
         if (p.lat == null || p.lng == null) return;
         hasAny = true;
@@ -488,7 +493,7 @@ function loadProductsMap() {
             title: p.name,
         });
 
-        const priceText = p.price ? p.price.toFixed(2) + ' €' : translate('price_on_request');
+        const priceText = p.price ? p.price.toFixed(2) + ' €' : (dict.price_on_request || 'Price on request');
         const info = new google.maps.InfoWindow({
             content: `<a href="/Product/Details/${p.id}" style="text-decoration:none;color:#1a1a1a;display:block;width:140px">
                 <img src="${p.image}" style="width:100%;height:90px;object-fit:cover;border-radius:6px" onerror="this.src='/img/no-photo.svg'" />
@@ -505,23 +510,18 @@ function loadProductsMap() {
 
     if (!hasAny) return;
 
-    markerCluster = new MarkerClusterer({
+    // ИСПРАВЛЕНО: Обращение к корректному глобальному объекту библиотеки
+    markerCluster = new markerClusterer.MarkerClusterer({
         map: googleMap,
         markers: markers,
-        gridSize: 60,           
-        maxZoom: 16,            
-        styles: [{
-            url: '/img/cluster-icon.png', 
-            height: 40,
-            width: 40,
-            textColor: '#fff',
-            textSize: 14
-        }]
+        algorithmOptions: {
+            maxZoom: 16,            
+            gridSize: 60           
+        }
     });
 
     googleMap.fitBounds(bounds);
 }  
-
 function resetFilters(categoryId) {
         window.location.href = '/Category/Index/' + categoryId;
     }
