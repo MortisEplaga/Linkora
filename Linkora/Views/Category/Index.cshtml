@@ -479,7 +479,6 @@ function loadProductsMap() {
     const bounds = new google.maps.LatLngBounds();
     let hasAny = false;
 
-    // Локализация для InfoWindow
     const lang = localStorage.getItem('lang') || 'en';
     const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
 
@@ -488,11 +487,10 @@ function loadProductsMap() {
         hasAny = true;
         const position = { lat: p.lat, lng: p.lng };
 
-        const marker = new google.maps.AdvancedMarkerElement({ 
-            position, 
-            title: p.name,
-        });
-
+const marker = new google.maps.marker.AdvancedMarkerElement({ 
+    position, 
+    title: p.name,
+});
         const priceText = p.price ? p.price.toFixed(2) + ' €' : (dict.price_on_request || 'Price on request');
         const info = new google.maps.InfoWindow({
             content: `<a href="/Product/Details/${p.id}" style="text-decoration:none;color:#1a1a1a;display:block;width:140px">
@@ -510,7 +508,6 @@ function loadProductsMap() {
 
     if (!hasAny) return;
 
-    // ИСПРАВЛЕНО: Обращение к корректному глобальному объекту библиотеки
     markerCluster = new markerClusterer.MarkerClusterer({
         map: googleMap,
         markers: markers,
