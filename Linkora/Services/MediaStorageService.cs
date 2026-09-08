@@ -6,7 +6,6 @@ namespace Linkora.Services
     {
         Task<List<ProductMedia>> SaveUploadedFilesAsync(List<IFormFile> files, CancellationToken ct = default);
     }
-
     public sealed class MediaStorageService : IMediaStorageService
     {
         public const long MaxSingleFileBytes = 10L * 1024 * 1024;   // 10 МБ
@@ -36,8 +35,7 @@ namespace Linkora.Services
             var result = new List<ProductMedia>();
             if (files is null || files.Count == 0) return result;
 
-            var folder = Path.Combine(
-                Directory.GetCurrentDirectory(), "wwwroot", "img", "products");
+            var folder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "img", "products");
             Directory.CreateDirectory(folder);
 
             foreach (var file in files)
@@ -47,16 +45,11 @@ namespace Linkora.Services
                 if (file.Length > MaxSingleFileBytes) continue;
 
                 var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-                if (!AllowedImageExtensions.Contains(ext) &&
-                    !AllowedVideoExtensions.Contains(ext))
-                    continue;
+                if (!AllowedImageExtensions.Contains(ext) && !AllowedVideoExtensions.Contains(ext)) continue;
 
                 var contentType = (file.ContentType ?? string.Empty).ToLowerInvariant();
-                var allowedMimes = AllowedVideoExtensions.Contains(ext)
-                    ? AllowedVideoMimeTypes
-                    : AllowedImageMimeTypes;
-                if (!allowedMimes.Contains(contentType))
-                    continue;
+                var allowedMimes = AllowedVideoExtensions.Contains(ext) ? AllowedVideoMimeTypes : AllowedImageMimeTypes;
+                if (!allowedMimes.Contains(contentType)) continue;
 
                 var header = new byte[16];
                 int totalRead = 0;
@@ -77,7 +70,7 @@ namespace Linkora.Services
 
                 var name = $"{Guid.NewGuid():N}{ext}";
                 var fullPath = Path.Combine(folder, name);
-                await using (var fs = System.IO.File.Create(fullPath))
+                await using (var fs = File.Create(fullPath))
                 {
                     await file.CopyToAsync(fs, ct);
                 }

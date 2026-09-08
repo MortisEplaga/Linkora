@@ -14,9 +14,7 @@ namespace Linkora.Services
     {
         private readonly IAdminRepository _admin;
         private readonly IProductRepository _products;
-
         public AdminService(IAdminRepository admin, IProductRepository products) => (_admin, _products) = (admin, products);
-
         public async Task<(string? OldRole, BanUserResult? BanData)> SetUserRoleAsync(int id, string role)
         {
             var oldRole = await _admin.UpdateUserRoleAsync(id, role);
@@ -30,23 +28,19 @@ namespace Linkora.Services
             banData.FavouriteUsers.AddRange(await _admin.GetFavouriteUsersBySellerAsync(id));
             return (oldRole, banData);
         }
-
         public async Task DeleteUserCascadeAsync(int id)
         {
             var productIds = await _admin.GetUserProductIdsAsync(id);
             foreach (var productId in productIds) await _products.DeleteAsync(productId);
             await _admin.DeleteUserAsync(id);
         }
-
         public async Task<ApproveOptionResult> ApproveOptionAsync(int id)
         {
             var result = await _admin.GetApproveOptionContextAsync(id);
             result.Success = await _products.ApproveSelectOptionAsync(id);
-            if (result.Success && result.UserId.HasValue && result.ProductId.HasValue)
-                await _admin.DecrementModerationScoreAsync(result.ProductId.Value);
+            if (result.Success && result.UserId.HasValue && result.ProductId.HasValue) await _admin.DecrementModerationScoreAsync(result.ProductId.Value);
             return result;
         }
-
         public async Task<RejectOptionResult> RejectProductByOptionAsync(int optionId, int productId)
         {
             var result = await _admin.GetRejectOptionContextAsync(optionId, productId);

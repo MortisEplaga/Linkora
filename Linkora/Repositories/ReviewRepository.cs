@@ -11,9 +11,8 @@ namespace Linkora.Repositories
             var whereField = isAbout ? "r.TargetUserId" : "r.AuthorId";
             var joinUserId = isAbout ? "r.AuthorId" : "r.TargetUserId";
 
-            return await QueryAsync($@"
-                SELECT r.Rating, r.Comment, r.CreatedAt, u.Id, u.UserName, u.AvatarUrl FROM Reviews r
-                JOIN Users u ON u.Id = {joinUserId} WHERE {whereField} = @UserId ORDER BY r.CreatedAt DESC",
+            return await QueryAsync($@"SELECT r.Rating, r.Comment, r.CreatedAt, u.Id, u.UserName, u.AvatarUrl FROM Reviews r
+                                       JOIN Users u ON u.Id = {joinUserId} WHERE {whereField} = @UserId ORDER BY r.CreatedAt DESC",
                 r => new ReviewRow
                 {
                     Rating = r.GetInt32(0),
@@ -26,8 +25,7 @@ namespace Linkora.Repositories
                 p => p.AddWithValue("@UserId", userId));
         }
         public async Task<bool> CanReviewAsync(int authorId, int targetUserId, int productId) => (await QueryAsync<int>(@"
-                    SELECT COUNT(*) FROM Reviews
-                    WHERE AuthorId = @AuthorId AND TargetUserId = @TargetId AND ProductId = @ProductId",
+                    SELECT COUNT(*) FROM Reviews WHERE AuthorId = @AuthorId AND TargetUserId = @TargetId AND ProductId = @ProductId",
                 r => r.GetInt32(0),
                 p =>
                 {

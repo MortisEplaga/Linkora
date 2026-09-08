@@ -48,18 +48,14 @@ namespace Linkora.Repositories
                     UserId = r.GetInt32(6),
                 },
                 p => p.AddWithValue("@Reference", reference));
-        public async Task MarkCompletedAsync(int paymentId) => await ExecuteAsync(
-                "UPDATE Payments SET Status = 'Completed', CompletedAt = SYSUTCDATETIME() WHERE Id = @Id",
-                p => p.AddWithValue("@Id", paymentId));
-        public async Task ApplyPromotionAsync(int productId, string promotionType) => await ExecuteAsync(
-                "UPDATE Products SET PromotionType = @Type WHERE Id = @Id",
+        public async Task MarkCompletedAsync(int paymentId) => await ExecuteAsync("UPDATE Payments SET Status = 'Completed', CompletedAt = SYSUTCDATETIME() WHERE Id = @Id", p => p.AddWithValue("@Id", paymentId));
+        public async Task ApplyPromotionAsync(int productId, string promotionType) => await ExecuteAsync("UPDATE Products SET PromotionType = @Type WHERE Id = @Id",
                 p =>
                 {
                     p.AddWithValue("@Type", promotionType);
                     p.AddWithValue("@Id", productId);
                 });
-        public async Task ApplySubscriptionAsync(int userId, string subscriptionType) => await ExecuteAsync(
-                "UPDATE Users SET SubscriptionType = @Type WHERE Id = @Id",
+        public async Task ApplySubscriptionAsync(int userId, string subscriptionType) => await ExecuteAsync("UPDATE Users SET SubscriptionType = @Type WHERE Id = @Id",
                 p =>
                 {
                     p.AddWithValue("@Type", subscriptionType);

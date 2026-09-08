@@ -4,12 +4,9 @@ namespace Linkora.Repositories
 {
     public class NotificationRepository(IConfiguration configuration) : SqlRepositoryBase(configuration), INotificationRepository
     {
-        public async Task<int> CreateAsync(int userId, int? fromUserId, int? productId, string text)
-        {
-            var ids = await QueryAsync<int>(
+        public async Task<int> CreateAsync(int userId, int? fromUserId, int? productId, string text) => (await QueryAsync<int>(
                 @"INSERT INTO Notifications (UserId, FromUserId, ProductId, Text, IsRead, CreatedAt)
-                  OUTPUT INSERTED.Id
-                  VALUES (@UserId, @FromUserId, @ProductId, @Text, 0, GETDATE())",
+                  OUTPUT INSERTED.Id VALUES (@UserId, @FromUserId, @ProductId, @Text, 0, GETDATE())",
                 r => r.GetInt32(0),
                 p =>
                 {
@@ -17,10 +14,7 @@ namespace Linkora.Repositories
                     p.AddWithValue("@FromUserId", (object?)fromUserId ?? DBNull.Value);
                     p.AddWithValue("@ProductId", (object?)productId ?? DBNull.Value);
                     p.AddWithValue("@Text", text);
-                });
-
-            return ids[0];
-        }
+                }))[0];
         public async Task<List<(int NotificationId, int UserId)>> CreateForSubscribersAsync(int authorId, int productId, string text) => await QueryAsync<(int, int)>(
                 @"INSERT INTO Notifications (UserId, FromUserId, ProductId, Text, IsRead, CreatedAt)
                   OUTPUT INSERTED.Id, INSERTED.UserId
@@ -63,19 +57,8 @@ namespace Linkora.Repositories
                     ProductImage = r.GetStringOrNull(10),
                 },
                 p => p.AddWithValue("@UserId", userId));
-        public Task<List<string>> GetUnreadTextsAsync(int userId) => QueryAsync<string>(
-                "SELECT Text FROM Notifications WHERE UserId = @UserId AND IsRead = 0",
-                r => r.GetStringOrDefault(0),
-                p => p.AddWithValue("@UserId", userId));
-        public Task MarkReadAsync(int notificationId, int userId) => ExecuteAsync(
-                "UPDATE Notifications SET IsRead = 1 WHERE Id = @Id AND UserId = @UserId",
-                p =>
-                {
-                    p.AddWithValue("@Id", notificationId);
-                    p.AddWithValue("@UserId", userId);
-                });
-        public Task MarkAllReadAsync(int userId) => ExecuteAsync(
-                "UPDATE Notifications SET IsRead = 1 WHERE UserId = @UserId AND IsRead = 0",
-                p => p.AddWithValue("@UserId", userId));
+        public Task<List<string>> GetUnreadTextsAsync(int userId) => QueryAsync<string>("SELECT Text FROM Notifications WHERE UserId = @UserId AND IsRead = 0", r => r.GetStringOrDefault(0), p => p.AddWithValue("@UserId", userId));
+        public Task MarkReadAsync(int notificationId, int userId) => ExecuteAsync("UPDATE Notifications SET IsRead = 1 WHERE Id = @Id AND UserId = @UserId", p => { p.AddWithValue("@Id", notificationId); p.AddWithValue("@UserId", userId); });
+        public Task MarkAllReadAsync(int userId) => ExecuteAsync("UPDATE Notifications SET IsRead = 1 WHERE UserId = @UserId AND IsRead = 0", p => p.AddWithValue("@UserId", userId));
     }
 }

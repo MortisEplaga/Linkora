@@ -7,10 +7,7 @@ namespace Linkora.Services
 {
     public interface IMaksekeskusService
     {
-        Task<(string TransactionId, string RedirectUrl)> CreateTransactionAsync(
-            decimal price, string currency, string reference,
-            string customerEmail, string customerIp, string locale,
-            string returnUrl, string cancelUrl, string notificationUrl);
+        Task<(string TransactionId, string RedirectUrl)> CreateTransactionAsync(decimal price, string currency, string reference, string customerEmail, string customerIp, string locale, string returnUrl, string cancelUrl, string notificationUrl);
         bool VerifyMac(string json, string mac);
     }
 
@@ -23,18 +20,13 @@ namespace Linkora.Services
 
         public MaksekeskusService(IConfiguration configuration, IHttpClientFactory httpClientFactory)
         {
-            _shopId = configuration["MakeCommerce:ShopId"]
-                ?? throw new InvalidOperationException("MakeCommerce:ShopId is not configured");
-            _secretKey = configuration["MakeCommerce:SecretKey"]
-                ?? throw new InvalidOperationException("MakeCommerce:SecretKey is not configured");
+            _shopId = configuration["MakeCommerce:ShopId"] ?? throw new InvalidOperationException("MakeCommerce:ShopId is not configured");
+            _secretKey = configuration["MakeCommerce:SecretKey"] ?? throw new InvalidOperationException("MakeCommerce:SecretKey is not configured");
             var testMode = configuration.GetValue<bool>("MakeCommerce:TestMode", true);
             _apiBase = testMode ? "https://api.test.maksekeskus.ee" : "https://api.maksekeskus.ee";
             _http = httpClientFactory.CreateClient();
         }
-        public async Task<(string TransactionId, string RedirectUrl)> CreateTransactionAsync(
-            decimal price, string currency, string reference,
-            string customerEmail, string customerIp, string locale,
-            string returnUrl, string cancelUrl, string notificationUrl)
+        public async Task<(string TransactionId, string RedirectUrl)> CreateTransactionAsync(decimal price, string currency, string reference, string customerEmail, string customerIp, string locale, string returnUrl, string cancelUrl, string notificationUrl)
         {
             var payload = new
             {
@@ -59,11 +51,9 @@ namespace Linkora.Services
                 }
             };
 
-            var json = JsonSerializer.Serialize(payload);
             using var request = new HttpRequestMessage(HttpMethod.Post, $"{_apiBase}/v1/transactions");
-            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
-            var authBytes = Encoding.ASCII.GetBytes($"{_shopId}:{_secretKey}");
-            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(authBytes));
+            request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.ASCII.GetBytes($"{_shopId}:{_secretKey}")));
 
             var response = await _http.SendAsync(request);
             var body = await response.Content.ReadAsStringAsync();

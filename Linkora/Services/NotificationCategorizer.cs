@@ -16,18 +16,14 @@ namespace Linkora.Services
                     {
                         "deal_sold" or "deal_bought" or "subscription_sold" => "Deals",
                         "review_received" => "Reviews",
-                        "product_approved" or "parameter_approved" or "parameter_rejected"
-                            or "rejected_reason" or "report_on_product" => "Moderation",
+                        "product_approved" or "parameter_approved" or "parameter_rejected" or "rejected_reason" or "report_on_product" => "Moderation",
                         "user_banned" or "user_unbanned" => "Account",
-                        "favourite_updated" or "favourite_archived_ban"
-                            or "subscription_seller_banned" => "Favourites",
+                        "favourite_updated" or "favourite_archived_ban" or "subscription_seller_banned" => "Favourites",
                         _ => "NewListings"
                     };
                 }
             }
-            catch (JsonException)
-            {
-            }
+            catch (JsonException) {}
             return "NewListings";
         }
     }

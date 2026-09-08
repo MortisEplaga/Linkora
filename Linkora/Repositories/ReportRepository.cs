@@ -89,13 +89,9 @@ namespace Linkora.Repositories
         }
         public async Task<IEnumerable<Report>> GetReportsByProductIdAsync(int productId) => await QueryAsync(
                 "SELECT * FROM Reports WHERE ProductId = @ProductId ORDER BY CreatedAt DESC",
-                MapReport,
-                p => p.AddWithValue("@ProductId", productId));
-        public async Task<IEnumerable<Report>> GetPendingReportsAsync() => await QueryAsync(
-                "SELECT * FROM Reports WHERE Status = 'Pending' ORDER BY CreatedAt ASC",
-                MapReport);
-        public async Task UpdateReportStatusAsync(int reportId, ReportStatus status) => await ExecuteAsync(
-                "UPDATE Reports SET Status = @Status WHERE Id = @Id",
+                MapReport, p => p.AddWithValue("@ProductId", productId));
+        public async Task<IEnumerable<Report>> GetPendingReportsAsync() => await QueryAsync("SELECT * FROM Reports WHERE Status = 'Pending' ORDER BY CreatedAt ASC", MapReport);
+        public async Task UpdateReportStatusAsync(int reportId, ReportStatus status) => await ExecuteAsync("UPDATE Reports SET Status = @Status WHERE Id = @Id",
                 p =>
                 {
                     p.AddWithValue("@Status", status.ToString());

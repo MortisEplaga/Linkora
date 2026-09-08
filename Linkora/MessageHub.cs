@@ -9,27 +9,19 @@ namespace Linkora.Hubs
     public class MessageHub : Hub
     {
         private readonly IMessageRepository _messageRepository;
-        public MessageHub(IMessageRepository messageRepository)
-        {
-            _messageRepository = messageRepository;
-        }
+        public MessageHub(IMessageRepository messageRepository) { _messageRepository = messageRepository; }
         public async Task JoinConversation(int conversationId) => await Groups.AddToGroupAsync(Context.ConnectionId, $"conv_{conversationId}");
         public async Task LeaveConversation(int conversationId) => await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"conv_{conversationId}");
         public async Task SendMessage(int conversationId, string text)
         {
-            if (!Context.User.TryGetUserId(out int userId)) return;
-            var userName = Context.User?.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
-
-            if (string.IsNullOrWhiteSpace(text)) return;
-
-            var msgId = await _messageRepository.SendMessageAsync(conversationId, userId, text);
+            if (!Context.User.TryGetUserId(out int userId) || string.IsNullOrWhiteSpace(text)) return;
 
             var payload = new
             {
-                id = msgId,
+                id = await _messageRepository.SendMessageAsync(conversationId, userId, text),
                 conversationId,
                 senderId = userId,
-                senderName = userName,
+                senderName = Context.User?.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown",
                 text,
                 createdAt = DateTime.UtcNow.ToString("o"),
                 isRead = false,

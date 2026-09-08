@@ -5,10 +5,7 @@ namespace Linkora.Repositories
     public class SelectOptionRepository : SqlRepositoryBase, ISelectOptionRepository
     {
         private readonly IMemoryCache _cache;
-        public SelectOptionRepository(IConfiguration configuration, IMemoryCache cache) : base(configuration)
-        {
-            _cache = cache;
-        }
+        public SelectOptionRepository(IConfiguration configuration, IMemoryCache cache) : base(configuration) { _cache = cache; }
         private static string ValueColumn(string lang) => lang switch
         {
             "lv" => "ValueLV",

@@ -6,7 +6,6 @@ namespace Linkora.Services
     {
         Task<(decimal Lat, decimal Lng)?> GeocodeAsync(string address);
     }
-
     public class GoogleGeocodingService : IGeocodingService
     {
         private readonly IHttpClientFactory _httpClientFactory;
@@ -21,7 +20,6 @@ namespace Linkora.Services
             _cache = cache;
             _logger = logger;
         }
-
         public async Task<(decimal Lat, decimal Lng)?> GeocodeAsync(string address)
         {
             if (string.IsNullOrWhiteSpace(address))

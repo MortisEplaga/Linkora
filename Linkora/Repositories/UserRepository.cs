@@ -70,8 +70,7 @@ namespace Linkora.Repositories
         }
         public async Task<User?> GetByConfirmationTokenAsync(string token) => await QuerySingleAsync("SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration, SubscriptionType, TelegramUrl, WhatsAppUrl, WebsiteUrl, HomeAddress, HomeLat, HomeLng FROM Users WHERE ConfirmationToken = @T", MapUser, p => p.AddWithValue("@T", token));
         public async Task ConfirmEmailAsync(string token) => await ExecuteAsync("UPDATE Users SET EmailConfirmed = 1, ConfirmationToken = NULL WHERE ConfirmationToken = @T", p => p.AddWithValue("@T", token));
-        public async Task<int> CreateExternalUserAsync(User user) => (await QueryAsync<int>(
-                @"INSERT INTO Users (UserName, Email, Role, PasswordHash, AvatarUrl, EmailConfirmed, IsCompany, ConfirmationToken) OUTPUT INSERTED.Id VALUES (@U, @E, 'user', NULL, @A, @EC, @IC, NULL)",
+        public async Task<int> CreateExternalUserAsync(User user) => (await QueryAsync<int>(@"INSERT INTO Users (UserName, Email, Role, PasswordHash, AvatarUrl, EmailConfirmed, IsCompany, ConfirmationToken) OUTPUT INSERTED.Id VALUES (@U, @E, 'user', NULL, @A, @EC, @IC, NULL)",
                 r => r.GetInt32(0), p => {
                     p.AddWithValue("@U", user.UserName);
                     p.AddWithValue("@E", (object?)user.Email ?? DBNull.Value);

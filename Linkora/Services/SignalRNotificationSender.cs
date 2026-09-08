@@ -11,12 +11,7 @@ namespace Linkora.Services
     public class SignalRNotificationSender : INotificationRealTimeSender
     {
         private readonly IHubContext<MessageHub> _hubContext;
-
-        public SignalRNotificationSender(IHubContext<MessageHub> hubContext)
-        {
-            _hubContext = hubContext;
-        }
-
+        public SignalRNotificationSender(IHubContext<MessageHub> hubContext) { _hubContext = hubContext; }
         public Task SendAsync(NotificationDispatch notification) => _hubContext
                 .Clients.Group($"user_{notification.TargetUserId}")
                 .SendAsync("NotificationReceived", new

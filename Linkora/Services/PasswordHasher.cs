@@ -22,7 +22,6 @@ namespace Linkora.Services
             var salt = RandomNumberGenerator.GetBytes(SaltSize);
             return $"{Prefix}.{Iterations}.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(Rfc2898DeriveBytes.Pbkdf2(password, salt, Iterations, Algorithm, KeySize))}";
         }
-
         public bool Verify(string password, string storedHash)
         {
             if (IsLegacyHash(storedHash)) return VerifyLegacy(password, storedHash);
@@ -30,18 +29,12 @@ namespace Linkora.Services
             var parts = storedHash.Split('.');
             if (parts.Length != 4 || parts[0] != Prefix) return false;
 
-            var iterations = int.Parse(parts[1]);
-            var salt = Convert.FromBase64String(parts[2]);
             var expectedKey = Convert.FromBase64String(parts[3]);
 
-            var actualKey = Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, Algorithm, expectedKey.Length);
+            var actualKey = Rfc2898DeriveBytes.Pbkdf2(password, Convert.FromBase64String(parts[2]), int.Parse(parts[1]), Algorithm, expectedKey.Length);
             return CryptographicOperations.FixedTimeEquals(actualKey, expectedKey);
         }
-
         public bool IsLegacyHash(string storedHash) => storedHash.Length == 64 && !storedHash.Contains('.');
-
-        private static bool VerifyLegacy(string password, string storedHash) => CryptographicOperations.FixedTimeEquals(
-                System.Text.Encoding.UTF8.GetBytes(Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(password))).ToLower()),
-                System.Text.Encoding.UTF8.GetBytes(storedHash));
+        private static bool VerifyLegacy(string password, string storedHash) => CryptographicOperations.FixedTimeEquals(System.Text.Encoding.UTF8.GetBytes(Convert.ToHexString(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(password))).ToLower()), System.Text.Encoding.UTF8.GetBytes(storedHash));
     }
 }
