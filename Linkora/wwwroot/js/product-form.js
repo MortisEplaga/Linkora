@@ -290,22 +290,6 @@ async function addressSearch(input, type) {
             document.getElementById('adHouseId').value = '';
             document.getElementById('houseField').style.display = 'block';
         });
-    } else if (type === 'house') {
-        const streetId = document.getElementById('adStreetId').value;
-        if (!streetId) return;
-        const res = await fetch(`/Product/Houses?streetId=${streetId}`);
-        const houses = await res.json();
-        const filteredH = houses.filter(h => h.name.toLowerCase().includes(val));
-        filteredH.sort((a, b) => {
-            const an = a.name.toLowerCase().startsWith(val) ? 0 : 1;
-            const bn = b.name.toLowerCase().startsWith(val) ? 0 : 1;
-            return an - bn || a.name.localeCompare(b.name);
-        });
-        showDrop('adHouseDrop', filteredH, (item) => {
-            document.getElementById('adHouse').value = item.name;
-            document.getElementById('adHouseId').value = item.id;
-            hideDrop('adHouseDrop');
-        });
     }
 }
 
@@ -328,7 +312,7 @@ function hideDrop(dropId) {
 }
 
 document.addEventListener('click', e => {
-    ['adCityDrop', 'adStreetDrop', 'adHouseDrop'].forEach(id => {
+    ['adCityDrop', 'adStreetDrop'].forEach(id => {
         const drop = document.getElementById(id);
         if (drop && !drop.contains(e.target)) drop.style.display = 'none';
     });

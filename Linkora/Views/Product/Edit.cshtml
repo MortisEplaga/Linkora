@@ -60,10 +60,8 @@
                 </div>
                 <div class="create-field" id="houseField" style="display:none">
                     <label class="create-label" data-i18n="house_label">House</label>
-                    <input type="text" class="create-input create-autocomplete" id="adHouse"
-                           placeholder="Start typing..." autocomplete="off"
-                           oninput="addressSearch(this,'house')"
-                           onfocus="addressSearch(this,'house')" data-i18n-placeholder="city_ph" />
+                    <input type="text" class="create-input" id="adHouse"
+                           placeholder="Start typing..." data-i18n-placeholder="city_ph" />
                     <input type="hidden" id="adHouseId" />
                     <div class="create-dropdown" id="adHouseDrop"></div>
                 </div>
@@ -159,7 +157,6 @@
         setVal('adStreet', state.street);
         setVal('adStreetId', state.streetId);
         setVal('adHouse', state.house);
-        setVal('adHouseId', state.houseId);
 
         if (state.cityId) document.getElementById('streetField').style.display = 'block';
         if (state.streetId) document.getElementById('houseField').style.display = 'block';
@@ -221,7 +218,6 @@
             street: document.getElementById('adStreet')?.value,
             streetId: document.getElementById('adStreetId')?.value,
             house: document.getElementById('adHouse')?.value,
-            houseId: document.getElementById('adHouseId')?.value,
             categoryId: document.getElementById('selectedCategoryId')?.value,
             categoryText: document.getElementById('catSelectorText')?.textContent,
             publishDays: document.getElementById('pubDurationValue')?.value,

@@ -84,9 +84,6 @@ namespace Linkora.Controllers
         [HttpGet]
         public async Task<IActionResult> Streets(int cityId) => Json((await _addressRepository.GetStreetsAsync(cityId)).Select(x => new { id = x.Id, name = x.Name }));
 
-        [HttpGet]
-        public async Task<IActionResult> Houses(int streetId) => Json((await _addressRepository.GetHousesAsync(streetId)).Select(x => new { id = x.Id, name = x.Name }));
-
         public async Task<IActionResult> Create()
         {
             if (User.Identity!.IsAuthenticated)
