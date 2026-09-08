@@ -63,7 +63,7 @@ namespace Linkora.Controllers
                 if (!AllowedSubscriptionTypes.Contains(dto.SubscriptionType)) errors.Add("Invalid subscription type");
                 else subscriptionType = dto.SubscriptionType;
 
-            if (errors.Any()) return BadRequest(new { errors });
+            if (errors.Count != 0) return BadRequest(new { errors });
 
             string? newHash = null;
             if (!string.IsNullOrWhiteSpace(dto.NewPassword))

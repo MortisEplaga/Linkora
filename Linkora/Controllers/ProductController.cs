@@ -16,7 +16,8 @@ namespace Linkora.Controllers
         IUserRepository userRepository,
         ISelectOptionRepository selectOptionRepository,
         IMediaStorageService mediaStorage,
-        IGeocodingService geocodingService) : Controller
+        IGeocodingService geocodingService,
+        ILogger<ProductController> logger) : Controller
     {
         private readonly ICategoryRepository _categoryRepository = categoryRepository;
         private readonly IAddressRepository _addressRepository = addressRepository;
@@ -28,6 +29,7 @@ namespace Linkora.Controllers
         private readonly IConfiguration _configuration = configuration;
         private readonly IMediaStorageService _mediaStorage = mediaStorage;
         private readonly IGeocodingService _geocodingService = geocodingService;
+        private readonly ILogger<ProductController> _logger = logger;
 
         private static int PromotionPoints(string? promotionType) => promotionType switch
         {
@@ -210,19 +212,24 @@ namespace Linkora.Controllers
             if (existing == null) return NotFound();
             if (existing.UserId != userId) return Forbid();
 
+            _logger.LogInformation("Product Edit {ProductId} by user {UserId}: incoming address='{Address}', existing address='{ExistingAddress}', existing Lat={ExistingLat}, existing Lng={ExistingLng}", id, userId, address, existing.Address, existing.Lat, existing.Lng);
+
             decimal? lat = existing.Lat, lng = existing.Lng;
             if (!string.Equals(existing.Address ?? "", address ?? "", StringComparison.Ordinal))
                 if (string.IsNullOrWhiteSpace(address))
                 {
                     lat = null;
                     lng = null;
+                    _logger.LogInformation("Product {ProductId}: address cleared, Lat/Lng reset to null", id);
                 }
                 else
                 {
                     var geocoded = await _geocodingService.GeocodeAsync(address);
                     if (geocoded.HasValue) (lat, lng) = geocoded.Value;
                     else { lat = null; lng = null; }
+                    _logger.LogInformation("Product {ProductId}: address changed to '{Address}', geocode result Lat={Lat}, Lng={Lng}", id, address, lat, lng);
                 }
+            else _logger.LogInformation("Product {ProductId}: address unchanged ('{Address}'), skipping geocode, keeping Lat={Lat}, Lng={Lng}", id, address, lat, lng);
 
             var paramValues = ParseParamsJson(paramsJson);
             var oldParamValues = await _productRepository.GetParamValuesAsync(id);
@@ -233,18 +240,16 @@ namespace Linkora.Controllers
             var currentMedia = await _productRepository.GetMediaAsync(id);
             var toDelete = currentMedia.Where(m => !keepPaths.Contains(m.FilePath)).ToList();
 
-            if (toDelete.Any()) await _productRepository.DeleteSpecificMediaAsync(toDelete.Select(m => m.Id));
+            if (toDelete.Count != 0) await _productRepository.DeleteSpecificMediaAsync(toDelete.Select(m => m.Id));
 
-            if (photos?.Count > 0)
-            {
-                var newMedia = await _mediaStorage.SaveUploadedFilesAsync(photos);
-                await _productRepository.SaveMediaAsync(id, newMedia);
-            }
+            if (photos?.Count > 0) await _productRepository.SaveMediaAsync(id, await _mediaStorage.SaveUploadedFilesAsync(photos));
 
             var refreshedMedia = await _productRepository.GetMediaAsync(id);
             string? newAvatar = refreshedMedia.FirstOrDefault()?.FilePath ?? existing.AvatarUrl;
             var oldPoints = PromotionPoints(existing.PromotionType);
             var newPoints = PromotionPoints(promotionType);
+
+            _logger.LogInformation("Updating product {ProductId} with Address='{Address}', Lat={Lat}, Lng={Lng}", id, address, lat, lng);
 
             await _productRepository.UpdateAsync(new Product
             {
@@ -300,10 +305,10 @@ namespace Linkora.Controllers
                 .Count();
             if (otherChanged > 0) changes.Add(new { type = "characteristics_updated" });
 
-            if (changes.Any())
+            if (changes.Count != 0)
             {
                 var favUserIds = await _productRepository.GetFavouriteSubscriberIdsAsync(id, userId);
-                if (favUserIds.Any())
+                if (favUserIds.Count != 0)
                 {
                     var payload = new
                     {
@@ -378,7 +383,7 @@ namespace Linkora.Controllers
             await _notifications.CreateAsync(otherUserId, userId, id, boughtMsg);
 
             var subIds = await _productRepository.GetSubscriberIdsExcludingAsync(userId, otherUserId);
-            if (subIds.Any())
+            if (subIds.Count != 0)
             {
                 var subSoldMsg = System.Text.Json.JsonSerializer.Serialize(new { type = "subscription_sold" });
                 foreach (var subId in subIds)
@@ -413,6 +418,8 @@ namespace Linkora.Controllers
             if (currentUser == null) return NotFound();
             if (currentUser.Role == "banned") return Forbid();
 
+            _logger.LogInformation("Product Create by user {UserId}: useHomeAddress={UseHomeAddress}, address='{Address}'", userId, useHomeAddress, address);
+
             decimal? lat = null, lng = null;
 
             if (useHomeAddress && !string.IsNullOrWhiteSpace(currentUser.HomeAddress))
@@ -420,12 +427,15 @@ namespace Linkora.Controllers
                 address = currentUser.HomeAddress;
                 lat = currentUser.HomeLat;
                 lng = currentUser.HomeLng;
+                _logger.LogInformation("Using home address for user {UserId}: '{Address}', Lat={Lat}, Lng={Lng}", userId, address, lat, lng);
             }
             else if (!string.IsNullOrWhiteSpace(address))
             {
                 var geocoded = await _geocodingService.GeocodeAsync(address);
                 if (geocoded.HasValue) (lat, lng) = geocoded.Value;
+                _logger.LogInformation("Geocode result for user {UserId}, address '{Address}': Lat={Lat}, Lng={Lng}", userId, address, lat, lng);
             }
+            else _logger.LogInformation("No address provided for user {UserId}, Lat/Lng will remain null", userId);
 
             int duration = 30;
             if (publishDays.HasValue && new[] { 7, 14, 30, 60, 90 }.Contains(publishDays.Value)) duration = publishDays.Value;
@@ -433,6 +443,8 @@ namespace Linkora.Controllers
 
             var media = photos?.Count > 0 ? await _mediaStorage.SaveUploadedFilesAsync(photos) : [];
             var paramValues = ParseParamsJson(paramsJson);
+
+            _logger.LogInformation("Creating product for user {UserId} with Address='{Address}', Lat={Lat}, Lng={Lng}", userId, address, lat, lng);
 
             var newId = await _productRepository.CreateAsync(new Product
             {
@@ -447,6 +459,8 @@ namespace Linkora.Controllers
                 Lng = lng,
                 Price = price,
             }, paramValues, duration, promotionType ?? "None");
+
+            _logger.LogInformation("Product {ProductId} created for user {UserId}", newId, userId);
 
             var points = PromotionPoints(promotionType);
             if (points > 0) await _userRepository.AdjustPromotionPointsAsync(userId, points);

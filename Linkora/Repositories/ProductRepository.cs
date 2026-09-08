@@ -6,7 +6,8 @@ namespace Linkora.Repositories
 {
     public class ProductRepository : SqlRepositoryBase, IProductRepository
     {
-        public ProductRepository(IConfiguration configuration) : base(configuration) { }
+        private readonly ILogger<ProductRepository> _logger;
+        public ProductRepository(IConfiguration configuration, ILogger<ProductRepository> logger) : base(configuration) { _logger = logger; }
         public async Task<CategoryRulesDto> GetCategoryRulesAsync(IEnumerable<int> categoryIds)
         {
             var idList = categoryIds.ToList();
@@ -307,12 +308,14 @@ namespace Linkora.Repositories
             var allowedPromotions = new[] { "None", "Highlight", "Top", "Vip" };
             if (!allowedPromotions.Contains(promotionType)) promotionType = "None";
 
+            _logger.LogInformation("ProductRepository.UpdateAsync: ProductId={ProductId}, UserId={UserId}, Address='{Address}', Lat={Lat}, Lng={Lng}", product.Id, product.UserId, product.Address, product.Lat, product.Lng);
+
             await ExecuteInTransactionAsync(async (conn, tx) =>
             {
                 await using (var updateCmd = new SqlCommand(@"UPDATE Products
-                                                              SET Name = @Name, Description = @Description, Qty = @Qty, Address = @Address,
-                                                                  CategoryId = @CategoryId, PromotionType = @PromotionType, Lat = @Lat, Lng = @Lng, Price = @Price
-                                                              WHERE Id = @Id AND UserId = @UserId", conn, tx))
+                                                      SET Name = @Name, Description = @Description, Qty = @Qty, Address = @Address,
+                                                          CategoryId = @CategoryId, PromotionType = @PromotionType, Lat = @Lat, Lng = @Lng, Price = @Price
+                                                      WHERE Id = @Id AND UserId = @UserId", conn, tx))
                 {
                     updateCmd.Parameters.AddWithValue("@Name", product.Name);
                     updateCmd.Parameters.AddWithValue("@Description", (object?)product.Description ?? DBNull.Value);
@@ -325,7 +328,8 @@ namespace Linkora.Repositories
                     updateCmd.Parameters.AddWithValue("@Price", (object?)product.Price ?? DBNull.Value);
                     updateCmd.Parameters.AddWithValue("@Id", product.Id);
                     updateCmd.Parameters.AddWithValue("@UserId", product.UserId!);
-                    await updateCmd.ExecuteNonQueryAsync();
+                    var rowsAffected = await updateCmd.ExecuteNonQueryAsync();
+                    _logger.LogInformation("ProductRepository.UpdateAsync: ProductId={ProductId}, rows affected={RowsAffected}", product.Id, rowsAffected);
                 }
 
                 await using (var deleteCmd = new SqlCommand("DELETE FROM MapperProductParam WHERE ProductId = @Id", conn, tx))
@@ -420,6 +424,8 @@ namespace Linkora.Repositories
             var allowedPromotions = new[] { "None", "Highlight", "Top", "Vip" };
             if (!allowedPromotions.Contains(promotionType)) promotionType = "None";
 
+            _logger.LogInformation("ProductRepository.CreateAsync: UserId={UserId}, Address='{Address}', Lat={Lat}, Lng={Lng}", product.UserId, product.Address, product.Lat, product.Lng);
+
             return await ExecuteInTransactionAsync(async (conn, tx) =>
             {
                 int newId;
@@ -445,6 +451,8 @@ namespace Linkora.Repositories
                     newId = reader.GetInt32(0);
                 }
 
+                _logger.LogInformation("ProductRepository.CreateAsync: inserted product {ProductId} with Lat={Lat}, Lng={Lng}", newId, product.Lat, product.Lng);
+
                 var rows = paramValues.Where(kv => !string.IsNullOrWhiteSpace(kv.Value)).Select(kv => new object?[] { newId, kv.Key, kv.Value });
                 await ExecuteBatchInsertAsync(conn, tx, "MapperProductParam", new[] { "ProductId", "ParamId", "Value" }, rows);
                 return newId;
@@ -462,27 +470,24 @@ namespace Linkora.Repositories
         }
         public async Task DeleteMediaAsync(int productId)
         {
-            var paths = await QueryAsync<string>("SELECT FilePath FROM ProductMedia WHERE ProductId = @Id", r => r.GetString(0), p => p.AddWithValue("@Id", productId));
             await ExecuteAsync("DELETE FROM ProductMedia WHERE ProductId = @Id", p => p.AddWithValue("@Id", productId));
-            foreach (var path in paths)
+            foreach (var path in await QueryAsync<string>("SELECT FilePath FROM ProductMedia WHERE ProductId = @Id", r => r.GetString(0), p => p.AddWithValue("@Id", productId)))
                 try { var full = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", path.TrimStart('/')); if (File.Exists(full)) File.Delete(full); } catch (Exception ex) { Console.Error.WriteLine(ex); }
         }
         public async Task IncrementViewCountAsync(int productId) => await ExecuteAsync("UPDATE Products SET ViewCount = ViewCount + 1 WHERE Id = @Id", p => p.AddWithValue("@Id", productId));
         public async Task DeleteAsync(int productId) => await DeleteProductCascade(productId);
         private async Task DeleteProductCascade(int productId)
         {
-            var paths = await QueryAsync<string>("SELECT FilePath FROM ProductMedia WHERE ProductId = @Id", r => r.GetString(0), p => p.AddWithValue("@Id", productId));
-            var steps = new[] { "DELETE FROM ProductMedia WHERE ProductId = @Id", "DELETE FROM MapperProductParam WHERE ProductId = @Id", "DELETE FROM Favourites WHERE ProductId = @Id", "DELETE FROM Reports WHERE ProductId = @Id", "DELETE FROM Notifications WHERE ProductId = @Id", "DELETE FROM Messages WHERE ConversationId IN (SELECT Id FROM Conversations WHERE ProductId = @Id)", "DELETE FROM Conversations WHERE ProductId = @Id", "DELETE FROM Reviews WHERE ProductId = @Id", "DELETE FROM Products WHERE Id = @Id" };
             await ExecuteInTransactionAsync(async (conn, tx) =>
             {
-                foreach (var sql in steps)
+                foreach (var sql in new[] { "DELETE FROM ProductMedia WHERE ProductId = @Id", "DELETE FROM MapperProductParam WHERE ProductId = @Id", "DELETE FROM Favourites WHERE ProductId = @Id", "DELETE FROM Reports WHERE ProductId = @Id", "DELETE FROM Notifications WHERE ProductId = @Id", "DELETE FROM Messages WHERE ConversationId IN (SELECT Id FROM Conversations WHERE ProductId = @Id)", "DELETE FROM Conversations WHERE ProductId = @Id", "DELETE FROM Reviews WHERE ProductId = @Id", "DELETE FROM Products WHERE Id = @Id" })
                 {
                     await using var cmd = new SqlCommand(sql, conn, tx);
                     cmd.Parameters.AddWithValue("@Id", productId);
                     await cmd.ExecuteNonQueryAsync();
                 }
             });
-            foreach (var path in paths)
+            foreach (var path in await QueryAsync<string>("SELECT FilePath FROM ProductMedia WHERE ProductId = @Id", r => r.GetString(0), p => p.AddWithValue("@Id", productId)))
                 try { var full = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", path.TrimStart('/')); if (File.Exists(full)) File.Delete(full); } catch (Exception ex) { Console.Error.WriteLine(ex); }
         }
         public async Task<(List<AdminConfOptionRow> Items, int TotalCount)> GetUnconfirmedOptionsAsync()

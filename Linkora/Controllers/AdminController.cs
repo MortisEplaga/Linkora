@@ -108,14 +108,14 @@ namespace Linkora.Controllers
 
                 if (banData != null)
                 {
-                    if (banData.SubscriberIds.Any())
+                    if (banData.SubscriberIds.Count != 0)
                     {
                         var subBanMsg = System.Text.Json.JsonSerializer.Serialize(new { type = "subscription_seller_banned" });
                         foreach (var subId in banData.SubscriberIds)
                             await _notificationRepository.CreateAsync(subId, id, null, subBanMsg);
                     }
 
-                    if (banData.FavouriteUsers.Any())
+                    if (banData.FavouriteUsers.Count != 0)
                     {
                         var favBanMsg = System.Text.Json.JsonSerializer.Serialize(new { type = "favourite_archived_ban" });
                         foreach (var fav in banData.FavouriteUsers.Where(f => f.UserId != id))
