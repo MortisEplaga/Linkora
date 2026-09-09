@@ -275,7 +275,13 @@
             </div>
         </div>
     }
-
+    @if (!string.IsNullOrWhiteSpace(p.Address) && p.Lat.HasValue && p.Lng.HasValue)
+    {
+        <div class="details-section details-location">
+            <h2 class="details-section-title" data-i18n="address_label">Address</h2>
+            <div id="productMap" class="details-map" aria-label="@p.Address"></div>
+        </div>
+    }
     @if (similar.Count > 0)
     {
         <div class="details-section">
@@ -333,3 +339,27 @@
     }
     document.addEventListener('DOMContentLoaded', applyTitleTranslations);
 </script>
+
+@if (!string.IsNullOrWhiteSpace(p.Address) && p.Lat.HasValue && p.Lng.HasValue)
+{
+    <script>
+        function initProductMap() {
+            const position = {
+                lat: @p.Lat.Value.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                lng: @p.Lng.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)
+            };
+            const map = new google.maps.Map(document.getElementById('productMap'), {
+                center: position,
+                zoom: 15,
+                mapId: '912f598a043983cbfa58c256'
+            });
+
+            new google.maps.marker.AdvancedMarkerElement({
+                map,
+                position,
+                title: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(p.Name))
+            });
+        }
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=@Uri.EscapeDataString((string?)ViewBag.GoogleMapsApiKey ?? string.Empty)&loading=async&libraries=marker&callback=initProductMap" async defer></script>
+}

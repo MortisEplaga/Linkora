@@ -141,6 +141,7 @@ namespace Linkora.Controllers
             ViewBag.ParamValues = paramValues;
             ViewBag.ParamDefs = paramDefs;
             ViewBag.RecaptchaSiteKey = _configuration["Recaptcha:SiteKey"];
+            ViewBag.GoogleMapsApiKey = _configuration["GoogleMaps:ApiKey"];
             return View();
         }
 

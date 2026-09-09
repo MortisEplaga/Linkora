@@ -7,6 +7,7 @@
     var children = (List<Category>)ViewBag.Children;
     var products = (List<Linkora.Models.Product>)ViewBag.Products;
     var sort = (string)ViewBag.Sort;
+    var selectedCity = (string?)ViewBag.City;
     ViewData["Title"] = category.Name;
 }
 
@@ -391,7 +392,7 @@
             lat = p.Lat, lng = p.Lng
         })
     ));
-
+    const selectedMapCity = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(selectedCity));
 let mapsScriptLoading = null;
 function ensureMapsLoaded() {
     if (window.google && window.google.maps) return Promise.resolve();
@@ -506,14 +507,31 @@ const marker = new google.maps.marker.AdvancedMarkerElement({
         bounds.extend(position);
     });
 
-    if (!hasAny) return;
+    if (hasAny) {
+        markerCluster = new markerClusterer.MarkerClusterer({
+            map: googleMap,
+            markers: markers,
+            algorithmOptions: {
+                maxZoom: 16,
+                gridSize: 60
+            }
+        });
+    }
 
-    markerCluster = new markerClusterer.MarkerClusterer({
-        map: googleMap,
-        markers: markers,
-        algorithmOptions: {
-            maxZoom: 16,            
-            gridSize: 60           
+    if (!selectedMapCity) {
+        if (hasAny) googleMap.fitBounds(bounds);
+        return;
+    }
+
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({
+        address: selectedMapCity,
+        componentRestrictions: { country: 'LV' }
+    }, (results, status) => {
+        if (status === 'OK' && results[0]?.geometry.viewport) {
+            googleMap.fitBounds(results[0].geometry.viewport);
+        } else if (hasAny) {
+            googleMap.fitBounds(bounds);
         }
     });
 
