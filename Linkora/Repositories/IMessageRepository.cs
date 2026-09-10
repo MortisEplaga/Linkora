@@ -6,6 +6,7 @@ namespace Linkora.Repositories
     {
         Task<List<Conversation>> GetConversationsAsync(int userId);
         Task<Conversation?> GetConversationAsync(int conversationId, int userId);
+        Task<bool> IsConversationParticipantAsync(int conversationId, int userId);
         Task<int> GetOrCreateConversationAsync(int productId, int buyerId, int sellerId);
         Task<List<Message>> GetMessagesAsync(int conversationId, int userId);
         Task<int> SendMessageAsync(int conversationId, int senderId, string text);

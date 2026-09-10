@@ -1,5 +1,6 @@
 ﻿using Linkora.Repositories;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Linkora.Models;
 
 [Route("api/[controller]")]
@@ -15,6 +16,7 @@ public class SupportController : ControllerBase
 
     [HttpPost("contact")]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("public-api")]
     public async Task<IActionResult> ContactSupport([FromBody] SupportRequestDto model)
     {
         if (!ModelState.IsValid) return BadRequest(new { error = "Invalid data" });

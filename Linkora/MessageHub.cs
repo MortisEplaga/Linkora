@@ -10,11 +10,16 @@ namespace Linkora.Hubs
     {
         private readonly IMessageRepository _messageRepository;
         public MessageHub(IMessageRepository messageRepository) { _messageRepository = messageRepository; }
-        public async Task JoinConversation(int conversationId) => await Groups.AddToGroupAsync(Context.ConnectionId, $"conv_{conversationId}");
+        public async Task JoinConversation(int conversationId)
+        {
+            await EnsureConversationAccessAsync(conversationId);
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"conv_{conversationId}");
+        }
         public async Task LeaveConversation(int conversationId) => await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"conv_{conversationId}");
         public async Task SendMessage(int conversationId, string text)
         {
             if (!Context.User.TryGetUserId(out int userId) || string.IsNullOrWhiteSpace(text)) return;
+            if (!await _messageRepository.IsConversationParticipantAsync(conversationId, userId)) throw new HubException("Access to this conversation is denied.");
 
             var payload = new
             {
@@ -34,13 +39,19 @@ namespace Linkora.Hubs
         public async Task MarkRead(int conversationId)
         {
             if (!Context.User.TryGetUserId(out int userId)) return;
-            await _messageRepository.MarkReadAsync(conversationId, userId);
+            if (!await _messageRepository.IsConversationParticipantAsync(conversationId, userId))
+                throw new HubException("Access to this conversation is denied."); await _messageRepository.MarkReadAsync(conversationId, userId);
             await Clients.User(userId.ToString()).SendAsync("UnreadCountChanged");
         }
         public override async Task OnConnectedAsync()
         {
-            if (!Context.User.TryGetUserId(out int userIdStr)) await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{userIdStr}");
+            if (Context.User.TryGetUserId(out int userId)) await Groups.AddToGroupAsync(Context.ConnectionId, $"user_{userId}");
             await base.OnConnectedAsync();
+        }
+        private async Task EnsureConversationAccessAsync(int conversationId)
+        {
+            if (!Context.User.TryGetUserId(out int userId) || !await _messageRepository.IsConversationParticipantAsync(conversationId, userId))
+                throw new HubException("Access to this conversation is denied.");
         }
     }
 }

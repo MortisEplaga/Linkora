@@ -3,6 +3,7 @@ using Linkora.Repositories;
 using Linkora.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -32,6 +33,7 @@ namespace Linkora.Controllers
         }
 
         [HttpPost]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> Login(string username, string password, string? returnUrl = null)
         {
             var user = await _userRepository.GetByUsernameAsync(username);
@@ -66,6 +68,7 @@ namespace Linkora.Controllers
         public IActionResult Register() => View();
 
         [HttpPost]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> Register(string username,
                                                   string email,
                                                   string password,
@@ -252,6 +255,7 @@ namespace Linkora.Controllers
         [HttpPost]
         [Route("Account/FacebookLogin")]
         [ValidateAntiForgeryToken]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> FacebookLogin([FromBody] FacebookLoginModel model)
         {
             var returnUrl = model.ReturnUrl ?? Url.Content("~/");
@@ -408,6 +412,7 @@ namespace Linkora.Controllers
         [HttpGet]
         public IActionResult ForgotPassword() => View();
         [HttpPost]
+        [EnableRateLimiting("auth")]
         public async Task<IActionResult> ForgotPassword(string email, string? lang = null)
         {
             if (string.IsNullOrWhiteSpace(email))

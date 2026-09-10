@@ -281,6 +281,20 @@ public class MessageRepository : SqlRepositoryBase, IMessageRepository
 
         return conv;
     }
+    public async Task<bool> IsConversationParticipantAsync(int conversationId, int userId) => (await QueryAsync<int>(
+            @"SELECT COUNT(*) FROM Conversations c
+              WHERE c.Id = @ConvId
+                AND (
+                    c.BuyerId = @UserId
+                    OR c.SellerId = @UserId
+                    OR (c.IsSupport = 1 AND EXISTS (SELECT 1 FROM Users WHERE Id = @UserId AND Role = 'admin'))
+                )",
+            r => r.GetInt32(0),
+            p =>
+            {
+                p.AddWithValue("@ConvId", conversationId);
+                p.AddWithValue("@UserId", userId);
+            }))[0] > 0;
     public async Task<int> GetOrCreateConversationAsync(int productId, int buyerId, int sellerId)
     {
         var existing = (await QueryAsync<int?>(

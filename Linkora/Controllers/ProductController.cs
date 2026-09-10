@@ -3,6 +3,7 @@ using Linkora.Repositories;
 using Linkora.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace Linkora.Controllers
@@ -67,6 +68,7 @@ namespace Linkora.Controllers
         public async Task<IActionResult> GetSelectOptions([FromQuery] int paramId) => Json((await _selectOptionRepository.GetConfirmedAsync(paramId, Request.GetLang())).Select(o => new { id = o.Id, text = o.Text }));
 
         [HttpPost]
+        [EnableRateLimiting("public-api")]
         public async Task<IActionResult> VerifyRecaptcha([FromBody] RecaptchaDto dto)
         {
             var secret = _configuration["Recaptcha:SecretKey"]!;

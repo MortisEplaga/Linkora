@@ -1,6 +1,7 @@
 ﻿using Linkora.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Linkora.Models;
 
 namespace Linkora.Controllers
@@ -46,8 +47,10 @@ namespace Linkora.Controllers
             return View();
         }
         [HttpPost]
+        [EnableRateLimiting("chat")]
         public async Task<IActionResult> StartSupportChat() => Ok(new { conversationId = await _messageRepository.GetOrCreateSupportConversationAsync(User.GetUserId()) });
         [HttpPost]
+        [EnableRateLimiting("chat")]
         public async Task<IActionResult> Start([FromBody] StartMessageDto dto)
         {
             var userId = User.GetUserId();
