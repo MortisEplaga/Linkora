@@ -25,6 +25,7 @@
     <script src="~/js/param-rules-engine.js"></script>
     <script src="~/js/free-text-select.js"></script>
     <script src="~/js/modals.js"></script>
+    <script src="~/js/listing-view.js"></script>
 
     @if (User.Identity!.IsAuthenticated)
     {
@@ -56,7 +57,7 @@
 
     @await Html.PartialAsync("Header")
 
-    <div style="max-width:1288px; margin:0 auto; padding:0 24px;">
+    <div class="page-container">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>

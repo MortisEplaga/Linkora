@@ -570,6 +570,16 @@ function applySettingsUI() {
     const dark = localStorage.getItem('theme') === 'dark';
     const themeToggle = document.getElementById('themeToggle');
     if (themeToggle) themeToggle.classList.toggle('settings-toggle-on', dark);
+    markActiveSettingsLang();
+}
+function setLangSettings(lang) {
+    setLang(lang);
+}
+
+function markActiveSettingsLang() {
+    const lang = localStorage.getItem('lang') || 'en';
+    document.querySelectorAll('#settingsLangPills .settings-lang-pill').forEach(b => b.classList.remove('settings-lang-pill-active'));
+    document.getElementById('sl' + lang.toUpperCase())?.classList.add('settings-lang-pill-active');
 }
 function toggleTheme() {
     const isDark = document.documentElement.classList.toggle('dark-theme');

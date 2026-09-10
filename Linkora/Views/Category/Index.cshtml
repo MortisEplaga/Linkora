@@ -241,14 +241,25 @@
     </div>
     <div class="category-content">
         <div class="listing-toolbar">
+            @if (parameters.Count > 0)
+            {
+                <button type="button" class="listing-filters-btn" onclick="FiltersPanel.open()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line>
+                        <line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line>
+                    </svg>
+                    <span data-i18n="apply_filters">Filters</span>
+                </button>
+            }
             <div class="listing-view-btns">
-                <button class="listing-view-btn" id="btnGrid" onclick="setView('grid')" title="Grid" data-i18n-title="grid_view">
+                <button class="listing-view-btn" id="btnGrid" onclick="ListingView.setView('grid')" title="Grid" data-i18n-title="grid_view">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></svg>
                 </button>
-                <button class="listing-view-btn" id="btnList" onclick="setView('list')" title="List" data-i18n-title="list_view">
+                <button class="listing-view-btn" id="btnList" onclick="ListingView.setView('list')" title="List" data-i18n-title="list_view">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg>
                 </button>
-                <button class="listing-view-btn" id="btnMap" onclick="setView('map')" title="Map" data-i18n-title="map_view">
+                <button class="listing-view-btn" id="btnMap" onclick="ListingView.setView('map')" title="Map" data-i18n-title="map_view">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
                         <line x1="8" y1="2" x2="8" y2="18" />
@@ -264,7 +275,7 @@
                 <span id="regionBtnLabel" data-i18n="@(ViewBag.City == null ? "all_regions" : null)">@(ViewBag.City != null ? (string)ViewBag.City : "All regions")</span>
             </button>
             <div class="listing-sort-wrap">
-                <button class="listing-sort-btn" onclick="toggleSort(event)">
+                <button class="listing-sort-btn" onclick="ListingView.toggleSort(event)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6" /><line x1="7" y1="12" x2="21" y2="12" /><line x1="11" y1="18" x2="21" y2="18" /></svg>
                     <span id="sortLabel" data-sort="@sort"></span> ▾
                 </button>
@@ -385,6 +396,7 @@
 
 <script src="https://unpkg.com/@@googlemaps/markerclusterer/dist/index.min.js"></script>
 <script src="~/js/param-utils.js"></script>
+<script src="~/js/filters-panel.js"></script>
 <script>
     var mapProducts = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
         products.Select(p => new {
@@ -405,39 +417,6 @@ function ensureMapsLoaded() {
     });
     return mapsScriptLoading;
 }
-
-function setView(v) {
-    localStorage.setItem('listingView', v);
-    const c = document.getElementById('listingContainer');
-    const mapWrap = document.getElementById('listingMap');
-
-    document.getElementById('btnGrid').classList.toggle('active', v === 'grid');
-    document.getElementById('btnList').classList.toggle('active', v === 'list');
-    document.getElementById('btnMap').classList.toggle('active', v === 'map');
-
-    if (v === 'map') {
-        c.style.display = 'none';
-        mapWrap.style.display = 'block';
-        ensureMapsLoaded().then(loadProductsMap);
-    } else {
-        c.className = v === 'grid' ? 'listing-grid' : 'listing-list';
-        c.style.display = '';
-        mapWrap.style.display = 'none';
-    }
-}
-    function toggleSort(e) {
-        e.stopPropagation();
-        document.getElementById('sortDrop').classList.toggle('open');
-    }
-
-    function setSortLabel() {
-        const sortLabel = document.getElementById('sortLabel');
-        if (!sortLabel) return;
-        const lang = localStorage.getItem('lang') || 'en';
-        const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
-        const sortMap = { new: dict.sort_newest, cheap: dict.sort_cheapest, expensive: dict.sort_expensive };
-        sortLabel.textContent = sortMap[sortLabel.dataset.sort || 'new'] || dict.sort_newest || 'Newest first';
-    }
 
     function initMoreButtons() {
         const lang = localStorage.getItem('lang') || 'en';
@@ -538,6 +517,7 @@ const marker = new google.maps.marker.AdvancedMarkerElement({
     googleMap.fitBounds(bounds);
 }  
 function resetFilters(categoryId) {
+        FiltersPanel?.close();
         window.location.href = '/Category/Index/' + categoryId;
     }
 
@@ -576,14 +556,9 @@ function resetFilters(categoryId) {
         cards.forEach(c => container.appendChild(c));
     }
 
-    document.addEventListener('click', e => {
-        if (!e.target.closest('.listing-sort-wrap'))
-            document.getElementById('sortDrop')?.classList.remove('open');
-    });
-
     document.addEventListener('DOMContentLoaded', async () => {
-        setView(localStorage.getItem('listingView') || 'grid');
-        setSortLabel();
+        ListingView.setView(ListingView.initialView());
+        ListingView.setSortLabel();
 
         if (typeof TRANSLATIONS === 'undefined') {
             const checkTranslations = setInterval(() => {
