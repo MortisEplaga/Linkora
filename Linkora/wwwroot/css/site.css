@@ -3811,7 +3811,8 @@ body {
 #partnerModal,
 #captchaModal,
 #rejectModal,
-#supportModal {
+#supportModal,
+#reportModal {
     height: auto !important;
     min-height: unset !important;
     max-height: 90vh;
@@ -3986,7 +3987,8 @@ body {
     #captchaModal,
     #partnerModal,
     #rejectModal,
-    #supportModal {
+    #supportModal,
+    #reportModal {
         width: calc(100vw - 24px) !important;
         max-width: calc(100vw - 24px) !important;
         left: 50%;

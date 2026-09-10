@@ -174,12 +174,16 @@
     flex-direction: column;
     gap: 16px;
 }
-
+.details-seller .details-btn-secondary
 .details-section-title {
     font-size: 20px;
     font-weight: 700;
     color: #1a1a1a;
     margin: 0;
+}
+
+.details-seller .details-btn-secondary {
+    margin-left: auto;
 }
 
 .details-description {
@@ -260,8 +264,7 @@
 
 .msg-modal-footer {
     display: flex;
-    gap: 10px;
-    justify-content: flex-end;
+    justify-content: space-between;
 }
 
 .lb-overlay {
@@ -461,3 +464,17 @@
         background: rgba(255,255,255,0.15);
         color: #fff;
     }
+
+@media (max-width: 900px) {
+    .details-main {
+        flex-direction: column;
+    }
+
+    .details-info {
+        width: 100%;
+    }
+
+    .details-gallery {
+        width: 100%;
+    }
+}
