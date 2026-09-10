@@ -972,4 +972,15 @@
         left: 10px;
         bottom: 10px;
     }
+
+    .listing-toolbar {
+        flex-wrap: wrap;
+    }
+
+    .listing-region-btn {
+        order: 10;
+        flex: 1 0 100%;
+        justify-content: center;
+        margin-top: 4px;
+    }
 }

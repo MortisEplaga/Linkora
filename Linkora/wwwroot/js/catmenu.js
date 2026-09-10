@@ -9,20 +9,22 @@ function getIcon(nameEn) {
 }
 function updateColumnsVisibility() {
     const container = document.getElementById('catMenuColumns');
-    if (!container) return;
+    const menu = document.getElementById('catMenu');
+    if (!container || !menu) return;
 
     const columns = Array.from(container.children);
-
     const availableWidth = window.innerWidth;
+    const colWidth = 240;
     let totalWidth = 0;
 
     for (let i = columns.length - 1; i >= 0; i--) {
-        const colWidth = 240; 
         totalWidth += colWidth;
-
         if (totalWidth > availableWidth && i < columns.length - 1) columns[i].classList.add('catmenu-col-hidden');
         else columns[i].classList.remove('catmenu-col-hidden');
     }
+
+    const visibleCount = columns.filter(c => !c.classList.contains('catmenu-col-hidden')).length;
+    menu.style.width = Math.min(visibleCount * colWidth, availableWidth) + 'px';
 }
 
 window.addEventListener('resize', () => {
