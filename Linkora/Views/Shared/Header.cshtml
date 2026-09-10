@@ -226,9 +226,23 @@
         }
 
         (function() {
-            const isDark = localStorage.getItem('theme') === 'dark';
             const logo = document.getElementById('siteLogo');
-            if (logo) Icons.applyAsset(logo, isDark ? 'logoDark' : 'logo');
+
+        function applyLogoForWidth() {
+                if (!logo) return;
+                const isDark = localStorage.getItem('theme') === 'dark';
+                const isNarrow = window.matchMedia('(max-width: 480px)').matches;
+
+                let key;
+                if (isNarrow) {
+                    key = isDark ? 'favicon' : 'faviconDark';
+                } else {
+                    key = isDark ? 'logoDark' : 'logo';
+                }
+                Icons.applyAsset(logo, key);
+            }
+            applyLogoForWidth();
+            window.addEventListener('resize', applyLogoForWidth);
 
             const currentLang = localStorage.getItem('lang') || 'en';
             if (currentLang === 'en') document.getElementById('headerLangEN')?.classList.add('active');

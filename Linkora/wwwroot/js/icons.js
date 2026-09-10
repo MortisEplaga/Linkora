@@ -16,6 +16,7 @@
         logo: '/img/Logo.svg',
         logoDark: '/img/DLogo.svg',
         favicon: '/img/MiniLogo.svg',
+        faviconDark: '/img/MiniLogoDark.svg',
         noPhoto: '/img/no-photo.svg',
         searchIcon: '/img/search_for.svg',
         markerIcon: '/img/marker_for_adv.svg',

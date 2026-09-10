@@ -3982,7 +3982,9 @@ body {
     }
 
     .site-logo img {
-        width: 100px;
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
     }
 
     .lang-switcher,
