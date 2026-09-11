@@ -94,3 +94,41 @@
     </button>
 </body>
 </html>
+<script>
+    (function () {
+        function fixFooterSeps() {
+            const wrap = document.querySelector('.footer-links');
+            if (!wrap) return;
+
+            const seps = wrap.querySelectorAll('.footer-sep');
+            seps.forEach(s => (s.style.visibility = ''));
+
+            seps.forEach(s => {
+                const prev = s.previousElementSibling;
+                const next = s.nextElementSibling;
+                if (!prev || !next) return;
+
+                const tol = 5;
+                const prevTop = prev.getBoundingClientRect().top;
+                const sepTop  = s.getBoundingClientRect().top;
+                const nextTop = next.getBoundingClientRect().top;
+
+                const sameRowWithPrev = Math.abs(prevTop - sepTop) <= tol;
+                const sameRowWithNext = Math.abs(nextTop - sepTop) <= tol;
+
+                if (!sameRowWithPrev || !sameRowWithNext) {
+                    s.style.visibility = 'hidden';
+                }
+            });
+        }
+
+        let timer;
+        const debounced = () => {
+            clearTimeout(timer);
+            timer = setTimeout(fixFooterSeps, 100);
+        };
+
+        window.addEventListener('resize', debounced);
+        document.addEventListener('DOMContentLoaded', fixFooterSeps);
+    })();
+</script>

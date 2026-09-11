@@ -5,6 +5,7 @@ namespace Linkora.Services
     public interface IMediaStorageService
     {
         Task<List<ProductMedia>> SaveUploadedFilesAsync(List<IFormFile> files, CancellationToken ct = default);
+        Task<string?> SaveAvatarAsync(IFormFile file, CancellationToken ct = default);
     }
     public sealed class MediaStorageService : IMediaStorageService
     {
@@ -82,6 +83,42 @@ namespace Linkora.Services
                 });
             }
             return result;
+        }
+        public async Task<string?> SaveAvatarAsync(IFormFile file, CancellationToken ct = default)
+        {
+            if (file is null || file.Length == 0 || file.Length > MaxSingleFileBytes) return null;
+
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!AllowedImageExtensions.Contains(ext)) return null;
+
+            var contentType = (file.ContentType ?? string.Empty).ToLowerInvariant();
+            if (!AllowedImageMimeTypes.Contains(contentType)) return null;
+
+            var header = new byte[16];
+            int totalRead = 0;
+            await using (var rs = file.OpenReadStream())
+            {
+                while (totalRead < header.Length)
+                {
+                    var n = await rs.ReadAsync(header.AsMemory(totalRead), ct);
+                    if (n == 0) break;
+                    totalRead += n;
+                }
+            }
+            if (totalRead == 0) return null;
+            if (totalRead < header.Length) Array.Resize(ref header, totalRead);
+
+            if (HasExecutableOrScriptSignature(header)) return null;
+            if (!ValidateContentSignature(header, ext, out _)) return null;
+
+            var folder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "img", "avatars");
+            Directory.CreateDirectory(folder);
+
+            var name = $"{Guid.NewGuid():N}{ext}";
+            var fullPath = Path.Combine(folder, name);
+            await using (var fs = File.Create(fullPath)) await file.CopyToAsync(fs, ct);
+
+            return $"/img/avatars/{name}";
         }
         private static bool MatchesPrefix(byte[] data, byte[] prefix, int offset = 0)
         {

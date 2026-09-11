@@ -477,4 +477,49 @@
     .details-gallery {
         width: 100%;
     }
+
+    .details-params {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .details-param-row {
+        padding: 10px 0;
+        font-size: 13px;
+        flex-wrap: wrap;
+        gap: 4px 8px;
+    }
+
+    .details-param-name {
+        white-space: normal;
+    }
+
+    .details-param-value {
+        white-space: normal;
+        margin-left: auto;
+        text-align: right;
+        word-break: break-word;
+    }
+
+    .details-description {
+        font-size: 14px;
+        line-height: 1.55;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+    }
+}
+
+@media (max-width: 600px) {
+    .details-param-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .details-param-value {
+        margin-left: 0;
+        text-align: left;
+        font-weight: 500;
+    }
 }

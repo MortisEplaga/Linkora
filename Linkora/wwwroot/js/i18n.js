@@ -1,5 +1,6 @@
 const TRANSLATIONS = {
     en: {
+        'profile_change_avatar': 'Change photo',
         'facebook_login_error': "Facebook login error. Please try again later.",
         'user_cancelled_login': "User cancelled login",
         'payment_failed': "Payment initiation failed",
@@ -478,6 +479,7 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'profile_change_avatar': 'Mainīt fotoattēlu',
         'facebook_login_error': "Facebook pieteikšanās kļūda. Lūdzu, mēģiniet vēlāk.",
         'user_cancelled_login': "Lietotājs atcēla pieteikšanos",
         'payment_failed': "Maksājuma uzsākšana neizdevās",
@@ -966,6 +968,7 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'profile_change_avatar': 'Изменить фото',
         'facebook_login_error': "Ошибка входа через Facebook. Попробуйте позже.",
         'user_cancelled_login': "Пользователь отменил вход",
         'payment_failed': "Не удалось инициировать платеж",

@@ -17,6 +17,23 @@
 
         <div class="profile-section-title" data-i18n="profile_basic_info">Basic information</div>
 
+        <div class="auth-field" style="align-items:center;flex-direction:row;gap:16px;margin-bottom:24px">
+            <div class="details-seller-avatar" id="avatarPreviewWrap" style="width:64px;height:64px;cursor:pointer" onclick="document.getElementById('avatarInput').click()">
+                @if (user.AvatarUrl != null)
+                {
+                    <img src="@user.AvatarUrl" id="avatarPreviewImg" onerror="this.src='/img/no-photo.svg'" />
+                }
+                else
+                {
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2" id="avatarPreviewImg"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                }
+            </div>
+            <div>
+                <button type="button" class="myads-action-btn" onclick="document.getElementById('avatarInput').click()" data-i18n="profile_change_avatar">Change photo</button>
+                <input type="file" id="avatarInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none" onchange="uploadAvatar(this)" />
+            </div>
+        </div>
+
         <div class="auth-field">
             <label class="auth-label" data-i18n="profile_username_label">Username</label>
             <input type="text" class="auth-input" id="fieldUserName" value="@user.UserName" />
@@ -170,6 +187,29 @@
 
 @section Scripts {
     <script>
+        async function uploadAvatar(input) {
+            const file = input.files?.[0];
+            if (!file) return;
+
+            const fd = new FormData();
+            fd.append('avatar', file);
+
+            const res = await fetch('/Profile/UploadAvatar', {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': document.getElementById('afToken')?.value ?? '' },
+                body: fd
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                const wrap = document.getElementById('avatarPreviewWrap');
+                wrap.innerHTML = `<img src="${data.avatarUrl}" id="avatarPreviewImg" onerror="this.src='/img/no-photo.svg'" />`;
+            } else {
+                alert(translate('error') + ': ' + await res.text());
+            }
+            input.value = '';
+        }
+
         (function () {
             const dark = localStorage.getItem('theme') === 'dark';
             document.getElementById('profileThemeToggle').classList.toggle('settings-toggle-on', dark);

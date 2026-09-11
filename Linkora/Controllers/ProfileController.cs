@@ -1,8 +1,10 @@
 ﻿using Linkora.Models;
 using Linkora.Repositories;
 using Linkora.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Linkora.Controllers
 {
@@ -15,12 +17,15 @@ namespace Linkora.Controllers
         private readonly IUserRepository _userRepository;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IGeocodingService _geocodingService;
+        private readonly IMediaStorageService _mediaStorage;
 
-        public ProfileController(IUserRepository userRepository, IPasswordHasher passwordHasher, IGeocodingService geocodingService)
+        public ProfileController(IUserRepository userRepository, IPasswordHasher passwordHasher,
+            IGeocodingService geocodingService, IMediaStorageService mediaStorage)
         {
             _userRepository = userRepository;
             _passwordHasher = passwordHasher;
             _geocodingService = geocodingService;
+            _mediaStorage = mediaStorage;
         }
         public async Task<IActionResult> Edit()
         {
@@ -119,6 +124,37 @@ namespace Linkora.Controllers
             if (!User.Identity!.IsAuthenticated) return Json(new { days = 30 });
 
             return Json(new { days = (await _userRepository.GetByIdAsync(User.GetUserId()))?.PreferredAdDuration ?? 30 });
+        }
+
+        [HttpPost]
+        [RequestSizeLimit(MediaStorageService.MaxSingleFileBytes)]
+        public async Task<IActionResult> UploadAvatar(IFormFile avatar)
+        {
+            var userId = User.GetUserId();
+            var user = await _userRepository.GetByIdAsync(userId);
+            if (user == null) return NotFound();
+
+            var newUrl = await _mediaStorage.SaveAvatarAsync(avatar);
+            if (newUrl == null) return BadRequest(new { error = "Invalid image file" });
+
+            var oldUrl = user.AvatarUrl;
+            await _userRepository.UpdateAvatarAsync(userId, newUrl);
+
+            if (!string.IsNullOrEmpty(oldUrl) && oldUrl.StartsWith("/img/avatars/"))
+                try
+                {
+                    var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", oldUrl.TrimStart('/'));
+                    if (System.IO.File.Exists(fullPath)) System.IO.File.Delete(fullPath);
+                }
+                catch (Exception ex) { Console.Error.WriteLine(ex); }
+
+            var identity = (ClaimsIdentity)User.Identity!;
+            var oldClaim = identity.FindFirst("Avatar");
+            if (oldClaim != null) identity.RemoveClaim(oldClaim);
+            identity.AddClaim(new Claim("Avatar", newUrl));
+            await HttpContext.SignInAsync("Cookies", new ClaimsPrincipal(identity));
+
+            return Ok(new { avatarUrl = newUrl });
         }
     }
 }

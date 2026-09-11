@@ -36,45 +36,45 @@ namespace Linkora.Repositories
             int skip = (page - 1) * pageSize;
 
             var promoCount = await GetPromoCountCachedAsync(rootCategoryId, includeDescendants);
-            var (_, highlightCount) = await QueryProductsAsync(rootCategoryId, includeDescendants, sort,
-                            "p.PromotionType = 'Highlight'", filters, rangeFrom, rangeTo, city, search, offset: null, limit: 0);
+            var (_, topCount) = await QueryProductsAsync(rootCategoryId, includeDescendants, sort,
+                            "p.PromotionType = 'Top'", filters, rangeFrom, rangeTo, city, search, offset: null, limit: 0);
             var promoTake = Math.Max(0, Math.Min(pageSize, promoCount - skip));
             var promoSkip = Math.Min(skip, promoCount);
             var afterPromo = Math.Max(0, skip - promoCount);
 
-            var highlightTake = Math.Max(0, Math.Min(pageSize - promoTake, highlightCount - afterPromo));
-            var highlightSkip = Math.Min(afterPromo, highlightCount);
-            var afterHighlight = Math.Max(0, afterPromo - highlightCount);
+            var topTake = Math.Max(0, Math.Min(pageSize - promoTake, topCount - afterPromo));
+            var topSkip = Math.Min(afterPromo, topCount);
+            var afterTop = Math.Max(0, afterPromo - topCount);
 
-            var filteredSkip = afterHighlight;
-            var filteredTake = Math.Max(0, pageSize - promoTake - highlightTake);
+            var filteredSkip = afterTop;
+            var filteredTake = Math.Max(0, pageSize - promoTake - topTake);
 
             var promoTask = promoTake > 0
                 ? QueryProductsAsync(rootCategoryId, includeDescendants, sort,
-                    "p.PromotionType IN ('Top','Vip')",
+                    "p.PromotionType IN ('Vip')",
                     null, null, null, null, null, promoSkip, promoTake)
                 : Task.FromResult((new List<Product>(), promoCount));
 
-            var highlightTask = highlightTake > 0
+            var topTask = topTake > 0
                 ? QueryProductsAsync(rootCategoryId, includeDescendants, sort,
-                    "p.PromotionType = 'Highlight'",
-                    filters, rangeFrom, rangeTo, city, search, highlightSkip, highlightTake)
-                : Task.FromResult((new List<Product>(), highlightCount));
+                    "p.PromotionType = 'Top'",
+                    filters, rangeFrom, rangeTo, city, search, topSkip, topTake)
+                : Task.FromResult((new List<Product>(), topCount));
 
             var filteredTask = QueryProductsAsync(rootCategoryId, includeDescendants, sort,
-                "(p.PromotionType NOT IN ('Top','Vip','Highlight') OR p.PromotionType IS NULL)",
+                "(p.PromotionType NOT IN ('Top','Vip') OR p.PromotionType IS NULL)",
                 filters, rangeFrom, rangeTo, city, search,
                 offset: filteredSkip, limit: filteredTake);
 
             var (promoItems, _) = await promoTask;
-            var (highlightItems, _) = await highlightTask;
+            var (topItems, _) = await topTask;
             var (filteredItems, filteredTotal) = await filteredTask;
 
-            var total = promoCount + highlightCount + filteredTotal;
+            var total = promoCount + topCount + filteredTotal;
 
             return new PagedResult<Product>
             {
-                Items = promoItems.Concat(highlightItems).Concat(filteredItems).ToList(),
+                Items = promoItems.Concat(topItems).Concat(filteredItems).ToList(),
                 CurrentPage = page,
                 TotalPages = (int)Math.Ceiling(total / (double)pageSize),
                 Total = total
