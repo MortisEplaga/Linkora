@@ -192,8 +192,8 @@ namespace Linkora.Repositories
             await QueryAsync<ApproveOptionResult>(@"
                 SELECT TOP 1 p.Id, p.UserId, c.Name, c.NameRU, c.NameLV
                 FROM SelectOptions so
-                JOIN MapperProductParam mpc ON ',' + mpc.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%'
-                JOIN Products p ON mpc.ProductId = p.Id
+                JOIN MapperProductParam mpp ON ',' + mpp.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%'
+                JOIN Products p ON mpp.ProductId = p.Id
                 JOIN Category c ON so.CategoryId = c.Id
                 WHERE so.Id = @OptionId",
                 r =>

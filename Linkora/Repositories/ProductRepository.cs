@@ -81,7 +81,7 @@ namespace Linkora.Repositories
                         commonParams.Add(new SqlParameter($"@rt{pIdx}", to));
                     }
                     whereClauses.Add($@"EXISTS (SELECT 1 FROM MapperProductParam m 
-                                WHERE m.ProductId = p.Id AND m.CategoryId = @rp{pIdx} 
+                                WHERE m.ProductId = p.Id AND m.ParamId = @rp{pIdx} 
                                 AND {string.Join(" AND ", conditions)})");
                     pIdx++;
                 }
@@ -495,7 +495,7 @@ namespace Linkora.Repositories
             var items = new List<AdminConfOptionRow>();
             int totalCount = 0;
             await using var conn = await OpenConnectionAsync();
-            var sql = @"SELECT COUNT(*) FROM dbo.SelectOptions so INNER JOIN dbo.MapperProductParam mpp ON ',' + mpp.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%' INNER JOIN dbo.Products p ON mpp.ProductId = p.Id WHERE so.IsConf = 0;SELECT so.Id AS OptionId,so.Value AS OptionValue,so.ValueLV AS OptionValueLV,so.ValueRU AS OptionValueRU,p.Id AS ProductId,p.Name AS ProductName,p.CreatedAt AS CreatedAt,u.Id AS UserId,u.UserName AS UserName,c.Id AS CategoryId,c.Name AS CategoryName,c2.Name AS OptionCategory,c.NameLV AS CategoryNameLV,c2.NameLV AS OptionCategoryLV,c.NameRU AS CategoryNameRU,c2.NameRU AS OptionCategoryRU FROM dbo.SelectOptions so INNER JOIN dbo.MapperProductParam mpc ON ',' + mpc.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%' INNER JOIN dbo.Products p ON mpp.ProductId = p.Id INNER JOIN dbo.Users u ON p.UserId = u.Id INNER JOIN dbo.Category c ON p.CategoryId = c.Id INNER JOIN dbo.Parameters p2 ON so.ParamId = p2.Id WHERE so.IsConf = 0;";
+            var sql = @"SELECT COUNT(*) FROM dbo.SelectOptions so INNER JOIN dbo.MapperProductParam mpp ON ',' + mpp.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%' INNER JOIN dbo.Products p ON mpp.ProductId = p.Id WHERE so.IsConf = 0;SELECT so.Id AS OptionId,so.Value AS OptionValue,so.ValueLV AS OptionValueLV,so.ValueRU AS OptionValueRU,p.Id AS ProductId,p.Name AS ProductName,p.CreatedAt AS CreatedAt,u.Id AS UserId,u.UserName AS UserName,c.Id AS CategoryId,c.Name AS CategoryName,c2.Name AS OptionCategory,c.NameLV AS CategoryNameLV,c2.NameLV AS OptionCategoryLV,c.NameRU AS CategoryNameRU,c2.NameRU AS OptionCategoryRU FROM dbo.SelectOptions so INNER JOIN dbo.MapperProductParam mpp ON ',' + mpp.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%' INNER JOIN dbo.Products p ON mpp.ProductId = p.Id INNER JOIN dbo.Users u ON p.UserId = u.Id INNER JOIN dbo.Category c ON p.CategoryId = c.Id INNER JOIN dbo.Parameters p2 ON so.ParamId = p2.Id WHERE so.IsConf = 0;";
             await using var cmd = new SqlCommand(sql, conn);
             await using var r = await cmd.ExecuteReaderAsync();
             if (await r.ReadAsync()) totalCount = r.GetInt32(0);
