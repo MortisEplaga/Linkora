@@ -1,5 +1,6 @@
 ﻿using Linkora.Models;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Caching.Memory;
 using System.Text.RegularExpressions;
 
 namespace Linkora.Repositories
@@ -7,7 +8,8 @@ namespace Linkora.Repositories
     public class ProductRepository : SqlRepositoryBase, IProductRepository
     {
         private readonly ILogger<ProductRepository> _logger;
-        public ProductRepository(IConfiguration configuration, ILogger<ProductRepository> logger) : base(configuration) { _logger = logger; }
+        private readonly IMemoryCache _cache;
+        public ProductRepository(IConfiguration configuration, ILogger<ProductRepository> logger, IMemoryCache cache) : base(configuration) { _logger = logger; _cache = cache; }
         public async Task<CategoryRulesDto> GetCategoryRulesAsync(IEnumerable<int> categoryIds)
         {
             var idList = categoryIds.ToList();
@@ -26,39 +28,116 @@ namespace Linkora.Repositories
             return result;
         }
         public async Task<PagedResult<Product>> GetByCategoryAsync(int rootCategoryId, bool includeDescendants = true, string sort = "new",
-                                                                   Dictionary<int, List<string>>? filters = null, Dictionary<int, decimal>? rangeFrom = null, Dictionary<int, decimal>? rangeTo = null,
-                                                                   string? city = null, string? search = null, int page = 1)
+            Dictionary<int, List<string>>? filters = null, Dictionary<int, decimal>? rangeFrom = null, Dictionary<int, decimal>? rangeTo = null,
+            string? city = null, string? search = null, int page = 1)
         {
             if (page < 1) page = 1;
-            int offset = (page - 1) * 20;
+            const int pageSize = 20;
+            int skip = (page - 1) * pageSize;
 
-            var baseOrder = sort switch
+            var promoCount = await GetPromoCountCachedAsync(rootCategoryId, includeDescendants);
+            var highlightCount = await GetHighlightCountCachedAsync(rootCategoryId, includeDescendants);
+
+            var promoTake = Math.Max(0, Math.Min(pageSize, promoCount - skip));
+            var promoSkip = Math.Min(skip, promoCount);
+            var afterPromo = Math.Max(0, skip - promoCount);
+
+            var highlightTake = Math.Max(0, Math.Min(pageSize - promoTake, highlightCount - afterPromo));
+            var highlightSkip = Math.Min(afterPromo, highlightCount);
+            var afterHighlight = Math.Max(0, afterPromo - highlightCount);
+
+            var filteredSkip = afterHighlight;
+            var filteredTake = Math.Max(0, pageSize - promoTake - highlightTake);
+
+            var promoTask = promoTake > 0
+                ? QueryProductsAsync(rootCategoryId, includeDescendants, sort,
+                    "p.PromotionType IN ('Top','Vip')",
+                    null, null, null, null, null, promoSkip, promoTake)
+                : Task.FromResult((new List<Product>(), promoCount));
+
+            var highlightTask = highlightTake > 0
+                ? QueryProductsAsync(rootCategoryId, includeDescendants, sort,
+                    "p.PromotionType = 'Highlight'",
+                    null, null, null, null, null, highlightSkip, highlightTake)
+                : Task.FromResult((new List<Product>(), highlightCount));
+
+            var filteredTask = QueryProductsAsync(rootCategoryId, includeDescendants, sort,
+                "(p.PromotionType NOT IN ('Top','Vip','Highlight') OR p.PromotionType IS NULL)",
+                filters, rangeFrom, rangeTo, city, search,
+                offset: filteredSkip, limit: filteredTake);
+
+            var (promoItems, _) = await promoTask;
+            var (highlightItems, _) = await highlightTask;
+            var (filteredItems, filteredTotal) = await filteredTask;
+
+            var total = promoCount + highlightCount + filteredTotal;
+
+            return new PagedResult<Product>
             {
-                "cheap" => "p.Price ASC",
-                "expensive" => "p.Price DESC",
-                _ => "p.CreatedAt DESC"
+                Items = promoItems.Concat(highlightItems).Concat(filteredItems).ToList(),
+                CurrentPage = page,
+                TotalPages = (int)Math.Ceiling(total / (double)pageSize),
+                Total = total
             };
-            var order = @"CASE WHEN p.PromotionType IN ('Top','Vip') THEN 0 WHEN p.PromotionType = 'Highlight' THEN 1 ELSE 2 END, " + baseOrder + ", p.Id";
+        }
+        private async Task<int> GetHighlightCountCachedAsync(int rootCategoryId, bool includeDescendants)
+        {
+            var cacheKey = $"highlight_count_{rootCategoryId}_{includeDescendants}";
+            if (_cache.TryGetValue(cacheKey, out int cached)) return cached;
 
-            var whereClauses = new List<string>();
+            var catCondition = includeDescendants
+                ? "INNER JOIN CategoryClosure cc ON cc.DescendantId = p.CategoryId AND cc.AncestorId = @RootCategoryId"
+                : "WHERE p.CategoryId = @RootCategoryId";
+            var whereKeyword = includeDescendants ? "WHERE" : "AND";
+
+            var countQuery = $@"SELECT COUNT(*) FROM Products p
+                {catCondition}
+                {whereKeyword} (p.Status = 'active' OR p.Status IS NULL) AND p.PromotionType = 'Highlight'";
+
+            var count = (await QueryAsync(countQuery, r => r.GetInt32(0), p => p.AddWithValue("@RootCategoryId", rootCategoryId))).FirstOrDefault();
+            _cache.Set(cacheKey, count, TimeSpan.FromSeconds(45));
+            return count;
+        }
+        private async Task<int> GetPromoCountCachedAsync(int rootCategoryId, bool includeDescendants)
+        {
+            var cacheKey = $"promo_count_{rootCategoryId}_{includeDescendants}";
+
+            if (_cache.TryGetValue(cacheKey, out int cached)) return cached;
+
+            var catCondition = includeDescendants
+                ? "INNER JOIN CategoryClosure cc ON cc.DescendantId = p.CategoryId AND cc.AncestorId = @RootCategoryId"
+                : "WHERE p.CategoryId = @RootCategoryId";
+            var whereKeyword = includeDescendants ? "WHERE" : "AND";
+
+            var countQuery = $@"SELECT COUNT(*) FROM Products p
+                        {catCondition}
+                        {whereKeyword} (p.Status = 'active' OR p.Status IS NULL) AND p.PromotionType IN ('Top','Vip')";
+
+            var count = (await QueryAsync(countQuery, r => r.GetInt32(0), p => p.AddWithValue("@RootCategoryId", rootCategoryId))).FirstOrDefault();
+
+            _cache.Set(cacheKey, count, TimeSpan.FromSeconds(45));
+            return count;
+        }
+        private async Task<(List<Product> Items, int Total)> QueryProductsAsync(int rootCategoryId, bool includeDescendants, string sort, string promotionClause, Dictionary<int, List<string>>? filters,
+                                                                                Dictionary<int, decimal>? rangeFrom, Dictionary<int, decimal>? rangeTo, string? city, string? search, int? offset, int? limit)
+        {
+            var whereClauses = new List<string> { promotionClause };
             var commonParams = new List<SqlParameter>();
             int pIdx = 0;
 
             if (filters != null)
-            {
                 foreach (var (paramId, values) in filters)
                 {
                     if (values is null || values.Count == 0) continue;
                     var fvNames = values.Select((_, i) => $"@fv{pIdx}_{i}").ToList();
                     whereClauses.Add($@"EXISTS (SELECT 1 FROM MapperProductParam m 
-                                WHERE m.ProductId = p.Id AND m.ParamId = @fp{pIdx} 
-                                AND m.Value IN ({string.Join(",", fvNames)}))");
+                        WHERE m.ProductId = p.Id AND m.ParamId = @fp{pIdx} 
+                        AND m.Value IN ({string.Join(",", fvNames)}))");
                     commonParams.Add(new SqlParameter($"@fp{pIdx}", paramId));
                     for (int i = 0; i < values.Count; i++)
                         commonParams.Add(new SqlParameter($"@fv{pIdx}_{i}", values[i]));
                     pIdx++;
                 }
-            }
 
             if (rangeFrom != null || rangeTo != null)
             {
@@ -81,8 +160,8 @@ namespace Linkora.Repositories
                         commonParams.Add(new SqlParameter($"@rt{pIdx}", to));
                     }
                     whereClauses.Add($@"EXISTS (SELECT 1 FROM MapperProductParam m 
-                                WHERE m.ProductId = p.Id AND m.ParamId = @rp{pIdx} 
-                                AND {string.Join(" AND ", conditions)})");
+                        WHERE m.ProductId = p.Id AND m.ParamId = @rp{pIdx} 
+                        AND {string.Join(" AND ", conditions)})");
                     pIdx++;
                 }
             }
@@ -109,74 +188,64 @@ namespace Linkora.Repositories
                 }
             }
 
-            var extraWhere = whereClauses.Count > 0 ? $"AND (({string.Join(" AND ", whereClauses)}) OR p.PromotionType IN ('Top','Vip'))" : "";
-
-            var catCondition = includeDescendants ? "INNER JOIN CategoryClosure cc ON cc.DescendantId = p.CategoryId AND cc.AncestorId = @RootCategoryId" : "WHERE p.CategoryId = @RootCategoryId";
-
+            var catCondition = includeDescendants
+                ? "INNER JOIN CategoryClosure cc ON cc.DescendantId = p.CategoryId AND cc.AncestorId = @RootCategoryId"
+                : "WHERE p.CategoryId = @RootCategoryId";
             var whereKeyword = includeDescendants ? "WHERE" : "AND";
-            var statusCondition = $"(p.Status = 'active' OR p.Status IS NULL) {extraWhere}";
-            var fullWhere = $"{whereKeyword} {statusCondition}";
+            var fullWhere = $"{whereKeyword} (p.Status = 'active' OR p.Status IS NULL) AND ({string.Join(" AND ", whereClauses)})";
 
             var countQuery = $@"SELECT COUNT(*) FROM Products p LEFT JOIN Users u ON u.Id = p.UserId {catCondition} {fullWhere}";
-
             var countParams = new List<SqlParameter> { new SqlParameter("@RootCategoryId", rootCategoryId) };
-            countParams.AddRange(commonParams);
+            countParams.AddRange(commonParams.Select(p => new SqlParameter(p.ParameterName, p.Value)));
+            var total = (await QueryAsync(countQuery, r => r.GetInt32(0), p => { foreach (var sp in countParams) p.Add(sp); })).FirstOrDefault();
 
-            var totalItems = (await QueryAsync(countQuery, r => r.GetInt32(0), p => { foreach (var sp in countParams) p.Add(sp); })).FirstOrDefault();
+            if (limit is 0) return (new List<Product>(), total);
 
-            var dataQuery = $@"SELECT p.Id, p.Name, p.Description, p.Address, p.CreatedAt, COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm 
-                               WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder), p.AvatarUrl) AS AvatarUrl,
-                               u.UserName, u.AvatarUrl, u.IsCompany, u.Phone, u.Email, u.CreatedAt, u.Id,
-                               p.PromotionType, u.TelegramUrl, u.WhatsAppUrl, u.WebsiteUrl, p.Price, p.Lat, p.Lng
-                               FROM Products p
-                               LEFT JOIN Users u ON u.Id = p.UserId
-                               {catCondition}
-                               {fullWhere}
-                               ORDER BY {order}
-                               OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY";
+            var baseOrder = sort switch { "cheap" => "p.Price ASC", "expensive" => "p.Price DESC", _ => "p.CreatedAt DESC" };
+            var pagingClause = limit.HasValue ? $"OFFSET {offset ?? 0} ROWS FETCH NEXT {limit.Value} ROWS ONLY" : "";
+
+            var dataQuery = $@"SELECT p.Id, p.Name, p.Description, p.Address, p.CreatedAt, 
+                       COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder), p.AvatarUrl) AS AvatarUrl,
+                       u.UserName, u.AvatarUrl, u.IsCompany, u.Phone, u.Email, u.CreatedAt, u.Id,
+                       p.PromotionType, u.TelegramUrl, u.WhatsAppUrl, u.WebsiteUrl, p.Price, p.Lat, p.Lng
+                       FROM Products p LEFT JOIN Users u ON u.Id = p.UserId
+                       {catCondition} {fullWhere}
+                       ORDER BY {baseOrder}, p.Id
+                       {pagingClause}";
 
             var dataParams = new List<SqlParameter> { new SqlParameter("@RootCategoryId", rootCategoryId) };
             dataParams.AddRange(commonParams.Select(p => new SqlParameter(p.ParameterName, p.Value)));
-            dataParams.Add(new SqlParameter("@Offset", offset));
-            dataParams.Add(new SqlParameter("@PageSize", 20));
 
-            var items = await QueryAsync(dataQuery,
-                r => new Product
-                {
-                    Id = r.GetInt32(0),
-                    Name = r.GetStringOrDefault(1),
-                    Description = r.GetStringOrNull(2),
-                    Address = r.GetStringOrNull(3),
-                    CreatedAt = r.GetDateTimeOrNull(4),
-                    AvatarUrl = r.GetStringOrNull(5),
-                    Seller = new UserSummary
-                    {
-                        Id = r.GetInt32OrDefault(12),
-                        UserName = r.GetStringOrNull(6),
-                        AvatarUrl = r.GetStringOrNull(7),
-                        IsCompany = r.GetBooleanOrDefault(8),
-                        Phone = r.GetStringOrNull(9),
-                        Email = r.GetStringOrNull(10),
-                        CreatedAt = r.GetDateTimeOrNull(11),
-                        TelegramUrl = r.GetStringOrNull(14),
-                        WhatsAppUrl = r.GetStringOrNull(15),
-                        WebsiteUrl = r.GetStringOrNull(16)
-                    },
-                    Price = r.GetDecimalOrNull(17),
-                    PromotionType = r.GetStringOrDefault(13, "None"),
-                    Lat = r.GetDecimalOrNull(18),
-                    Lng = r.GetDecimalOrNull(19)
-                },
-                p => { foreach (var sp in dataParams) p.Add(sp); });
+            var items = await QueryAsync(dataQuery, r => MapProductRow(r), p => { foreach (var sp in dataParams) p.Add(sp); });
 
-            return new PagedResult<Product>
-            {
-                Items = items,
-                CurrentPage = page,
-                TotalPages = (int)Math.Ceiling(totalItems / (double)20),
-                Total = totalItems
-            };
+            return (items, total);
         }
+        private static Product MapProductRow(SqlDataReader r) => new()
+        {
+            Id = r.GetInt32(0),
+            Name = r.GetStringOrDefault(1),
+            Description = r.GetStringOrNull(2),
+            Address = r.GetStringOrNull(3),
+            CreatedAt = r.GetDateTimeOrNull(4),
+            AvatarUrl = r.GetStringOrNull(5),
+            Seller = new UserSummary
+            {
+                Id = r.GetInt32OrDefault(12),
+                UserName = r.GetStringOrNull(6),
+                AvatarUrl = r.GetStringOrNull(7),
+                IsCompany = r.GetBooleanOrDefault(8),
+                Phone = r.GetStringOrNull(9),
+                Email = r.GetStringOrNull(10),
+                CreatedAt = r.GetDateTimeOrNull(11),
+                TelegramUrl = r.GetStringOrNull(14),
+                WhatsAppUrl = r.GetStringOrNull(15),
+                WebsiteUrl = r.GetStringOrNull(16)
+            },
+            Price = r.GetDecimalOrNull(17),
+            PromotionType = r.GetStringOrDefault(13, "None"),
+            Lat = r.GetDecimalOrNull(18),
+            Lng = r.GetDecimalOrNull(19)
+        };
         public async Task<Dictionary<int, string>> GetParamDisplayValuesAsync(int productId, string lang)
         {
             var rawValues = await QueryAsync(
