@@ -36,8 +36,8 @@ namespace Linkora.Repositories
             int skip = (page - 1) * pageSize;
 
             var promoCount = await GetPromoCountCachedAsync(rootCategoryId, includeDescendants);
-            var highlightCount = await GetHighlightCountCachedAsync(rootCategoryId, includeDescendants);
-
+            var (_, highlightCount) = await QueryProductsAsync(rootCategoryId, includeDescendants, sort,
+                            "p.PromotionType = 'Highlight'", filters, rangeFrom, rangeTo, city, search, offset: null, limit: 0);
             var promoTake = Math.Max(0, Math.Min(pageSize, promoCount - skip));
             var promoSkip = Math.Min(skip, promoCount);
             var afterPromo = Math.Max(0, skip - promoCount);
@@ -58,7 +58,7 @@ namespace Linkora.Repositories
             var highlightTask = highlightTake > 0
                 ? QueryProductsAsync(rootCategoryId, includeDescendants, sort,
                     "p.PromotionType = 'Highlight'",
-                    null, null, null, null, null, highlightSkip, highlightTake)
+                    filters, rangeFrom, rangeTo, city, search, highlightSkip, highlightTake)
                 : Task.FromResult((new List<Product>(), highlightCount));
 
             var filteredTask = QueryProductsAsync(rootCategoryId, includeDescendants, sort,
@@ -79,24 +79,6 @@ namespace Linkora.Repositories
                 TotalPages = (int)Math.Ceiling(total / (double)pageSize),
                 Total = total
             };
-        }
-        private async Task<int> GetHighlightCountCachedAsync(int rootCategoryId, bool includeDescendants)
-        {
-            var cacheKey = $"highlight_count_{rootCategoryId}_{includeDescendants}";
-            if (_cache.TryGetValue(cacheKey, out int cached)) return cached;
-
-            var catCondition = includeDescendants
-                ? "INNER JOIN CategoryClosure cc ON cc.DescendantId = p.CategoryId AND cc.AncestorId = @RootCategoryId"
-                : "WHERE p.CategoryId = @RootCategoryId";
-            var whereKeyword = includeDescendants ? "WHERE" : "AND";
-
-            var countQuery = $@"SELECT COUNT(*) FROM Products p
-                {catCondition}
-                {whereKeyword} (p.Status = 'active' OR p.Status IS NULL) AND p.PromotionType = 'Highlight'";
-
-            var count = (await QueryAsync(countQuery, r => r.GetInt32(0), p => p.AddWithValue("@RootCategoryId", rootCategoryId))).FirstOrDefault();
-            _cache.Set(cacheKey, count, TimeSpan.FromSeconds(45));
-            return count;
         }
         private async Task<int> GetPromoCountCachedAsync(int rootCategoryId, bool includeDescendants)
         {
@@ -294,7 +276,7 @@ namespace Linkora.Repositories
         {
             var (inClause, parameters) = BuildInClause(paramIds, "@pid");
             var data = await QueryAsync(
-                $"SELECT Id,Value,ValueLV,ValueRU FROM SelectOptions WHERE IsConf = 1 AND ParamId IN ({inClause})",
+                $"SELECT Id,Value,ValueLV,ValueRU FROM SelectOptions WHERE ParamId IN ({inClause})",
                 r => (Id: r.GetInt32(0), Value: r.GetString(1), ValueLV: r.GetStringOrDefault(2, r.GetString(1)), ValueRU: r.GetStringOrDefault(3, r.GetString(1))),
                 p => { foreach (var prm in parameters) p.Add(prm); });
             return data.ToDictionary(x => x.Id, x => (x.Value, x.ValueLV, x.ValueRU));
@@ -303,7 +285,7 @@ namespace Linkora.Repositories
         {
             var (inClause, parameters) = BuildInClause(paramIds, "@pid");
             var data = await QueryAsync(
-                $"SELECT Id,Name,NameLV,NameRU,HexValue FROM ColorOptions WHERE IsConf = 1 AND ParamId IN ({inClause})",
+                $"SELECT Id,Name,NameLV,NameRU,HexValue FROM ColorOptions WHERE ParamId IN ({inClause})",
                 r => (Id: r.GetInt32(0), Name: r.GetString(1), NameLV: r.GetStringOrDefault(2, r.GetString(1)), NameRU: r.GetStringOrDefault(3, r.GetString(1)), Hex: r.GetString(4)),
                 p => { foreach (var prm in parameters) p.Add(prm); });
             return data.ToDictionary(x => x.Id, x => (x.Name, x.NameLV, x.NameRU, x.Hex));
@@ -564,16 +546,50 @@ namespace Linkora.Repositories
             var items = new List<AdminConfOptionRow>();
             int totalCount = 0;
             await using var conn = await OpenConnectionAsync();
-            var sql = @"SELECT COUNT(*) FROM dbo.SelectOptions so INNER JOIN dbo.MapperProductParam mpp ON ',' + mpp.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%' INNER JOIN dbo.Products p ON mpp.ProductId = p.Id WHERE so.IsConf = 0;SELECT so.Id AS OptionId,so.Value AS OptionValue,so.ValueLV AS OptionValueLV,so.ValueRU AS OptionValueRU,p.Id AS ProductId,p.Name AS ProductName,p.CreatedAt AS CreatedAt,u.Id AS UserId,u.UserName AS UserName,c.Id AS CategoryId,c.Name AS CategoryName,c2.Name AS OptionCategory,c.NameLV AS CategoryNameLV,c2.NameLV AS OptionCategoryLV,c.NameRU AS CategoryNameRU,c2.NameRU AS OptionCategoryRU FROM dbo.SelectOptions so INNER JOIN dbo.MapperProductParam mpp ON ',' + mpp.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%' INNER JOIN dbo.Products p ON mpp.ProductId = p.Id INNER JOIN dbo.Users u ON p.UserId = u.Id INNER JOIN dbo.Category c ON p.CategoryId = c.Id INNER JOIN dbo.Parameters p2 ON so.ParamId = p2.Id WHERE so.IsConf = 0;";
+            var sql = @"SELECT COUNT(*) 
+            FROM dbo.SelectOptions so 
+            INNER JOIN dbo.MapperProductParam mpp ON ',' + mpp.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%' 
+            INNER JOIN dbo.Products p ON mpp.ProductId = p.Id 
+            WHERE so.IsConf = 0;
+
+            SELECT so.Id AS OptionId, so.Value AS OptionValue, so.ValueLV AS OptionValueLV, so.ValueRU AS OptionValueRU,
+                   p.Id AS ProductId, p.Name AS ProductName, p.CreatedAt AS CreatedAt,
+                   u.Id AS UserId, u.UserName AS UserName,
+                   c.Id AS CategoryId, c.Name AS CategoryName, c.NameLV AS CategoryNameLV, c.NameRU AS CategoryNameRU,
+                   p2.Name AS ParameterName, p2.NameLV AS ParameterNameLV, p2.NameRU AS ParameterNameRU
+            FROM dbo.SelectOptions so
+            INNER JOIN dbo.MapperProductParam mpp ON ',' + mpp.Value + ',' LIKE '%,' + CAST(so.Id AS VARCHAR) + ',%'
+            INNER JOIN dbo.Products p ON mpp.ProductId = p.Id
+            INNER JOIN dbo.Users u ON p.UserId = u.Id
+            INNER JOIN dbo.Category c ON p.CategoryId = c.Id
+            INNER JOIN dbo.Parameters p2 ON so.ParamId = p2.Id
+            WHERE so.IsConf = 0;";
             await using var cmd = new SqlCommand(sql, conn);
             await using var r = await cmd.ExecuteReaderAsync();
             if (await r.ReadAsync()) totalCount = r.GetInt32(0);
             await r.NextResultAsync();
             while (await r.ReadAsync())
-                items.Add(new AdminConfOptionRow { OptionId = r.GetInt32(0), OptionValue = r.GetStringOrDefault(1), OptionValueLV = r.GetStringOrDefault(2), OptionValueRU = r.GetStringOrDefault(3), ProductId = r.GetInt32(4), ProductName = r.GetStringOrDefault(5), CreatedAt = r.GetDateTimeOrNull(6), UserId = r.GetInt32(7), UserName = r.GetStringOrDefault(8), CategoryId = r.GetInt32(9), CategoryName = r.GetStringOrDefault(10), ParameterName = r.GetStringOrDefault(11), CategoryNameLV = r.GetStringOrDefault(12), ParameterNameLV = r.GetStringOrDefault(13), CategoryNameRU = r.GetStringOrDefault(14), ParameterNameRU = r.GetStringOrDefault(15) });
+                items.Add(new AdminConfOptionRow { OptionId = r.GetInt32(0), OptionValue = r.GetStringOrDefault(1), OptionValueLV = r.GetStringOrDefault(2), OptionValueRU = r.GetStringOrDefault(3), ProductId = r.GetInt32(4), ProductName = r.GetStringOrDefault(5), CreatedAt = r.GetDateTimeOrNull(6), UserId = r.GetInt32(7), UserName = r.GetStringOrDefault(8), CategoryId = r.GetInt32(9),
+                    CategoryName = r.GetStringOrDefault(10), CategoryNameLV = r.GetStringOrDefault(11), CategoryNameRU = r.GetStringOrDefault(12), ParameterName = r.GetStringOrDefault(13), ParameterNameLV = r.GetStringOrDefault(14), ParameterNameRU = r.GetStringOrDefault(15)});
             return (items, totalCount);
         }
-        public async Task<bool> ApproveSelectOptionAsync(int optionId) => (await ExecuteAsync("UPDATE SelectOptions SET IsConf = 1 WHERE Id = @Id", p => p.AddWithValue("@Id", optionId))) > 0;
+        public async Task<bool> ApproveSelectOptionAsync(int optionId)
+        {
+            var paramId = (await QueryAsync<int?>(
+                "UPDATE SelectOptions SET IsConf = 1 OUTPUT INSERTED.ParamId WHERE Id = @Id",
+                r => r.GetInt32OrNull(0),
+                p => p.AddWithValue("@Id", optionId))).FirstOrDefault();
+
+            if (!paramId.HasValue) return false;
+
+            foreach (var lang in new[] { "en", "lv", "ru" })
+                _cache.Remove($"select_options_{paramId.Value}_{lang}");
+
+            var cacheVersion = _cache.TryGetValue("select_options_cache_version", out int version) ? version : 0;
+            _cache.Set("select_options_cache_version", cacheVersion + 1);
+
+            return true;
+        }
         public async Task<bool> RejectProductAndOptionAsync(int optionId, int productId)
         {
             try

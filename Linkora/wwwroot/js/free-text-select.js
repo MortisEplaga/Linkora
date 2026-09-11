@@ -2,8 +2,26 @@
     var optionsCache = {};
 
     function buildFreeTextSelectHtml(paramId, initialText, initialId, options) {
-        var safeText = initialText ? String(initialText).replace(/"/g, '&quot;') : '';
-        var optionsJson = JSON.stringify(options || []).replace(/"/g, '&quot;');
+        var opts = options || [];
+
+        if (initialId && !initialText) {
+            var byId = opts.find(function (o) { return String(o.id) === String(initialId); });
+            if (byId) {
+                initialText = byId.text;
+            } else {
+                initialText = initialId;
+                initialId = null;
+            }
+        }
+
+        if (initialText && !initialId) {
+            var byText = opts.find(function (o) { return o.text === initialText; });
+            if (byText) initialId = byText.id;
+        }
+
+        var safeText = initialText ? initialText.replace(/"/g, '&quot;') : '';
+        var optionsJson = JSON.stringify(opts).replace(/"/g, '&quot;');
+
         return '' +
             '<div class="free-text-select" data-param="' + paramId + '" data-options="' + optionsJson + '" style="position:relative">' +
             '<input type="text" class="create-input free-text-select-input" ' +
@@ -86,7 +104,7 @@
         var hidden = wrap.querySelector('.free-text-select-id');
         var paramId = wrap.dataset.param;
 
-        if (paramId && typeof window.addType8Chip === 'function') {
+        if (document.getElementById('chips_' + paramId) && typeof window.addType8Chip === 'function') {
             window.addType8Chip(paramId, opt.id, opt.text);
             input.value = '';
             if (hidden) hidden.value = '';

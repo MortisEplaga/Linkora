@@ -9,7 +9,7 @@ namespace Linkora.Repositories
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IMemoryCache _cache;
         private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(30);
-
+        private int SelectOptionsCacheVersion => _cache.TryGetValue("select_options_cache_version", out int version) ? version : 0;
         public CategoryRepository(IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IMemoryCache cache) : base(configuration)
         {
             _httpContextAccessor = httpContextAccessor;
@@ -70,7 +70,7 @@ namespace Linkora.Repositories
             var idList = categoryIds.OrderBy(x => x).ToList();
             if (idList.Count == 0) return [];
 
-            var cacheKey = $"cat_params_{string.Join(",", idList)}_{_httpContextAccessor.HttpContext.GetLang()}";
+            var cacheKey = $"cat_params_{string.Join(",", idList)}_{_httpContextAccessor.HttpContext.GetLang()}_{SelectOptionsCacheVersion}";
 
             if (_cache.TryGetValue(cacheKey, out List<Parameter>? cached) && cached != null) return cached;
 
@@ -81,7 +81,7 @@ namespace Linkora.Repositories
         }
         public async Task<List<Parameter>> GetParametersAsync(int categoryId)
         {
-            var cacheKey = $"cat_params_single_{categoryId}_{_httpContextAccessor.HttpContext.GetLang()}";
+            var cacheKey = $"cat_params_single_{categoryId}_{_httpContextAccessor.HttpContext.GetLang()}_{SelectOptionsCacheVersion}";
 
             if (_cache.TryGetValue(cacheKey, out List<Parameter>? cached) && cached != null) return cached;
 

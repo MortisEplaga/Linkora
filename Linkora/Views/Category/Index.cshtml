@@ -281,13 +281,13 @@
                 </button>
                 <div class="listing-sort-drop" id="sortDrop">
                     <a class="listing-sort-item@(sort == "new" ? " active" : "")"
-                       onclick="clientSort('new', this)" data-i18n="sort_newest"></a>
+                       onclick="clientSort('new')" data-i18n="sort_newest"></a>
                     @if (hasPriceSort)
                     {
                         <a class="listing-sort-item@(sort == "cheap" ? " active" : "")"
-                           onclick="clientSort('cheap', this)" data-i18n="sort_cheapest"></a>
+                           onclick="clientSort('cheap')" data-i18n="sort_cheapest"></a>
                         <a class="listing-sort-item@(sort == "expensive" ? " active" : "")"
-                           onclick="clientSort('expensive', this)" data-i18n="sort_expensive"></a>
+                           onclick="clientSort('expensive')" data-i18n="sort_expensive"></a>
                     }
                 </div>
             </div>
@@ -521,39 +521,11 @@ function resetFilters(categoryId) {
         window.location.href = '/Category/Index/' + categoryId;
     }
 
-    function clientSort(type, el) {
-        const lang = localStorage.getItem('lang') || 'en';
-        const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
-
-        document.querySelectorAll('.param-show-more[data-count]').forEach(btn => {
-            btn.textContent = (dict.more_btn || 'More') + ' ' + btn.dataset.count;
-        });
-        document.querySelectorAll('.listing-sort-item').forEach(i => i.classList.remove('active'));
-        el.classList.add('active');
-
-        const labels = { new: dict.sort_newest, cheap: dict.sort_cheapest, expensive: dict.sort_expensive };
-        document.getElementById('sortLabel').textContent = labels[type];
-        document.getElementById('sortDrop').classList.remove('open');
-
-        const container = document.getElementById('listingContainer');
-        const cards = Array.from(container.children);
-
-        cards.sort((a, b) => {
-            const aTop = a.dataset.promoTop === 'true';
-            const bTop = b.dataset.promoTop === 'true';
-            if (aTop !== bTop) return aTop ? -1 : 1;
-
-            if (type === 'new') {
-                const da = a.querySelector('.product-card-date')?.textContent.trim() || '';
-                const db = b.querySelector('.product-card-date')?.textContent.trim() || '';
-                return db.localeCompare(da);
-            }
-            const pa = parseFloat(a.querySelector('.product-card-price-tag .price-value')?.textContent.replace(/[^0-9.]/g, '')) || 0;
-            const pb = parseFloat(b.querySelector('.product-card-price-tag .price-value')?.textContent.replace(/[^0-9.]/g, '')) || 0;
-            return type === 'cheap' ? pa - pb : pb - pa;
-        });
-
-        cards.forEach(c => container.appendChild(c));
+    function clientSort(type) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('sort', type);
+        url.searchParams.delete('page');
+        window.location.href = url.toString();
     }
 
     document.addEventListener('DOMContentLoaded', async () => {

@@ -121,7 +121,7 @@ namespace Linkora.Repositories
         {
             var (inClause, parameters) = BuildInClause(paramIds, "@pid");
             var data = await QueryAsync(
-                $"SELECT Id,Value,ValueLV,ValueRU FROM SelectOptions WHERE IsConf = 1 AND ParamId IN ({inClause})",
+                $"SELECT Id,Value,ValueLV,ValueRU FROM SelectOptions WHERE AND ParamId IN ({inClause})",
                 r => (Id: r.GetInt32(0), Value: r.GetString(1), ValueLV: r.GetStringOrDefault(2, r.GetString(1)), ValueRU: r.GetStringOrDefault(3, r.GetString(1))),
                 p => { foreach (var prm in parameters) p.Add(prm); });
             return data.ToDictionary(x => x.Id, x => (x.Value, x.ValueLV, x.ValueRU));
