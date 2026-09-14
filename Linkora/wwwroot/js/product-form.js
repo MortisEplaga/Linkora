@@ -397,7 +397,7 @@ function selectPromotion(type, btn) {
     }
     pendingPromoType = type;
     pendingPromoBtn = btn;
-    openSharedRulesModal('promo');
+    openSharedRulesModal('promo', { type: 'promotion', promotionType: type });
 }
 
 async function confirmPromoRules(agreed) {

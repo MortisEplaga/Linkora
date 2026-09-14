@@ -5,11 +5,10 @@ namespace Linkora.Repositories
     public class PaymentRepository : SqlRepositoryBase, IPaymentRepository
     {
         public PaymentRepository(IConfiguration configuration) : base(configuration) { }
-        public async Task<int> CreateAsync(int userId, string purpose, int? productId, string? promotionType, 
-                                           string? subscriptionType, decimal price, string reference) => (await QueryAsync<int>(
-                @"INSERT INTO Payments (UserId, PurposeType, ProductId, PromotionType, SubscriptionType, Price, Currency, Reference, Status, CreatedAt)
+        public async Task<int> CreateAsync(int userId, string purpose, int? productId, string? promotionType, string? subscriptionType, decimal price, string reference, int pointsSpent) => (await QueryAsync<int>(
+                @"INSERT INTO Payments (UserId, PurposeType, ProductId, PromotionType, SubscriptionType, Price, Currency, Reference, Status, PointsSpent, CreatedAt)
                   OUTPUT INSERTED.Id
-                  VALUES (@UserId, @Purpose, @ProductId, @PromotionType, @SubscriptionType, @Price, 'EUR', @Reference, 'Created', SYSUTCDATETIME())",
+                  VALUES (@UserId, @Purpose, @ProductId, @PromotionType, @SubscriptionType, @Price, 'EUR', @Reference, 'Created', @PointsSpent, SYSUTCDATETIME())",
                 r => r.GetInt32(0),
                 p =>
                 {
@@ -20,6 +19,7 @@ namespace Linkora.Repositories
                     p.AddWithValue("@SubscriptionType", (object?)subscriptionType ?? DBNull.Value);
                     p.AddWithValue("@Price", price);
                     p.AddWithValue("@Reference", reference);
+                    p.AddWithValue("@PointsSpent", pointsSpent);
                 }))[0];
         public async Task SetTransactionIdAsync(int paymentId, string transactionId) => await ExecuteAsync(
                 "UPDATE Payments SET TransactionId = @TxId, Status = 'Pending' WHERE Id = @Id",
@@ -36,7 +36,7 @@ namespace Linkora.Repositories
                     p.AddWithValue("@Id", paymentId);
                 });
         public async Task<PaymentBase?> GetByReferenceAsync(string reference) => await QuerySingleAsync(
-                "SELECT Id, Status, PurposeType, ProductId, PromotionType, SubscriptionType, UserId FROM Payments WHERE Reference = @Reference",
+                "SELECT Id, Status, PurposeType, ProductId, PromotionType, SubscriptionType, UserId, PointsSpent FROM Payments WHERE Reference = @Reference",
                 r => new PaymentBase
                 {
                     Id = r.GetInt32(0),
@@ -46,6 +46,7 @@ namespace Linkora.Repositories
                     PromotionType = r.GetStringOrNull(4),
                     SubscriptionType = r.GetStringOrNull(5),
                     UserId = r.GetInt32(6),
+                    PointsSpent = r.GetInt32OrDefault(7),
                 },
                 p => p.AddWithValue("@Reference", reference));
         public async Task MarkCompletedAsync(int paymentId) => await ExecuteAsync("UPDATE Payments SET Status = 'Completed', CompletedAt = SYSUTCDATETIME() WHERE Id = @Id", p => p.AddWithValue("@Id", paymentId));

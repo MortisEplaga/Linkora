@@ -32,14 +32,6 @@ namespace Linkora.Controllers
         private readonly IGeocodingService _geocodingService = geocodingService;
         private readonly ILogger<ProductController> _logger = logger;
 
-        private static int PromotionPoints(string? promotionType) => promotionType switch
-        {
-            "Highlight" => 1,
-            "Top" => 2,
-            "Vip" => 3,
-            _ => 0
-        };
-
         private static Dictionary<int, string> ParseParamsJson(string? json)
         {
             var result = new Dictionary<int, string>();
@@ -249,8 +241,8 @@ namespace Linkora.Controllers
 
             var refreshedMedia = await _productRepository.GetMediaAsync(id);
             string? newAvatar = refreshedMedia.FirstOrDefault()?.FilePath ?? existing.AvatarUrl;
-            var oldPoints = PromotionPoints(existing.PromotionType);
-            var newPoints = PromotionPoints(promotionType);
+            var oldPoints = UserRepository.PromotionPoints(existing.PromotionType);
+            var newPoints = UserRepository.PromotionPoints(promotionType);
 
             _logger.LogInformation("Updating product {ProductId} with Address='{Address}', Lat={Lat}, Lng={Lng}", id, address, lat, lng);
 
@@ -461,12 +453,9 @@ namespace Linkora.Controllers
                 Lat = lat,
                 Lng = lng,
                 Price = price,
-            }, paramValues, duration, promotionType ?? "None");
+            }, paramValues, duration, "None");
 
             _logger.LogInformation("Product {ProductId} created for user {UserId}", newId, userId);
-
-            var points = PromotionPoints(promotionType);
-            if (points > 0) await _userRepository.AdjustPromotionPointsAsync(userId, points);
 
             if (media.Count > 0) await _productRepository.SaveMediaAsync(newId, media);
 
@@ -475,7 +464,9 @@ namespace Linkora.Controllers
             var userName = User.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
             await _notifications.NotifySubscribersAsync(userId, newId, title, userName);
 
-            return Ok(new { id = newId });
+            var pendingPromotion = string.IsNullOrEmpty(promotionType) || promotionType == "None" ? null : promotionType;
+
+            return Ok(new { id = newId, promotionType = pendingPromotion });
         }
         [HttpGet]
         public async Task<IActionResult> CategoryRules(int categoryId)

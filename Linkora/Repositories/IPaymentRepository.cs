@@ -5,7 +5,7 @@ namespace Linkora.Repositories
     public interface IPaymentRepository
     {
         Task<int> CreateAsync(int userId, string purpose, int? productId, string? promotionType,
-            string? subscriptionType, decimal price, string reference);
+            string? subscriptionType, decimal price, string reference, int pointsSpent);
         Task SetTransactionIdAsync(int paymentId, string transactionId);
         Task SetStatusAsync(int paymentId, string status);
         Task<PaymentBase?> GetByReferenceAsync(string reference);

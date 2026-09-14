@@ -879,12 +879,28 @@
     .listing-grid {
         grid-template-columns: repeat(3, 1fr);
     }
+
+    .product-card-price-tag {
+        font-size: 15px;
+        height: 38px;
+        padding: 0 7px 0 3px;
+        left: 14px;
+        bottom: 12px;
+    }
 }
 
 @media (max-width: 768px) {
     .listing-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 10px;
+    }
+
+    .product-card-price-tag {
+        font-size: 13px;
+        height: 34px;
+        padding: 0 6px 0 3px;
+        left: 10px;
+        bottom: 10px;
     }
 
     .listing-toolbar {
@@ -967,10 +983,12 @@
     }
 
     .product-card-price-tag {
-        font-size: 14px;
-        height: 34px;
-        left: 10px;
-        bottom: 10px;
+        font-size: 11px;
+        height: 28px;
+        left: 8px;
+        bottom: 8px;
+        padding: 0 5px 0 2px;
+        max-width: calc(100% - 18px);
     }
 
     .listing-toolbar {

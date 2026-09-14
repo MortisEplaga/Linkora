@@ -23,6 +23,12 @@
         <button class="info-lang-btn" onclick="switchSharedRulesLang('@prefix', 'lv', this)">LV</button>
         <button class="info-lang-btn" onclick="switchSharedRulesLang('@prefix', 'en', this)">EN</button>
     </div>
+    <div id="@(prefix)PriceInfo" class="duration-hint" style="padding:0 24px 16px;font-size:14px;color:#333"></div>
+
+    <div style="display:flex;gap:10px;padding:16px 24px 24px;flex-shrink:0">
+        <button class="auth-submit auth-submit-secondary" id="@(prefix)DisagreeBtn" onclick="confirmSharedRules('@prefix', false)" data-i18n="@disagreeI18nKey">@disagreeText</button>
+        <button class="auth-submit" id="@(prefix)AgreeBtn" disabled onclick="confirmSharedRules('@prefix', true)" data-i18n="@agreeI18nKey">@agreeText</button>
+    </div>
 
     <div class="promo-scroll-wrapper">
         <div class="terms-title" style="margin-top: 15px; font-size: 16px;" data-i18n="rules_title">Правила</div>

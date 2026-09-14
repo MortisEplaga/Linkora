@@ -8,7 +8,7 @@ const MODAL_TITLES = {
     faqModal: { en: 'FAQ', lv: 'Bieži uzdotie jautājumi', ru: 'FAQ' },
     rulesModal: { en: 'Terms of use', lv: 'Portāla lietošanas noteikumi', ru: 'Правила пользования порталом' },
     policyModal: { en: 'Privacy Policy', lv: 'Privātuma politika', ru: 'Политика конфиденциальности' },
-    contactsModal: { en: 'Contacts', lv: 'Kontakti', ru: 'Контакты' },
+    contactsModal: { en: 'Contacts', lv: 'Kontakti', ru: 'Контакты' }, fetchPriceQuote
     supportModal: { en: 'Technical Support', lv: 'Tehniskā palīdzība', ru: 'Техническая поддержка' },
 };
 
@@ -16,6 +16,18 @@ const SUPPORT_FORM_TEXT = {
     en: { name: 'Your name', email: 'Email', phone: 'Phone', message: 'Describe the error', send: 'Send' },
     lv: { name: 'Jūsu vārds', email: 'E-pasts', phone: 'Tālrunis', message: 'Aprakstiet kļūdu', send: 'Sūtīt' },
     ru: { name: 'Ваше имя', email: 'Email', phone: 'Телефон', message: 'Опишите ошибку', send: 'Отправить' },
+};
+
+const PRICE_INFO_TEXT = {
+    en: (original, discount, final) => discount > 0
+        ? `Price: ${original.toFixed(2)} € — discount ${discount}% (points) — you pay ${final.toFixed(2)} €`
+        : `Price: ${final.toFixed(2)} €`,
+    lv: (original, discount, final) => discount > 0
+        ? `Cena: ${original.toFixed(2)} € — atlaide ${discount}% (punkti) — jāmaksā ${final.toFixed(2)} €`
+        : `Cena: ${final.toFixed(2)} €`,
+    ru: (original, discount, final) => discount > 0с
+        ? `Цена: ${original.toFixed(2)} € — скидка ${discount}% (баллы) — к оплате ${final.toFixed(2)} €`
+        : `Цена: ${final.toFixed(2)} €`,
 };
 
 function switchInfoLang(lang, btn) {
@@ -1064,7 +1076,7 @@ async function updateMsgBadge() {
 
 const sharedRulesState = {};
 
-function openSharedRulesModal(prefix) {
+async function openSharedRulesModal(prefix, quoteParams = null) {
     const rulesBody = document.getElementById(`${prefix}RulesBody`);
     const policyBody = document.getElementById(`${prefix}PolicyBody`);
 
@@ -1113,7 +1125,7 @@ function openSharedRulesModal(prefix) {
     const agreeBtn = document.getElementById(`${prefix}AgreeBtn`);
     if (agreeBtn) agreeBtn.disabled = true;
 
-    sharedRulesState[prefix] = { rulesScrolled: false, policyScrolled: false };
+    sharedRulesState[prefix] = { rulesScrolled: false, policyScrolled: false, quoteParams };
 
     if (rulesBody) rulesBody.scrollTop = 0;
     if (policyBody) policyBody.scrollTop = 0;
@@ -1122,6 +1134,8 @@ function openSharedRulesModal(prefix) {
     modal.classList.add('modal-open');
     document.body.style.overflow = 'hidden';
 
+    fetchPriceQuote(prefix, quoteParams);
+
     setTimeout(() => {
         if (rulesBody && rulesBody.scrollHeight <= rulesBody.clientHeight + 10) sharedRulesState[prefix].rulesScrolled = true;
         if (policyBody && policyBody.scrollHeight <= policyBody.clientHeight + 10) sharedRulesState[prefix].policyScrolled = true;
@@ -1129,6 +1143,23 @@ function openSharedRulesModal(prefix) {
             if (agreeBtn) agreeBtn.disabled = false;
         }
     }, 50);
+}
+
+async function fetchPriceQuote(prefix, quoteParams) {
+    const infoEl = document.getElementById(`${prefix}PriceInfo`);
+    if (!infoEl || !quoteParams) return;
+
+    infoEl.textContent = '';
+
+    const query = new URLSearchParams(quoteParams).toString();
+    try {
+        const res = await fetch(`/Payments/Quote?${query}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const lang = getCurrentLanguage();
+        const fmt = PRICE_INFO_TEXT[lang] || PRICE_INFO_TEXT.en;
+        infoEl.textContent = fmt(data.originalPrice, data.discountPercent, data.finalPrice);
+    } catch { }
 }
 
 function checkSharedRulesScroll(prefix, type) {
@@ -1195,6 +1226,7 @@ function switchSharedRulesLang(prefix, lang, btn) {
     const policyTitleEl = modal.querySelector('[data-i18n="policy_title"]');
     if (rulesTitleEl) rulesTitleEl.textContent = innerTitles[lang].rules;
     if (policyTitleEl) policyTitleEl.textContent = innerTitles[lang].policy;
+    fetchPriceQuote(prefix, sharedRulesState[prefix]?.quoteParams);
 }
 
 function closeSharedRulesModal(prefix) {

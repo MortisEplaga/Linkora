@@ -6,6 +6,13 @@ namespace Linkora.Repositories
     public class UserRepository : SqlRepositoryBase, IUserRepository
     {
         public UserRepository(IConfiguration configuration) : base(configuration) { }
+        public static int PromotionPoints(string? promotionType) => promotionType switch
+        {
+            "Highlight" => 1,
+            "Top" => 2,
+            "Vip" => 3,
+            _ => 0
+        };
         private static bool HasColumn(SqlDataReader r, string name)
         {
             for (int i = 0; i < r.FieldCount; i++) if (r.GetName(i).Equals(name, StringComparison.OrdinalIgnoreCase)) return true;

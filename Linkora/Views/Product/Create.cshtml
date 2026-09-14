@@ -274,6 +274,25 @@
 
             if (res.ok) {
                 const data = await res.json();
+
+                if (data.promotionType) {
+                    const payRes = await fetch('/Payments/InitiatePromotion', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `productId=${data.id}&promotionType=${encodeURIComponent(data.promotionType)}`
+                    });
+
+                    if (payRes.ok) {
+                        const payData = await payRes.json();
+                        window.location.href = payData.redirectUrl;
+                        return;
+                    } else {
+                        alert(translate('payment_failed'));
+                        window.location.href = `/Product/Details/${data.id}`;
+                        return;
+                    }
+                }
+
                 window.location.href = `/Product/Details/${data.id}`;
             } else {
                 alert(translate('error') + ': ' + await res.text());
@@ -284,5 +303,4 @@
             btn.disabled = false;
             translateDynamicElement(btn);
         }
-    }
-</script>
+    }</script>

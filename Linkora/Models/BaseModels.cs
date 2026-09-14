@@ -55,5 +55,6 @@
         public string? PromotionType { get; set; }
         public string? SubscriptionType { get; set; }
         public string Status { get; set; } = "";
+        public int PointsSpent { get; set; }
     }
 }
