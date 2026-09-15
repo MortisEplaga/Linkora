@@ -15,15 +15,15 @@ namespace Linkora.Controllers
 
         private static readonly Dictionary<string, decimal> PromotionPrices = new()
         {
-            ["Highlight"] = 2.00m,
-            ["Top"] = 5.00m,
-            ["Vip"] = 10.00m,
+            ["Highlight"] = 0.20m,
+            ["Top"] = 0.50m,
+            ["Vip"] = 1.00m,
         };
 
         private static readonly Dictionary<string, decimal> SubscriptionPrices = new()
         {
-            ["Standard"] = 4.99m,
-            ["Premium"] = 9.99m,
+            ["Standard"] = 0.5m,
+            ["Premium"] = 1.00m,
         };
         private static (decimal FinalPrice, int PointsSpent) ApplyPointsDiscount(decimal price, int availablePoints)
         {
@@ -80,7 +80,7 @@ namespace Linkora.Controllers
         private async Task<IActionResult> StartTransactionAsync(int paymentId, decimal price, string reference)
         {
             var scheme = Request.Scheme;
-            var host = Request.Host.Value;
+            var host = "vena.lv";//Request.Host.Value;
             var returnUrl = $"{scheme}://{host}/Payments/Return";
             var cancelUrl = $"{scheme}://{host}/Payments/Return";
             var notificationUrl = $"{scheme}://{host}/Payments/Notification";

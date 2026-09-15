@@ -32,7 +32,7 @@ namespace Linkora.Services
             {
                 transaction = new
                 {
-                    price = price.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
+                    amount = price.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture),
                     currency,
                     reference
                 },
