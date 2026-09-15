@@ -272,7 +272,8 @@
         const res = await fetch('/Payments/InitiatePromotion', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
             },
             body: `productId=@p.Id&promotionType=${type}`
         });

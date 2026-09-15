@@ -8,7 +8,7 @@ const MODAL_TITLES = {
     faqModal: { en: 'FAQ', lv: 'Bieži uzdotie jautājumi', ru: 'FAQ' },
     rulesModal: { en: 'Terms of use', lv: 'Portāla lietošanas noteikumi', ru: 'Правила пользования порталом' },
     policyModal: { en: 'Privacy Policy', lv: 'Privātuma politika', ru: 'Политика конфиденциальности' },
-    contactsModal: { en: 'Contacts', lv: 'Kontakti', ru: 'Контакты' }, fetchPriceQuote
+    contactsModal: { en: 'Contacts', lv: 'Kontakti', ru: 'Контакты' },
     supportModal: { en: 'Technical Support', lv: 'Tehniskā palīdzība', ru: 'Техническая поддержка' },
 };
 
@@ -25,7 +25,7 @@ const PRICE_INFO_TEXT = {
     lv: (original, discount, final) => discount > 0
         ? `Cena: ${original.toFixed(2)} € — atlaide ${discount}% (punkti) — jāmaksā ${final.toFixed(2)} €`
         : `Cena: ${final.toFixed(2)} €`,
-    ru: (original, discount, final) => discount > 0с
+    ru: (original, discount, final) => discount > 0
         ? `Цена: ${original.toFixed(2)} € — скидка ${discount}% (баллы) — к оплате ${final.toFixed(2)} €`
         : `Цена: ${final.toFixed(2)} €`,
 };
@@ -1235,11 +1235,11 @@ function closeSharedRulesModal(prefix) {
     document.body.style.overflow = '';
 }
 
-function confirmSharedRules(prefix, agreed) {
+async function confirmSharedRules(prefix, agreed) {
     if (prefix === 'promo' && typeof window.confirmPromoRules === 'function') {
-        window.confirmPromoRules(agreed);
+        await window.confirmPromoRules(agreed);
     } else if (prefix === 'sub' && typeof window.confirmSubRules === 'function') {
-        window.confirmSubRules(agreed);
+        await window.confirmSubRules(agreed);
     }
 }
 
