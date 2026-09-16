@@ -22,6 +22,7 @@ namespace Linkora.Services
                 try
                 {
                     await ArchiveExpiredProducts();
+                    await ExpirePromotions();
                     await CleanupAsync();
                     await CleanupOldSessionsAsync();
                 }
@@ -34,6 +35,11 @@ namespace Linkora.Services
             }
         }
         private async Task ArchiveExpiredProducts() => _logger.LogInformation("Archived {Count} expired products", await _serviceScopeFactory.CreateScope().ServiceProvider.GetRequiredService<IProductRepository>().ArchiveExpiredProductsAsync());
+        private async Task ExpirePromotions()
+        {
+            var expired = await _serviceScopeFactory.CreateScope().ServiceProvider.GetRequiredService<IPromotionRepository>().ExpireDueAsync();
+            if (expired > 0) _logger.LogInformation("Expired {Count} due promotions", expired);
+        }
         private async Task CleanupAsync()
         {
             int deleted = await _serviceScopeFactory.CreateScope().ServiceProvider.GetRequiredService<IProductRepository>().ProcessMediaDeletionQueueAsync();

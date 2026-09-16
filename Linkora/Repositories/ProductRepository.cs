@@ -189,7 +189,8 @@ namespace Linkora.Repositories
             var dataQuery = $@"SELECT p.Id, p.Name, p.Description, p.Address, p.CreatedAt, 
                        COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder), p.AvatarUrl) AS AvatarUrl,
                        u.UserName, u.AvatarUrl, u.IsCompany, u.Phone, u.Email, u.CreatedAt, u.Id,
-                       p.PromotionType, u.TelegramUrl, u.WhatsAppUrl, u.WebsiteUrl, p.Price, p.Lat, p.Lng
+                       u.TelegramUrl, u.WhatsAppUrl, u.WebsiteUrl, p.Price, p.Lat, p.Lng,
+                       p.SubscriptionBoostLevel, p.SubscriptionBoostExpiresAt, p.PaidBoostLevel, p.PaidBoostExpiresAt
                        FROM Products p LEFT JOIN Users u ON u.Id = p.UserId
                        {catCondition} {fullWhere}
                        ORDER BY {baseOrder}, p.Id
@@ -219,14 +220,17 @@ namespace Linkora.Repositories
                 Phone = r.GetStringOrNull(9),
                 Email = r.GetStringOrNull(10),
                 CreatedAt = r.GetDateTimeOrNull(11),
-                TelegramUrl = r.GetStringOrNull(14),
-                WhatsAppUrl = r.GetStringOrNull(15),
-                WebsiteUrl = r.GetStringOrNull(16)
+                TelegramUrl = r.GetStringOrNull(13),
+                WhatsAppUrl = r.GetStringOrNull(14),
+                WebsiteUrl = r.GetStringOrNull(15)
             },
-            Price = r.GetDecimalOrNull(17),
-            PromotionType = r.GetStringOrDefault(13, "None"),
-            Lat = r.GetDecimalOrNull(18),
-            Lng = r.GetDecimalOrNull(19)
+            Price = r.GetDecimalOrNull(16),
+            Lat = r.GetDecimalOrNull(17),
+            Lng = r.GetDecimalOrNull(18),
+            SubscriptionBoostLevel = (PromotionTier?)r.GetInt16OrNull(19),
+            SubscriptionBoostExpiresAt = r.GetDateTimeOrNull(20),
+            PaidBoostLevel = (PromotionTier?)r.GetInt16OrNull(21),
+            PaidBoostExpiresAt = r.GetDateTimeOrNull(22)
         };
         public async Task<Dictionary<int, string>> GetParamDisplayValuesAsync(int productId, string lang)
         {
@@ -295,7 +299,8 @@ namespace Linkora.Repositories
             var product = await QuerySingleAsync(@"SELECT p.Id,p.Name,p.Description,p.Address,p.CreatedAt,
                                                            COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),p.AvatarUrl) AS AvatarUrl,
                                                            p.CategoryId,p.Status,p.Qty,u.UserName,u.AvatarUrl,u.IsCompany,u.Phone,u.Id,p.UserId,u.Email,u.CreatedAt,
-                                                           p.PromotionType,u.TelegramUrl,u.WhatsAppUrl,u.WebsiteUrl,p.Lat,p.Lng,p.Price
+                                                           u.TelegramUrl,u.WhatsAppUrl,u.WebsiteUrl,p.Lat,p.Lng,p.Price,
+                                                           p.SubscriptionBoostLevel,p.SubscriptionBoostExpiresAt,p.PaidBoostLevel,p.PaidBoostExpiresAt
                                                     FROM Products p
                                                     LEFT JOIN Users u ON u.Id = p.UserId
                                                     WHERE p.Id = @Id",
@@ -320,14 +325,17 @@ namespace Linkora.Repositories
                         Phone = r.GetStringOrNull(12),
                         Email = r.GetStringOrNull(15),
                         CreatedAt = r.GetDateTimeOrNull(16),
-                        TelegramUrl = r.GetStringOrNull(18),
-                        WhatsAppUrl = r.GetStringOrNull(19),
-                        WebsiteUrl = r.GetStringOrNull(20)
+                        TelegramUrl = r.GetStringOrNull(17),
+                        WhatsAppUrl = r.GetStringOrNull(18),
+                        WebsiteUrl = r.GetStringOrNull(19)
                     },
-                    PromotionType = r.GetStringOrDefault(17, "None"),
-                    Lat = r.GetDecimalOrNull(21),
-                    Lng = r.GetDecimalOrNull(22),
-                    Price = r.GetDecimalOrNull(23)
+                    Lat = r.GetDecimalOrNull(20),
+                    Lng = r.GetDecimalOrNull(21),
+                    Price = r.GetDecimalOrNull(22),
+                    SubscriptionBoostLevel = (PromotionTier?)r.GetInt16OrNull(23),
+                    SubscriptionBoostExpiresAt = r.GetDateTimeOrNull(24),
+                    PaidBoostLevel = (PromotionTier?)r.GetInt16OrNull(25),
+                    PaidBoostExpiresAt = r.GetDateTimeOrNull(26)
                 },
                 p => p.AddWithValue("@Id", id));
 
@@ -354,18 +362,16 @@ namespace Linkora.Repositories
             ORDER BY p.CreatedAt DESC",
             r => new Product { Id = r.GetInt32(0), Name = r.GetStringOrDefault(1), Address = r.GetStringOrNull(2), CreatedAt = r.GetDateTimeOrNull(3), AvatarUrl = r.GetStringOrNull(4), Status = r.IsDBNull(5) ? ProductStatus.Active : Enum.Parse<ProductStatus>(r.GetString(5), true), Price = r.GetDecimalOrNull(6), ViewCount = r.GetInt32(7), FavCount = r.GetInt32(8), CartCount = r.GetInt32(9) },
             p => { p.AddWithValue("@UserId", userId); p.AddWithValue("@Status", status); });
-        public async Task UpdateAsync(Product product, Dictionary<int, string> paramValues, string promotionType = "None")
+        public async Task UpdateAsync(Product product, Dictionary<int, string> paramValues)
         {
-            var allowedPromotions = new[] { "None", "Highlight", "Top", "Vip" };
-            if (!allowedPromotions.Contains(promotionType)) promotionType = "None";
-
             _logger.LogInformation("ProductRepository.UpdateAsync: ProductId={ProductId}, UserId={UserId}, Address='{Address}', Lat={Lat}, Lng={Lng}", product.Id, product.UserId, product.Address, product.Lat, product.Lng);
 
             await ExecuteInTransactionAsync(async (conn, tx) =>
             {
                 await using (var updateCmd = new SqlCommand(@"UPDATE Products
                                                       SET Name = @Name, Description = @Description, Qty = @Qty, Address = @Address,
-                                                          CategoryId = @CategoryId, PromotionType = @PromotionType, Lat = @Lat, Lng = @Lng, Price = @Price
+                                                          CategoryId = @CategoryId, Lat = @Lat, Lng = @Lng, Price = @Price,
+                                                          SubscriptionBoostLevel = @SubBoostLevel, SubscriptionBoostExpiresAt = @SubBoostExp
                                                       WHERE Id = @Id AND UserId = @UserId", conn, tx))
                 {
                     updateCmd.Parameters.AddWithValue("@Name", product.Name);
@@ -373,10 +379,11 @@ namespace Linkora.Repositories
                     updateCmd.Parameters.AddWithValue("@Qty", (object?)product.Qty ?? DBNull.Value);
                     updateCmd.Parameters.AddWithValue("@Address", (object?)product.Address ?? DBNull.Value);
                     updateCmd.Parameters.AddWithValue("@CategoryId", (object?)product.CategoryId ?? DBNull.Value);
-                    updateCmd.Parameters.AddWithValue("@PromotionType", promotionType);
                     updateCmd.Parameters.AddWithValue("@Lat", (object?)product.Lat ?? DBNull.Value);
                     updateCmd.Parameters.AddWithValue("@Lng", (object?)product.Lng ?? DBNull.Value);
                     updateCmd.Parameters.AddWithValue("@Price", (object?)product.Price ?? DBNull.Value);
+                    updateCmd.Parameters.AddWithValue("@SubBoostLevel", (object?)(short?)product.SubscriptionBoostLevel ?? DBNull.Value);
+                    updateCmd.Parameters.AddWithValue("@SubBoostExp", (object?)product.SubscriptionBoostExpiresAt ?? DBNull.Value);
                     updateCmd.Parameters.AddWithValue("@Id", product.Id);
                     updateCmd.Parameters.AddWithValue("@UserId", product.UserId!);
                     var rowsAffected = await updateCmd.ExecuteNonQueryAsync();
@@ -469,11 +476,9 @@ namespace Linkora.Repositories
             });
             return rowsAffected > 0;
         }
-        public async Task<int> CreateAsync(Product product, Dictionary<int, string> paramValues, int publishDurationDays = 30, string promotionType = "None")
+        public async Task<int> CreateAsync(Product product, Dictionary<int, string> paramValues, int publishDurationDays = 30)
         {
             if (!new[] { 7, 14, 30, 60, 90 }.Contains(publishDurationDays)) publishDurationDays = 30;
-            var allowedPromotions = new[] { "None", "Highlight", "Top", "Vip" };
-            if (!allowedPromotions.Contains(promotionType)) promotionType = "None";
 
             _logger.LogInformation("ProductRepository.CreateAsync: UserId={UserId}, Address='{Address}', Lat={Lat}, Lng={Lng}", product.UserId, product.Address, product.Lat, product.Lng);
 
@@ -481,9 +486,11 @@ namespace Linkora.Repositories
             {
                 int newId;
                 await using (var insertCmd = new SqlCommand(@"
-                    INSERT INTO Products (Name,Description,Qty,Address,CategoryId,UserId,AvatarUrl,CreatedAt,Status,PublishDurationDays,ExpiresAt,PromotionType,Lat,Lng,Price)
+                    INSERT INTO Products (Name,Description,Qty,Address,CategoryId,UserId,AvatarUrl,CreatedAt,Status,PublishDurationDays,ExpiresAt,Lat,Lng,Price,
+                                          SubscriptionBoostLevel,SubscriptionBoostExpiresAt,PaidBoostLevel,PaidBoostExpiresAt)
                     OUTPUT INSERTED.Id
-                    VALUES (@Name,@Description,@Qty,@Address,@CategoryId,@UserId,@AvatarUrl,GETDATE(),'Active',@Duration,DATEADD(DAY,@Duration,GETDATE()),@PromotionType,@Lat,@Lng,@Price)", conn, tx))
+                    VALUES (@Name,@Description,@Qty,@Address,@CategoryId,@UserId,@AvatarUrl,GETDATE(),'Active',@Duration,DATEADD(DAY,@Duration,GETDATE()),@Lat,@Lng,@Price,
+                            @SubBoostLevel,@SubBoostExp,@PaidBoostLevel,@PaidBoostExp)", conn, tx))
                 {
                     insertCmd.Parameters.AddWithValue("@Name", product.Name);
                     insertCmd.Parameters.AddWithValue("@Description", (object?)product.Description ?? DBNull.Value);
@@ -493,10 +500,13 @@ namespace Linkora.Repositories
                     insertCmd.Parameters.AddWithValue("@UserId", product.UserId!);
                     insertCmd.Parameters.AddWithValue("@AvatarUrl", (object?)product.AvatarUrl ?? DBNull.Value);
                     insertCmd.Parameters.AddWithValue("@Duration", publishDurationDays);
-                    insertCmd.Parameters.AddWithValue("@PromotionType", promotionType);
                     insertCmd.Parameters.AddWithValue("@Lat", (object?)product.Lat ?? DBNull.Value);
                     insertCmd.Parameters.AddWithValue("@Lng", (object?)product.Lng ?? DBNull.Value);
                     insertCmd.Parameters.AddWithValue("@Price", (object?)product.Price ?? DBNull.Value);
+                    insertCmd.Parameters.AddWithValue("@SubBoostLevel", (object?)(short?)product.SubscriptionBoostLevel ?? DBNull.Value);
+                    insertCmd.Parameters.AddWithValue("@SubBoostExp", (object?)product.SubscriptionBoostExpiresAt ?? DBNull.Value);
+                    insertCmd.Parameters.AddWithValue("@PaidBoostLevel", (object?)(short?)product.PaidBoostLevel ?? DBNull.Value);
+                    insertCmd.Parameters.AddWithValue("@PaidBoostExp", (object?)product.PaidBoostExpiresAt ?? DBNull.Value);
                     await using var reader = await insertCmd.ExecuteReaderAsync();
                     if (!await reader.ReadAsync()) throw new InvalidOperationException("INSERT INTO Products did not return an Id.");
                     newId = reader.GetInt32(0);

@@ -22,7 +22,6 @@ namespace Linkora.Models
         public string Address { get; set; }
         public int? UserId { get; set; }
         [NotMapped] public int? CategoryId { get; set; }
-        public string PromotionType { get; set; } = "None";
         [NotMapped] public UserSummary? Seller { get; set; }
         public ProductStatus Status { get; set; } = ProductStatus.Active;
         public DateTime? ArchivedAt { get; set; }
@@ -32,6 +31,10 @@ namespace Linkora.Models
         [NotMapped] public int CartCount { get; set; }
         public decimal? Lat { get; set; }
         public decimal? Lng { get; set; }
+        public PromotionTier? SubscriptionBoostLevel { get; set; }
+        public DateTime? SubscriptionBoostExpiresAt { get; set; }
+        public PromotionTier? PaidBoostLevel { get; set; }
+        public DateTime? PaidBoostExpiresAt { get; set; }
     }
 
     public class CategoryRulesDto

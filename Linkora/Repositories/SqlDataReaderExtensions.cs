@@ -7,6 +7,7 @@ namespace Linkora.Repositories
     {
         public static string? GetStringOrNull(this SqlDataReader r, int ordinal) => r.IsDBNull(ordinal) ? null : r.GetString(ordinal);
         public static string GetStringOrDefault(this SqlDataReader r, int ordinal, string defaultValue = "") => r.IsDBNull(ordinal) ? defaultValue : r.GetString(ordinal);
+        public static short? GetInt16OrNull(this SqlDataReader r, int ordinal) => r.IsDBNull(ordinal) ? null : r.GetInt16(ordinal);
         public static int? GetInt32OrNull(this SqlDataReader r, int ordinal) => r.IsDBNull(ordinal) ? null : r.GetInt32(ordinal);
         public static int GetInt32OrDefault(this SqlDataReader r, int ordinal, int defaultValue = 0) => r.IsDBNull(ordinal) ? defaultValue : r.GetInt32(ordinal);
         public static decimal? GetDecimalOrNull(this SqlDataReader r, int ordinal) => r.IsDBNull(ordinal) ? null : r.GetDecimal(ordinal);

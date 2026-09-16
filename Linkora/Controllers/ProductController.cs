@@ -18,6 +18,7 @@ namespace Linkora.Controllers
         ISelectOptionRepository selectOptionRepository,
         IMediaStorageService mediaStorage,
         IGeocodingService geocodingService,
+        IPromotionRepository promotionRepository,
         ILogger<ProductController> logger) : Controller
     {
         private readonly ICategoryRepository _categoryRepository = categoryRepository;
@@ -30,6 +31,7 @@ namespace Linkora.Controllers
         private readonly IConfiguration _configuration = configuration;
         private readonly IMediaStorageService _mediaStorage = mediaStorage;
         private readonly IGeocodingService _geocodingService = geocodingService;
+        private readonly IPromotionRepository _promotionRepository = promotionRepository;
         private readonly ILogger<ProductController> _logger = logger;
 
         private static Dictionary<int, string> ParseParamsJson(string? json)
@@ -59,8 +61,7 @@ namespace Linkora.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSelectOptions([FromQuery] int paramId) => Json((await _selectOptionRepository.GetConfirmedAsync(paramId, Request.GetLang())).Select(o => new { id = o.Id, text = o.Text }));
 
-        [HttpPost]
-        [EnableRateLimiting("public-api")]
+        [HttpPost][EnableRateLimiting("public-api")]
         public async Task<IActionResult> VerifyRecaptcha([FromBody] RecaptchaDto dto)
         {
             var secret = _configuration["Recaptcha:SecretKey"]!;
@@ -189,10 +190,7 @@ namespace Linkora.Controllers
         [HttpGet]
         public async Task<IActionResult> MediaFiles(int productId) => Json((await _productRepository.GetMediaAsync(productId)).Select(m => new { filePath = m.FilePath, mediaType = m.MediaType }));
 
-        [Authorize]
-        [HttpPost]
-        [RequestSizeLimit(MediaStorageService.MaxTotalBytes)]
-        [RequestFormLimits(MultipartBodyLengthLimit = MediaStorageService.MaxTotalBytes)]
+        [Authorize][HttpPost][RequestSizeLimit(MediaStorageService.MaxTotalBytes)][RequestFormLimits(MultipartBodyLengthLimit = MediaStorageService.MaxTotalBytes)]
         public async Task<IActionResult> Edit(int id, string title, string? description, int? qty, string? address, int? categoryId,
                                               string? paramsJson, List<IFormFile>? photos, decimal? price = null,
                                               string? keepMediaJson = null, bool replaceMedia = false,
@@ -243,6 +241,7 @@ namespace Linkora.Controllers
             string? newAvatar = refreshedMedia.FirstOrDefault()?.FilePath ?? existing.AvatarUrl;
             var oldPoints = UserRepository.PromotionPoints(existing.PromotionType);
             var newPoints = UserRepository.PromotionPoints(promotionType);
+            var activeSubscription = await _promotionRepository.GetActiveAsync(userId);
 
             _logger.LogInformation("Updating product {ProductId} with Address='{Address}', Lat={Lat}, Lng={Lng}", id, address, lat, lng);
 
@@ -259,6 +258,8 @@ namespace Linkora.Controllers
                 Lat = lat,
                 Lng = lng,
                 Price = price,
+                SubscriptionBoostLevel = activeSubscription?.Tier,
+                SubscriptionBoostExpiresAt = activeSubscription?.ExpiresAt,
             }, paramValues, promotionType ?? "None");
 
             await _productRepository.RecalculateModerationScoreAsync(id);
@@ -320,8 +321,7 @@ namespace Linkora.Controllers
 
             return Ok();
         }
-        [Authorize]
-        [HttpPost]
+        [Authorize][HttpPost]
         public async Task<IActionResult> Delete(int id)
         {
             var userId = User.GetUserId();
@@ -336,8 +336,7 @@ namespace Linkora.Controllers
             return Ok();
         }
 
-        [Authorize]
-        [HttpPost]
+        [Authorize][HttpPost]
         public async Task<IActionResult> Republish(int id)
         {
             var userId = User.GetUserId();
@@ -356,8 +355,7 @@ namespace Linkora.Controllers
         [HttpGet]
         public async Task<IActionResult> ParamValues(int productId) => Json(await _productRepository.GetParamDisplayValuesAsync(productId, Request.GetLang()));
 
-        [Authorize]
-        [HttpPost]
+        [Authorize][HttpPost]
         public async Task<IActionResult> CompleteDeal(int id, int otherUserId)
         {
             var userId = User.GetUserId();
@@ -388,8 +386,7 @@ namespace Linkora.Controllers
             return Ok();
         }
 
-        [Authorize]
-        [HttpGet]
+        [Authorize][HttpGet]
         public async Task<IActionResult> GetConversationPartners(int productId)
         {
             var userId = User.GetUserId();
@@ -397,8 +394,7 @@ namespace Linkora.Controllers
             return Ok(partners.Select(p => new { p.Id, p.UserName, p.AvatarUrl, p.IsCompany }));
         }
 
-        [Authorize]
-        [HttpPost]
+        [Authorize][HttpPost]
         public async Task<IActionResult> Create(string title, string? description, int? qty, string? address, int? categoryId,
                                                 List<IFormFile>? photos, string? paramsJson, decimal? price = null,
                                                 int? publishDays = null, string? promotionType = null, bool useHomeAddress = false)
@@ -438,6 +434,7 @@ namespace Linkora.Controllers
 
             var media = photos?.Count > 0 ? await _mediaStorage.SaveUploadedFilesAsync(photos) : [];
             var paramValues = ParseParamsJson(paramsJson);
+            var activeSubscription = await _promotionRepository.GetActiveAsync(userId);
 
             _logger.LogInformation("Creating product for user {UserId} with Address='{Address}', Lat={Lat}, Lng={Lng}", userId, address, lat, lng);
 
@@ -453,6 +450,8 @@ namespace Linkora.Controllers
                 Lat = lat,
                 Lng = lng,
                 Price = price,
+                SubscriptionBoostLevel = activeSubscription?.Tier,
+                SubscriptionBoostExpiresAt = activeSubscription?.ExpiresAt,
             }, paramValues, duration, "None");
 
             _logger.LogInformation("Product {ProductId} created for user {UserId}", newId, userId);

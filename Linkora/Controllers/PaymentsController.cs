@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Linkora.Models;
+using Linkora.Repositories;
+using Linkora.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Text.Json;
-using Linkora.Services;
-using Linkora.Repositories;
 
 namespace Linkora.Controllers
 {
@@ -12,42 +13,39 @@ namespace Linkora.Controllers
         private readonly IMaksekeskusService _mk;
         private readonly IPaymentRepository _paymentRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IPromotionRepository _promotionRepository;
+        private readonly IPromotionPricingService _pricing;
 
-        private static readonly Dictionary<string, decimal> PromotionPrices = new()
-        {
-            ["Highlight"] = 0.20m,
-            ["Top"] = 0.50m,
-            ["Vip"] = 1.00m,
-        };
-
-        private static readonly Dictionary<string, decimal> SubscriptionPrices = new()
-        {
-            ["Highlight"] = 2.00m,
-            ["Top"] = 5.00m,
-            ["Vip"] = 10.00m,
-        };
         private static (decimal FinalPrice, int PointsSpent) ApplyPointsDiscount(decimal price, int availablePoints)
         {
             var discountPercent = Math.Min(availablePoints, 100);
             var finalPrice = Math.Round(price * (100 - discountPercent) / 100m, 2);
             return (finalPrice, discountPercent);
         }
-        public PaymentsController(IMaksekeskusService mk, IPaymentRepository paymentRepository, IUserRepository userRepository)
+        public PaymentsController(IMaksekeskusService mk, IPaymentRepository paymentRepository, IUserRepository userRepository,
+            IPromotionRepository promotionRepository, IPromotionPricingService pricing)
         {
             _mk = mk;
             _paymentRepository = paymentRepository;
             _userRepository = userRepository;
+            _promotionRepository = promotionRepository;
+            _pricing = pricing;
         }
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> InitiatePromotion(int productId, string promotionType)
         {
-            if (!PromotionPrices.TryGetValue(promotionType, out var price)) return BadRequest("Unknown promotion type");
+            if (!Enum.TryParse<PromotionTier>(promotionType, true, out var tier)) return BadRequest("Unknown promotion type");
 
             var userId = User.GetUserId();
 
             var owner = await GetProductOwnerAsync(productId);
             if (owner == null || owner != userId) return Forbid();
+
+            var subscription = await _promotionRepository.GetActiveAsync(userId);
+            var price = _pricing.CalculateListingBoostPayable(tier, subscription);
+
+            if (price <= 0) return Ok(new { redirectUrl = (string?)null, coveredBySubscription = true });
 
             var user = await _userRepository.GetByIdAsync(userId);
             var (finalPrice, pointsSpent) = ApplyPointsDiscount(price, user?.PromotionPoints ?? 0);
@@ -57,27 +55,30 @@ namespace Linkora.Controllers
 
             return await StartTransactionAsync(paymentId, finalPrice, reference);
         }
-
         [Authorize]
         [HttpPost]
-        public async Task<IActionResult> InitiateSubscription(string subscriptionType)
+        public async Task<IActionResult> InitiateSubscription(string subscriptionType, string termType)
         {
-            if (!SubscriptionPrices.TryGetValue(subscriptionType, out var price)) return BadRequest("Unknown subscription type");
+            if (!Enum.TryParse<PromotionTier>(subscriptionType, true, out var tier)) return BadRequest("Unknown subscription tier");
+            if (!Enum.TryParse<PromotionTermType>(termType, true, out var term)) return BadRequest("Unknown term type");
 
             var userId = User.GetUserId();
 
             var user = await _userRepository.GetByIdAsync(userId);
+            var current = await _promotionRepository.GetActiveAsync(userId);
+
+            var price = current != null
+                ? _pricing.CalculateUpgrade(current, tier, term, DateTime.UtcNow).Payable
+                : _pricing.GetPrice(tier, term);
+
             var (finalPrice, pointsSpent) = ApplyPointsDiscount(price, user?.PromotionPoints ?? 0);
 
             var reference = $"SUB{userId}{DateTime.UtcNow:HHmmss}";
-            var paymentId = await _paymentRepository.CreateAsync(userId, "Subscription", null, null, subscriptionType, finalPrice, reference, pointsSpent);
+            var paymentId = await _paymentRepository.CreateAsync(userId, "Subscription", null, null, $"{tier}:{term}", finalPrice, reference, pointsSpent);
 
             return await StartTransactionAsync(paymentId, finalPrice, reference);
         }
-        private async Task<int?> GetProductOwnerAsync(int productId)
-        {
-            return await _paymentRepository.GetProductUserIdAsync(productId);
-        }
+        private async Task<int?> GetProductOwnerAsync(int productId) => await _paymentRepository.GetProductUserIdAsync(productId);
         private async Task<IActionResult> StartTransactionAsync(int paymentId, decimal price, string reference)
         {
             var scheme = Request.Scheme;
@@ -164,8 +165,20 @@ namespace Linkora.Controllers
             }
             else if (payment.PurposeType == "Subscription" && payment.SubscriptionType != null)
             {
-                await _paymentRepository.ApplySubscriptionAsync(payment.UserId, payment.SubscriptionType);
-                var earnedPoints = UserRepository.PromotionPoints(payment.SubscriptionType)*5;
+                var parts = payment.SubscriptionType.Split(':');
+                if (parts.Length != 2
+                    || !Enum.TryParse<PromotionTier>(parts[0], out var tier)
+                    || !Enum.TryParse<PromotionTermType>(parts[1], out var term))
+                    return "bad_subscription_payload";
+
+                var current = await _promotionRepository.GetActiveAsync(payment.UserId);
+                if (current != null) await _promotionRepository.SupersedeAsync(current.Id);
+
+                var startedAt = DateTime.UtcNow;
+                var expiresAt = _pricing.CalculateExpiry(term, startedAt);
+                await _promotionRepository.CreateAsync(payment.UserId, tier, term, startedAt, expiresAt, payment.Price);
+
+                var earnedPoints = UserRepository.PromotionPoints(tier.ToString()) * 5;
                 var netDelta = earnedPoints - payment.PointsSpent;
                 if (netDelta != 0) await _userRepository.AdjustPromotionPointsAsync(payment.UserId, netDelta);
             }
@@ -174,20 +187,29 @@ namespace Linkora.Controllers
         }
         [Authorize]
         [HttpGet]
-        public async Task<IActionResult> Quote(string type, string? promotionType = null, string? subscriptionType = null)
+        public async Task<IActionResult> Quote(string type, string? promotionType = null, string? subscriptionType = null, string? termType = null)
         {
-            decimal basePrice = 0m;
-
-            if (type == "promotion")
-                if (promotionType == null || !PromotionPrices.TryGetValue(promotionType, out basePrice))
-                    return BadRequest("Unknown promotion type");
-            else if (type == "subscription")
-                if (subscriptionType == null || !SubscriptionPrices.TryGetValue(subscriptionType, out basePrice))
-                    return BadRequest("Unknown subscription type");
-            else return BadRequest("Unknown type");
-
             var userId = User.GetUserId();
             var user = await _userRepository.GetByIdAsync(userId);
+            decimal basePrice;
+
+            if (type == "promotion")
+            {
+                if (promotionType == null || !Enum.TryParse<PromotionTier>(promotionType, true, out var tier)) return BadRequest("Unknown promotion type");
+                var subscription = await _promotionRepository.GetActiveAsync(userId);
+                basePrice = _pricing.CalculateListingBoostPayable(tier, subscription);
+            }
+            else if (type == "subscription")
+            {
+                if (subscriptionType == null || !Enum.TryParse<PromotionTier>(subscriptionType, true, out var tier)) return BadRequest("Unknown subscription type");
+                if (termType == null || !Enum.TryParse<PromotionTermType>(termType, true, out var term)) return BadRequest("Unknown term type");
+                var current = await _promotionRepository.GetActiveAsync(userId);
+                basePrice = current != null
+                    ? _pricing.CalculateUpgrade(current, tier, term, DateTime.UtcNow).Payable
+                    : _pricing.GetPrice(tier, term);
+            }
+            else return BadRequest("Unknown type");
+
             var (finalPrice, pointsSpent) = ApplyPointsDiscount(basePrice, user?.PromotionPoints ?? 0);
 
             return Ok(new
