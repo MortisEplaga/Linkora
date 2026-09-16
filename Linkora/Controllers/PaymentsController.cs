@@ -22,8 +22,9 @@ namespace Linkora.Controllers
 
         private static readonly Dictionary<string, decimal> SubscriptionPrices = new()
         {
-            ["Standard"] = 0.5m,
-            ["Premium"] = 1.00m,
+            ["Highlight"] = 2.00m,
+            ["Top"] = 5.00m,
+            ["Vip"] = 10.00m,
         };
         private static (decimal FinalPrice, int PointsSpent) ApplyPointsDiscount(decimal price, int availablePoints)
         {
