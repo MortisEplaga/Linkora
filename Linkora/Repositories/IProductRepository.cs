@@ -7,7 +7,7 @@ namespace Linkora.Repositories
         Task<Product?> GetByIdAsync(int id);
         Task<List<Product>> GetSimilarAsync(int categoryId, int excludeId, int count = 8);
         Task<List<Product>> GetByUserAsync(int userId, string status = "active");
-        Task UpdateAsync(Product product, Dictionary<int, string> paramValues, string promotionType = "None");
+        Task UpdateAsync(Product product, Dictionary<int, string> paramValues);
         Task<Dictionary<int, string>> GetParamValuesAsync(int productId);
         Task<Dictionary<string, int>> GetCountsByStatusAsync(int userId);
         Task<PagedResult<Product>> GetByCategoryAsync(int rootCategoryId, bool includeDescendants = true, string sort = "new", Dictionary<int, List<string>>? filters = null, 
@@ -17,7 +17,7 @@ namespace Linkora.Repositories
         Task ArchiveProductsByUserAsync(int userId);
         Task<IEnumerable<Product>> GetUserProductsByStatusAsync(int userId, string status);
         Task<bool> UpdateProductStatusAsync(int productId, ProductStatus status);
-        Task<int> CreateAsync(Product product, Dictionary<int, string> paramValues, int publishDurationDays = 30, string promotionType = "None");
+        Task<int> CreateAsync(Product product, Dictionary<int, string> paramValues, int publishDurationDays = 30);
         Task<List<ProductMedia>> GetMediaAsync(int productId);
         Task SaveMediaAsync(int productId, List<ProductMedia> media);
         Task DeleteMediaAsync(int productId);

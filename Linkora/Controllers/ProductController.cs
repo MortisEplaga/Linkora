@@ -239,8 +239,6 @@ namespace Linkora.Controllers
 
             var refreshedMedia = await _productRepository.GetMediaAsync(id);
             string? newAvatar = refreshedMedia.FirstOrDefault()?.FilePath ?? existing.AvatarUrl;
-            var oldPoints = UserRepository.PromotionPoints(existing.PromotionType);
-            var newPoints = UserRepository.PromotionPoints(promotionType);
             var activeSubscription = await _promotionRepository.GetActiveAsync(userId);
 
             _logger.LogInformation("Updating product {ProductId} with Address='{Address}', Lat={Lat}, Lng={Lng}", id, address, lat, lng);
@@ -260,11 +258,9 @@ namespace Linkora.Controllers
                 Price = price,
                 SubscriptionBoostLevel = activeSubscription?.Tier,
                 SubscriptionBoostExpiresAt = activeSubscription?.ExpiresAt,
-            }, paramValues, promotionType ?? "None");
+            }, paramValues);
 
             await _productRepository.RecalculateModerationScoreAsync(id);
-
-            if (newPoints != oldPoints) await _userRepository.AdjustPromotionPointsAsync(userId, newPoints - oldPoints);
 
             var changes = new List<object>();
             if (!string.Equals(existing.Name, title, StringComparison.Ordinal)) changes.Add(new { type = "title_changed" });
@@ -452,7 +448,7 @@ namespace Linkora.Controllers
                 Price = price,
                 SubscriptionBoostLevel = activeSubscription?.Tier,
                 SubscriptionBoostExpiresAt = activeSubscription?.ExpiresAt,
-            }, paramValues, duration, "None");
+            }, paramValues, duration);
 
             _logger.LogInformation("Product {ProductId} created for user {UserId}", newId, userId);
 

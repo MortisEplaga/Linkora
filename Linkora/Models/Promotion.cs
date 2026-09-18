@@ -4,6 +4,7 @@ namespace Linkora.Models
 {
     public enum PromotionTier : short
     {
+        None = 0,
         Highlight = 1,
         Top = 2,
         Vip = 3

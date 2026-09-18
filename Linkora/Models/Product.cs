@@ -17,9 +17,7 @@ namespace Linkora.Models
     {
         public string Description { get; set; }
         public int? Qty { get; set; }
-
-        [StringLength(50)]
-        public string Address { get; set; }
+        [StringLength(50)] public string Address { get; set; }
         public int? UserId { get; set; }
         [NotMapped] public int? CategoryId { get; set; }
         [NotMapped] public UserSummary? Seller { get; set; }
@@ -35,6 +33,7 @@ namespace Linkora.Models
         public DateTime? SubscriptionBoostExpiresAt { get; set; }
         public PromotionTier? PaidBoostLevel { get; set; }
         public DateTime? PaidBoostExpiresAt { get; set; }
+        [NotMapped] public string PromotionType => PaidBoostLevel.HasValue && PaidBoostExpiresAt > DateTime.UtcNow ? PaidBoostLevel.Value.ToString() : "None";
     }
 
     public class CategoryRulesDto

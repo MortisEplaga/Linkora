@@ -9,6 +9,9 @@ namespace Linkora.Repositories
     {
         private readonly ILogger<ProductRepository> _logger;
         private readonly IMemoryCache _cache;
+        private const string EffectiveBoostExpr = @"(SELECT MAX(v) FROM (VALUES
+            (CASE WHEN p.PaidBoostLevel IS NOT NULL AND p.PaidBoostExpiresAt > SYSUTCDATETIME() THEN p.PaidBoostLevel END),
+            (CASE WHEN p.SubscriptionBoostLevel IS NOT NULL AND p.SubscriptionBoostExpiresAt > SYSUTCDATETIME() THEN p.SubscriptionBoostLevel END)) AS t(v)))";
         public ProductRepository(IConfiguration configuration, ILogger<ProductRepository> logger, IMemoryCache cache) : base(configuration) { _logger = logger; _cache = cache; }
         public async Task<CategoryRulesDto> GetCategoryRulesAsync(IEnumerable<int> categoryIds)
         {
@@ -37,7 +40,7 @@ namespace Linkora.Repositories
 
             var promoCount = await GetPromoCountCachedAsync(rootCategoryId, includeDescendants);
             var (_, topCount) = await QueryProductsAsync(rootCategoryId, includeDescendants, sort,
-                            "p.PromotionType = 'Top'", filters, rangeFrom, rangeTo, city, search, offset: null, limit: 0);
+                            $"{EffectiveBoostExpr} = {(short)PromotionTier.Top}", filters, rangeFrom, rangeTo, city, search, offset: null, limit: 0);
             var promoTake = Math.Max(0, Math.Min(pageSize, promoCount - skip));
             var promoSkip = Math.Min(skip, promoCount);
             var afterPromo = Math.Max(0, skip - promoCount);
@@ -51,18 +54,18 @@ namespace Linkora.Repositories
 
             var promoTask = promoTake > 0
                 ? QueryProductsAsync(rootCategoryId, includeDescendants, sort,
-                    "p.PromotionType IN ('Vip')",
+                    $"{EffectiveBoostExpr} = {(short)PromotionTier.Vip}",
                     null, null, null, null, null, promoSkip, promoTake)
                 : Task.FromResult((new List<Product>(), promoCount));
 
             var topTask = topTake > 0
                 ? QueryProductsAsync(rootCategoryId, includeDescendants, sort,
-                    "p.PromotionType = 'Top'",
+                    $"{EffectiveBoostExpr} = {(short)PromotionTier.Top}",
                     filters, rangeFrom, rangeTo, city, search, topSkip, topTake)
                 : Task.FromResult((new List<Product>(), topCount));
 
             var filteredTask = QueryProductsAsync(rootCategoryId, includeDescendants, sort,
-                "(p.PromotionType NOT IN ('Top','Vip') OR p.PromotionType IS NULL)",
+                $"({EffectiveBoostExpr} IS NULL OR {EffectiveBoostExpr} < {(short)PromotionTier.Top})",
                 filters, rangeFrom, rangeTo, city, search,
                 offset: filteredSkip, limit: filteredTake);
 
@@ -91,10 +94,7 @@ namespace Linkora.Repositories
                 : "WHERE p.CategoryId = @RootCategoryId";
             var whereKeyword = includeDescendants ? "WHERE" : "AND";
 
-            var countQuery = $@"SELECT COUNT(*) FROM Products p
-                        {catCondition}
-                        {whereKeyword} (p.Status = 'active' OR p.Status IS NULL) AND p.PromotionType IN ('Top','Vip')";
-
+            var countQuery = $@"SELECT COUNT(*) FROM Products p {catCondition} {whereKeyword} (p.Status = 'active' OR p.Status IS NULL) AND {EffectiveBoostExpr} >= {(short)PromotionTier.Top}"; 
             var count = (await QueryAsync(countQuery, r => r.GetInt32(0), p => p.AddWithValue("@RootCategoryId", rootCategoryId))).FirstOrDefault();
 
             _cache.Set(cacheKey, count, TimeSpan.FromSeconds(45));

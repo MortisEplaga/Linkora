@@ -158,7 +158,11 @@ namespace Linkora.Controllers
 
             if (payment.PurposeType == "Promotion" && payment.ProductId.HasValue && payment.PromotionType != null)
             {
-                await _paymentRepository.ApplyPromotionAsync(payment.ProductId.Value, payment.PromotionType);
+                if (!Enum.TryParse<PromotionTier>(payment.PromotionType, out var tier)) return "bad_promotion_payload";
+
+                var expiresAt = _pricing.CalculateExpiry(PromotionTermType.Week, DateTime.UtcNow);
+                await _paymentRepository.ApplyPromotionAsync(payment.ProductId.Value, tier, expiresAt);
+
                 var earnedPoints = UserRepository.PromotionPoints(payment.PromotionType);
                 var netDelta = earnedPoints - payment.PointsSpent;
                 if (netDelta != 0) await _userRepository.AdjustPromotionPointsAsync(payment.UserId, netDelta);

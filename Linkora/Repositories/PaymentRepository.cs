@@ -50,17 +50,13 @@ namespace Linkora.Repositories
                 },
                 p => p.AddWithValue("@Reference", reference));
         public async Task MarkCompletedAsync(int paymentId) => await ExecuteAsync("UPDATE Payments SET Status = 'Completed', CompletedAt = SYSUTCDATETIME() WHERE Id = @Id", p => p.AddWithValue("@Id", paymentId));
-        public async Task ApplyPromotionAsync(int productId, string promotionType) => await ExecuteAsync("UPDATE Products SET PromotionType = @Type WHERE Id = @Id",
+        public async Task ApplyPromotionAsync(int productId, PromotionTier tier, DateTime expiresAt) => await ExecuteAsync(
+                "UPDATE Products SET PaidBoostLevel = @Tier, PaidBoostExpiresAt = @Exp WHERE Id = @Id",
                 p =>
                 {
-                    p.AddWithValue("@Type", promotionType);
+                    p.AddWithValue("@Tier", (short)tier);
+                    p.AddWithValue("@Exp", expiresAt);
                     p.AddWithValue("@Id", productId);
-                });
-        public async Task ApplySubscriptionAsync(int userId, string subscriptionType) => await ExecuteAsync("UPDATE Users SET SubscriptionType = @Type WHERE Id = @Id",
-                p =>
-                {
-                    p.AddWithValue("@Type", subscriptionType);
-                    p.AddWithValue("@Id", userId);
                 });
         public async Task<int?> GetProductUserIdAsync(int productId)
         {

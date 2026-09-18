@@ -11,18 +11,19 @@ namespace Linkora.Controllers
     [Authorize]
     public class ProfileController : Controller
     {
-        private static readonly int[] AllowedDurations = { 1, 3, 7, 14, 30 };
-        private static readonly string[] AllowedSubscriptionTypes = { "Free", "Standard", "Premium" };
+        private static readonly int[] AllowedDurations = { 7, 14, 30 };
 
         private readonly IUserRepository _userRepository;
+        IPromotionRepository _promotionRepository;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IGeocodingService _geocodingService;
         private readonly IMediaStorageService _mediaStorage;
 
-        public ProfileController(IUserRepository userRepository, IPasswordHasher passwordHasher,
+        public ProfileController(IUserRepository userRepository, IPromotionRepository promotionRepository, IPasswordHasher passwordHasher,
             IGeocodingService geocodingService, IMediaStorageService mediaStorage)
         {
             _userRepository = userRepository;
+            _promotionRepository = promotionRepository;
             _passwordHasher = passwordHasher;
             _geocodingService = geocodingService;
             _mediaStorage = mediaStorage;
@@ -32,6 +33,7 @@ namespace Linkora.Controllers
             var user = await _userRepository.GetByIdAsync(User.GetUserId());
             if (user == null) return NotFound();
             ViewBag.User = user;
+            ViewBag.ActiveSubscription = await _promotionRepository.GetActiveAsync(user.Id);
             return View("~/Views/Account/ProfileEdit.cshtml");
         }
 
@@ -62,11 +64,6 @@ namespace Linkora.Controllers
             if (dto.PreferredAdDuration.HasValue)
                 if (!AllowedDurations.Contains(dto.PreferredAdDuration.Value)) errors.Add("Invalid ad duration value");
                 else duration = dto.PreferredAdDuration.Value;
-
-            string? subscriptionType = null;
-            if (!string.IsNullOrWhiteSpace(dto.SubscriptionType))
-                if (!AllowedSubscriptionTypes.Contains(dto.SubscriptionType)) errors.Add("Invalid subscription type");
-                else subscriptionType = dto.SubscriptionType;
 
             if (errors.Count != 0) return BadRequest(new { errors });
 

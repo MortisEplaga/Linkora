@@ -1,5 +1,9 @@
 const TRANSLATIONS = {
     en: {
+        'sub_term_week': 'Week',
+        'sub_term_month': 'Month',
+        'sub_term_3month': '3 Months',
+        'sub_term_year': 'Year',
         'profile_change_avatar': 'Change photo',
         'facebook_login_error': "Facebook login error. Please try again later.",
         'user_cancelled_login': "User cancelled login",
@@ -479,6 +483,10 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'sub_term_week': 'Nedēļa',
+        'sub_term_month': 'Mēnesis',
+        'sub_term_3month': '3 mēneši',
+        'sub_term_year': 'Gads',
         'profile_change_avatar': 'Mainīt fotoattēlu',
         'facebook_login_error': "Facebook pieteikšanās kļūda. Lūdzu, mēģiniet vēlāk.",
         'user_cancelled_login': "Lietotājs atcēla pieteikšanos",
@@ -968,6 +976,10 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'sub_term_week': 'Неделя',
+        'sub_term_month': 'Месяц',
+        'sub_term_3month': '3 месяца',
+        'sub_term_year': 'Год',
         'profile_change_avatar': 'Изменить фото',
         'facebook_login_error': "Ошибка входа через Facebook. Попробуйте позже.",
         'user_cancelled_login': "Пользователь отменил вход",

@@ -31,7 +31,9 @@ builder.Services.AddScoped<ISelectOptionRepository, SelectOptionRepository>();
 builder.Services.AddScoped<ICompareRepository, CompareRepository>();
 builder.Services.AddScoped<IAdminRepository, AdminRepository>();
 builder.Services.AddScoped<IUserSessionRepository, UserSessionRepository>();
+builder.Services.AddScoped<IPromotionRepository, PromotionRepository>();
 
+builder.Services.AddScoped<IPromotionPricingService, PromotionPricingService>();
 builder.Services.AddScoped<IGeocodingService, GoogleGeocodingService>();
 builder.Services.AddScoped<IAdminService, AdminService>(); 
 builder.Services.AddScoped<INotificationRealTimeSender, SignalRNotificationSender>();

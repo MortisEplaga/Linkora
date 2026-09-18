@@ -10,8 +10,7 @@ namespace Linkora.Repositories
         Task SetStatusAsync(int paymentId, string status);
         Task<PaymentBase?> GetByReferenceAsync(string reference);
         Task MarkCompletedAsync(int paymentId);
-        Task ApplyPromotionAsync(int productId, string promotionType);
-        Task ApplySubscriptionAsync(int userId, string subscriptionType);
+        Task ApplyPromotionAsync(int productId, PromotionTier tier, DateTime expiresAt);
         Task<int?> GetProductUserIdAsync(int productId);
     }
 }
