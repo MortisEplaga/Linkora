@@ -1168,7 +1168,7 @@ async function fetchPriceQuote(prefix, quoteParams) {
         } else {
             infoEl.textContent = eurLine;
         }
-    } catch { }
+    } catch (e) { console.error(e); }
 }
 
 function checkSharedRulesScroll(prefix, type) {
@@ -1190,6 +1190,8 @@ function switchSharedRulesLang(prefix, lang, btn) {
     const modal = document.getElementById(`${prefix}RulesModal`);
     if (!modal) return;
 
+    const prevQuote = sharedRulesState[prefix]?.quoteParams;
+
     modal.querySelectorAll('.info-lang-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
 
@@ -1203,7 +1205,7 @@ function switchSharedRulesLang(prefix, lang, btn) {
         }
     });
 
-    sharedRulesState[prefix] = { rulesScrolled: false, policyScrolled: false };
+    sharedRulesState[prefix] = { rulesScrolled: false, policyScrolled: false, quoteParams: prevQuote };
     const agreeBtn = document.getElementById(`${prefix}AgreeBtn`);
     if (agreeBtn) agreeBtn.disabled = true;
 
@@ -1235,9 +1237,9 @@ function switchSharedRulesLang(prefix, lang, btn) {
     const policyTitleEl = modal.querySelector('[data-i18n="policy_title"]');
     if (rulesTitleEl) rulesTitleEl.textContent = innerTitles[lang].rules;
     if (policyTitleEl) policyTitleEl.textContent = innerTitles[lang].policy;
-    fetchPriceQuote(prefix, sharedRulesState[prefix]?.quoteParams);
-}
 
+    fetchPriceQuote(prefix, prevQuote);
+}
 function closeSharedRulesModal(prefix) {
     document.getElementById(`${prefix}RulesOverlay`)?.classList.remove('modal-open');
     document.getElementById(`${prefix}RulesModal`)?.classList.remove('modal-open');

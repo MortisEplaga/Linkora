@@ -14,11 +14,11 @@ namespace Linkora.Controllers
         private static readonly int[] AllowedDurations = { 7, 14, 30 };
         private readonly IPromotionRepository _promotionRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IPointsRepository _pointsRepository;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IGeocodingService _geocodingService;
         private readonly IMediaStorageService _mediaStorage;
-
-        public ProfileController(IUserRepository userRepository, IPromotionRepository promotionRepository, IPasswordHasher passwordHasher, IGeocodingService geocodingService, IMediaStorageService mediaStorage)
+        public ProfileController(IUserRepository userRepository, IPromotionRepository promotionRepository, IPointsRepository pointsRepository, IPasswordHasher passwordHasher, IGeocodingService geocodingService, IMediaStorageService mediaStorage)
         {
             _userRepository = userRepository;
             _promotionRepository = promotionRepository;
@@ -32,7 +32,7 @@ namespace Linkora.Controllers
             if (user == null) return NotFound();
             ViewBag.User = user;
             ViewBag.ActiveSubscription = await _promotionRepository.GetActiveAsync(user.Id); 
-            ViewBag.PromotionPoints = await _userRepository.GetPromotionPointsAsync(user.Id);
+            ViewBag.PromotionPoints = await _pointsRepository.GetBalanceAsync(user.Id);
             return View("~/Views/Account/ProfileEdit.cshtml");
         }
         [HttpPost] public async Task<IActionResult> Save([FromBody] ProfileSaveDto dto)
