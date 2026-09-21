@@ -18,16 +18,10 @@ const SUPPORT_FORM_TEXT = {
     ru: { name: 'Ваше имя', email: 'Email', phone: 'Телефон', message: 'Опишите ошибку', send: 'Отправить' },
 };
 
-const PRICE_INFO_TEXT = {
-    en: (original, discount, final) => discount > 0
-        ? `Price: ${original.toFixed(2)} € — discount ${discount}% (points) — you pay ${final.toFixed(2)} €`
-        : `Price: ${final.toFixed(2)} €`,
-    lv: (original, discount, final) => discount > 0
-        ? `Cena: ${original.toFixed(2)} € — atlaide ${discount}% (punkti) — jāmaksā ${final.toFixed(2)} €`
-        : `Cena: ${final.toFixed(2)} €`,
-    ru: (original, discount, final) => discount > 0
-        ? `Цена: ${original.toFixed(2)} € — скидка ${discount}% (баллы) — к оплате ${final.toFixed(2)} €`
-        : `Цена: ${final.toFixed(2)} €`,
+const PAY_TEXT = {
+    en: { eur: p => `Pay ${p.toFixed(2)} €`, points: n => `Pay ${n} points`, earn: n => `you will earn ${n} points` },
+    lv: { eur: p => `Maksāt ${p.toFixed(2)} €`, points: n => `Maksāt ${n} punktus`, earn: n => `jūs saņemsiet ${n} punktus` },
+    ru: { eur: p => `Оплатить ${p.toFixed(2)} €`, points: n => `Оплатить ${n} поинтов`, earn: n => `вы получите ${n} поинтов` },
 };
 
 function switchInfoLang(lang, btn) {
@@ -1145,8 +1139,15 @@ async function openSharedRulesModal(prefix, quoteParams = null) {
     }, 50);
 }
 
+const payMethodState = {};
+function setPayMethod(prefix, method) { payMethodState[prefix] = method; }
+function getPayWithPoints(prefix) { return payMethodState[prefix] === 'points'; }
+
 async function fetchPriceQuote(prefix, quoteParams) {
     const infoEl = document.getElementById(`${prefix}PriceInfo`);
+    const methodEl = document.getElementById(`${prefix}PayMethod`);
+    payMethodState[prefix] = 'eur';
+    if (methodEl) methodEl.style.display = 'none';
     if (!infoEl || !quoteParams) return;
 
     infoEl.textContent = '';
@@ -1156,9 +1157,17 @@ async function fetchPriceQuote(prefix, quoteParams) {
         const res = await fetch(`/Payments/Quote?${query}`);
         if (!res.ok) return;
         const data = await res.json();
-        const lang = getCurrentLanguage();
-        const fmt = PRICE_INFO_TEXT[lang] || PRICE_INFO_TEXT.en;
-        infoEl.textContent = fmt(data.originalPrice, data.discountPercent, data.finalPrice);
+        const t = PAY_TEXT[getCurrentLanguage()] || PAY_TEXT.en;
+        const eurLine = t.eur(data.price) + (data.pointsEarned > 0 ? ` (${t.earn(data.pointsEarned)})` : '');
+
+        if (methodEl && data.canPayWithPoints) {
+            document.getElementById(`${prefix}PayEurLabel`).textContent = eurLine;
+            document.getElementById(`${prefix}PayPointsLabel`).textContent = t.points(data.pointsCost);
+            methodEl.querySelector('input[value="eur"]').checked = true;
+            methodEl.style.display = '';
+        } else {
+            infoEl.textContent = eurLine;
+        }
     } catch { }
 }
 

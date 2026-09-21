@@ -278,13 +278,14 @@
                 if (data.promotionType) {
                     const payRes = await fetch('/Payments/InitiatePromotion', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: `productId=${data.id}&promotionType=${encodeURIComponent(data.promotionType)}`
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded',
+                                    'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''},
+                        body: `productId=${data.id}&promotionType=${encodeURIComponent(data.promotionType)}&payWithPoints=${getPayWithPoints('promo')}`
                     });
 
                     if (payRes.ok) {
                         const payData = await payRes.json();
-                        window.location.href = payData.redirectUrl;
+                        window.location.href = payData.redirectUrl || `/Product/Details/${data.id}`;
                         return;
                     } else {
                         alert(translate('payment_failed'));

@@ -12,15 +12,13 @@ namespace Linkora.Controllers
     public class ProfileController : Controller
     {
         private static readonly int[] AllowedDurations = { 7, 14, 30 };
-
+        private readonly IPromotionRepository _promotionRepository;
         private readonly IUserRepository _userRepository;
-        IPromotionRepository _promotionRepository;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IGeocodingService _geocodingService;
         private readonly IMediaStorageService _mediaStorage;
 
-        public ProfileController(IUserRepository userRepository, IPromotionRepository promotionRepository, IPasswordHasher passwordHasher,
-            IGeocodingService geocodingService, IMediaStorageService mediaStorage)
+        public ProfileController(IUserRepository userRepository, IPromotionRepository promotionRepository, IPasswordHasher passwordHasher, IGeocodingService geocodingService, IMediaStorageService mediaStorage)
         {
             _userRepository = userRepository;
             _promotionRepository = promotionRepository;
@@ -33,12 +31,11 @@ namespace Linkora.Controllers
             var user = await _userRepository.GetByIdAsync(User.GetUserId());
             if (user == null) return NotFound();
             ViewBag.User = user;
-            ViewBag.ActiveSubscription = await _promotionRepository.GetActiveAsync(user.Id);
+            ViewBag.ActiveSubscription = await _promotionRepository.GetActiveAsync(user.Id); 
+            ViewBag.PromotionPoints = await _userRepository.GetPromotionPointsAsync(user.Id);
             return View("~/Views/Account/ProfileEdit.cshtml");
         }
-
-        [HttpPost]
-        public async Task<IActionResult> Save([FromBody] ProfileSaveDto dto)
+        [HttpPost] public async Task<IActionResult> Save([FromBody] ProfileSaveDto dto)
         {
             var userId = User.GetUserId();
             var user = await _userRepository.GetByIdAsync(userId);
@@ -113,19 +110,13 @@ namespace Linkora.Controllers
 
             return Ok(new { success = true });
         }
-
-        [HttpGet]
-        [AllowAnonymous]
-        public async Task<IActionResult> AdDurationPref()
+        [HttpGet] [AllowAnonymous] public async Task<IActionResult> AdDurationPref()
         {
             if (!User.Identity!.IsAuthenticated) return Json(new { days = 30 });
 
             return Json(new { days = (await _userRepository.GetByIdAsync(User.GetUserId()))?.PreferredAdDuration ?? 30 });
         }
-
-        [HttpPost]
-        [RequestSizeLimit(MediaStorageService.MaxSingleFileBytes)]
-        public async Task<IActionResult> UploadAvatar(IFormFile avatar)
+        [HttpPost] [RequestSizeLimit(MediaStorageService.MaxSingleFileBytes)] public async Task<IActionResult> UploadAvatar(IFormFile avatar)
         {
             var userId = User.GetUserId();
             var user = await _userRepository.GetByIdAsync(userId);

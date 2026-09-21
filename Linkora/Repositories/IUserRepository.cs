@@ -28,5 +28,7 @@ namespace Linkora.Repositories
         Task UpdateProfileAsync(int userId, string userName, string? phone, int? duration, string? newHash,
                                 string? telegramUrl, string? whatsAppUrl, string? websiteUrl,
                                 string? homeAddress, decimal? homeLat, decimal? homeLng);
+        Task<int> GetPromotionPointsAsync(int userId);
+        Task<bool> TrySpendPromotionPointsAsync(int userId, int points);
     }
 }

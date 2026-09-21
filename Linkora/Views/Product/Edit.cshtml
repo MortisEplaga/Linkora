@@ -285,20 +285,21 @@
         wrap.remove();
     }
 
-    window.onPromoAgree = async function(type, btn) {
+    window.onPromoAgree = async function (type, btn) {
         const res = await fetch('/Payments/InitiatePromotion', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
             },
-            body: `productId=@p.Id&promotionType=${type}`
+            body: `productId=@p.Id&promotionType=${type}&payWithPoints=${getPayWithPoints('promo')}`
         });
         if (res.ok) {
             const data = await res.json();
-            window.location.href = data.redirectUrl;
+            if (data.redirectUrl) window.location.href = data.redirectUrl;
+            else window.location.reload();
         } else {
-            alert('Payment initiation failed');
+            alert(translate('payment_failed'));
         }
     };
 

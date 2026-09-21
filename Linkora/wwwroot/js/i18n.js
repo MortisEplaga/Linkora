@@ -1,5 +1,8 @@
 const TRANSLATIONS = {
     en: {
+        'profile_points_title': 'Points wallet',
+        'points_unit': 'points',
+        'profile_points_hint': '1 point is earned for every euro cent paid for subscriptions and promotions. 10 points = 0.01 €. Points can be used to pay for promotions and subscriptions.',
         'sub_term_week': 'Week',
         'sub_term_month': 'Month',
         'sub_term_3month': '3 Months',
@@ -483,6 +486,9 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'profile_points_title': 'Punktu maks',
+        'points_unit': 'punkti',
+        'profile_points_hint': 'Par katru eiro centu, kas samaksāts par abonementiem un reklamēšanu, tiek piešķirts 1 punkts. 10 punkti = 0,01 €. Punktus var izmantot, lai maksātu par reklamēšanu un abonementiem.',
         'sub_term_week': 'Nedēļa',
         'sub_term_month': 'Mēnesis',
         'sub_term_3month': '3 mēneši',
@@ -976,6 +982,9 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'profile_points_title': 'Кошелёк поинтов',
+        'points_unit': 'поинтов',
+        'profile_points_hint': 'За каждый евроцент, оплаченный за подписки и продвижение, начисляется 1 поинт. 10 поинтов = 0,01 €. Поинтами можно оплачивать продвижение и подписки.',
         'sub_term_week': 'Неделя',
         'sub_term_month': 'Месяц',
         'sub_term_3month': '3 месяца',

@@ -151,7 +151,20 @@
             </div>
             <input type="hidden" id="fieldAdDuration" value="@(user.PreferredAdDuration?.ToString() ?? "")" />
         </div>
-
+        @{
+            var pointsBalance = (int)ViewBag.PromotionPoints;
+        }
+        <div class="profile-section-title" data-i18n="profile_points_title">Points wallet</div>
+        <div class="auth-field">
+            <div style="display:flex;align-items:baseline;gap:8px">
+                <span id="pointsBalance" style="font-size:28px;font-weight:700">@pointsBalance.ToString("N0")</span>
+                <span data-i18n="points_unit">points</span>
+                <span class="duration-hint" style="margin:0">≈ @((pointsBalance / 1000m).ToString("N2")) €</span>
+            </div>
+            <div class="duration-hint" data-i18n="profile_points_hint">
+                1 point is earned for every euro cent paid for subscriptions and promotions. 10 points = 0.01 €. Points can be used to pay for promotions and subscriptions.
+            </div>
+        </div>
         <div class="profile-section-title" data-i18n="profile_subscription_title">Subscription</div>
 
         <div class="auth-field">
@@ -291,12 +304,13 @@
                             'Content-Type': 'application/x-www-form-urlencoded',
                             'RequestVerificationToken': document.getElementById('afToken')?.value ?? ''
                         },
-                        body: `subscriptionType=${encodeURIComponent(pendingSubType)}&termType=${encodeURIComponent(term)}`
+                        body: `subscriptionType=${encodeURIComponent(pendingSubType)}&termType=${encodeURIComponent(term)}&payWithPoints=${getPayWithPoints('sub')}`
                     });
 
                     if (res.ok) {
                         const data = await res.json();
-                        window.location.href = data.redirectUrl;
+                        if (data.redirectUrl) window.location.href = data.redirectUrl;
+                        else window.location.reload();
                     } else {
                         alert(translate('payment_failed'));
                     }

@@ -6,13 +6,6 @@ namespace Linkora.Repositories
     public class UserRepository : SqlRepositoryBase, IUserRepository
     {
         public UserRepository(IConfiguration configuration) : base(configuration) { }
-        public static int PromotionPoints(string? promotionType) => promotionType switch
-        {
-            "Highlight" => 1,
-            "Top" => 2,
-            "Vip" => 3,
-            _ => 0
-        };
         private static User MapUser(SqlDataReader r) => new()
         {
             Id = r.GetInt32(r.GetOrdinal("Id")),
@@ -123,5 +116,7 @@ namespace Linkora.Repositories
                 p.AddWithValue("@Id", userId);
             });
         }
+        public async Task<int> GetPromotionPointsAsync(int userId) => (await QueryAsync<int>("SELECT ISNULL(PromotionPoints, 0) FROM Users WHERE Id = @Id", r => r.GetInt32(0), p => p.AddWithValue("@Id", userId))).FirstOrDefault();
+        public async Task<bool> TrySpendPromotionPointsAsync(int userId, int points) => points > 0 && (await ExecuteAsync("UPDATE Users SET PromotionPoints = PromotionPoints - @P WHERE Id = @Id AND PromotionPoints >= @P", p => { p.AddWithValue("@P", points); p.AddWithValue("@Id", userId); })) > 0;
     }
 }
