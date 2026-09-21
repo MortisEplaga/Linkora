@@ -97,9 +97,8 @@ namespace Linkora.Repositories
         }
         public async Task<int?> SetProductStatusAsync(int id, string status)
         {
-            return status != "Active" ? null : (await QueryAsync<int?>("UPDATE Products SET Status = @S OUTPUT inserted.UserId WHERE Id = @Id",
-                r => r.GetInt32OrNull(0),
-                p => { p.AddWithValue("@S", status); p.AddWithValue("@Id", id); })).FirstOrDefault();
+            return status != "Active" ? null : (await QueryAsync<int?>("DECLARE @o TABLE (UserId int); UPDATE Products SET Status = @S OUTPUT inserted.UserId INTO @o WHERE Id = @Id; SELECT UserId FROM @o",
+                r => r.GetInt32OrNull(0), p => { p.AddWithValue("@S", status); p.AddWithValue("@Id", id); })).FirstOrDefault();
         }
         public async Task<PagedResult<AdminUserRow>> GetUsersAsync(int page, string? search, string role)
         {

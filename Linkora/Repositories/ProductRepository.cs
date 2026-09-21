@@ -486,11 +486,13 @@ namespace Linkora.Repositories
             {
                 int newId;
                 await using (var insertCmd = new SqlCommand(@"
+                    DECLARE @new TABLE (Id int);
                     INSERT INTO Products (Name,Description,Qty,Address,CategoryId,UserId,AvatarUrl,CreatedAt,Status,PublishDurationDays,ExpiresAt,Lat,Lng,Price,
                                           SubscriptionBoostLevel,SubscriptionBoostExpiresAt,PaidBoostLevel,PaidBoostExpiresAt)
-                    OUTPUT INSERTED.Id
+                    OUTPUT INSERTED.Id INTO @new
                     VALUES (@Name,@Description,@Qty,@Address,@CategoryId,@UserId,@AvatarUrl,GETDATE(),'Active',@Duration,DATEADD(DAY,@Duration,GETDATE()),@Lat,@Lng,@Price,
-                            @SubBoostLevel,@SubBoostExp,@PaidBoostLevel,@PaidBoostExp)", conn, tx))
+                            @SubBoostLevel,@SubBoostExp,@PaidBoostLevel,@PaidBoostExp);
+                    SELECT Id FROM @new;", conn, tx))
                 {
                     insertCmd.Parameters.AddWithValue("@Name", product.Name);
                     insertCmd.Parameters.AddWithValue("@Description", (object?)product.Description ?? DBNull.Value);
@@ -620,7 +622,12 @@ namespace Linkora.Repositories
         public async Task<int> RecalculateModerationScoreAsync(int productId)
         {
             await using var conn = await OpenConnectionAsync();
-            await using var cmd = new SqlCommand(@";WITH UnconfirmedCount AS (SELECT COUNT(*) AS Cnt FROM MapperProductParam mpp JOIN SelectOptions so ON TRY_CAST(mpp.Value AS int) = so.Id JOIN Parameters pa ON pa.Id = mpp.ParamId AND pa.Type IN (2,4,8) WHERE mpp.ProductId = @Id AND so.IsConf = 0) UPDATE p SET ModerationScore = (SELECT Cnt FROM UnconfirmedCount),Status = CASE WHEN (SELECT Cnt FROM UnconfirmedCount) >= 5 THEN 'Moderation' ELSE Status END OUTPUT INSERTED.ModerationScore FROM Products p WHERE p.Id = @Id;", conn);
+            await using var cmd = new SqlCommand(@"DECLARE @out TABLE (Score int);
+                ;WITH UnconfirmedCount AS (SELECT COUNT(*) AS Cnt FROM MapperProductParam mpp JOIN SelectOptions so ON TRY_CAST(mpp.Value AS int) = so.Id JOIN Parameters pa ON pa.Id = mpp.ParamId AND pa.Type IN (2,4,8) WHERE mpp.ProductId = @Id AND so.IsConf = 0)
+                UPDATE p SET ModerationScore = (SELECT Cnt FROM UnconfirmedCount),Status = CASE WHEN (SELECT Cnt FROM UnconfirmedCount) >= 5 THEN 'Moderation' ELSE Status END
+                OUTPUT INSERTED.ModerationScore INTO @out
+                FROM Products p WHERE p.Id = @Id;
+                SELECT Score FROM @out;", conn); 
             cmd.Parameters.AddWithValue("@Id", productId);
             await using var reader = await cmd.ExecuteReaderAsync();
             if (await reader.ReadAsync()) return reader.GetInt32(0);

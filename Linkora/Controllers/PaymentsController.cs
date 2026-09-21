@@ -12,15 +12,15 @@ namespace Linkora.Controllers
     {
         private readonly IMaksekeskusService _mk;
         private readonly IPaymentRepository _paymentRepository;
-        private readonly IUserRepository _userRepository;
         private readonly IPromotionRepository _promotionRepository;
+        private readonly IPointsRepository _pointsRepository;
         private readonly IPromotionPricingService _pricing;
-        public PaymentsController(IMaksekeskusService mk, IPaymentRepository paymentRepository, IUserRepository userRepository, IPromotionRepository promotionRepository, IPromotionPricingService pricing)
+        public PaymentsController(IMaksekeskusService mk, IPaymentRepository paymentRepository, IPromotionRepository promotionRepository, IPointsRepository pointsRepository, IPromotionPricingService pricing)
         {
             _mk = mk;
             _paymentRepository = paymentRepository;
-            _userRepository = userRepository;
             _promotionRepository = promotionRepository;
+            _pointsRepository = pointsRepository;
             _pricing = pricing;
         }
         [Authorize] [HttpPost] public async Task<IActionResult> InitiatePromotion(int productId, string promotionType, bool payWithPoints = false)
@@ -32,11 +32,23 @@ namespace Linkora.Controllers
             var owner = await GetProductOwnerAsync(productId);
             if (owner == null || owner != userId) return Forbid();
 
-            var price = _pricing.CalculateListingBoostPayable(tier, await _promotionRepository.GetActiveAsync(userId));
+            var subscription = await _promotionRepository.GetActiveAsync(userId);
+            var price = _pricing.CalculateListingBoostPayable(tier, subscription);
 
             if (price <= 0) return Ok(new { redirectUrl = (string?)null, coveredBySubscription = true });
 
-            return await StartPurchaseAsync(userId, "Promotion", productId, promotionType, null, price, $"PROMO{productId}{DateTime.UtcNow:HHmmss}", payWithPoints);
+            if (payWithPoints)
+            {
+                var pointsCost = _pricing.GetPointsCost(price);
+                var expiresAt = _pricing.CalculateExpiry(PromotionTermType.Week, DateTime.UtcNow);
+                if (!await _pointsRepository.SpendOnListingBoostAsync(userId, productId, tier, expiresAt, pointsCost)) return BadRequest("Not enough points");
+
+                return Ok(new { redirectUrl = (string?)null, paidWithPoints = true, pointsSpent = pointsCost });
+            }
+
+            var reference = $"PROMO{productId}{DateTime.UtcNow:HHmmss}";
+            var paymentId = await _paymentRepository.CreateAsync(userId, "Promotion", productId, promotionType, null, price, reference, 0);
+            return await StartTransactionAsync(paymentId, price, reference);
         }
         [Authorize] [HttpPost] public async Task<IActionResult> InitiateSubscription(string subscriptionType, string termType, bool payWithPoints = false)
         {
@@ -45,11 +57,24 @@ namespace Linkora.Controllers
 
             var userId = User.GetUserId();
             var current = await _promotionRepository.GetActiveAsync(userId);
+
             var price = current != null ? _pricing.CalculateUpgrade(current, tier, term, DateTime.UtcNow).Payable : _pricing.GetPrice(tier, term);
 
             if (price <= 0) return BadRequest("Nothing to pay");
 
-            return await StartPurchaseAsync(userId, "Subscription", null, null, $"{tier}:{term}", price, $"SUB{userId}{DateTime.UtcNow:HHmmss}", payWithPoints);
+            if (payWithPoints)
+            {
+                var pointsCost = _pricing.GetPointsCost(price);
+                var startedAt = DateTime.UtcNow;
+                var expiresAt = _pricing.CalculateExpiry(term, startedAt);
+                if (!await _pointsRepository.SpendOnSubscriptionAsync(userId, tier, term, price, pointsCost, startedAt, expiresAt, current?.Id)) return BadRequest("Not enough points");
+
+                return Ok(new { redirectUrl = (string?)null, paidWithPoints = true, pointsSpent = pointsCost });
+            }
+
+            var reference = $"SUB{userId}{DateTime.UtcNow:HHmmss}";
+            var paymentId = await _paymentRepository.CreateAsync(userId, "Subscription", null, null, $"{tier}:{term}", price, reference, 0);
+            return await StartTransactionAsync(paymentId, price, reference);
         }
         private async Task<int?> GetProductOwnerAsync(int productId) => await _paymentRepository.GetProductUserIdAsync(productId);
         private async Task<IActionResult> StartTransactionAsync(int paymentId, decimal price, string reference)
@@ -98,64 +123,26 @@ namespace Linkora.Controllers
             ViewBag.Status = status;
             return View();
         }
-        private async Task<IActionResult> StartPurchaseAsync(int userId, string purpose, int? productId, string? promotionTier, string? subscriptionTier, decimal price, string reference, bool payWithPoints)
-        {
-            if (!payWithPoints)
-            {
-                var eurPaymentId = await _paymentRepository.CreateAsync(userId, purpose, productId, promotionTier, subscriptionTier, price, reference, 0);
-                return await StartTransactionAsync(eurPaymentId, price, reference);
-            }
-
-            var pointsCost = _pricing.GetPointsCost(price);
-            var paymentId = await _paymentRepository.CreateAsync(userId, purpose, productId, promotionTier, subscriptionTier, price, reference, pointsCost);
-
-            if (!await _userRepository.TrySpendPromotionPointsAsync(userId, pointsCost))
-            {
-                await _paymentRepository.SetStatusAsync(paymentId, "Failed");
-                return BadRequest("Not enough points");
-            }
-
-            try
-            {
-                var payment = await _paymentRepository.GetByReferenceAsync(reference);
-                await _paymentRepository.MarkCompletedAsync(paymentId);
-                if (await ApplyPaymentAsync(payment!) == "completed") return Ok(new { redirectUrl = (string?)null, paidWithPoints = true, pointsSpent = pointsCost });
-            }
-            catch
-            {
-                await RefundPointsAsync(userId, paymentId, pointsCost);
-                throw;
-            }
-
-            await RefundPointsAsync(userId, paymentId, pointsCost);
-            return StatusCode(500, "Purchase could not be applied");
-        }
-        private async Task RefundPointsAsync(int userId, int paymentId, int points)
-        {
-            await _userRepository.AdjustPromotionPointsAsync(userId, points);
-            await _paymentRepository.SetStatusAsync(paymentId, "Failed");
-        }
         private async Task<string> ProcessPaymentMessageAsync(string json)
         {
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
+            var reference = root.GetProperty("reference").GetString();
+            var mkStatus = root.GetProperty("status").GetString();
 
-            var payment = await _paymentRepository.GetByReferenceAsync(root.GetProperty("reference").GetString()!);
+            var payment = await _paymentRepository.GetByReferenceAsync(reference!);
             if (payment == null) return "not_found";
 
             if (payment.Status == "Completed") return "already_completed";
 
-            if (root.GetProperty("status").GetString() != "COMPLETED")
+            if (mkStatus != "COMPLETED")
             {
                 await _paymentRepository.SetStatusAsync(payment.Id, "Failed");
                 return "failed";
             }
 
             await _paymentRepository.MarkCompletedAsync(payment.Id);
-            return await ApplyPaymentAsync(payment);
-        }
-        private async Task<string> ApplyPaymentAsync(PaymentBase payment)
-        {
+
             if (payment.PurposeType == "Promotion" && payment.ProductId.HasValue && payment.PromotionTier != null)
             {
                 if (!Enum.TryParse<PromotionTier>(payment.PromotionTier, out var tier)) return "bad_promotion_payload";
@@ -176,13 +163,7 @@ namespace Linkora.Controllers
 
                 var startedAt = DateTime.UtcNow;
                 var expiresAt = _pricing.CalculateExpiry(term, startedAt);
-                await _promotionRepository.CreateAsync(payment.UserId, tier, term, startedAt, expiresAt, payment.Price);
-            }
-
-            if (payment.PointsSpent == 0)
-            {
-                var earned = _pricing.GetPointsEarned(payment.Price);
-                if (earned > 0) await _userRepository.AdjustPromotionPointsAsync(payment.UserId, earned);
+                await _promotionRepository.CreateAsync(payment.UserId, tier, term, startedAt, expiresAt, payment.Price, payment.Id);
             }
 
             return "completed";
@@ -209,7 +190,7 @@ namespace Linkora.Controllers
             }
             else return BadRequest("Unknown type");
 
-            var available = await _userRepository.GetPromotionPointsAsync(userId);
+            var available = await _pointsRepository.GetBalanceAsync(userId);
             var pointsCost = _pricing.GetPointsCost(basePrice);
 
             return Ok(new
