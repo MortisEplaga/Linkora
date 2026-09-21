@@ -156,20 +156,20 @@ namespace Linkora.Controllers
 
             await _paymentRepository.MarkCompletedAsync(payment.Id);
 
-            if (payment.PurposeType == "Promotion" && payment.ProductId.HasValue && payment.PromotionType != null)
+            if (payment.PurposeType == "Promotion" && payment.ProductId.HasValue && payment.PromotionTier != null)
             {
-                if (!Enum.TryParse<PromotionTier>(payment.PromotionType, out var tier)) return "bad_promotion_payload";
+                if (!Enum.TryParse<PromotionTier>(payment.PromotionTier, out var tier)) return "bad_promotion_payload";
 
                 var expiresAt = _pricing.CalculateExpiry(PromotionTermType.Week, DateTime.UtcNow);
                 await _paymentRepository.ApplyPromotionAsync(payment.ProductId.Value, tier, expiresAt);
 
-                var earnedPoints = UserRepository.PromotionPoints(payment.PromotionType);
+                var earnedPoints = UserRepository.PromotionPoints(payment.PromotionTier);
                 var netDelta = earnedPoints - payment.PointsSpent;
                 if (netDelta != 0) await _userRepository.AdjustPromotionPointsAsync(payment.UserId, netDelta);
             }
-            else if (payment.PurposeType == "Subscription" && payment.SubscriptionType != null)
+            else if (payment.PurposeType == "Subscription" && payment.SubscriptionTier != null)
             {
-                var parts = payment.SubscriptionType.Split(':');
+                var parts = payment.SubscriptionTier.Split(':');
                 if (parts.Length != 2
                     || !Enum.TryParse<PromotionTier>(parts[0], out var tier)
                     || !Enum.TryParse<PromotionTermType>(parts[1], out var term))

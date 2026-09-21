@@ -7,13 +7,14 @@ namespace Linkora.Controllers
     {
         private readonly ISellerRepository _sellerRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IPromotionRepository _promotionRepository;
 
-        public SellerController(ISellerRepository sellerRepository, IHttpContextAccessor httpContextAccessor)
+        public SellerController(ISellerRepository sellerRepository, IHttpContextAccessor httpContextAccessor, IPromotionRepository promotionRepository)
         {
             _sellerRepository = sellerRepository;
             _httpContextAccessor = httpContextAccessor;
+            _promotionRepository = promotionRepository;
         }
-
         public async Task<IActionResult> Index(int id, int? categoryId, string sort = "new", int page = 1)
         {
             var seller = await _sellerRepository.GetByIdAsync(id);
@@ -35,6 +36,7 @@ namespace Linkora.Controllers
             ViewBag.Page = pagedResult.CurrentPage;
             ViewBag.TotalPages = pagedResult.TotalPages;
             ViewBag.Total = pagedResult.Total;
+            ViewBag.ActiveSubscription = await _promotionRepository.GetActiveAsync(id);
 
             return View();
         }

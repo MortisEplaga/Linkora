@@ -459,7 +459,7 @@ namespace Linkora.Controllers
             var userName = User.FindFirst(ClaimTypes.Name)?.Value ?? "Unknown";
             await _notifications.NotifySubscribersAsync(userId, newId, title, userName);
 
-            var pendingPromotion = string.IsNullOrEmpty(promotionType) || promotionType == "None" ? null : promotionType;
+            var pendingPromotion = string.IsNullOrEmpty(promotionType) || promotionType == "Free" ? null : promotionType;
 
             return Ok(new { id = newId, promotionType = pendingPromotion });
         }

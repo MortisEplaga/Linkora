@@ -7,7 +7,6 @@
         public string? CategoryName { get; set; }
         public string? SellerName { get; set; }
     }
-
     public class CompareData
     {
         public List<CompareProduct> Products { get; set; } = [];

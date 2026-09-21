@@ -11,7 +11,7 @@ namespace Linkora.Repositories
         private readonly IMemoryCache _cache;
         private const string EffectiveBoostExpr = @"(SELECT MAX(v) FROM (VALUES
             (CASE WHEN p.PaidBoostLevel IS NOT NULL AND p.PaidBoostExpiresAt > SYSUTCDATETIME() THEN p.PaidBoostLevel END),
-            (CASE WHEN p.SubscriptionBoostLevel IS NOT NULL AND p.SubscriptionBoostExpiresAt > SYSUTCDATETIME() THEN p.SubscriptionBoostLevel END)) AS t(v)))";
+            (CASE WHEN p.SubscriptionBoostLevel IS NOT NULL AND p.SubscriptionBoostExpiresAt > SYSUTCDATETIME() THEN p.SubscriptionBoostLevel END)) AS t(v))";
         public ProductRepository(IConfiguration configuration, ILogger<ProductRepository> logger, IMemoryCache cache) : base(configuration) { _logger = logger; _cache = cache; }
         public async Task<CategoryRulesDto> GetCategoryRulesAsync(IEnumerable<int> categoryIds)
         {

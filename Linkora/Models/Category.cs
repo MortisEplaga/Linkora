@@ -19,5 +19,8 @@ namespace Linkora.Models
         public int? CategoryId { get; set; }
         public int? Type { get; set; }
     }
-
+    public class CategoryCount : NamedEntity
+    {
+        public int Count { get; set; }
+    }
 }

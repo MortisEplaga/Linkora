@@ -7,35 +7,27 @@
         public int TotalPages { get; set; }
         public int CurrentPage { get; set; }
     }
-
     public class AdminBadges
     {
         public int PendingModeration { get; set; }
         public int PendingReports { get; set; }
         public int PendingOptions { get; set; }
     }
-
     public class AdminStatsApiData
     {
         public List<object> Registrations { get; set; } = [];
         public List<object> Products { get; set; } = [];
     }
-
     public class BanUserResult
     {
         public List<int> SubscriberIds { get; set; } = [];
         public List<(int UserId, int ProductId)> FavouriteUsers { get; set; } = [];
     }
-
     public class ApproveOptionResult : OptionModerationResultBase
     {
         public int? ProductId { get; set; }
     }
-
-    public class RejectOptionResult : OptionModerationResultBase
-    {
-    }
-
+    public class RejectOptionResult : OptionModerationResultBase {}
     public class RejectProductResult
     {
         public bool Success { get; set; }
@@ -46,7 +38,6 @@
         public string ReasonRu { get; set; } = "";
         public string Comment { get; set; } = "";
     }
-
     public class AdminDashboardViewModel : AdminBadges
     {
         public int TotalUsers { get; set; }
@@ -57,7 +48,6 @@
         public Dictionary<string, int> ProductsByStatus { get; set; } = [];
         public List<AdminProductRow> RecentProducts { get; set; } = [];
     }
-
     public class AdminProductRow : ProductSummaryBase
     {
         public string Status { get; set; } = "";
@@ -65,13 +55,11 @@
         public int UserId { get; set; }
         public int ReportCount { get; set; }
     }
-
     public class AdminUserRow : UserSummary
     {
         public string Role { get; set; } = "user";
         public int ProductCount { get; set; }
     }
-
     public class AdminReportRow : ReportBase
     {
         public string Status { get; set; } = "";
@@ -81,7 +69,6 @@
         public string ReporterName { get; set; } = "";
         public string ReasonText { get; set; } = "";
     }
-
     public class AdminConfOptionRow
     {
         public int OptionId { get; set; }

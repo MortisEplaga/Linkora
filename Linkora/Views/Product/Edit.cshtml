@@ -113,9 +113,9 @@
                 <div class="auth-field">
                     <label class="auth-label" data-i18n="promotion_label">Promote your listing</label>
                     <div class="duration-pills" id="promotionPills">
-                        @foreach (var promo in new[] { "None", "Highlight", "Top", "Vip" })
+                        @foreach (var promo in new[] { "Free", "Highlight", "Top", "Vip" })
                         {
-                            var isActive = p.PromotionType == promo;
+                            var isActive = p.EffectiveBoostTier.ToString() == promo;
                             <button type="button"
                                     class="duration-pill @(isActive ? "active" : "")"
                                     data-type="@promo"
@@ -124,11 +124,28 @@
                                 @promo
                             </button>
                         }
+                        <input type="hidden" id="promotionValue" value="@p.EffectiveBoostTier" />
                     </div>
-                    <div class="duration-hint" data-i18n="promotion_hint">
-                        No paid promotion applied by default.
-                    </div>
-                    <input type="hidden" id="promotionValue" value="@p.PromotionType" />
+                    @if (p.PaidBoostLevel.HasValue && p.PaidBoostExpiresAt > DateTime.UtcNow
+                                        && p.PaidBoostLevel.Value > (p.SubscriptionBoostLevel ?? PromotionTier.Free))
+                    {
+                        <div class="duration-hint" data-i18n="boost_paid_until">
+                            Paid boost (@p.PaidBoostLevel) active until @p.PaidBoostExpiresAt?.ToString("dd MMM")
+                        </div>
+                    }
+                    else if (p.SubscriptionBoostLevel.HasValue && p.SubscriptionBoostExpiresAt > DateTime.UtcNow
+                    && p.SubscriptionBoostLevel.Value != PromotionTier.Free)
+                    {
+                        <div class="duration-hint" data-i18n="boost_subscription_covered">
+                            Covered by subscription (@p.SubscriptionBoostLevel) until @p.SubscriptionBoostExpiresAt?.ToString("dd MMM")
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="duration-hint" data-i18n="promotion_hint">
+                            No paid promotion applied by default.
+                        </div>
+                    }
                 </div>
             </div>
 
@@ -322,7 +339,7 @@
             fd.append('categoryId', document.getElementById('selectedCategoryId').value);
             fd.append('keepMediaJson', JSON.stringify(window.existingMediaPaths || []));
             fd.append('publishDays', document.getElementById('pubDurationValue').value || '30');
-            fd.append('promotionType', document.getElementById('promotionValue').value || 'None');
+            fd.append('promotionType', document.getElementById('promotionValue').value || 'Free');
 
             const priceWrap = document.getElementById('priceFieldWrap');
             if (priceWrap.style.display !== 'none') {

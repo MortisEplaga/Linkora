@@ -187,7 +187,7 @@
             <div class="duration-hint" data-i18n="profile_subscription_hint">
                 Placeholder section. Plan benefits will be defined later.fselectSubscription
             </div>
-            <input type="hidden" id="fieldSubscriptionType" value="@user.SubscriptionType" />
+            <input type="hidden" id="fieldSubscriptionTier" value="@(activeSub?.Tier.ToString() ?? "Free")" />
             <input type="hidden" id="fieldSubscriptionTerm" value="Month" />
         </div>
 
@@ -276,7 +276,7 @@
         function applySubscriptionSelection(type, btn) {
             document.querySelectorAll('#subscriptionPills .duration-pill').forEach(p => p.classList.remove('active'));
             btn.classList.add('active');
-            document.getElementById('fieldSubscriptionType').value = type;
+            document.getElementById('fieldSubscriptionTier').value = type;
         }
 
         window.confirmSubRules = async function(agreed) {
@@ -306,7 +306,7 @@
             } else if (!agreed && pendingSubBtn) {
                 document.querySelectorAll('#subscriptionPills .duration-pill')
                     .forEach(p => p.classList.remove('active'));
-                const prev = document.getElementById('fieldSubscriptionType').value;
+                const prev = document.getElementById('fieldSubscriptionTier').value;
                 if (prev) {
                     document.querySelector(`#subscriptionPills .duration-pill[data-type="${prev}"]`)
                         ?.classList.add('active');

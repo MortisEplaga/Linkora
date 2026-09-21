@@ -6,5 +6,4 @@
         public int SellerId { get; set; }
         public string? Text { get; set; }
     }
-
 }

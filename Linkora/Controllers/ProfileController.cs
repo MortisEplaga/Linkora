@@ -109,7 +109,7 @@ namespace Linkora.Controllers
 
             if (_passwordHasher.IsLegacyHash(user.PasswordHash) && string.IsNullOrWhiteSpace(dto.NewPassword)) newHash = _passwordHasher.Hash(dto.CurrentPassword);
 
-            await _userRepository.UpdateProfileAsync(userId, dto.UserName, dto.Phone, duration, newHash, subscriptionType, dto.TelegramUrl, dto.WhatsAppUrl, dto.WebsiteUrl, dto.HomeAddress, homeLat, homeLng);
+            await _userRepository.UpdateProfileAsync(userId, dto.UserName, dto.Phone, duration, newHash, dto.TelegramUrl, dto.WhatsAppUrl, dto.WebsiteUrl, dto.HomeAddress, homeLat, homeLng);
 
             return Ok(new { success = true });
         }

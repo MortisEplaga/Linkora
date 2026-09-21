@@ -631,6 +631,17 @@
     font-weight: 600;
     margin-bottom: 4px;
 }
+.seller-sub-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #fff3d6;
+    color: #b8860b;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    margin-left: 6px;
+}
 :root {
     --card-transition: 0.18s ease;
     --card-shadow-rest: 0 2px 8px rgba(0,0,0,0.06);

@@ -391,7 +391,7 @@ function applyPromotionSelection(type, btn) {
 }
 
 function selectPromotion(type, btn) {
-    if (type === 'None') {
+    if (type === 'Free') {
         applyPromotionSelection(type, btn);
         return;
     }

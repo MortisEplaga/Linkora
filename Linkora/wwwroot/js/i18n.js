@@ -79,7 +79,7 @@ const TRANSLATIONS = {
         'sub_plan_premium': 'Premium',
         'promotion_label': 'Promote your listing',
         'promotion_hint': 'No paid promotion applied by default.',
-        'promo_none': 'None',
+        'promo_none': 'Free',
         'promo_highlight': 'Highlight',
         'promo_top': 'Top placement',
         'promo_vip': 'VIP',

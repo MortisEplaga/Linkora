@@ -33,7 +33,15 @@ namespace Linkora.Models
         public DateTime? SubscriptionBoostExpiresAt { get; set; }
         public PromotionTier? PaidBoostLevel { get; set; }
         public DateTime? PaidBoostExpiresAt { get; set; }
-        [NotMapped] public string PromotionType => PaidBoostLevel.HasValue && PaidBoostExpiresAt > DateTime.UtcNow ? PaidBoostLevel.Value.ToString() : "None";
+        [NotMapped] public PromotionTier EffectiveBoostTier
+        {
+            get
+            {
+                var paid = PaidBoostLevel.HasValue && PaidBoostExpiresAt > DateTime.UtcNow ? PaidBoostLevel.Value : PromotionTier.Free;
+                var sub = SubscriptionBoostLevel.HasValue && SubscriptionBoostExpiresAt > DateTime.UtcNow ? SubscriptionBoostLevel.Value : PromotionTier.Free;
+                return paid > sub ? paid : sub;
+            }
+        }
     }
 
     public class CategoryRulesDto

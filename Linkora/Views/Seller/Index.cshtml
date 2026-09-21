@@ -7,6 +7,7 @@
     var sort = (string)ViewBag.Sort;
     var activeCatId = (int?)ViewBag.CategoryId;
     var categories = (List<CategoryCount>)ViewBag.Categories;
+    var activeSub = (Promotion?)ViewBag.ActiveSubscription;
     ViewData["Title"] = seller.UserName;
 }
 
@@ -30,6 +31,10 @@
             @if (seller.IsCompany)
             {
                 <span class="seller-badge" data-i18n="company_badge">Company</span>
+            }
+            @if (activeSub != null)
+            {
+                <span class="seller-sub-badge" data-i18n="sub_plan_@(activeSub.Tier.ToString().ToLower())">@activeSub.Tier</span>
             }
         </div>
         @if (reviewCount > 0)

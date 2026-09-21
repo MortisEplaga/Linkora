@@ -4,8 +4,8 @@
     var p = Model.Product;
 }
 
-<a class="product-card @(p.PromotionType != "None" ? "product-card-promoted" : "")"
-   data-promo-top="@(p.PromotionType is "Top" or "Vip" ? "true" : "false")"
+<a class="product-card @(p.EffectiveBoostTier != PromotionTier.Free ? "product-card-promoted" : "")"
+   data-promo-top="@(p.EffectiveBoostTier >= PromotionTier.Top ? "true" : "false")"
    asp-controller="Product" asp-action="Details" asp-route-id="@p.Id">
     <div class="product-card-img">
         <img src="@(p.AvatarUrl ?? "/img/no-photo.svg")" alt="@p.Name"
