@@ -22,6 +22,7 @@ namespace Linkora.Controllers
         {
             _userRepository = userRepository;
             _promotionRepository = promotionRepository;
+            _pointsRepository = pointsRepository;
             _passwordHasher = passwordHasher;
             _geocodingService = geocodingService;
             _mediaStorage = mediaStorage;
