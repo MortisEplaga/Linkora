@@ -2527,6 +2527,17 @@ body {
     width: 100%;
 }
 
+.notif-prefs-header {
+    padding-bottom: 4px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.notif-prefs-col-label {
+    font-size: 11px;
+    color: #aaa;
+    text-align: center;
+}
+
 .notif-bell-btn,
 .msg-btn,
 .cart-btn {
@@ -3828,6 +3839,84 @@ body {
     min-height: unset !important;
     max-height: 90vh;
 }
+
+#notifPrefsModal {
+    height: auto !important;
+    min-height: unset !important;
+    max-height: fit-content !important;
+}
+
+    #notifPrefsModal .settings-section {
+        gap: 12px;
+        border-bottom: none;
+    }
+
+    #notifPrefsModal .settings-row {
+        display: grid;
+        grid-template-columns: minmax(140px, 1fr) 70px 70px;
+        align-items: center;
+        justify-content: unset;
+        padding: 8px 0;
+    }
+
+    #notifPrefsModal .notif-prefs-header {
+        grid-template-columns: minmax(140px, 1fr) 70px 70px;
+        border-bottom: 1px solid #f0f0f0;
+        padding-bottom: 10px;
+        margin-bottom: 4px;
+    }
+
+    #notifPrefsModal .notif-prefs-col-label {
+        text-align: center;
+        font-size: 11px;
+        font-weight: 600;
+        color: #888;
+        line-height: 1.2;
+        word-wrap: break-word;
+    }
+
+        #notifPrefsModal .notif-prefs-col-label:first-child {
+            text-align: left;
+        }
+
+    #notifPrefsModal input[type="checkbox"] {
+        margin: 0 auto;
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+        accent-color: #00b0a3;
+    }
+
+    #notifPrefsModal .auth-submit {
+        width: 100%;
+        padding: 12px;
+        background: #1a1a1a;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 16px;
+        transition: background 0.15s;
+    }
+
+        #notifPrefsModal .auth-submit:hover {
+            background: #333;
+        }
+
+.dark-theme #notifPrefsModal .notif-prefs-header {
+    border-bottom-color: #333;
+}
+
+.dark-theme #notifPrefsModal .auth-submit {
+    background: #e8e8e8;
+    color: #1a1a1a;
+}
+
+    .dark-theme #notifPrefsModal .auth-submit:hover {
+        background: #ccc;
+    }
 
 @media (max-width: 1024px) {
     :root {

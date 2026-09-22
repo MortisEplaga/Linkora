@@ -3,7 +3,6 @@ using Linkora.Services;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 using Serilog;
 using System.Threading.RateLimiting;
 
@@ -44,6 +43,8 @@ builder.Services.AddScoped<IMaksekeskusService, MaksekeskusService>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IMediaStorageService, MediaStorageService>();
 builder.Services.AddHostedService<ArchiveOldProductsService>();
+builder.Services.AddHostedService<EmailQueueBackgroundService>();
+builder.Services.AddSingleton<IEmailQueue, EmailQueue>();
 builder.Services.AddSignalR();
 
 builder.Services.Configure<FormOptions>(o =>

@@ -7,7 +7,6 @@ namespace Linkora.Services
         private readonly ILogger<ArchiveOldProductsService> _logger;
         private readonly IServiceScopeFactory _serviceScopeFactory;
         private readonly TimeSpan _interval = TimeSpan.FromHours(24);
-
         public ArchiveOldProductsService(ILogger<ArchiveOldProductsService> logger, IServiceScopeFactory serviceScopeFactory)
         {
             _logger = logger;
@@ -22,6 +21,7 @@ namespace Linkora.Services
                 try
                 {
                     await ArchiveExpiredProducts();
+                    await NotifyExpiringProducts();
                     await ExpirePromotions();
                     await CleanupAsync();
                     await CleanupOldSessionsAsync();
@@ -50,6 +50,19 @@ namespace Linkora.Services
         {
             var deleted = await _serviceScopeFactory.CreateScope().ServiceProvider.GetRequiredService<IUserSessionRepository>().DeleteOldSessionsAsync(30);
             if (deleted > 0) _logger.LogInformation("Deleted {Count} old user session records", deleted);
+        }
+        private async Task NotifyExpiringProducts()
+        {
+            using var scope = _serviceScopeFactory.CreateScope();
+            var products = scope.ServiceProvider.GetRequiredService<IProductRepository>();
+            var notifications = scope.ServiceProvider.GetRequiredService<INotificationService>();
+
+            var expiring = await products.GetProductsExpiringSoonAsync();
+
+            foreach (var (id, userId, name) in expiring)
+                await notifications.CreateAsync(userId, null, id, System.Text.Json.JsonSerializer.Serialize(new { type = "listing_expiring_soon", productName = name }));
+
+            if (expiring.Count > 0) _logger.LogInformation("Sent {Count} expiry reminders", expiring.Count);
         }
     }
 }

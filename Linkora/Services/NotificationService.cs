@@ -17,11 +17,17 @@ namespace Linkora.Services
         private readonly INotificationRepository _repository;
         private readonly INotificationPreferencesRepository _preferencesRepository;
         private readonly INotificationRealTimeSender _realTimeSender;
-        public NotificationService(INotificationRepository repository, INotificationPreferencesRepository preferencesRepository, INotificationRealTimeSender realTimeSender)
+        private readonly IUserRepository _userRepository;
+        private readonly IEmailQueue _emailQueue;
+        private readonly ILogger<NotificationService> _logger;
+        public NotificationService(INotificationRepository repository, INotificationPreferencesRepository preferencesRepository, INotificationRealTimeSender realTimeSender, IUserRepository userRepository, IEmailQueue emailQueue, ILogger<NotificationService> logger)
         {
             _repository = repository;
             _preferencesRepository = preferencesRepository;
             _realTimeSender = realTimeSender;
+            _userRepository = userRepository;
+            _emailQueue = emailQueue;
+            _logger = logger;
         }
         public async Task<int> CreateAsync(int userId, int? fromUserId, int? productId, string text)
         {
@@ -36,6 +42,8 @@ namespace Linkora.Services
                 Text = text,
                 CreatedAt = DateTime.UtcNow,
             });
+
+            await QueueEmailIfAllowedAsync(userId, text);
 
             return id;
         }
@@ -61,6 +69,7 @@ namespace Linkora.Services
             if (created.Count == 0) return;
 
             foreach (var (notificationId, followerId) in created)
+            {
                 await _realTimeSender.SendAsync(new NotificationDispatch
                 {
                     Id = notificationId,
@@ -71,7 +80,20 @@ namespace Linkora.Services
                     ProductName = productName,
                     CreatedAt = DateTime.UtcNow,
                 });
+
+                await QueueEmailIfAllowedAsync(followerId, text);
+            }
         }
+        private static bool IsEmailAllowed(string text, NotificationPreferences prefs) => NotificationCategorizer.Categorize(text) switch
+        {
+            "Deals" => prefs.EmailDeals,
+            "Reviews" => prefs.EmailReviews,
+            "Moderation" => prefs.EmailModeration,
+            "Account" => prefs.EmailAccount,
+            "Favourites" => prefs.EmailFavourites,
+            "ExpiringSoon" => prefs.EmailExpiringSoon,
+            _ => prefs.EmailNewListings,
+        };
         private static bool IsAllowed(string text, NotificationPreferences prefs) => NotificationCategorizer.Categorize(text) switch
             {
                 "Deals" => prefs.Deals,
@@ -79,7 +101,26 @@ namespace Linkora.Services
                 "Moderation" => prefs.Moderation,
                 "Account" => prefs.Account,
                 "Favourites" => prefs.Favourites,
+                "ExpiringSoon" => prefs.ExpiringSoon,
                 _ => prefs.NewListings,
             };
+        private async Task QueueEmailIfAllowedAsync(int userId, string text)
+        {
+            try
+            {
+                var prefs = await _preferencesRepository.GetAsync(userId);
+                if (!IsEmailAllowed(text, prefs)) return;
+
+                var user = await _userRepository.GetByIdAsync(userId);
+                if (string.IsNullOrWhiteSpace(user?.Email)) return;
+
+                var (subject, body) = NotificationEmailFormatter.Format(text);
+                _emailQueue.Enqueue(new EmailNotificationRequest(user.Email, subject, body));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to queue notification email for user {UserId}", userId);
+            }
+        }
     }
 }

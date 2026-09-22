@@ -19,6 +19,7 @@ namespace Linkora.Services
                         "product_approved" or "parameter_approved" or "parameter_rejected" or "rejected_reason" or "report_on_product" => "Moderation",
                         "user_banned" or "user_unbanned" => "Account",
                         "favourite_updated" or "favourite_archived_ban" or "subscription_seller_banned" => "Favourites",
+                        "listing_expiring_soon" => "ExpiringSoon",
                         _ => "NewListings"
                     };
                 }

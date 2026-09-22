@@ -11,22 +11,17 @@ namespace Linkora.Controllers
     {
         private readonly INotificationService _notifications;
         private readonly INotificationPreferencesRepository _preferencesRepository;
-
         public NotificationsController(INotificationService notifications, INotificationPreferencesRepository preferencesRepository)
         {
             _notifications = notifications;
             _preferencesRepository = preferencesRepository;
         }
-
-        [HttpGet]
-        public async Task<IActionResult> Count()
+        [HttpGet] public async Task<IActionResult> Count()
         {
             var count = await _notifications.GetUnreadCountAsync(User.GetUserId());
             return Json(new { count });
         }
-
-        [HttpGet]
-        public async Task<IActionResult> Preferences()
+        [HttpGet] public async Task<IActionResult> Preferences()
         {
             var prefs = await _preferencesRepository.GetAsync(User.GetUserId());
             return Json(new
@@ -36,12 +31,18 @@ namespace Linkora.Controllers
                 moderation = prefs.Moderation,
                 account = prefs.Account,
                 favourites = prefs.Favourites,
-                newListings = prefs.NewListings
+                newListings = prefs.NewListings,
+                expiringSoon = prefs.ExpiringSoon,
+                emailDeals = prefs.EmailDeals,
+                emailReviews = prefs.EmailReviews,
+                emailModeration = prefs.EmailModeration,
+                emailAccount = prefs.EmailAccount,
+                emailFavourites = prefs.EmailFavourites,
+                emailNewListings = prefs.EmailNewListings,
+                emailExpiringSoon = prefs.EmailExpiringSoon,
             });
         }
-
-        [HttpPost]
-        public async Task<IActionResult> SavePreferences([FromBody] NotificationPreferencesDto dto)
+        [HttpPost] public async Task<IActionResult> SavePreferences([FromBody] NotificationPreferencesDto dto)
         {
             var userId = User.GetUserId();
             await _preferencesRepository.SaveAsync(new NotificationPreferences
@@ -52,12 +53,19 @@ namespace Linkora.Controllers
                 Moderation = dto.Moderation,
                 Account = dto.Account,
                 Favourites = dto.Favourites,
-                NewListings = dto.NewListings
+                NewListings = dto.NewListings,
+                ExpiringSoon = dto.ExpiringSoon,
+                EmailDeals = dto.EmailDeals,
+                EmailReviews = dto.EmailReviews,
+                EmailModeration = dto.EmailModeration,
+                EmailAccount = dto.EmailAccount,
+                EmailFavourites = dto.EmailFavourites,
+                EmailNewListings = dto.EmailNewListings,
+                EmailExpiringSoon = dto.EmailExpiringSoon,
             });
             return Ok();
         }
-        [HttpGet]
-        public async Task<IActionResult> List() => Json((await _notifications.GetByUserAsync(User.GetUserId(), 20)).Select(n => new
+        [HttpGet] public async Task<IActionResult> List() => Json((await _notifications.GetByUserAsync(User.GetUserId(), 20)).Select(n => new
             {
                 id = n.Id,
                 text = n.Text,
@@ -70,16 +78,12 @@ namespace Linkora.Controllers
                 productName = n.ProductName,
                 productImage = n.ProductImage,
             }));
-
-        [HttpPost]
-        public async Task<IActionResult> MarkRead(int id)
+        [HttpPost] public async Task<IActionResult> MarkRead(int id)
         {
             await _notifications.MarkReadAsync(id, User.GetUserId());
             return Ok();
         }
-
-        [HttpPost]
-        public async Task<IActionResult> MarkAllRead()
+        [HttpPost] public async Task<IActionResult> MarkAllRead()
         {
             await _notifications.MarkAllReadAsync(User.GetUserId());
             return Ok();

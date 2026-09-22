@@ -21,6 +21,14 @@
         public bool Account { get; set; } = true;
         public bool Favourites { get; set; } = true;
         public bool NewListings { get; set; } = true;
+        public bool ExpiringSoon { get; set; } = true;
+        public bool EmailDeals { get; set; } = false;
+        public bool EmailReviews { get; set; } = false;
+        public bool EmailModeration { get; set; } = false;
+        public bool EmailAccount { get; set; } = false;
+        public bool EmailFavourites { get; set; } = false;
+        public bool EmailNewListings { get; set; } = false;
+        public bool EmailExpiringSoon { get; set; } = false;
     }
     public class NotificationPreferences : NotificationPreferencesDto
     {

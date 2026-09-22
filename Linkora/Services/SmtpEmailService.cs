@@ -8,6 +8,7 @@ namespace Linkora.Services
     {
         Task SendConfirmationEmailAsync(string toEmail, string username, string confirmUrl);
         Task SendPasswordResetEmailAsync(string toEmail, string username, string resetUrl, string lang = "en");
+        Task SendNotificationEmailAsync(string toEmail, string subject, string bodyText);
     }
     public class SmtpEmailService : IEmailService
     {
@@ -156,6 +157,51 @@ namespace Linkora.Services
                           </div>
                         </body>
                         </html>";
+
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(fromName, user));
+            message.To.Add(new MailboxAddress(toEmail, toEmail));
+            message.Subject = subject;
+            message.Body = new BodyBuilder { HtmlBody = body }.ToMessageBody();
+
+            using var client = new SmtpClient();
+            var options = port == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
+            if (!enableSsl) options = SecureSocketOptions.None;
+
+            await client.ConnectAsync(host, port, options);
+            await client.AuthenticateAsync(user, password);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+        }
+        public async Task SendNotificationEmailAsync(string toEmail, string subject, string bodyText)
+        {
+            var section = _configuration.GetSection("Email");
+            var host = section["SmtpHost"] ?? throw new InvalidOperationException("SmtpHost is not configured");
+            var port = int.Parse(section["SmtpPort"] ?? throw new InvalidOperationException("SmtpPort is not configured"));
+            var user = section["SmtpUser"] ?? throw new InvalidOperationException("SmtpUser is not configured");
+            var password = section["SmtpPassword"] ?? throw new InvalidOperationException("SmtpPassword is not configured");
+            var fromName = section["FromName"] ?? "noreply";
+            var enableSsl = bool.Parse(section["EnableSsl"] ?? "true");
+
+            var body = $@"<!DOCTYPE html>
+                          <html>
+                          <head><meta charset=""utf-8"" />
+                          <style>
+                            body {{ font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 0; }}
+                            .wrap {{ max-width: 520px; margin: 40px auto; background: #fff; border-radius: 12px; border: 1px solid #e8e8e8; overflow: hidden; }}
+                            .header {{ background: #1a1a1a; padding: 28px 32px; }}
+                            .header h1 {{ color: #fff; margin: 0; font-size: 22px; }}
+                            .body {{ padding: 32px; }}
+                            .body p {{ color: #333; font-size: 15px; line-height: 1.6; margin: 0 0 16px; }}
+                          </style>
+                          </head>
+                          <body>
+                            <div class=""wrap"">
+                              <div class=""header""><h1>Vena</h1></div>
+                              <div class=""body""><p>{bodyText}</p></div>
+                            </div>
+                          </body>
+                          </html>";
 
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(fromName, user));

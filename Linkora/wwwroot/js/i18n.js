@@ -1,5 +1,10 @@
 const TRANSLATIONS = {
     en: {
+        'notif_col_type': 'Notification type',
+        'notif_cat_expiring': 'Listing about to expire',
+        'notif_col_app': 'In app',
+        'notif_col_email': 'Email',
+        'notif_listing_expiring': 'Your listing "{0}" expires in 24 hours',
         'profile_points_title': 'Points wallet',
         'points_unit': 'points',
         'profile_points_hint': '1 point is earned for every euro cent paid for subscriptions and promotions. 10 points = 0.01 €. Points can be used to pay for promotions and subscriptions.',
@@ -486,6 +491,11 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'notif_col_type': 'Paziņojuma veids',
+        'notif_cat_expiring': 'Sludinājuma termiņš beidzas',
+        'notif_col_app': 'Lietotnē',
+        'notif_col_email': 'E-pastā',
+        'notif_listing_expiring': 'Jūsu sludinājums "{0}" beigsies pēc 24 stundām',
         'profile_points_title': 'Punktu maks',
         'points_unit': 'punkti',
         'profile_points_hint': 'Par katru eiro centu, kas samaksāts par abonementiem un reklamēšanu, tiek piešķirts 1 punkts. 10 punkti = 0,01 €. Punktus var izmantot, lai maksātu par reklamēšanu un abonementiem.',
@@ -982,6 +992,11 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'notif_col_type': 'Тип уведомления',
+        'notif_cat_expiring': 'Скоро истекает срок публикации',
+        'notif_col_app': 'В приложении',
+        'notif_col_email': 'На почту',
+        'notif_listing_expiring': 'Срок публикации объявления "{0}" истекает через 24 часа',
         'profile_points_title': 'Кошелёк поинтов',
         'points_unit': 'поинтов',
         'profile_points_hint': 'За каждый евроцент, оплаченный за подписки и продвижение, начисляется 1 поинт. 10 поинтов = 0,01 €. Поинтами можно оплачивать продвижение и подписки.',
@@ -1570,6 +1585,7 @@ function translateNotificationMessage(message, notif) {
                         : lang === 'ru' ? parsed.paramNameRu : parsed.paramName;
                     return fmt(tl('notif_parameter_rejected'), pName || '');
                 }
+                case 'listing_expiring_soon': return fmt(tl('notif_listing_expiring'), parsed.productName || '');
                 case 'subscription_sold': return fmt(tl('notif_subscription_sold'), from);
                 case 'favourite_updated': {
                     const changeItems = parsed.changes || [];

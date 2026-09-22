@@ -725,12 +725,19 @@ async function openNotifPrefsModal() {
         document.getElementById('prefAccount').checked = p.account;
         document.getElementById('prefFavourites').checked = p.favourites;
         document.getElementById('prefNewListings').checked = p.newListings;
+        document.getElementById('prefExpiringSoon').checked = p.expiringSoon;
+        document.getElementById('prefEmailDeals').checked = p.emailDeals;
+        document.getElementById('prefEmailReviews').checked = p.emailReviews;
+        document.getElementById('prefEmailModeration').checked = p.emailModeration;
+        document.getElementById('prefEmailAccount').checked = p.emailAccount;
+        document.getElementById('prefEmailFavourites').checked = p.emailFavourites;
+        document.getElementById('prefEmailNewListings').checked = p.emailNewListings;
+        document.getElementById('prefEmailExpiringSoon').checked = p.emailExpiringSoon;
     }
     document.getElementById('notifPrefsOverlay').classList.add('modal-open');
     document.getElementById('notifPrefsModal').classList.add('modal-open');
     applyTranslations();
 }
-
 function closeNotifPrefsModal() {
     document.getElementById('notifPrefsOverlay').classList.remove('modal-open');
     document.getElementById('notifPrefsModal').classList.remove('modal-open');
@@ -744,6 +751,14 @@ async function saveNotifPrefs() {
         account: document.getElementById('prefAccount').checked,
         favourites: document.getElementById('prefFavourites').checked,
         newListings: document.getElementById('prefNewListings').checked,
+        expiringSoon: document.getElementById('prefExpiringSoon').checked,
+        emailDeals: document.getElementById('prefEmailDeals').checked,
+        emailReviews: document.getElementById('prefEmailReviews').checked,
+        emailModeration: document.getElementById('prefEmailModeration').checked,
+        emailAccount: document.getElementById('prefEmailAccount').checked,
+        emailFavourites: document.getElementById('prefEmailFavourites').checked,
+        emailNewListings: document.getElementById('prefEmailNewListings').checked,
+        emailExpiringSoon: document.getElementById('prefEmailExpiringSoon').checked,
     };
     const res = await fetch('/Notifications/SavePreferences', {
         method: 'POST',
@@ -755,7 +770,6 @@ async function saveNotifPrefs() {
     });
     if (res.ok) closeNotifPrefsModal();
 }
-
 /* ---------- Facebook login ---------- */
 
 window.fbAsyncInit = function () {
