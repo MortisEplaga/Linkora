@@ -70,7 +70,7 @@
 
                             <div class="user-dropdown" id="userDropdown">
                                 <div class="user-dropdown-header">
-                                    <div class="user-dropdown-name">@User.Identity.Name</div>
+                                        <div class="user-dropdown-name">@User.Identity.Name</div>
                                     @if (User.IsInRole("admin") || User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value == "admin")
                                     {
                                         <a class="user-dropdown-item" href="/Admin/Index">
@@ -100,7 +100,10 @@
                                     </svg>
                                     <span data-i18n="reviews">Reviews</span>
                                 </a>
-                                <div class="user-dropdown-divider"></div>
+                                <a class="user-dropdown-item" style="cursor:default">
+                                    <span class="user-points-vp">VP</span>
+                                    <span id="userPointsValue">—</span>
+                                </a>
                                 <div class="user-dropdown-divider"></div>
                                 <a class="user-dropdown-item" onclick="openSettingsModal()" style="cursor:pointer">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -221,8 +224,21 @@
 
     <script>
         function flashRed(btn) {
-            btn.classList.add('flash-red');
-            setTimeout(() => btn.classList.remove('flash-red'), 500);
+                   btn.classList.add('flash-red');
+                   setTimeout(() => btn.classList.remove('flash-red'), 500);
+               }
+
+        async function loadUserPoints() {
+            const el = document.getElementById('userPointsValue');
+            if (!el) return;
+            try {
+                const res = await fetch('/Profile/PointsBalance');
+                if (!res.ok) { el.textContent = '—'; return; }
+                const { balance } = await res.json();
+                el.textContent = balance;
+            } catch {
+                el.textContent = '—';
+            }
         }
 
         (function() {
@@ -296,6 +312,7 @@
                             await updateFavAndCartBadges();
                         }
                         await updateMsgBadge();
+                        await loadUserPoints();
                     })();
 
                     (function () {

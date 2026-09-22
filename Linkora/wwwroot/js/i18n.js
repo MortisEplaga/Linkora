@@ -1,5 +1,6 @@
 const TRANSLATIONS = {
     en: {
+        'points_label': 'VP',
         'notif_col_type': 'Notification type',
         'notif_cat_expiring': 'Listing about to expire',
         'notif_col_app': 'In app',
@@ -491,6 +492,7 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'points_label': 'VP',
         'notif_col_type': 'Paziņojuma veids',
         'notif_cat_expiring': 'Sludinājuma termiņš beidzas',
         'notif_col_app': 'Lietotnē',
@@ -992,6 +994,7 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'points_label': 'VP',
         'notif_col_type': 'Тип уведомления',
         'notif_cat_expiring': 'Скоро истекает срок публикации',
         'notif_col_app': 'В приложении',
