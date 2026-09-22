@@ -1160,17 +1160,37 @@ async function fetchPriceQuote(prefix, quoteParams) {
         const t = PAY_TEXT[getCurrentLanguage()] || PAY_TEXT.en;
         const eurLine = t.eur(data.price) + (data.pointsEarned > 0 ? ` (${t.earn(data.pointsEarned)})` : '');
 
-        if (methodEl && data.canPayWithPoints) {
+        const hasPointsOption = data.pointsCost != null && data.pointsCost > 0;
+        const canUsePoints = !!data.canPayWithPoints;
+
+        if (methodEl && hasPointsOption) {
             document.getElementById(`${prefix}PayEurLabel`).textContent = eurLine;
             document.getElementById(`${prefix}PayPointsLabel`).textContent = t.points(data.pointsCost);
-            methodEl.querySelector('input[value="eur"]').checked = true;
+
+            const eurInput = methodEl.querySelector('input[value="eur"]');
+            const pointsInput = methodEl.querySelector('input[value="points"]');
+            const pointsLabel = pointsInput?.closest('.auth-type-option');
+
+            if (eurInput) {
+                eurInput.disabled = false;
+                eurInput.checked = true;
+            }
+            if (pointsInput) {
+                pointsInput.disabled = !canUsePoints;
+                pointsInput.checked = false;
+            }
+            if (pointsLabel) {
+                pointsLabel.classList.toggle('auth-type-option-disabled', !canUsePoints);
+                pointsLabel.title = canUsePoints ? '' : t.points(data.pointsCost);
+            }
+
+            payMethodState[prefix] = 'eur';
             methodEl.style.display = '';
         } else {
             infoEl.textContent = eurLine;
         }
     } catch (e) { console.error(e); }
 }
-
 function checkSharedRulesScroll(prefix, type) {
     const body = document.getElementById(`${prefix}${type === 'rules' ? 'Rules' : 'Policy'}Body`);
     if (!body) return;

@@ -31,6 +31,17 @@
     cursor: pointer;
 }
 
+.auth-type-option.auth-type-option-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+    .auth-type-option.auth-type-option-disabled .auth-type-circle,
+    .auth-type-option.auth-type-option-disabled span {
+        color: #999;
+    }
+
 .page-container {
     max-width: 1288px;
     margin: 0 auto;
