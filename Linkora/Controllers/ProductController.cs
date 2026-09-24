@@ -19,6 +19,7 @@ namespace Linkora.Controllers
         IMediaStorageService mediaStorage,
         IGeocodingService geocodingService,
         IPromotionRepository promotionRepository,
+        IPointsLedgerRepository pointsLedgerRepository,
         ILogger<ProductController> logger) : Controller
     {
         private readonly ICategoryRepository _categoryRepository = categoryRepository;
@@ -32,8 +33,8 @@ namespace Linkora.Controllers
         private readonly IMediaStorageService _mediaStorage = mediaStorage;
         private readonly IGeocodingService _geocodingService = geocodingService;
         private readonly IPromotionRepository _promotionRepository = promotionRepository;
+        private readonly IPointsLedgerRepository _pointsLedgerRepository = pointsLedgerRepository;
         private readonly ILogger<ProductController> _logger = logger;
-
         private static Dictionary<int, string> ParseParamsJson(string? json)
         {
             var result = new Dictionary<int, string>();
@@ -451,6 +452,8 @@ namespace Linkora.Controllers
             }, paramValues, duration);
 
             _logger.LogInformation("Product {ProductId} created for user {UserId}", newId, userId);
+
+            await _pointsLedgerRepository.RecordListingPostedAsync(userId, newId);
 
             if (media.Count > 0) await _productRepository.SaveMediaAsync(newId, media);
 

@@ -1,5 +1,36 @@
 const TRANSLATIONS = {
     en: {
+        'points_event_email_confirmed': 'Email confirmed',
+        'points_event_profile_completed': 'Profile completed',
+        'points_event_listing_posted': 'Listing posted',
+        'points_event_referral_first_listing': "Referral's first listing",
+        'points_event_referral_five_listings': "Referral's 5th listing",
+        'points_status_pending': 'Pending',
+        'points_status_available': 'Available',
+        'points_status_rejected': 'Rejected',
+        'points_history_available_in_singular': 'Available in {0} day · {1}',
+        'points_history_available_in_plural': 'Available in {0} days · {1}',
+        'points_history_processing': 'Processing… available any moment',
+        'points_history_confirmed': 'Confirmed {0}',
+        'points_history_not_awarded': 'Not awarded',
+        'points_available': 'Available',
+        'points_pending': 'Pending (up to 7 days)',
+        'points_progress_to_next': 'Progress to next milestone',
+        'points_remaining': 'points to go',
+        'points_milestone_reached': 'Milestone reached',
+        'points_how_to_earn': 'How to earn points',
+        'points_act_email': 'Confirm your email',
+        'points_limit_once': 'one-time',
+        'points_act_profile': 'Complete your profile',
+        'points_act_listing': 'Post a listing that stays up 7 days',
+        'points_limit_listing': 'up to 10/month, 100 P/month',
+        'points_act_ref_first': "Invited seller posts their first listing (7 days)",
+        'points_limit_ref_first': 'up to 5/month, 250 P/month',
+        'points_act_ref_five': 'Invited seller posts 5 listings (7 days)',
+        'points_limit_ref_five': 'up to 5/month, 500 P/month',
+        'points_note': 'Pending points move to Available 7 days after the event, once the account and listing are still in good standing.',
+        'points_history': 'Recent activity',
+        'points_go_to_wallet_settings': 'Manage in profile settings →',
         'points_label': 'VP',
         'notif_col_type': 'Notification type',
         'notif_cat_expiring': 'Listing about to expire',
@@ -492,6 +523,37 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'points_event_email_confirmed': 'E-pasts apstiprināts',
+        'points_event_profile_completed': 'Profils aizpildīts',
+        'points_event_listing_posted': 'Sludinājums publicēts',
+        'points_event_referral_first_listing': 'Uzaicinātā pirmā sludinājums',
+        'points_event_referral_five_listings': 'Uzaicinātā 5. sludinājums',
+        'points_status_pending': 'Gaida',
+        'points_status_available': 'Pieejams',
+        'points_status_rejected': 'Noraidīts',
+        'points_history_available_in_singular': 'Pieejams pēc {0} dienas · {1}',
+        'points_history_available_in_plural': 'Pieejams pēc {0} dienām · {1}',
+        'points_history_processing': 'Apstrādā… pieejams jebkurā brīdī',
+        'points_history_confirmed': 'Apstiprināts {0}',
+        'points_history_not_awarded': 'Nav piešķirts',
+        'points_available': 'Pieejamie',
+        'points_pending': 'Gaida apstiprinājumu (līdz 7 dienām)',
+        'points_progress_to_next': 'Virzība līdz nākamajam mērķim',
+        'points_remaining': 'punkti līdz mērķim',
+        'points_milestone_reached': 'Mērķis sasniegts',
+        'points_how_to_earn': 'Kā nopelnīt punktus',
+        'points_act_email': 'Apstipriniet savu e-pastu',
+        'points_limit_once': 'vienreiz',
+        'points_act_profile': 'Aizpildiet savu profilu',
+        'points_act_listing': 'Publicējiet sludinājumu, kas saglabājas 7 dienas',
+        'points_limit_listing': 'līdz 10/mēnesī, 100 P/mēnesī',
+        'points_act_ref_first': 'Uzaicinātais pārdevējs publicē savu pirmo sludinājumu (7 dienas)',
+        'points_limit_ref_first': 'līdz 5/mēnesī, 250 P/mēnesī',
+        'points_act_ref_five': 'Uzaicinātais pārdevējs publicē 5 sludinājumus (7 dienas)',
+        'points_limit_ref_five': 'līdz 5/mēnesī, 500 P/mēnesī',
+        'points_note': 'Gaidošie punkti pāriet uz pieejamajiem 7 dienas pēc notikuma, ja konts un sludinājums joprojām ir labā stāvoklī.',
+        'points_history': 'Nesenā aktivitāte',
+        'points_go_to_wallet_settings': 'Pārvaldīt profila iestatījumos →',
         'points_label': 'VP',
         'notif_col_type': 'Paziņojuma veids',
         'notif_cat_expiring': 'Sludinājuma termiņš beidzas',
@@ -994,6 +1056,37 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'points_event_email_confirmed': 'Email подтверждён',
+        'points_event_profile_completed': 'Профиль заполнен',
+        'points_event_listing_posted': 'Объявление размещено',
+        'points_event_referral_first_listing': 'Первое объявление приглашённого',
+        'points_event_referral_five_listings': '5-е объявление приглашённого',
+        'points_status_pending': 'В ожидании',
+        'points_status_available': 'Доступно',
+        'points_status_rejected': 'Отклонено',
+        'points_history_available_in_singular': 'Доступно через {0} день · {1}',
+        'points_history_available_in_plural': 'Доступно через {0} дней · {1}',
+        'points_history_processing': 'Обработка… будет доступно в любой момент',
+        'points_history_confirmed': 'Подтверждено {0}',
+        'points_history_not_awarded': 'Не начислено',
+        'points_available': 'Доступно',
+        'points_pending': 'В ожидании (до 7 дней)',
+        'points_progress_to_next': 'Прогресс до следующей цели',
+        'points_remaining': 'поинтов осталось',
+        'points_milestone_reached': 'Цель достигнута',
+        'points_how_to_earn': 'Как заработать поинты',
+        'points_act_email': 'Подтвердите email',
+        'points_limit_once': 'одноразово',
+        'points_act_profile': 'Заполните профиль',
+        'points_act_listing': 'Разместите объявление, которое продержится 7 дней',
+        'points_limit_listing': 'до 10/мес., 100 P/мес.',
+        'points_act_ref_first': 'Приглашённый продавец размещает первое объявление (7 дней)',
+        'points_limit_ref_first': 'до 5/мес., 250 P/мес.',
+        'points_act_ref_five': 'Приглашённый продавец размещает 5 объявлений (7 дней)',
+        'points_limit_ref_five': 'до 5/мес., 500 P/мес.',
+        'points_note': 'Поинты в ожидании переходят в доступные через 7 дней после события, если аккаунт и объявление остаются в хорошем состоянии.',
+        'points_history': 'Последняя активность',
+        'points_go_to_wallet_settings': 'Управлять в настройках профиля →',
         'points_label': 'VP',
         'notif_col_type': 'Тип уведомления',
         'notif_cat_expiring': 'Скоро истекает срок публикации',
@@ -1517,9 +1610,20 @@ function applyTranslations() {
 
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.dataset.i18n;
-        if (dict[key] !== undefined) el.textContent = dict[key];
-    });
+        let text = dict[key] || TRANSLATIONS['en'][key];
+        if (text === undefined) return;
 
+        if (el.dataset.i18nParams) {
+            try {
+                const params = JSON.parse(el.dataset.i18nParams);
+                Object.keys(params).forEach(k => {
+                    text = text.replace(new RegExp('\\{' + k + '\\}', 'g'), params[k]);
+                });
+            } catch (e) {}
+        }
+
+        el.textContent = text;
+    });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         const key = el.dataset.i18nPlaceholder;
         if (dict[key] !== undefined) el.placeholder = dict[key];

@@ -14,14 +14,15 @@ namespace Linkora.Controllers
     {
         private readonly IUserRepository _userRepository;
         private readonly IUserSessionRepository _userSessionRepository;
+        private readonly IPointsLedgerRepository _pointsLedgerRepository;
         private readonly IEmailService _emailService;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IConfiguration _configuration;
-
-        public AccountController(IUserRepository userRepository, IUserSessionRepository userSessionRepository, IEmailService emailService, IPasswordHasher passwordHasher, IConfiguration configuration)
+        public AccountController(IUserRepository userRepository, IUserSessionRepository userSessionRepository, IPointsLedgerRepository pointsLedgerRepository, IEmailService emailService, IPasswordHasher passwordHasher, IConfiguration configuration)
         {
             _userRepository = userRepository;
             _userSessionRepository = userSessionRepository;
+            _pointsLedgerRepository = pointsLedgerRepository;
             _emailService = emailService;
             _passwordHasher = passwordHasher;
             _configuration = configuration;
@@ -31,10 +32,7 @@ namespace Linkora.Controllers
             ViewBag.ReturnUrl = returnUrl;
             return View();
         }
-
-        [HttpPost]
-        [EnableRateLimiting("auth")]
-        public async Task<IActionResult> Login(string username, string password, string? returnUrl = null)
+        [HttpPost] [EnableRateLimiting("auth")] public async Task<IActionResult> Login(string username, string password, string? returnUrl = null)
         {
             var user = await _userRepository.GetByUsernameAsync(username);
             if (user == null)
@@ -66,15 +64,7 @@ namespace Linkora.Controllers
             return Redirect(returnUrl ?? "/");
         }
         public IActionResult Register() => View();
-
-        [HttpPost]
-        [EnableRateLimiting("auth")]
-        public async Task<IActionResult> Register(string username,
-                                                  string email,
-                                                  string password,
-                                                  string confirm,
-                                                  string? phone = null,
-                                                  bool isCompany = false)
+        [HttpPost] [EnableRateLimiting("auth")] public async Task<IActionResult> Register(string username, string email, string password, string confirm, string? phone = null, bool isCompany = false)
         {
             if (string.IsNullOrWhiteSpace(username))
             {
@@ -148,19 +138,18 @@ namespace Linkora.Controllers
         }
         public async Task<IActionResult> ConfirmEmail(string token)
         {
-            if (string.IsNullOrWhiteSpace(token))
-                return RedirectToAction(nameof(ConfirmEmailResult), new { success = false });
+            if (string.IsNullOrWhiteSpace(token)) return RedirectToAction(nameof(ConfirmEmailResult), new { success = false });
 
             var user = await _userRepository.GetByConfirmationTokenAsync(token);
 
-            if (user == null)
-                return RedirectToAction(nameof(ConfirmEmailResult), new { success = false });
+            if (user == null) return RedirectToAction(nameof(ConfirmEmailResult), new { success = false });
 
             await _userRepository.ConfirmEmailAsync(token);
 
+            await _pointsLedgerRepository.TryAddAsync(user.Id, PointsLedgerEventType.EmailConfirmed);
+
             var confirmed = await _userRepository.GetByIdAsync(user.Id);
-            if (confirmed != null)
-                await SignInAsync(confirmed);
+            if (confirmed != null) await SignInAsync(confirmed);
 
             return RedirectToAction(nameof(ConfirmEmailResult), new { success = true });
         }
@@ -252,10 +241,7 @@ namespace Linkora.Controllers
             var result = sb.ToString().Trim('_');
             return string.IsNullOrEmpty(result) ? "user" : result;
         }
-        [HttpPost]
-        [Route("Account/FacebookLogin")]
-        [ValidateAntiForgeryToken]
-        [EnableRateLimiting("auth")]
+        [HttpPost] [Route("Account/FacebookLogin")] [ValidateAntiForgeryToken] [EnableRateLimiting("auth")]
         public async Task<IActionResult> FacebookLogin([FromBody] FacebookLoginModel model)
         {
             var returnUrl = model.ReturnUrl ?? Url.Content("~/");
@@ -320,8 +306,7 @@ namespace Linkora.Controllers
             await SignInAsync(user);
             return LocalRedirect(returnUrl);
         }
-        [HttpPost, IgnoreAntiforgeryToken]
-        [Route("Account/FacebookDataDeletion")]
+        [HttpPost, IgnoreAntiforgeryToken] [Route("Account/FacebookDataDeletion")]
         public async Task<IActionResult> FacebookDataDeletion()
         {
             var form = await Request.ReadFormAsync();
@@ -385,8 +370,7 @@ namespace Linkora.Controllers
             return Convert.FromBase64String(s);
         }
         private static byte[] ComputeHmacSha256(string payload, string secret) => new HMACSHA256(Encoding.UTF8.GetBytes(secret)).ComputeHash(Encoding.UTF8.GetBytes(payload));
-        [HttpGet]
-        [Route("Account/DeletionStatus")]
+        [HttpGet] [Route("Account/DeletionStatus")]
         public async Task<IActionResult> DeletionStatus(string code)
         {
             if (string.IsNullOrEmpty(code))
@@ -409,11 +393,8 @@ namespace Linkora.Controllers
 
             return View();
         }
-        [HttpGet]
-        public IActionResult ForgotPassword() => View();
-        [HttpPost]
-        [EnableRateLimiting("auth")]
-        public async Task<IActionResult> ForgotPassword(string email, string? lang = null)
+        [HttpGet] public IActionResult ForgotPassword() => View();
+        [HttpPost] [EnableRateLimiting("auth")] public async Task<IActionResult> ForgotPassword(string email, string? lang = null)
         {
             if (string.IsNullOrWhiteSpace(email))
             {
@@ -439,8 +420,7 @@ namespace Linkora.Controllers
             ViewBag.Sent = true;
             return View();
         }
-        [HttpGet]
-        public async Task<IActionResult> ResetPassword(string token)
+        [HttpGet] public async Task<IActionResult> ResetPassword(string token)
         {
             if (string.IsNullOrWhiteSpace(token))
                 return RedirectToAction(nameof(Login));
@@ -455,8 +435,7 @@ namespace Linkora.Controllers
             ViewBag.Token = token;
             return View();
         }
-        [HttpPost]
-        public async Task<IActionResult> ResetPassword(string token, string password, string confirm)
+        [HttpPost] public async Task<IActionResult> ResetPassword(string token, string password, string confirm)
         {
             ViewBag.Token = token;
 

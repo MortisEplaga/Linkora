@@ -18,7 +18,8 @@ namespace Linkora.Controllers
         private readonly IPasswordHasher _passwordHasher;
         private readonly IGeocodingService _geocodingService;
         private readonly IMediaStorageService _mediaStorage;
-        public ProfileController(IUserRepository userRepository, IPromotionRepository promotionRepository, IPointsRepository pointsRepository, IPasswordHasher passwordHasher, IGeocodingService geocodingService, IMediaStorageService mediaStorage)
+        private readonly IPointsLedgerRepository _pointsLedgerRepository;
+        public ProfileController(IUserRepository userRepository, IPromotionRepository promotionRepository, IPointsRepository pointsRepository, IPasswordHasher passwordHasher, IGeocodingService geocodingService, IMediaStorageService mediaStorage, IPointsLedgerRepository pointsLedgerRepository)
         {
             _userRepository = userRepository;
             _promotionRepository = promotionRepository;
@@ -26,6 +27,7 @@ namespace Linkora.Controllers
             _passwordHasher = passwordHasher;
             _geocodingService = geocodingService;
             _mediaStorage = mediaStorage;
+            _pointsLedgerRepository = pointsLedgerRepository;
         }
         public async Task<IActionResult> Edit()
         {
@@ -108,6 +110,11 @@ namespace Linkora.Controllers
             if (_passwordHasher.IsLegacyHash(user.PasswordHash) && string.IsNullOrWhiteSpace(dto.NewPassword)) newHash = _passwordHasher.Hash(dto.CurrentPassword);
 
             await _userRepository.UpdateProfileAsync(userId, dto.UserName, dto.Phone, duration, newHash, dto.TelegramUrl, dto.WhatsAppUrl, dto.WebsiteUrl, dto.HomeAddress, homeLat, homeLng);
+            
+            var isComplete = !string.IsNullOrWhiteSpace(dto.Phone) && (!string.IsNullOrWhiteSpace(dto.TelegramUrl) ||
+                             !string.IsNullOrWhiteSpace(dto.WhatsAppUrl) || !string.IsNullOrWhiteSpace(dto.WebsiteUrl) || !string.IsNullOrWhiteSpace(dto.HomeAddress));
+
+            if (isComplete) await _pointsLedgerRepository.TryAddAsync(userId, PointsLedgerEventType.ProfileCompleted);
 
             return Ok(new { success = true });
         }

@@ -43,14 +43,12 @@ namespace Linkora.Models
             }
         }
     }
-
     public class CategoryRulesDto
     {
         public List<VisibilityRuleDto> VisibilityRules { get; set; } = [];
         public List<ValidationRuleDto> ValidationRules { get; set; } = [];
         public List<string> CustomScriptPaths { get; set; } = [];
     }
-
     public class VisibilityRuleDto
     {
         public int TargetParamId { get; set; }
@@ -59,7 +57,6 @@ namespace Linkora.Models
         public string TriggerOperator { get; set; } = "eq";
         public string Action { get; set; } = "show";
     }
-
     public class ValidationRuleDto
     {
         public int ParamId { get; set; }
@@ -69,7 +66,6 @@ namespace Linkora.Models
         public string? TriggerValue { get; set; }
         public string? ErrorMessageKey { get; set; }
     }
-
     public class ResolveSelectOptionDto
     {
         public int ParamId { get; set; }

@@ -15,24 +15,9 @@ namespace Linkora.Services
     public class PromotionPricingService : IPromotionPricingService
     {
         private const int PointsPerCentOfPrice = 10;
-        private static readonly Dictionary<(PromotionTier, PromotionTermType), decimal> Prices = new()
-        {
-            [(PromotionTier.Highlight, PromotionTermType.Week)] = 0.74m,
-            [(PromotionTier.Highlight, PromotionTermType.Month)] = 1.24m,
-            [(PromotionTier.Highlight, PromotionTermType.ThreeMonth)] = 3.24m,
-            [(PromotionTier.Highlight, PromotionTermType.Year)] = 9.99m,
-            [(PromotionTier.Top, PromotionTermType.Week)] = 1.49m,
-            [(PromotionTier.Top, PromotionTermType.Month)] = 3.49m,
-            [(PromotionTier.Top, PromotionTermType.ThreeMonth)] = 7.49m,
-            [(PromotionTier.Top, PromotionTermType.Year)] = 19.99m,
-            [(PromotionTier.Vip, PromotionTermType.Week)] = 2.99m,
-            [(PromotionTier.Vip, PromotionTermType.Month)] = 6.99m,
-            [(PromotionTier.Vip, PromotionTermType.ThreeMonth)] = 14.99m,
-            [(PromotionTier.Vip, PromotionTermType.Year)] = 39.99m,
-        };
         public int GetPointsEarned(decimal eurPaid) => (int)Math.Round(eurPaid * 100m, MidpointRounding.AwayFromZero);
         public int GetPointsCost(decimal eurPrice) => GetPointsEarned(eurPrice) * PointsPerCentOfPrice;
-        public decimal GetPrice(PromotionTier tier, PromotionTermType termType) => Prices[(tier, termType)];
+        public decimal GetPrice(PromotionTier tier, PromotionTermType termType) => PromotionPrices.Prices[(tier, termType)];
 
         public DateTime CalculateExpiry(PromotionTermType termType, DateTime from) => termType switch
         {

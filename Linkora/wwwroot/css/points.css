@@ -1,0 +1,302 @@
+﻿.points-page {
+    max-width: 640px;
+    margin: 40px auto;
+    padding: 0 16px 48px;
+}
+
+.points-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 20px;
+}
+
+.points-balance-card {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.points-balance-value {
+    font-size: 36px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.points-balance-label {
+    font-size: 14px;
+    color: #888;
+}
+
+.points-progress-block {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+}
+
+.points-progress-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.points-progress-track {
+    height: 10px;
+    border-radius: 5px;
+    background: #f0f0f0;
+    overflow: hidden;
+}
+
+.points-progress-fill {
+    height: 100%;
+    border-radius: 5px;
+    background: #00b0a3;
+    transition: width 0.3s;
+}
+
+.points-progress-hint {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #aaa;
+}
+
+.points-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0 0 12px;
+}
+
+.points-activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.points-activity-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+    padding: 12px 16px;
+}
+
+.points-activity-name {
+    font-size: 14px;
+    color: #1a1a1a;
+}
+
+.points-activity-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.points-activity-amount {
+    font-size: 14px;
+    font-weight: 700;
+    color: #00b0a3;
+}
+
+.points-activity-limit {
+    font-size: 11px;
+    color: #aaa;
+    white-space: nowrap;
+}
+
+.points-note {
+    font-size: 12px;
+    color: #aaa;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.dark-theme .points-title {
+    color: #e8e8e8 !important;
+}
+
+.dark-theme .points-balance-card,
+.dark-theme .points-progress-block,
+.dark-theme .points-activity-row {
+    background: #252525 !important;
+    border-color: #333 !important;
+}
+
+.dark-theme .points-balance-value {
+    color: #e8e8e8 !important;
+}
+
+.dark-theme .points-activity-name {
+    color: #e0e0e0 !important;
+}
+/* -------- History list -------- */
+.points-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.points-history-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+        "main  meta"
+        "hold  hold";
+    row-gap: 8px;
+    column-gap: 16px;
+    padding: 14px 16px;
+    border: 1px solid rgba(0, 0, 0, .08);
+    border-radius: 12px;
+    background: #fff;
+    transition: box-shadow .15s ease, transform .15s ease;
+}
+
+    .points-history-row:hover {
+        box-shadow: 0 4px 14px rgba(0, 0, 0, .06);
+        transform: translateY(-1px);
+    }
+
+.points-history-row-pending {
+    border-left: 4px solid #f0a500;
+}
+
+.points-history-row-available {
+    border-left: 4px solid #2e9c4a;
+}
+
+.points-history-row-rejected {
+    border-left: 4px solid #d04444;
+    opacity: .85;
+}
+
+.points-history-main {
+    grid-area: main;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.points-history-name {
+    font-weight: 600;
+    font-size: 15px;
+    color: #1f2328;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.points-history-date {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.points-history-meta {
+    grid-area: meta;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+}
+
+.points-history-amount {
+    font-weight: 700;
+    font-size: 15px;
+    color: #1f2328;
+}
+
+/* -------- Status pill -------- */
+.points-history-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+}
+
+.points-history-status-pending {
+    background: #fff4d6;
+    color: #8a5b00;
+}
+
+.points-history-status-available {
+    background: #dff5e1;
+    color: #1e6b2e;
+}
+
+.points-history-status-rejected {
+    background: #fde2e2;
+    color: #a02727;
+}
+
+/* -------- Hold progress -------- */
+.points-history-hold {
+    grid-area: hold;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.points-history-hold-track {
+    height: 6px;
+    background: #eef0f3;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.points-history-hold-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f0a500, #ffcf5c);
+    border-radius: 999px;
+    transition: width .4s ease;
+}
+
+.points-history-hold-hint {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.points-history-hold-hint-ok {
+    color: #1e6b2e;
+}
+
+.points-history-hold-hint-bad {
+    color: #a02727;
+}
+
+.points-page .myads-action-btn {
+    display: inline-block;
+    margin-top: 24px;
+}
+@media (max-width: 520px) {
+    .points-history-row {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "main"
+            "meta"
+            "hold";
+    }
+
+    .points-history-meta {
+        justify-content: space-between;
+    }
+}

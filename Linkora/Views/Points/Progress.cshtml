@@ -1,0 +1,238 @@
+﻿@using Linkora.Models
+@{
+    var summary = (PointsSummary)ViewBag.Summary;
+    var history = (List<PointsLedgerEntry>)ViewBag.History;
+    ViewData["Title"] = "Points";
+
+    var total = summary.Available + summary.Pending;
+    var milestones = PromotionPrices.PointPrices.Values
+           .Select(v => (int)v).Distinct().OrderBy(v => v).ToArray();
+    var lastMilestone = milestones.Last();
+    var nextMilestone = total >= lastMilestone
+        ? lastMilestone
+        : milestones.First(m => m > total);
+
+    var prevMilestone = milestones.Where(m => m <= total).DefaultIfEmpty(0).Max();
+    var span = nextMilestone - prevMilestone;
+    var pct = span > 0 ? (int)((total - prevMilestone) * 100.0 / span) : 100;
+    pct = Math.Clamp(pct, 0, 100);
+    var remaining = Math.Max(0, nextMilestone - total);
+
+    string EventLabel(PointsLedgerEventType t) => t switch
+    {
+        PointsLedgerEventType.EmailConfirmed => "Email confirmed",
+        PointsLedgerEventType.ProfileCompleted => "Profile completed",
+        PointsLedgerEventType.ListingPosted => "Listing posted",
+        PointsLedgerEventType.ReferralFirstListing => "Referral's first listing",
+        PointsLedgerEventType.ReferralFiveListings => "Referral's 5th listing",
+        _ => t.ToString(),
+    };
+    string EventKey(PointsLedgerEventType t) => t switch
+    {
+        PointsLedgerEventType.EmailConfirmed => "points_event_email_confirmed",
+        PointsLedgerEventType.ProfileCompleted => "points_event_profile_completed",
+        PointsLedgerEventType.ListingPosted => "points_event_listing_posted",
+        PointsLedgerEventType.ReferralFirstListing => "points_event_referral_first_listing",
+        PointsLedgerEventType.ReferralFiveListings => "points_event_referral_five_listings",
+        _ => t.ToString(),
+    };
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/points.css" />
+}
+
+<div class="points-page">
+    <h1 class="points-title" data-i18n="profile_points_title">Points wallet</h1>
+
+    <div class="points-balance-row">
+        <div class="points-balance-card">
+            <div class="points-balance-value">@summary.Available.ToString("N0")</div>
+            <div class="points-balance-label" data-i18n="points_available">Available</div>
+        </div>
+        <div class="points-balance-card points-balance-card-pending">
+            <div class="points-balance-value">@summary.Pending.ToString("N0")</div>
+            <div class="points-balance-label" data-i18n="points_pending">Pending (up to 7 days)</div>
+        </div>
+    </div>
+
+    <div class="points-progress-block">
+        <div class="points-progress-header">
+            <span data-i18n="points_progress_to_next">Progress to next milestone</span>
+            <span>@total / @nextMilestone</span>
+        </div>
+        <div class="points-progress-track">
+            <div class="points-progress-fill" style="width:@pct%"></div>
+        </div>
+        <div class="points-progress-hint">
+            @if (remaining > 0)
+            {
+                <span>@remaining <span data-i18n="points_remaining">points to go</span></span>
+            }
+            else
+            {
+                <span data-i18n="points_milestone_reached">Milestone reached</span>
+            }
+        </div>
+    </div>
+
+    <div class="points-section-title" data-i18n="points_how_to_earn">How to earn points</div>
+
+    <div class="points-activity-list">
+        <div class="points-activity-row">
+            <div class="points-activity-name" data-i18n="points_act_email">Confirm your email</div>
+            <div class="points-activity-meta">
+                <span class="points-activity-amount">+30 P</span>
+                <span class="points-activity-limit" data-i18n="points_limit_once">one-time</span>
+            </div>
+        </div>
+        <div class="points-activity-row">
+            <div class="points-activity-name" data-i18n="points_act_profile">Complete your profile</div>
+            <div class="points-activity-meta">
+                <span class="points-activity-amount">+20 P</span>
+                <span class="points-activity-limit" data-i18n="points_limit_once">one-time</span>
+            </div>
+        </div>
+        <div class="points-activity-row">
+            <div class="points-activity-name" data-i18n="points_act_listing">Post a listing that stays up 7 days</div>
+            <div class="points-activity-meta">
+                <span class="points-activity-amount">+10 P</span>
+                <span class="points-activity-limit" data-i18n="points_limit_listing">up to 10/month, 100 P/month</span>
+            </div>
+        </div>
+        <div class="points-activity-row">
+            <div class="points-activity-name" data-i18n="points_act_ref_first">Invited seller posts their first listing (7 days)</div>
+            <div class="points-activity-meta">
+                <span class="points-activity-amount">+50 P</span>
+                <span class="points-activity-limit" data-i18n="points_limit_ref_first">up to 5/month, 250 P/month</span>
+            </div>
+        </div>
+        <div class="points-activity-row">
+            <div class="points-activity-name" data-i18n="points_act_ref_five">Invited seller posts 5 listings (7 days)</div>
+            <div class="points-activity-meta">
+                <span class="points-activity-amount">+100 P</span>
+                <span class="points-activity-limit" data-i18n="points_limit_ref_five">up to 5/month, 500 P/month</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="points-note" data-i18n="points_note">
+        Pending points move to Available 7 days after the event, once the account and listing are still in good standing.
+    </div>
+
+@if (history.Count > 0)
+{
+    <div class="points-section-title" data-i18n="points_history">Recent activity</div>
+    <div class="points-history-list">
+        @foreach (var e in history)
+        {
+            var isPending = e.Status == PointsLedgerStatus.Pending;
+            var isAvailable = e.Status == PointsLedgerStatus.Available;
+            var isRejected = e.Status == PointsLedgerStatus.Rejected;
+
+            var totalHold = Math.Max(1.0, (e.AvailableAt - e.CreatedAt).TotalSeconds);
+            var elapsed   = Math.Max(0.0, (DateTime.UtcNow - e.CreatedAt).TotalSeconds);
+            var holdPct   = (int)Math.Clamp(elapsed / totalHold * 100.0, 0, 100);
+
+            var daysLeft = isPending
+                ? Math.Max(0, (int)Math.Ceiling((e.AvailableAt - DateTime.UtcNow).TotalDays))
+                : 0;
+
+                <div class="points-history-row points-history-row-@e.Status.ToString().ToLower()">
+                    <div class="points-history-main">
+                        <div class="points-history-name" data-i18n="@EventKey(e.EventType)">@EventLabel(e.EventType)</div>
+                        <div class="points-history-date">@e.CreatedAt.ToString("dd MMM yyyy, HH:mm")</div>
+                    </div>
+
+                    <div class="points-history-meta">
+                        @{
+                            string statusKey = e.Status switch
+                            {
+                                PointsLedgerStatus.Pending => "points_status_pending",
+                                PointsLedgerStatus.Available => "points_status_available",
+                                PointsLedgerStatus.Rejected => "points_status_rejected",
+                                _ => e.Status.ToString()
+                            };
+                        }
+                        <span class="points-history-status points-history-status-@e.Status.ToString().ToLower()"
+                              data-i18n="@statusKey">
+                            @if (isPending)
+                            {
+                                <text>Pending</text>
+                            }
+                            else if (isAvailable)
+                            {
+
+                                <text>Available</text>
+                            }
+                            else if (isRejected)
+                            {
+
+                                <text>Rejected</text>
+                            }
+                            else
+                            {
+
+                                @e.Status
+                            }
+                        </span>
+                        <span class="points-history-amount">+@e.Points P</span>
+                    </div>
+
+                    @if (isPending)
+                    {
+                        <div class="points-history-hold">
+                            <div class="points-history-hold-track">
+                                <div class="points-history-hold-fill" style="width:@holdPct%"></div>
+                            </div>
+                            <div class="points-history-hold-hint">
+                                @if (daysLeft > 0)
+                                {
+                                    var availKey = daysLeft == 1
+                                    ? "points_history_available_in_singular"
+                                    : "points_history_available_in_plural";
+                                    var dateStr = e.AvailableAt.ToString("dd MMM yyyy");
+                                    <span data-i18n="@availKey"
+                                          data-i18n-params='{"0":@daysLeft,"1":"@dateStr"}'>
+                                        Available in @daysLeft day@(daysLeft == 1 ? "" : "s") · @dateStr
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span data-i18n="points_history_processing">Processing… available any moment</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                    else if (isAvailable && e.ConfirmedAt.HasValue)
+                    {
+                        <div class="points-history-hold">
+                            <div class="points-history-hold-hint points-history-hold-hint-ok">
+                                <span data-i18n="points_history_confirmed"
+                                      data-i18n-params='{"0":"@e.ConfirmedAt.Value.ToString("dd MMM yyyy")"}'>
+                                    Confirmed @e.ConfirmedAt.Value.ToString("dd MMM yyyy")
+                                </span>
+                            </div>
+                        </div>
+                    }
+                    else if (isRejected)
+                    {
+                        <div class="points-history-hold">
+                            <div class="points-history-hold-hint points-history-hold-hint-bad">
+                                <span data-i18n="points_history_not_awarded">Not awarded</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+    </div>
+}
+
+    <a class="myads-action-btn" href="/Profile/Edit" data-i18n="points_go_to_wallet_settings">Manage in profile settings →</a>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', applyTranslations);
+    </script>
+}
