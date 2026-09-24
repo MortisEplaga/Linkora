@@ -102,6 +102,20 @@ namespace Linkora.Repositories
 
             return result.FirstOrDefault() ?? new PointsSummary();
         }
+        public async Task<(int Earned, int Pending)> GetReferralPointsAsync(int userId)
+        {
+            var result = await QueryAsync(
+                @"SELECT
+                    ISNULL(SUM(Points), 0),
+                    ISNULL(SUM(CASE WHEN Status = 'Pending' THEN Points END), 0)
+                  FROM PointsLedgerEntries
+                  WHERE UserId = @UserId AND Status <> 'Rejected'
+                    AND EventType IN ('ReferralFirstListing', 'ReferralFiveListings')",
+                r => (Earned: r.GetInt32(0), Pending: r.GetInt32(1)),
+                p => p.AddWithValue("@UserId", userId));
+
+            return result.FirstOrDefault();
+        }
         public async Task<List<PointsLedgerEntry>> GetHistoryAsync(int userId, int limit = 50) => await QueryAsync(
                 @"SELECT TOP (@Limit) Id, UserId, Points, EventType, Status, SourceUserId, SourceProductId, MonthKey, CreatedAt, AvailableAt, ConfirmedAt
                   FROM PointsLedgerEntries WHERE UserId = @UserId ORDER BY CreatedAt DESC",

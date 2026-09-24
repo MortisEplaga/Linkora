@@ -300,3 +300,160 @@
         justify-content: space-between;
     }
 }
+.points-referral-block {
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 24px;
+}
+
+.points-referral-hint {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.5;
+    margin-bottom: 14px;
+}
+
+.points-referral-row {
+    display: flex;
+    gap: 8px;
+    align-items: stretch;
+}
+
+.points-referral-input {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    color: #1a1a1a;
+    background: #f7f8f8;
+    border: 1px solid #e2e4e4;
+    border-radius: 10px;
+    padding: 11px 14px;
+    outline: none;
+}
+
+    .points-referral-input:focus {
+        border-color: #00b0a3;
+        background: #fff;
+    }
+
+.points-referral-copy {
+    flex-shrink: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    background: #00b0a3;
+    border: none;
+    border-radius: 10px;
+    padding: 11px 20px;
+    cursor: pointer;
+    transition: background .15s ease;
+    white-space: nowrap;
+}
+
+    .points-referral-copy:hover {
+        background: #009a8f;
+    }
+
+    .points-referral-copy.points-referral-copy-ok {
+        background: #2e9c4a;
+    }
+
+.points-referral-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.points-referral-share {
+    font-size: 12px;
+    font-weight: 600;
+    color: #4a5568;
+    background: #f2f4f5;
+    border: 1px solid #e2e4e4;
+    border-radius: 999px;
+    padding: 7px 14px;
+    cursor: pointer;
+    transition: background .15s ease;
+}
+
+    .points-referral-share:hover {
+        background: #e8ecee;
+    }
+
+.points-referral-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.points-referral-stat {
+    flex: 1 1 130px;
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+    padding: 12px 14px;
+}
+
+.points-referral-stat-pending {
+    border-color: #f5d9a8;
+    background: #fffaf1;
+}
+
+.points-referral-stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.points-referral-stat-label {
+    font-size: 12px;
+    color: #888;
+    margin-top: 2px;
+    line-height: 1.35;
+}
+
+.points-referral-note {
+    font-size: 12px;
+    color: #aaa;
+    line-height: 1.5;
+    margin-top: 14px;
+}
+
+.dark-theme .points-referral-block,
+.dark-theme .points-referral-stat {
+    background: #252525 !important;
+    border-color: #333 !important;
+}
+
+.dark-theme .points-referral-stat-pending {
+    background: #2c2617 !important;
+    border-color: #5c4a1f !important;
+}
+
+.dark-theme .points-referral-input {
+    background: #1e1e1e !important;
+    border-color: #3a3a3a !important;
+    color: #e8e8e8 !important;
+}
+
+.dark-theme .points-referral-stat-value {
+    color: #e8e8e8 !important;
+}
+
+.dark-theme .points-referral-share {
+    background: #2a2a2a !important;
+    border-color: #3a3a3a !important;
+    color: #ddd !important;
+}
+
+@media (max-width: 520px) {
+    .points-referral-row {
+        flex-direction: column;
+    }
+
+    .points-referral-copy {
+        width: 100%;
+    }
+}

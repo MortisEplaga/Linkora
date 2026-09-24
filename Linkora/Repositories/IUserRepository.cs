@@ -30,5 +30,7 @@ namespace Linkora.Repositories
                                 string? homeAddress, decimal? homeLat, decimal? homeLng);
         Task<int> GetPromotionPointsAsync(int userId);
         Task<bool> TrySpendPromotionPointsAsync(int userId, int points);
+        Task<int> SetReferrerAsync(int userId, int referrerId);
+        Task<int> GetReferralCountAsync(int userId);
     }
 }

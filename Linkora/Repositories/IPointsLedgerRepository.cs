@@ -9,5 +9,6 @@ namespace Linkora.Repositories
         Task<PointsSummary> GetSummaryAsync(int userId);
         Task<int> PromoteDueEntriesAsync();
         Task<List<PointsLedgerEntry>> GetHistoryAsync(int userId, int limit = 50);
+        Task<(int Earned, int Pending)> GetReferralPointsAsync(int userId);
     }
 }

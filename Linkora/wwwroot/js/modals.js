@@ -233,6 +233,13 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 /* ---------- Auth modal ---------- */
+function getReferralCode() {
+    try {
+        const fromUrl = new URLSearchParams(location.search).get('ref');
+        if (fromUrl) sessionStorage.setItem('linkora_ref', fromUrl);
+        return sessionStorage.getItem('linkora_ref') || '';
+    } catch (e) { return ''; }
+}
 
 function openAuthModal(tab) {
     switchTab(tab || 'login');
@@ -348,6 +355,7 @@ function submitRegister() {
     document.getElementById('fRegPassword').value = passwordEl.value;
     document.getElementById('fRegConfirm').value = confirmEl.value;
     document.getElementById('fRegPhone').value = phoneValue;
+    document.getElementById('fRegRef').value = getReferralCode();
     document.getElementById('registerForm').submit();
 }
 

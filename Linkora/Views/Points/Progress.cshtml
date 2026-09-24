@@ -2,6 +2,7 @@
 @{
     var summary = (PointsSummary)ViewBag.Summary;
     var history = (List<PointsLedgerEntry>)ViewBag.History;
+    var referral = (ReferralInfo)ViewBag.Referral;
     ViewData["Title"] = "Points";
 
     var total = summary.Available + summary.Pending;
@@ -74,6 +75,58 @@
                 <span data-i18n="points_milestone_reached">Milestone reached</span>
             }
         </div>
+    </div>
+    <div class="points-section-title" data-i18n="points_referral_title">Invite friends</div>
+
+    <div class="points-referral-block">
+        <div class="points-referral-hint" data-i18n="points_referral_hint">
+            Share your personal link. You get 50 P when your invitee publishes their first listing and 100 P for their fifth.
+        </div>
+
+        @if (!string.IsNullOrEmpty(referral.Link))
+        {
+            <div class="points-referral-row">
+                <input class="points-referral-input" id="referralLink" readonly value="@referral.Link" onclick="this.select()" />
+                <button type="button" class="points-referral-copy" id="referralCopyBtn" onclick="copyReferralLink()" data-i18n="points_referral_copy">Copy</button>
+            </div>
+
+            <div class="points-referral-actions">
+                <button type="button" class="points-referral-share" onclick="shareReferral('telegram')">
+                    <span data-i18n="points_referral_share_telegram">Telegram</span>
+                </button>
+                <button type="button" class="points-referral-share" onclick="shareReferral('whatsapp')">
+                    <span data-i18n="points_referral_share_whatsapp">WhatsApp</span>
+                </button>
+            </div>
+
+            <div class="points-referral-stats">
+                <div class="points-referral-stat">
+                    <div class="points-referral-stat-value">@referral.InvitedCount</div>
+                    <div class="points-referral-stat-label" data-i18n="points_referral_invited">Registered via your link</div>
+                </div>
+                <div class="points-referral-stat">
+                    <div class="points-referral-stat-value">@referral.EarnedPoints.ToString("N0") P</div>
+                    <div class="points-referral-stat-label" data-i18n="points_referral_earned">Referral points earned</div>
+                </div>
+                @if (referral.PendingPoints > 0)
+                {
+                    <div class="points-referral-stat points-referral-stat-pending">
+                        <div class="points-referral-stat-value">@referral.PendingPoints.ToString("N0") P</div>
+                        <div class="points-referral-stat-label" data-i18n="points_status_pending">Pending</div>
+                    </div>
+                }
+            </div>
+
+            <div class="points-referral-note" data-i18n="points_referral_note">
+                The link is built from your username, so it changes if you rename your account. Points are credited once the invited listing has been up for 7 days.
+            </div>
+        }
+        else
+        {
+            <div class="points-referral-note" data-i18n="points_referral_no_username">
+                Set a username in your profile settings to get a referral link.
+            </div>
+        }
     </div>
 
     <div class="points-section-title" data-i18n="points_how_to_earn">How to earn points</div>
@@ -234,5 +287,51 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', applyTranslations);
+
+        async function copyReferralLink() {
+            const input = document.getElementById('referralLink');
+            const btn = document.getElementById('referralCopyBtn');
+            if (!input || !btn) return;
+
+            const link = input.value;
+            let copied = false;
+
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(link);
+                    copied = true;
+                }
+            } catch (e) { copied = false; }
+
+            if (!copied) {
+                input.removeAttribute('readonly');
+                input.select();
+                input.setSelectionRange(0, link.length);
+                try { copied = document.execCommand('copy'); } catch (e) { copied = false; }
+                input.setAttribute('readonly', 'readonly');
+                window.getSelection()?.removeAllRanges();
+            }
+
+            const original = btn.textContent;
+            btn.textContent = translate(copied ? 'points_referral_copied' : 'points_referral_copy');
+            btn.classList.toggle('points-referral-copy-ok', copied);
+            setTimeout(() => {
+                btn.textContent = translate('points_referral_copy') || original;
+                btn.classList.remove('points-referral-copy-ok');
+            }, 2000);
+        }
+
+        function shareReferral(network) {
+            const input = document.getElementById('referralLink');
+            if (!input || !input.value) return;
+
+            const link = input.value;
+            const text = translate('points_referral_share_text');
+            const url = network === 'whatsapp'
+                ? `https://wa.me/?text=${encodeURIComponent(`${text} ${link}`)}`
+                : `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`;
+
+            window.open(url, '_blank', 'noopener');
+        }
     </script>
 }

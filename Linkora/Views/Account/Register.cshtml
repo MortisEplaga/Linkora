@@ -37,6 +37,7 @@
         <div class="auth-divider"><span data-i18n="or_text">or</span></div>
 
         <form method="post" asp-controller="Account" asp-action="Register">
+            <input type="hidden" name="refCode" value="@ViewBag.RefCode" />
             <div class="auth-type-row">
                 <label class="auth-type-option">
                     <input type="radio" name="isCompany" value="false" checked />

@@ -35,10 +35,8 @@ namespace Linkora.Controllers
         [HttpPost] [EnableRateLimiting("auth")] public async Task<IActionResult> Login(string username, string password, string? returnUrl = null)
         {
             var user = await _userRepository.GetByUsernameAsync(username);
-            if (user == null)
-                user = await _userRepository.GetByEmailAsync(username);
-            if (user == null)
-                user = await _userRepository.GetByPhoneAsync(username);
+            user ??= await _userRepository.GetByEmailAsync(username);
+            user ??= await _userRepository.GetByPhoneAsync(username);
 
             if (user == null || user.PasswordHash == null || !_passwordHasher.Verify(password, user.PasswordHash))
             {
@@ -47,11 +45,7 @@ namespace Linkora.Controllers
                 return View();
             }
 
-            if (_passwordHasher.IsLegacyHash(user.PasswordHash))
-            {
-                var upgradedHash = _passwordHasher.Hash(password);
-                await _userRepository.UpdatePasswordHashAsync(user.Id, upgradedHash);
-            }
+            if (_passwordHasher.IsLegacyHash(user.PasswordHash)) await _userRepository.UpdatePasswordHashAsync(user.Id, _passwordHasher.Hash(password));
 
             if (!user.EmailConfirmed)
             {
@@ -63,8 +57,15 @@ namespace Linkora.Controllers
             await SignInAsync(user);
             return Redirect(returnUrl ?? "/");
         }
-        public IActionResult Register() => View();
-        [HttpPost] [EnableRateLimiting("auth")] public async Task<IActionResult> Register(string username, string email, string password, string confirm, string? phone = null, bool isCompany = false)
+        public IActionResult Register([FromQuery(Name = "ref")] string? referralCode = null)
+        {
+            var code = ReferralCode.Clean(referralCode) ?? ReferralCode.Clean(Request.Cookies[ReferralCode.CookieName]);
+            if (code != null) StoreReferralCookie(code);
+
+            ViewBag.RefCode = code;
+            return View();
+        }
+        [HttpPost] [EnableRateLimiting("auth")] public async Task<IActionResult> Register(string username, string email, string password, string confirm, string? phone = null, bool isCompany = false, string? refCode = null)
         {
             if (string.IsNullOrWhiteSpace(username))
             {
@@ -122,7 +123,9 @@ namespace Linkora.Controllers
                 ConfirmationToken = token,
             };
 
-            await _userRepository.CreateAsync(user, _passwordHasher.Hash(password));
+            var newUserId = await _userRepository.CreateAsync(user, _passwordHasher.Hash(password));
+
+            await ApplyReferralAsync(newUserId, refCode);
 
             var confirmUrl = Url.Action("ConfirmEmail", "Account", new { token }, Request.Scheme)!;
 
@@ -164,12 +167,43 @@ namespace Linkora.Controllers
             var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
             return Challenge(properties, "Google");
         }
+        [HttpGet] public IActionResult Ref(string code)
+        {
+            var clean = ReferralCode.Clean(code);
+
+            if (clean != null) StoreReferralCookie(clean);
+
+            if (User.Identity?.IsAuthenticated == true) return Redirect("/");
+
+            return Redirect(clean == null ? "/Account/Register" : $"/Account/Register?ref={Uri.EscapeDataString(clean)}");
+        }
+        private void StoreReferralCookie(string code) => Response.Cookies.Append(ReferralCode.CookieName, code, new CookieOptions
+        {
+            HttpOnly = true,
+            IsEssential = true,
+            SameSite = SameSiteMode.Lax,
+            Expires = DateTimeOffset.UtcNow.AddDays(ReferralCode.CookieDays),
+        });
+        private async Task ApplyReferralAsync(int newUserId, string? refCode = null)
+        {
+            var code = ReferralCode.Clean(refCode)
+                       ?? ReferralCode.Clean(Request.Query["ref"].ToString())
+                       ?? ReferralCode.Clean(Request.Cookies[ReferralCode.CookieName]);
+
+            Response.Cookies.Delete(ReferralCode.CookieName);
+
+            if (string.IsNullOrEmpty(code)) return;
+
+            var referrer = await _userRepository.GetByUsernameAsync(code);
+            if (referrer == null) return;
+
+            await _userRepository.SetReferrerAsync(newUserId, referrer.Id);
+        }
         public async Task<IActionResult> GoogleSignedIn(string? returnUrl = null)
         {
             var result = await HttpContext.AuthenticateAsync("Cookies");
 
-            if (!result.Succeeded || result.Principal == null)
-                return RedirectToAction("Login");
+            if (!result.Succeeded || result.Principal == null) return RedirectToAction("Login");
 
             var claims = result.Principal.Claims.ToList();
             var email = claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
@@ -177,8 +211,7 @@ namespace Linkora.Controllers
             var avatarUrl = claims.FirstOrDefault(c => c.Type == "picture")?.Value
                           ?? claims.FirstOrDefault(c => c.Type == "urn:google:picture")?.Value;
 
-            if (string.IsNullOrEmpty(email))
-                return RedirectToAction("Login");
+            if (string.IsNullOrEmpty(email)) return RedirectToAction("Login");
 
             var user = await _userRepository.GetByEmailAsync(email);
 
@@ -197,6 +230,7 @@ namespace Linkora.Controllers
 
                 var id = await _userRepository.CreateGoogleUserAsync(user);
                 user.Id = id;
+                await ApplyReferralAsync(id);
             }
             else if (string.IsNullOrEmpty(user.AvatarUrl) && !string.IsNullOrEmpty(avatarUrl))
             {
@@ -221,10 +255,10 @@ namespace Linkora.Controllers
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name,           user.UserName),
-                new Claim(ClaimTypes.Role,           user.Role ?? "user"),
-                new Claim("SessionId",               sessionId.ToString()),
+                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new(ClaimTypes.Name,           user.UserName),
+                new(ClaimTypes.Role,           user.Role ?? "user"),
+                new("SessionId",               sessionId.ToString()),
             };
             if (!string.IsNullOrEmpty(user.AvatarUrl)) claims.Add(new Claim("Avatar", user.AvatarUrl));
 
@@ -245,31 +279,25 @@ namespace Linkora.Controllers
         public async Task<IActionResult> FacebookLogin([FromBody] FacebookLoginModel model)
         {
             var returnUrl = model.ReturnUrl ?? Url.Content("~/");
-            if (string.IsNullOrEmpty(model.AccessToken))
-                return BadRequest("Access token required");
+            if (string.IsNullOrEmpty(model.AccessToken)) return BadRequest("Access token required");
 
             using var http = new HttpClient();
             var graphUrl = $"https://graph.facebook.com/me?fields=id,name,email&access_token={model.AccessToken}";
             var response = await http.GetAsync(graphUrl);
-            if (!response.IsSuccessStatusCode)
-                return BadRequest("Invalid Facebook token");
+            if (!response.IsSuccessStatusCode) return BadRequest("Invalid Facebook token");
 
             var fbUser = await response.Content.ReadFromJsonAsync<FacebookUserInfo>();
-            if (fbUser == null || string.IsNullOrEmpty(fbUser.Id))
-                return BadRequest("Could not retrieve user info");
+            if (fbUser == null || string.IsNullOrEmpty(fbUser.Id)) return BadRequest("Could not retrieve user info");
 
             User? user = null;
 
-            if (!string.IsNullOrEmpty(fbUser.Email))
-                user = await _userRepository.GetByEmailAsync(fbUser.Email);
+            if (!string.IsNullOrEmpty(fbUser.Email)) user = await _userRepository.GetByEmailAsync(fbUser.Email);
 
             if (user == null)
             {
                 string baseName;
-                if (!string.IsNullOrEmpty(fbUser.Email))
-                    baseName = fbUser.Email.Split('@')[0];
-                else
-                    baseName = $"fb_{fbUser.Id}";
+                if (!string.IsNullOrEmpty(fbUser.Email)) baseName = fbUser.Email.Split('@')[0];
+                else baseName = $"fb_{fbUser.Id}";
                 baseName = SanitizeUsername(fbUser.Name ?? baseName);
                 var username = await _userRepository.EnsureUniqueUsernameAsync(baseName);
 
@@ -287,8 +315,8 @@ namespace Linkora.Controllers
                 await _userRepository.CreateExternalUserAsync(user);
 
                 user = await _userRepository.GetByEmailAsync(user.Email) ?? await _userRepository.GetByUsernameAsync(username);
-                if (user == null)
-                    return BadRequest("Failed to create user");
+                if (user == null) return BadRequest("Failed to create user");
+                await ApplyReferralAsync(user.Id);
             }
             else
                 if (string.IsNullOrEmpty(user.AvatarUrl))
@@ -311,16 +339,13 @@ namespace Linkora.Controllers
         {
             var form = await Request.ReadFormAsync();
             var signedRequest = form["signed_request"].FirstOrDefault();
-            if (string.IsNullOrEmpty(signedRequest))
-                return BadRequest("Missing signed_request");
+            if (string.IsNullOrEmpty(signedRequest)) return BadRequest("Missing signed_request");
 
             var facebookUserId = DecodeSignedRequest(signedRequest);
-            if (string.IsNullOrEmpty(facebookUserId))
-                return BadRequest("Invalid signed_request");
+            if (string.IsNullOrEmpty(facebookUserId)) return BadRequest("Invalid signed_request");
 
             var user = await _userRepository.GetByFacebookIdAsync(facebookUserId);
-            if (user == null)
-                return Ok(new { url = Url.Action("DeletionStatus", "Account", new { code = "not_found" }, Request.Scheme), confirmation_code = "not_found" });
+            if (user == null) return Ok(new { url = Url.Action("DeletionStatus", "Account", new { code = "not_found" }, Request.Scheme), confirmation_code = "not_found" });
 
             var confirmationCode = Guid.NewGuid().ToString("N");
 
@@ -373,8 +398,7 @@ namespace Linkora.Controllers
         [HttpGet] [Route("Account/DeletionStatus")]
         public async Task<IActionResult> DeletionStatus(string code)
         {
-            if (string.IsNullOrEmpty(code))
-                return BadRequest();
+            if (string.IsNullOrEmpty(code)) return BadRequest();
 
             if (code == "not_found")
             {
@@ -422,11 +446,9 @@ namespace Linkora.Controllers
         }
         [HttpGet] public async Task<IActionResult> ResetPassword(string token)
         {
-            if (string.IsNullOrWhiteSpace(token))
-                return RedirectToAction(nameof(Login));
+            if (string.IsNullOrWhiteSpace(token)) return RedirectToAction(nameof(Login));
 
-            var user = await _userRepository.GetByPasswordResetTokenAsync(token);
-            if (user == null)
+            if (await _userRepository.GetByPasswordResetTokenAsync(token) == null)
             {
                 ViewBag.Invalid = true;
                 return View();
@@ -452,10 +474,8 @@ namespace Linkora.Controllers
                 return View();
             }
 
-            if (password.Length < 8 ||
-                !password.Any(char.IsUpper) ||
-                !password.Any(char.IsLower) ||
-                !password.Any(char.IsDigit))
+            if (password.Length < 8 || !password.Any(char.IsUpper) ||
+                !password.Any(char.IsLower) || !password.Any(char.IsDigit))
             {
                 ViewBag.Error = "Password must be at least 8 characters with uppercase, lowercase and digit";
                 return View();

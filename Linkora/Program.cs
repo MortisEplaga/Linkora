@@ -140,6 +140,10 @@ try
         name: "terms",
         pattern: "terms",
         defaults: new { controller = "Home", action = "Terms" });
+    app.MapControllerRoute(
+        name: "referral",
+        pattern: "r/{code}",
+        defaults: new { controller = "Account", action = "Ref" });
     app.UseHttpsRedirection();
     app.UseStaticFiles();
 

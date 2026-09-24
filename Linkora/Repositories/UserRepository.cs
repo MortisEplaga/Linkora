@@ -38,6 +38,19 @@ namespace Linkora.Repositories
                     p.AddWithValue("@IC", user.IsCompany);
                     p.AddWithValue("@Token", (object?)user.ConfirmationToken ?? DBNull.Value);
                 }))[0];
+        public async Task<int> SetReferrerAsync(int userId, int referrerId) => await ExecuteAsync(
+            @"UPDATE u SET ReferrerId = @Ref
+              FROM Users u
+              JOIN Users r ON r.Id = @Ref AND r.Id <> u.Id AND r.Role <> 'banned'
+              WHERE u.Id = @Id AND u.ReferrerId IS NULL
+                AND (r.Email IS NULL OR u.Email IS NULL OR u.Email <> r.Email)
+                AND (r.Phone IS NULL OR u.Phone IS NULL OR u.Phone <> r.Phone)",
+            p =>
+            {
+                p.AddWithValue("@Ref", referrerId);
+                p.AddWithValue("@Id", userId);
+            });
+        public async Task<int> GetReferralCountAsync(int userId) => (await QueryAsync<int>("SELECT COUNT(*) FROM Users WHERE ReferrerId = @Id", r => r.GetInt32(0), p => p.AddWithValue("@Id", userId))).FirstOrDefault();
         public async Task<User?> GetByEmailAsync(string email) => await QuerySingleAsync("SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration, TelegramUrl, WhatsAppUrl, WebsiteUrl, HomeAddress, HomeLat, HomeLng FROM Users WHERE Email = @E", MapUser, p => p.AddWithValue("@E", email));
         public async Task<int> CreateGoogleUserAsync(User user) => (await QueryAsync<int>(@"INSERT INTO Users (UserName, Email, Role, AvatarUrl, PasswordHash) OUTPUT INSERTED.Id VALUES (@U, @E, 'user', @A, NULL)",
                 r => r.GetInt32(0),
