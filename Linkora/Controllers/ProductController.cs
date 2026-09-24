@@ -312,7 +312,7 @@ namespace Linkora.Controllers
                 }
             }
 
-            if (publishDays.HasValue && new[] { 7, 14, 30, 60, 90 }.Contains(publishDays.Value)) await _productRepository.UpdatePublishDurationAsync(id, userId, publishDays.Value);
+            if (publishDays.HasValue && AdDurations.IsAccepted(publishDays.Value)) await _productRepository.UpdatePublishDurationAsync(id, userId, publishDays.Value);
 
             if (wasArchived) await _productRepository.ReactivateProductAsync(id, userId);
 
@@ -425,9 +425,9 @@ namespace Linkora.Controllers
             }
             else _logger.LogInformation("No address provided for user {UserId}, Lat/Lng will remain null", userId);
 
-            int duration = 30;
-            if (publishDays.HasValue && new[] { 7, 14, 30, 60, 90 }.Contains(publishDays.Value)) duration = publishDays.Value;
-            else if (currentUser.PreferredAdDuration.HasValue) duration = currentUser.PreferredAdDuration.Value;
+            int duration = AdDurations.Default;
+            if (publishDays.HasValue && AdDurations.IsAccepted(publishDays.Value)) duration = publishDays.Value;
+            else if (currentUser.PreferredAdDuration.HasValue && AdDurations.IsAccepted(currentUser.PreferredAdDuration.Value)) duration = currentUser.PreferredAdDuration.Value;
 
             var media = photos?.Count > 0 ? await _mediaStorage.SaveUploadedFilesAsync(photos) : [];
             var paramValues = ParseParamsJson(paramsJson);

@@ -478,7 +478,7 @@ namespace Linkora.Repositories
         }
         public async Task<int> CreateAsync(Product product, Dictionary<int, string> paramValues, int publishDurationDays = 30)
         {
-            if (!new[] { 7, 14, 30, 60, 90 }.Contains(publishDurationDays)) publishDurationDays = 30;
+            if (!AdDurations.IsAccepted(publishDurationDays)) publishDurationDays = AdDurations.Default;
 
             _logger.LogInformation("ProductRepository.CreateAsync: UserId={UserId}, Address='{Address}', Lat={Lat}, Lng={Lng}", product.UserId, product.Address, product.Lat, product.Lng);
 

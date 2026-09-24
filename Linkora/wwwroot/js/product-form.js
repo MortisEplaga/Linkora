@@ -415,12 +415,21 @@ async function confirmPromoRules(agreed) {
 
 async function initDurationUI() {
     let preferred = DEFAULT_DURATION;
+    let options = DURATION_OPTIONS;
     try {
         const res = await fetch('/Profile/AdDurationPref');
         if (res.ok) {
             const data = await res.json();
             if (data.days && DURATION_OPTIONS.includes(data.days)) {
-                preferred = data.days;
+                if (Array.isArray(data.options)) {
+                    const serverOptions = data.options.map(Number).filter(d => Number.isInteger(d) && d > 0);
+                    if (serverOptions.length) options = serverOptions;
+                }
+                if (data.days && options.includes(data.days)) {
+                    preferred = data.days;
+                } else if (data.defaultDays && options.includes(data.defaultDays)) {
+                    preferred = data.defaultDays;
+                }
             }
         }
     } catch (e) { console.warn('Could not load duration preference', e); }
@@ -442,7 +451,7 @@ async function initDurationUI() {
         const container = document.getElementById('pubDurationPills');
         if (container) {
             container.innerHTML = '';
-            DURATION_OPTIONS.forEach(days => {
+            options.forEach(days => {
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'duration-pill';

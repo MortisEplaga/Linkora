@@ -11,7 +11,6 @@ namespace Linkora.Controllers
     [Authorize]
     public class ProfileController : Controller
     {
-        private static readonly int[] AllowedDurations = { 7, 14, 30 };
         private readonly IPromotionRepository _promotionRepository;
         private readonly IUserRepository _userRepository;
         private readonly IPointsRepository _pointsRepository;
@@ -62,7 +61,7 @@ namespace Linkora.Controllers
 
             int? duration = null;
             if (dto.PreferredAdDuration.HasValue)
-                if (!AllowedDurations.Contains(dto.PreferredAdDuration.Value)) errors.Add("Invalid ad duration value");
+                if (!AdDurations.IsAccepted(dto.PreferredAdDuration.Value)) errors.Add($"Invalid ad duration value: {dto.PreferredAdDuration.Value}. Allowed values: {AdDurations.OptionsHint}");
                 else duration = dto.PreferredAdDuration.Value;
 
             if (errors.Count != 0) return BadRequest(new { errors });
@@ -120,9 +119,15 @@ namespace Linkora.Controllers
         }
         [HttpGet] [AllowAnonymous] public async Task<IActionResult> AdDurationPref()
         {
-            if (!User.Identity!.IsAuthenticated) return Json(new { days = 30 });
+            int? preferred = null;
 
-            return Json(new { days = (await _userRepository.GetByIdAsync(User.GetUserId()))?.PreferredAdDuration ?? 30 });
+            if (User.Identity!.IsAuthenticated)
+            {
+                preferred = (await _userRepository.GetByIdAsync(User.GetUserId()))?.PreferredAdDuration;
+                if (preferred.HasValue && !AdDurations.IsAccepted(preferred.Value)) preferred = null;
+            }
+
+            return Json(new { days = preferred ?? AdDurations.Default, defaultDays = AdDurations.Default, options = AdDurations.Options });
         }
         [HttpPost] [RequestSizeLimit(MediaStorageService.MaxSingleFileBytes)] public async Task<IActionResult> UploadAvatar(IFormFile avatar)
         {
