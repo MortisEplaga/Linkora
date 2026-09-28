@@ -24,7 +24,7 @@ namespace Linkora.Services
         public const int MaxRows = 200;
         public const long MaxFileBytes = 5 * 1024 * 1024;
         public const int MaxPhotosPerListing = 10;
-        public const long MaxImportMediaBytes = 100L * 1024 * 1024;   // суммарный лимит фото, скачиваемых за один импорт
+        public const long MaxImportMediaBytes = 100L * 1024 * 1024;
         private const int DownloadDegreeOfParallelism = 6;
         private static readonly Regex ParamHeader = new(@"\[p(\d+)\]\s*$", RegexOptions.Compiled);
         private static readonly string[] FixedColumns = ["title", "description", "qty", "price", "address", "photos", "publish_days"];
@@ -201,12 +201,6 @@ namespace Linkora.Services
         }
 
         private static string Truncate(string s, int max) => s.Length <= max ? s : s[..max] + "…";
-
-        /// <summary>
-        /// Скачивает все фото из колонки photos. Файлы пишутся на диск до записи в БД,
-        /// поэтому при любом сбое вызывающий код обязан удалить всё из downloadedFiles.
-        /// Возвращает false и заполняет errors, если хотя бы одна ссылка не скачалась.
-        /// </summary>
         private async Task<bool> TryDownloadPhotosAsync(List<PreparedRow> prepared, List<string> downloadedFiles, List<ImportError> errors)
         {
             var rowStart = new int[prepared.Count];
@@ -233,8 +227,7 @@ namespace Linkora.Services
                         return;
                     }
                     results[idx] = await mediaStorage.DownloadImageAsync(url);
-                    if (results[idx].Media != null)
-                        Interlocked.Add(ref totalBytes, results[idx].Bytes);
+                    if (results[idx].Media != null) Interlocked.Add(ref totalBytes, results[idx].Bytes);
                 }
                 finally { gate.Release(); }
             }));
@@ -268,7 +261,7 @@ namespace Linkora.Services
                     var full = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", path.TrimStart('/'));
                     if (File.Exists(full)) File.Delete(full);
                 }
-                catch { /* очистка best-effort */ }
+                catch {}
         }
 
         public async Task<ImportResult> ImportAsync(int userId, string userName, IFormFile file, string lang)
@@ -446,7 +439,6 @@ namespace Linkora.Services
                 p.Product.SubscriptionBoostExpiresAt = subscription?.ExpiresAt;
             }
 
-            // 1. Сначала скачиваем все фото. Любой сбой — файлы удаляются, в БД не пишем ничего.
             var downloadedFiles = new List<string>();
             bool downloadOk;
             try { downloadOk = await TryDownloadPhotosAsync(prepared, downloadedFiles, errors); }
@@ -464,7 +456,6 @@ namespace Linkora.Services
                 if (p.Media.Count > 0)
                     p.Product.AvatarUrl = p.Media[0].FilePath;
 
-            // 2. Одна атомарная транзакция: все объявления, параметры, медиа, опции и поинты — либо всё, либо ничего.
             List<int> createdIds;
             try
             {
@@ -477,10 +468,9 @@ namespace Linkora.Services
                 return new ImportResult(0, [new ImportError(0, "Import failed, nothing was created: " + ex.Message)], []);
             }
 
-            // 3. Уведомления подписчикам — после фиксации транзакции; сбой не откатывает импорт.
             for (int i = 0; i < createdIds.Count; i++)
                 try { await notifications.NotifySubscribersAsync(userId, createdIds[i], prepared[i].Product.Name, userName); }
-                catch { /* уведомление не критично */ }
+                catch { }
 
             return new ImportResult(createdIds.Count, [], createdIds);
         }

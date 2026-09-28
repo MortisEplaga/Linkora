@@ -642,11 +642,6 @@ namespace Linkora.Repositories
             if (await reader.ReadAsync()) return reader.GetInt32(0);
             return 0;
         }
-        /// <summary>
-        /// Атомарное создание объявлений из файла импорта: продукты, параметры, медиа,
-        /// новые опции выбора, пересчёт модерационного счёта и записи о поинтах —
-        /// всё в одной транзакции. Либо созданы все строки, либо ни одной.
-        /// </summary>
         public async Task<List<int>> CreateImportedListingsAsync(int userId, List<ImportListing> listings, string lang = "en")
         {
             if (listings.Count == 0) return [];
@@ -687,11 +682,6 @@ namespace Linkora.Repositories
                 return ids;
             });
         }
-        /// <summary>
-        /// Единый консистентный снимок активных объявлений пользователя в категории
-        /// (продукты + параметры + медиа читаются в одной транзакции) для экспорта в CSV/XLSX.
-        /// ParamValues возвращаются с отображаемыми значениями на языке lang.
-        /// </summary>
         public async Task<List<ExportListing>> GetListingsForExportAsync(int userId, int categoryId, string lang)
         {
             var products = new List<(int Id, string Name, string? Description, int? Qty, string? Address, decimal? Price, int Duration, string? AvatarUrl)>();
@@ -765,8 +755,7 @@ namespace Linkora.Repositories
                     if (row.Type == 2 || row.Type == 8) text = ResolveOptionTextFromDictionary(row.Value, options, lang);
                     else if (row.Type == 4)
                     {
-                        var texts = row.Value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                            .Select(id => ResolveOptionTextFromDictionary(id, options, lang));
+                        var texts = row.Value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).Select(id => ResolveOptionTextFromDictionary(id, options, lang));
                         if (!multiValues.ContainsKey(row.ParamId)) multiValues[row.ParamId] = [];
                         multiValues[row.ParamId].AddRange(texts);
                         continue;
@@ -778,14 +767,10 @@ namespace Linkora.Repositories
                 }
                 foreach (var (paramId, list) in multiValues) values[paramId] = string.Join(", ", list);
 
-                // В колонку photos выгружаем только изображения (видео обратно через ссылки не импортируется);
-                // если медиа нет, берём legacy AvatarUrl.
                 var photoUrls = mediaRows.Where(m => m.ProductId == p.Id && m.MediaType == "image").Select(m => m.FilePath).ToList();
-                if (photoUrls.Count == 0 && !string.IsNullOrWhiteSpace(p.AvatarUrl) && p.AvatarUrl.StartsWith('/'))
-                    photoUrls = [p.AvatarUrl];
+                if (photoUrls.Count == 0 && !string.IsNullOrWhiteSpace(p.AvatarUrl) && p.AvatarUrl.StartsWith('/')) photoUrls = [p.AvatarUrl];
 
-                result.Add(new ExportListing(p.Id, p.Name, p.Description, p.Qty, p.Address, p.Price, p.Duration,
-                    values, photoUrls));
+                result.Add(new ExportListing(p.Id, p.Name, p.Description, p.Qty, p.Address, p.Price, p.Duration, values, photoUrls));
             }
             return result;
         }
