@@ -1,0 +1,126 @@
+﻿@using Linkora.Models
+@model UserStats
+@{
+    ViewData["Title"] = "My statistics";
+    var total = Model.ByStatus.Values.Sum();
+    var colors = new Dictionary<string, string>
+    {
+        ["Active"] = "#388e3c",
+        ["Moderation"] = "#f57c00",
+        ["Rejected"] = "#c62828",
+        ["Archived"] = "#757575",
+        ["Succeeded"] = "#1565c0"
+    };
+}
+
+<main class="admin-main user-stats">
+    <h1 class="admin-page-title">
+        <span data-i18n="user_stats_title">My statistics</span>
+        <a class="admin-card-link" href="/Profile/Edit">← <span data-i18n="user_stats_back">Profile settings</span></a>
+    </h1>
+
+    <div class="admin-stats-grid">
+        <div class="admin-stat-card">
+            <div class="admin-stat-icon admin-stat-icon-blue">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+            </div>
+            <div class="admin-stat-value">@Model.TotalViews.ToString("N0")</div>
+            <div class="admin-stat-label" data-i18n="user_stats_views">Views</div>
+        </div>
+        <div class="admin-stat-card">
+            <div class="admin-stat-icon admin-stat-icon-red">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+            </div>
+            <div class="admin-stat-value">@Model.Likes.ToString("N0")</div>
+            <div class="admin-stat-label" data-i18n="user_stats_likes">Added to favourites</div>
+        </div>
+        <div class="admin-stat-card">
+            <div class="admin-stat-icon admin-stat-icon-teal">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>
+            </div>
+            <div class="admin-stat-value">@Model.InCarts.ToString("N0")</div>
+            <div class="admin-stat-label" data-i18n="user_stats_carts">Added to cart</div>
+        </div>
+        <div class="admin-stat-card">
+            <div class="admin-stat-icon admin-stat-icon-orange">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+            </div>
+            <div class="admin-stat-value">@Model.Subscribers.ToString("N0")</div>
+            <div class="admin-stat-label" data-i18n="user_stats_subscribers">Subscribers</div>
+            @if (Model.ReviewCount > 0)
+            {
+                <div class="admin-stat-delta">★ @Model.ReviewAvg.ToString("F1") (@Model.ReviewCount)</div>
+            }
+        </div>
+    </div>
+
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <h2 class="admin-card-title" data-i18n="admin_listings_by_status_title">Listings by status</h2>
+        </div>
+        <div style="display:flex;padding:16px 20px;flex-wrap:wrap;gap:24px">
+            @foreach (var (status, count) in Model.ByStatus.OrderByDescending(x => x.Value))
+            {
+                var color = colors.TryGetValue(status, out var c) ? c : "#aaa";
+                var pct = total > 0 ? (int)(count * 100.0 / total) : 0;
+                <div style="display:flex;flex-direction:column;gap:4px;min-width:120px">
+                    <div style="font-size:20px;font-weight:700">@count</div>
+                    <div style="height:4px;border-radius:2px;background:@color;width:@(Math.Max(pct, 4))%"></div>
+                    <div style="font-size:12px;color:#888">
+                        <span data-i18n="admin_status_@status.ToLower()">@status</span> (@pct%)
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <h2 class="admin-card-title" data-i18n="user_stats_top">Top active listings</h2>
+        </div>
+        @if (Model.TopProducts.Count == 0)
+        {
+            <div class="admin-empty" data-i18n="no_ads_yet">No active ads yet.</div>
+        }
+        else
+        {
+            <div class="admin-table-wrapper">
+                <table class="admin-table" style="min-width:600px">
+                    <thead>
+                        <tr>
+                            <th data-i18n="admin_listing_col">Listing</th>
+                            <th data-i18n="user_stats_views">Views</th>
+                            <th data-i18n="user_stats_likes">Favourites</th>
+                            <th data-i18n="user_stats_carts">Cart</th>
+                            <th data-i18n="admin_date_col">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model.TopProducts)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="admin-table-product">
+                                        <img class="admin-table-img" src="@(p.AvatarUrl ?? "/img/no-photo.svg")" onerror="this.src='/img/no-photo.svg'" />
+                                        <div>
+                                            <a class="admin-table-product-name" href="/Product/Details/@p.Id">@p.Name</a>
+                                            <div class="admin-table-product-meta">#@p.Id</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="font-weight:600">@p.ViewCount</td>
+                                <td>@p.FavCount</td>
+                                <td>@p.CartCount</td>
+                                <td style="color:#aaa;font-size:12px;white-space:nowrap">@(p.CreatedAt?.ToString("dd MMM yyyy"))</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</main>
+
+@section Scripts {
+    <script>document.addEventListener('DOMContentLoaded', applyTranslations);</script>
+}

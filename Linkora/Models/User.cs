@@ -26,6 +26,17 @@ namespace Linkora.Models
         public decimal? HomeLat { get; set; }
         public decimal? HomeLng { get; set; }
     }
+    public class UserStats
+    {
+        public int TotalViews { get; set; }
+        public int Likes { get; set; }
+        public int InCarts { get; set; }
+        public int Subscribers { get; set; }
+        public int ReviewCount { get; set; }
+        public double ReviewAvg { get; set; }
+        public Dictionary<string, int> ByStatus { get; set; } = [];
+        public List<Product> TopProducts { get; set; } = [];
+    }
     public class FacebookLoginModel
     {
         public string AccessToken { get; set; }

@@ -150,6 +150,10 @@
                 Applied by default when posting an ad. If not set, 30 days is used.
             </div>
             <input type="hidden" id="fieldAdDuration" value="@(user.PreferredAdDuration?.ToString() ?? "")" />
+            <div class="profile-section-title" data-i18n="user_stats_title">My statistics</div>
+            <div class="auth-field">
+                <a class="myads-action-btn" href="/Profile/Stats" data-i18n="user_stats_open">Open statistics →</a>
+            </div>
         </div>
         @{
             var pointsBalance = (int)ViewBag.PromotionPoints;

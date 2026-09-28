@@ -13,15 +13,23 @@ namespace Linkora.Controllers
     {
         private readonly IPromotionRepository _promotionRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IUserStatsRepository _statsRepository;
+        private readonly ISellerRepository _sellerRepository;
+        private readonly ISubscriptionRepository _subscriptionRepository;
+        private readonly IProductRepository _productRepository;
         private readonly IPointsRepository _pointsRepository;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IGeocodingService _geocodingService;
         private readonly IMediaStorageService _mediaStorage;
         private readonly IPointsLedgerRepository _pointsLedgerRepository;
-        public ProfileController(IUserRepository userRepository, IPromotionRepository promotionRepository, IPointsRepository pointsRepository, IPasswordHasher passwordHasher, IGeocodingService geocodingService, IMediaStorageService mediaStorage, IPointsLedgerRepository pointsLedgerRepository)
+        public ProfileController(IUserRepository userRepository, IUserStatsRepository statsRepository, ISellerRepository sellerRepository, ISubscriptionRepository subscriptionRepository, IProductRepository productRepository, IPromotionRepository promotionRepository, IPointsRepository pointsRepository, IPasswordHasher passwordHasher, IGeocodingService geocodingService, IMediaStorageService mediaStorage, IPointsLedgerRepository pointsLedgerRepository)
         {
             _userRepository = userRepository;
+            _statsRepository = statsRepository;
+            _sellerRepository = sellerRepository;
+            _subscriptionRepository = subscriptionRepository;
             _promotionRepository = promotionRepository;
+            _productRepository = productRepository;
             _pointsRepository = pointsRepository;
             _passwordHasher = passwordHasher;
             _geocodingService = geocodingService;
@@ -161,6 +169,25 @@ namespace Linkora.Controllers
         {
             var balance = await _pointsRepository.GetBalanceAsync(User.GetUserId());
             return Json(new { balance });
+        }
+        public async Task<IActionResult> Stats()
+        {
+            var userId = User.GetUserId();
+            var (views, likes, carts) = await _statsRepository.GetTotalsAsync(userId);
+            var (reviewCount, reviewAvg) = await _sellerRepository.GetRatingAsync(userId);
+            var active = await _productRepository.GetByUserAsync(userId, "Active");
+
+            return View("~/Views/Account/Stats.cshtml", new UserStats
+            {
+                TotalViews = views,
+                Likes = likes,
+                InCarts = carts,
+                Subscribers = await _subscriptionRepository.GetSubscriberCountAsync(userId),
+                ReviewCount = reviewCount,
+                ReviewAvg = reviewAvg,
+                ByStatus = await _productRepository.GetCountsByStatusAsync(userId),
+                TopProducts = active.OrderByDescending(p => p.ViewCount).Take(10).ToList()
+            });
         }
     }
 }

@@ -1,0 +1,61 @@
+﻿@{
+    ViewData["Title"] = "Bulk import";
+}
+<div class="create-page">
+    <h1 class="create-title">Массовая загрузка объявлений</h1>
+
+    <div class="create-section">
+        <h2 class="create-section-title">1. Шаблон</h2>
+        <div class="create-cat-selector" onclick="pickCategory()">
+            <span id="impCatText">Выберите категорию</span><span class="create-cat-arrow">›</span>
+        </div>
+        <input type="hidden" id="impCatId" />
+        <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="myads-action-btn" onclick="downloadTemplate('xlsx')">Скачать XLSX</button>
+            <button class="myads-action-btn" onclick="downloadTemplate('csv')">Скачать CSV</button>
+        </div>
+    </div>
+
+    <div class="create-section">
+        <h2 class="create-section-title">2. Загрузка заполненного файла</h2>
+        <input type="file" id="impFile" accept=".xlsx,.csv" />
+        <button class="create-submit" style="margin-top:12px" onclick="uploadFile()">Загрузить</button>
+        <div id="impResult" style="margin-top:12px;font-size:14px"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function pickCategory() {
+            openCatMenu('select', c => {
+                document.getElementById('impCatId').value = c.id;
+                document.getElementById('impCatText').textContent = c.name;
+            });
+        }
+        function downloadTemplate(format) {
+            const id = document.getElementById('impCatId').value;
+            if (!id) return;
+            window.location.href = `/Import/Template?categoryId=${id}&format=${format}`;
+        }
+        async function uploadFile() {
+            const file = document.getElementById('impFile').files[0];
+            const out = document.getElementById('impResult');
+            if (!file) return;
+            const fd = new FormData();
+            fd.append('file', file);
+            const res = await fetch('/Import/Upload', {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': document.getElementById('afToken')?.value ?? '' },
+                body: fd
+            });
+            if (!res.ok) { out.textContent = 'Ошибка: ' + await res.text(); return; }
+            const data = await res.json();
+            if (data.errors.length) {
+                out.innerHTML = '<b>Объявления не созданы. Ошибки:</b><br>' +
+                    data.errors.map(e => `Строка ${e.row}: ${e.message}`).join('<br>');
+            } else {
+                out.textContent = `Создано объявлений: ${data.created}`;
+            }
+        }
+    </script>
+}

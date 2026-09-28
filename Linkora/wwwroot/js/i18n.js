@@ -1,5 +1,13 @@
 const TRANSLATIONS = {
     en: {
+        'user_stats_title': 'My statistics',
+        'user_stats_back': 'Profile settings',
+        'user_stats_open': 'Open statistics →',
+        'user_stats_views': 'Views',
+        'user_stats_likes': 'Added to favourites',
+        'user_stats_carts': 'Added to cart',
+        'user_stats_subscribers': 'Subscribers',
+        'user_stats_top': 'Top active listings',
         'points_referral_title': 'Invite friends',
         'points_referral_hint': 'Share your personal link. You get 50 P when your invitee publishes their first listing and 100 P for their fifth.',
         'points_referral_copy': 'Copy',
@@ -534,6 +542,14 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'user_stats_title': 'Mana statistika',
+        'user_stats_back': 'Profila iestatījumi',
+        'user_stats_open': 'Atvērt statistiku →',
+        'user_stats_views': 'Skatījumi',
+        'user_stats_likes': 'Pievienots izlasei',
+        'user_stats_carts': 'Pievienots grozam',
+        'user_stats_subscribers': 'Sekotāji',
+        'user_stats_top': 'Populārākie aktīvie sludinājumi',
         'points_referral_title': 'Uzaicini draugus',
         'points_referral_hint': 'Kopīgo savu personīgo saiti. Tu saņem 50 P, kad uzaicinātais publicē savu pirmo sludinājumu, un 100 P par viņa piekto sludinājumu.',
         'points_referral_copy': 'Kopēt',
@@ -1078,6 +1094,14 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'user_stats_title': 'Моя статистика',
+        'user_stats_back': 'Настройки профиля',
+        'user_stats_open': 'Открыть статистику →',
+        'user_stats_views': 'Просмотры',
+        'user_stats_likes': 'В избранном',
+        'user_stats_carts': 'В корзине',
+        'user_stats_subscribers': 'Подписчики',
+        'user_stats_top': 'Топ активных объявлений',
         'points_referral_title': 'Пригласите друзей',
         'points_referral_hint': 'Поделитесь личной ссылкой. Вы получаете 50 P, когда приглашённый размещает первое объявление, и 100 P — за его пятое объявление.',
         'points_referral_copy': 'Копировать',
