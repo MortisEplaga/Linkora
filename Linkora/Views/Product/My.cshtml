@@ -152,10 +152,21 @@
     }
 
     async function deleteAd(id) {
-        await fetch(`/Product/Delete?id=${id}`, {
-            method: 'POST',
-            headers: { 'RequestVerificationToken': document.getElementById('afToken')?.value ?? '' }
-        });
-        location.reload();
-    }
+        try {
+            const res = await fetch(`/Product/Delete?id=${id}`, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': document.getElementById('afToken')?.value ?? '' }
+            });
+
+            if (!res.ok) {
+                console.error(translate('err_delete'), res.status, await res.text());
+                alert(translate('err_delete'));
+                return;
+            }
+
+            location.reload();
+        } catch (e) {
+            console.error(translate('network_error'), e);
+            alert(translate('network_error'));
+        }
 </script>

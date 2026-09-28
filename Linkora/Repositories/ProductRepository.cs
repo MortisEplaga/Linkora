@@ -548,15 +548,40 @@ namespace Linkora.Repositories
         {
             await ExecuteInTransactionAsync(async (conn, tx) =>
             {
-                foreach (var sql in new[] { "DELETE FROM ProductMedia WHERE ProductId = @Id", "DELETE FROM MapperProductParam WHERE ProductId = @Id", "DELETE FROM Favourites WHERE ProductId = @Id", "DELETE FROM Reports WHERE ProductId = @Id", "DELETE FROM Notifications WHERE ProductId = @Id", "DELETE FROM Messages WHERE ConversationId IN (SELECT Id FROM Conversations WHERE ProductId = @Id)", "DELETE FROM Conversations WHERE ProductId = @Id", "DELETE FROM Reviews WHERE ProductId = @Id", "DELETE FROM Products WHERE Id = @Id" })
+                foreach (var sql in new[]
+                                {
+                    "INSERT INTO MediaDeletionQueue (FilePath) SELECT FilePath FROM ProductMedia WHERE ProductId = @Id AND FilePath LIKE '/img/products/%'",
+                    "INSERT INTO MediaDeletionQueue (FilePath) SELECT AvatarUrl FROM Products WHERE Id = @Id AND AvatarUrl LIKE '/img/products/%'"
+                })
+                {
+                    await using var queueCmd = new SqlCommand(sql, conn, tx);
+                    queueCmd.Parameters.AddWithValue("@Id", productId);
+                    await queueCmd.ExecuteNonQueryAsync();
+                }
+
+                var deleteSteps = new[]
+                {
+                    "DELETE FROM Messages WHERE ConversationId IN (SELECT Id FROM Conversations WHERE ProductId = @Id)",
+                    "DELETE FROM Conversations WHERE ProductId = @Id",
+                    "DELETE FROM ProductMedia WHERE ProductId = @Id",
+                    "DELETE FROM MapperProductParam WHERE ProductId = @Id",
+                    "DELETE FROM Favourites WHERE ProductId = @Id",
+                    "DELETE FROM Reports WHERE ProductId = @Id",
+                    "DELETE FROM Notifications WHERE ProductId = @Id",
+                    "DELETE FROM Reviews WHERE ProductId = @Id",
+                    "DELETE FROM Orders WHERE ProductId = @Id",
+                    "UPDATE PointsLedgerEntries SET Status = 'Rejected', ConfirmedAt = SYSUTCDATETIME() WHERE Status = 'Pending' AND SourceProductId = @Id",
+                    "UPDATE PointsLedgerEntries SET SourceProductId = NULL WHERE SourceProductId = @Id",
+                    "DELETE FROM Products WHERE Id = @Id"
+                };
+
+                foreach (var sql in deleteSteps)
                 {
                     await using var cmd = new SqlCommand(sql, conn, tx);
                     cmd.Parameters.AddWithValue("@Id", productId);
                     await cmd.ExecuteNonQueryAsync();
                 }
             });
-            foreach (var path in await QueryAsync<string>("SELECT FilePath FROM ProductMedia WHERE ProductId = @Id", r => r.GetString(0), p => p.AddWithValue("@Id", productId)))
-                try { var full = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", path.TrimStart('/')); if (File.Exists(full)) File.Delete(full); } catch (Exception ex) { Console.Error.WriteLine(ex); }
         }
         public async Task<(List<AdminConfOptionRow> Items, int TotalCount)> GetUnconfirmedOptionsAsync()
         {
