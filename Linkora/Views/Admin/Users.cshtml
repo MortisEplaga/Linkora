@@ -154,8 +154,8 @@
                                                     <span data-i18n="admin_ban">Ban</span>
                                                 </button>
                                             }
-                                            <button class="admin-btn admin-btn-danger"
-                                                    onclick="confirmDeleteUser(@u.Id, '@u.UserName.Replace("'", "\\'")')">
+                                            <button class="admin-btn admin-btn-danger" data-name="@u.UserName"
+                                                    onclick="confirmDeleteUser(@u.Id, this.dataset.name)">
                                                 <span data-i18n="admin_delete">Delete</span>
                                             </button>
                                         </div>

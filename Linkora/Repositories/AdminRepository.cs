@@ -1,4 +1,5 @@
 ﻿using Linkora.Models;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Linkora.Repositories
@@ -137,8 +138,58 @@ namespace Linkora.Repositories
                   WHERE p.UserId = @Id AND f.Can = 1",
                 r => (UserId: r.GetInt32(0), ProductId: r.GetInt32(1)),
                 p => p.AddWithValue("@Id", sellerId));
-        public Task<List<int>> GetUserProductIdsAsync(int userId) => QueryAsync("SELECT Id FROM Products WHERE UserId = @UserId", r => r.GetInt32(0), p => p.AddWithValue("@UserId", userId));
-        public async Task DeleteUserAsync(int id) => await ExecuteAsync("DELETE FROM Users WHERE Id = @Id", p => p.AddWithValue("@Id", id));
+        private const string UserProductIds = "SELECT Id FROM Products WHERE UserId = @Id";
+        private const string UserConversationIds = "SELECT Id FROM Conversations WHERE BuyerId = @Id OR SellerId = @Id OR ProductId IN (" + UserProductIds + ")";
+        private static readonly string[] DeleteUserSteps =
+        [
+            $"INSERT INTO MediaDeletionQueue (FilePath) SELECT FilePath FROM ProductMedia WHERE ProductId IN ({UserProductIds}) AND FilePath LIKE '/img/products/%'",
+            "INSERT INTO MediaDeletionQueue (FilePath) SELECT AvatarUrl FROM Products WHERE UserId = @Id AND AvatarUrl LIKE '/img/products/%'",
+            "INSERT INTO MediaDeletionQueue (FilePath) SELECT AvatarUrl FROM Users WHERE Id = @Id AND AvatarUrl LIKE '/img/avatars/%'",
+
+            $"DELETE FROM Messages WHERE ConversationId IN ({UserConversationIds})",
+            "UPDATE Messages SET SenderId = NULL WHERE SenderId = @Id", 
+            $"DELETE FROM Conversations WHERE Id IN ({UserConversationIds})",
+
+            $"DELETE FROM ProductMedia WHERE ProductId IN ({UserProductIds})",
+            $"DELETE FROM MapperProductParam WHERE ProductId IN ({UserProductIds})",
+            $"DELETE FROM Favourites WHERE UserId = @Id OR ProductId IN ({UserProductIds})",
+            $"DELETE FROM Reports WHERE UserId = @Id OR ProductId IN ({UserProductIds})",
+            $"DELETE FROM Reviews WHERE AuthorId = @Id OR TargetUserId = @Id OR ProductId IN ({UserProductIds})",
+            $"DELETE FROM Notifications WHERE UserId = @Id OR FromUserId = @Id OR ProductId IN ({UserProductIds})",
+            $"DELETE FROM Orders WHERE UserId = @Id OR ProductId IN ({UserProductIds})",
+
+            "DELETE FROM PointsLedgerEntries WHERE UserId = @Id",
+            $"UPDATE PointsLedgerEntries SET Status = 'Rejected', ConfirmedAt = SYSUTCDATETIME() WHERE Status = 'Pending' AND (SourceUserId = @Id OR SourceProductId IN ({UserProductIds}))",
+            "UPDATE PointsLedgerEntries SET SourceUserId = NULL WHERE SourceUserId = @Id",
+            $"UPDATE PointsLedgerEntries SET SourceProductId = NULL WHERE SourceProductId IN ({UserProductIds})",
+            "DELETE FROM Promotion WHERE UserId = @Id",
+            "DELETE FROM Payments WHERE UserId = @Id",
+
+            "DELETE FROM Subscriptions WHERE FollowerId = @Id OR FollowingId = @Id",
+            "DELETE FROM UserSessions WHERE UserId = @Id",
+            "DELETE FROM NotificationPreferences WHERE UserId = @Id",
+            "UPDATE SupportRequests SET UserId = NULL WHERE UserId = CAST(@Id AS nvarchar(20))", 
+            "UPDATE Users SET ReferrerId = NULL WHERE ReferrerId = @Id",
+
+            "DELETE FROM Products WHERE UserId = @Id",
+            "DELETE FROM Users WHERE Id = @Id"
+        ];
+        public Task<bool> DeleteUserAsync(int id) => ExecuteInTransactionAsync(async (conn, tx) =>
+        {
+            await using (var lockCmd = new SqlCommand("SELECT Id FROM Users WITH (UPDLOCK, HOLDLOCK) WHERE Id = @Id", conn, tx))
+            {
+                lockCmd.Parameters.AddWithValue("@Id", id);
+                if (await lockCmd.ExecuteScalarAsync() == null) return false;
+            }
+
+            foreach (var sql in DeleteUserSteps)
+            {
+                await using var cmd = new SqlCommand(sql, conn, tx);
+                cmd.Parameters.AddWithValue("@Id", id);
+                await cmd.ExecuteNonQueryAsync();
+            }
+            return true;
+        });
         public async Task<PagedResult<AdminReportRow>> GetReportsAsync(string status, int page) => await GetPagedDataAsync(
                 selectClause: @"SELECT r.Id, r.ProductId, r.UserId, r.Comment, r.CreatedAt, r.Status, p.Name AS ProductName,
                                 COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder), p.AvatarUrl) AS ProductImg,

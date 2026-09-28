@@ -2,6 +2,7 @@ using Linkora.Repositories;
 using Linkora.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using System.Security.Claims;
 
 namespace Linkora.Controllers
@@ -13,16 +14,18 @@ namespace Linkora.Controllers
         private readonly IProductRepository _productRepository;
         private readonly INotificationRepository _notificationRepository;
         private readonly IAdminService _adminService;
-
+        private readonly ILogger<AdminController> _logger;
         public AdminController(IAdminRepository adminRepository,
                                IProductRepository productRepository,
                                INotificationRepository notificationRepository,
-                               IAdminService adminService)
+                               IAdminService adminService,
+                               ILogger<AdminController> logger)
         {
             _adminRepository = adminRepository;
             _productRepository = productRepository;
             _notificationRepository = notificationRepository;
             _adminService = adminService;
+            _logger = logger;
         }
 
         private bool IsAdmin() => User.FindFirst(ClaimTypes.Role)?.Value == "admin";
@@ -137,9 +140,17 @@ namespace Linkora.Controllers
         {
             if (!IsAdmin()) return Forbid();
             if (id == User.GetUserId()) return BadRequest("Cannot delete yourself");
+            if (id == MessageRepository.SupportUserId) return BadRequest("Cannot delete the support account");
 
-            await _adminService.DeleteUserCascadeAsync(id);
-            return Ok();
+            try
+            {
+                return await _adminService.DeleteUserCascadeAsync(id) ? Ok() : NotFound("User not found");
+            }
+            catch (SqlException ex) when (ex.Number == 547)
+            {
+                _logger.LogError(ex, "Failed to delete user {UserId}", id);
+                return Conflict(ex.Message);
+            }
         }
 
         [HttpPost]

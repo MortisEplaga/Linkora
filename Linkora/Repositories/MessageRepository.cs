@@ -3,24 +3,20 @@ using Linkora.Repositories;
 
 public class MessageRepository : SqlRepositoryBase, IMessageRepository
 {
+    public const int SupportUserId = 3;
     public MessageRepository(IConfiguration configuration) : base(configuration) { }
     public async Task<int> GetOrCreateSupportConversationAsync(int userId)
     {
-        var existing = (await QueryAsync<int?>(
-            "SELECT Id FROM Conversations WHERE BuyerId = @UserId AND IsSupport = 1",
-            r => r.GetInt32(0),
-            p => p.AddWithValue("@UserId", userId))).FirstOrDefault();
+        var existing = (await QueryAsync<int?>("SELECT Id FROM Conversations WHERE BuyerId = @UserId AND IsSupport = 1", r => r.GetInt32(0), p => p.AddWithValue("@UserId", userId))).FirstOrDefault();
 
         if (existing != null) return existing.Value;
 
-        return (await QueryAsync<int>(@"
-        INSERT INTO Conversations (ProductId, BuyerId, SellerId, CreatedAt, IsSystem, IsSupport)
-        OUTPUT INSERTED.Id VALUES (NULL, @UserId, @SystemId, GETDATE(), 0, 1)",
+        return (await QueryAsync<int>(@"INSERT INTO Conversations (ProductId, BuyerId, SellerId, CreatedAt, IsSystem, IsSupport) OUTPUT INSERTED.Id VALUES (NULL, @UserId, @SystemId, GETDATE(), 0, 1)",
             r => r.GetInt32(0),
             p =>
             {
                 p.AddWithValue("@UserId", userId);
-                p.AddWithValue("@SystemId", 3);
+                p.AddWithValue("@SystemId", SupportUserId);
             })).First();
     }
     public async Task<string> GetUserStatusAsync(int userId) => (await QueryAsync<string>(

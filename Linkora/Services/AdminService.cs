@@ -6,7 +6,7 @@ namespace Linkora.Services
     public interface IAdminService
     {
         Task<(string? OldRole, BanUserResult? BanData)> SetUserRoleAsync(int id, string role);
-        Task DeleteUserCascadeAsync(int id);
+        Task<bool> DeleteUserCascadeAsync(int id);
         Task<ApproveOptionResult> ApproveOptionAsync(int optionId);
         Task<RejectOptionResult> RejectProductByOptionAsync(int optionId, int productId);
     }
@@ -28,12 +28,7 @@ namespace Linkora.Services
             banData.FavouriteUsers.AddRange(await _admin.GetFavouriteUsersBySellerAsync(id));
             return (oldRole, banData);
         }
-        public async Task DeleteUserCascadeAsync(int id)
-        {
-            var productIds = await _admin.GetUserProductIdsAsync(id);
-            foreach (var productId in productIds) await _products.DeleteAsync(productId);
-            await _admin.DeleteUserAsync(id);
-        }
+        public Task<bool> DeleteUserCascadeAsync(int id) => _admin.DeleteUserAsync(id);
         public async Task<ApproveOptionResult> ApproveOptionAsync(int id)
         {
             var result = await _admin.GetApproveOptionContextAsync(id);

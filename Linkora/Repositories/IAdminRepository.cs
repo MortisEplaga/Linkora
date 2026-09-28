@@ -16,8 +16,7 @@ namespace Linkora.Repositories
         Task<string?> UpdateUserRoleAsync(int id, string role);
         Task<List<int>> GetSubscriberIdsAsync(int userId);
         Task<List<(int UserId, int ProductId)>> GetFavouriteUsersBySellerAsync(int sellerId);
-        Task<List<int>> GetUserProductIdsAsync(int userId);
-        Task DeleteUserAsync(int id);
+        Task<bool> DeleteUserAsync(int id);
         Task<ApproveOptionResult> GetApproveOptionContextAsync(int optionId);
         Task DecrementModerationScoreAsync(int productId);
         Task<RejectOptionResult> GetRejectOptionContextAsync(int optionId, int productId);
