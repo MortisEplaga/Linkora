@@ -1,4 +1,4 @@
-﻿using Linkora.Models;
+using Linkora.Models;
 
 namespace Linkora.Repositories
 {
@@ -18,6 +18,10 @@ namespace Linkora.Repositories
         Task<IEnumerable<Product>> GetUserProductsByStatusAsync(int userId, string status);
         Task<bool> UpdateProductStatusAsync(int productId, ProductStatus status);
         Task<int> CreateAsync(Product product, Dictionary<int, string> paramValues, int publishDurationDays = 30);
+        /// <summary>Атомарное создание всех объявлений из файла импорта (одна транзакция: всё или ничего).</summary>
+        Task<List<int>> CreateImportedListingsAsync(int userId, List<ImportListing> listings, string lang = "en");
+        /// <summary>Единый снимок объявлений пользователя в категории для экспорта в CSV/XLSX (одна транзакция чтения).</summary>
+        Task<List<ExportListing>> GetListingsForExportAsync(int userId, int categoryId, string lang);
         Task<List<ProductMedia>> GetMediaAsync(int productId);
         Task SaveMediaAsync(int productId, List<ProductMedia> media);
         Task DeleteMediaAsync(int productId);

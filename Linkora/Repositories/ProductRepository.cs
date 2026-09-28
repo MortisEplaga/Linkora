@@ -1,4 +1,4 @@
-﻿using Linkora.Models;
+using Linkora.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Caching.Memory;
 using System.Text.RegularExpressions;
@@ -9,10 +9,14 @@ namespace Linkora.Repositories
     {
         private readonly ILogger<ProductRepository> _logger;
         private readonly IMemoryCache _cache;
+        private readonly ISelectOptionRepository _selectOptions;
+        private readonly IPointsLedgerRepository _pointsLedger;
         private const string EffectiveBoostExpr = @"(SELECT MAX(v) FROM (VALUES
             (CASE WHEN p.PaidBoostLevel IS NOT NULL AND p.PaidBoostExpiresAt > SYSUTCDATETIME() THEN p.PaidBoostLevel END),
             (CASE WHEN p.SubscriptionBoostLevel IS NOT NULL AND p.SubscriptionBoostExpiresAt > SYSUTCDATETIME() THEN p.SubscriptionBoostLevel END)) AS t(v))";
-        public ProductRepository(IConfiguration configuration, ILogger<ProductRepository> logger, IMemoryCache cache) : base(configuration) { _logger = logger; _cache = cache; }
+        public ProductRepository(IConfiguration configuration, ILogger<ProductRepository> logger, IMemoryCache cache,
+                                 ISelectOptionRepository selectOptions, IPointsLedgerRepository pointsLedger) : base(configuration)
+        { _logger = logger; _cache = cache; _selectOptions = selectOptions; _pointsLedger = pointsLedger; }
         public async Task<CategoryRulesDto> GetCategoryRulesAsync(IEnumerable<int> categoryIds)
         {
             var idList = categoryIds.ToList();
@@ -484,35 +488,7 @@ namespace Linkora.Repositories
 
             return await ExecuteInTransactionAsync(async (conn, tx) =>
             {
-                int newId;
-                await using (var insertCmd = new SqlCommand(@"
-                    DECLARE @new TABLE (Id int);
-                    INSERT INTO Products (Name,Description,Qty,Address,CategoryId,UserId,AvatarUrl,CreatedAt,Status,PublishDurationDays,ExpiresAt,Lat,Lng,Price,
-                                          SubscriptionBoostLevel,SubscriptionBoostExpiresAt,PaidBoostLevel,PaidBoostExpiresAt)
-                    OUTPUT INSERTED.Id INTO @new
-                    VALUES (@Name,@Description,@Qty,@Address,@CategoryId,@UserId,@AvatarUrl,GETDATE(),'Active',@Duration,DATEADD(DAY,@Duration,GETDATE()),@Lat,@Lng,@Price,
-                            @SubBoostLevel,@SubBoostExp,@PaidBoostLevel,@PaidBoostExp);
-                    SELECT Id FROM @new;", conn, tx))
-                {
-                    insertCmd.Parameters.AddWithValue("@Name", product.Name);
-                    insertCmd.Parameters.AddWithValue("@Description", (object?)product.Description ?? DBNull.Value);
-                    insertCmd.Parameters.AddWithValue("@Qty", (object?)product.Qty ?? DBNull.Value);
-                    insertCmd.Parameters.AddWithValue("@Address", (object?)product.Address ?? DBNull.Value);
-                    insertCmd.Parameters.AddWithValue("@CategoryId", (object?)product.CategoryId ?? DBNull.Value);
-                    insertCmd.Parameters.AddWithValue("@UserId", product.UserId!);
-                    insertCmd.Parameters.AddWithValue("@AvatarUrl", (object?)product.AvatarUrl ?? DBNull.Value);
-                    insertCmd.Parameters.AddWithValue("@Duration", publishDurationDays);
-                    insertCmd.Parameters.AddWithValue("@Lat", (object?)product.Lat ?? DBNull.Value);
-                    insertCmd.Parameters.AddWithValue("@Lng", (object?)product.Lng ?? DBNull.Value);
-                    insertCmd.Parameters.AddWithValue("@Price", (object?)product.Price ?? DBNull.Value);
-                    insertCmd.Parameters.AddWithValue("@SubBoostLevel", (object?)(short?)product.SubscriptionBoostLevel ?? DBNull.Value);
-                    insertCmd.Parameters.AddWithValue("@SubBoostExp", (object?)product.SubscriptionBoostExpiresAt ?? DBNull.Value);
-                    insertCmd.Parameters.AddWithValue("@PaidBoostLevel", (object?)(short?)product.PaidBoostLevel ?? DBNull.Value);
-                    insertCmd.Parameters.AddWithValue("@PaidBoostExp", (object?)product.PaidBoostExpiresAt ?? DBNull.Value);
-                    await using var reader = await insertCmd.ExecuteReaderAsync();
-                    if (!await reader.ReadAsync()) throw new InvalidOperationException("INSERT INTO Products did not return an Id.");
-                    newId = reader.GetInt32(0);
-                }
+                var newId = await InsertProductCoreAsync(conn, tx, product, publishDurationDays);
 
                 _logger.LogInformation("ProductRepository.CreateAsync: inserted product {ProductId} with Lat={Lat}, Lng={Lng}", newId, product.Lat, product.Lng);
 
@@ -520,6 +496,35 @@ namespace Linkora.Repositories
                 await ExecuteBatchInsertAsync(conn, tx, "MapperProductParam", new[] { "ProductId", "ParamId", "Value" }, rows);
                 return newId;
             });
+        }
+        private static async Task<int> InsertProductCoreAsync(SqlConnection conn, SqlTransaction tx, Product product, int publishDurationDays)
+        {
+            await using var insertCmd = new SqlCommand(@"
+                    DECLARE @new TABLE (Id int);
+                    INSERT INTO Products (Name,Description,Qty,Address,CategoryId,UserId,AvatarUrl,CreatedAt,Status,PublishDurationDays,ExpiresAt,Lat,Lng,Price,
+                                          SubscriptionBoostLevel,SubscriptionBoostExpiresAt,PaidBoostLevel,PaidBoostExpiresAt)
+                    OUTPUT INSERTED.Id INTO @new
+                    VALUES (@Name,@Description,@Qty,@Address,@CategoryId,@UserId,@AvatarUrl,GETDATE(),'Active',@Duration,DATEADD(DAY,@Duration,GETDATE()),@Lat,@Lng,@Price,
+                            @SubBoostLevel,@SubBoostExp,@PaidBoostLevel,@PaidBoostExp);
+                    SELECT Id FROM @new;", conn, tx);
+            insertCmd.Parameters.AddWithValue("@Name", product.Name);
+            insertCmd.Parameters.AddWithValue("@Description", (object?)product.Description ?? DBNull.Value);
+            insertCmd.Parameters.AddWithValue("@Qty", (object?)product.Qty ?? DBNull.Value);
+            insertCmd.Parameters.AddWithValue("@Address", (object?)product.Address ?? DBNull.Value);
+            insertCmd.Parameters.AddWithValue("@CategoryId", (object?)product.CategoryId ?? DBNull.Value);
+            insertCmd.Parameters.AddWithValue("@UserId", product.UserId!);
+            insertCmd.Parameters.AddWithValue("@AvatarUrl", (object?)product.AvatarUrl ?? DBNull.Value);
+            insertCmd.Parameters.AddWithValue("@Duration", publishDurationDays);
+            insertCmd.Parameters.AddWithValue("@Lat", (object?)product.Lat ?? DBNull.Value);
+            insertCmd.Parameters.AddWithValue("@Lng", (object?)product.Lng ?? DBNull.Value);
+            insertCmd.Parameters.AddWithValue("@Price", (object?)product.Price ?? DBNull.Value);
+            insertCmd.Parameters.AddWithValue("@SubBoostLevel", (object?)(short?)product.SubscriptionBoostLevel ?? DBNull.Value);
+            insertCmd.Parameters.AddWithValue("@SubBoostExp", (object?)product.SubscriptionBoostExpiresAt ?? DBNull.Value);
+            insertCmd.Parameters.AddWithValue("@PaidBoostLevel", (object?)(short?)product.PaidBoostLevel ?? DBNull.Value);
+            insertCmd.Parameters.AddWithValue("@PaidBoostExp", (object?)product.PaidBoostExpiresAt ?? DBNull.Value);
+            await using var reader = await insertCmd.ExecuteReaderAsync();
+            if (!await reader.ReadAsync()) throw new InvalidOperationException("INSERT INTO Products did not return an Id.");
+            return reader.GetInt32(0);
         }
         public async Task<List<ProductMedia>> GetMediaAsync(int productId) => await QueryAsync("SELECT Id,FilePath,MediaType,SortOrder FROM ProductMedia WHERE ProductId = @Id ORDER BY SortOrder", r => new ProductMedia { Id = r.GetInt32(0), ProductId = productId, FilePath = r.GetString(1), MediaType = r.GetString(2), SortOrder = r.GetInt32(3) }, p => p.AddWithValue("@Id", productId));
         public async Task SaveMediaAsync(int productId, List<ProductMedia> media)
@@ -622,16 +627,167 @@ namespace Linkora.Repositories
         public async Task<int> RecalculateModerationScoreAsync(int productId)
         {
             await using var conn = await OpenConnectionAsync();
+            return await RecalculateModerationScoreCoreAsync(conn, null, productId);
+        }
+        private static async Task<int> RecalculateModerationScoreCoreAsync(SqlConnection conn, SqlTransaction? tx, int productId)
+        {
             await using var cmd = new SqlCommand(@"DECLARE @out TABLE (Score int);
                 ;WITH UnconfirmedCount AS (SELECT COUNT(*) AS Cnt FROM MapperProductParam mpp JOIN SelectOptions so ON TRY_CAST(mpp.Value AS int) = so.Id JOIN Parameters pa ON pa.Id = mpp.ParamId AND pa.Type IN (2,4,8) WHERE mpp.ProductId = @Id AND so.IsConf = 0)
                 UPDATE p SET ModerationScore = (SELECT Cnt FROM UnconfirmedCount),Status = CASE WHEN (SELECT Cnt FROM UnconfirmedCount) >= 5 THEN 'Moderation' ELSE Status END
                 OUTPUT INSERTED.ModerationScore INTO @out
                 FROM Products p WHERE p.Id = @Id;
-                SELECT Score FROM @out;", conn); 
+                SELECT Score FROM @out;", conn, tx);
             cmd.Parameters.AddWithValue("@Id", productId);
             await using var reader = await cmd.ExecuteReaderAsync();
             if (await reader.ReadAsync()) return reader.GetInt32(0);
             return 0;
+        }
+        /// <summary>
+        /// Атомарное создание объявлений из файла импорта: продукты, параметры, медиа,
+        /// новые опции выбора, пересчёт модерационного счёта и записи о поинтах —
+        /// всё в одной транзакции. Либо созданы все строки, либо ни одной.
+        /// </summary>
+        public async Task<List<int>> CreateImportedListingsAsync(int userId, List<ImportListing> listings, string lang = "en")
+        {
+            if (listings.Count == 0) return [];
+            var optionCache = new Dictionary<(int ParamId, string Text), int>();
+
+            return await ExecuteInTransactionAsync(async (conn, tx) =>
+            {
+                var ids = new List<int>(listings.Count);
+                foreach (var listing in listings)
+                {
+                    foreach (var key in listing.ParamValues.Where(kv => kv.Value.StartsWith("new:")).Select(kv => kv.Key).ToList())
+                    {
+                        var text = listing.ParamValues[key][4..];
+                        if (!optionCache.TryGetValue((key, text.ToLowerInvariant()), out var optId))
+                        {
+                            optId = await _selectOptions.FindIdAsync(conn, tx, key, text, lang)
+                                    ?? await _selectOptions.CreateAsync(conn, tx, key, text);
+                            optionCache[(key, text.ToLowerInvariant())] = optId;
+                        }
+                        listing.ParamValues[key] = optId.ToString();
+                    }
+
+                    var id = await InsertProductCoreAsync(conn, tx, listing.Product, listing.PublishDurationDays);
+
+                    var paramRows = listing.ParamValues.Where(kv => !string.IsNullOrWhiteSpace(kv.Value)).Select(kv => new object?[] { id, kv.Key, kv.Value });
+                    await ExecuteBatchInsertAsync(conn, tx, "MapperProductParam", ["ProductId", "ParamId", "Value"], paramRows);
+
+                    if (listing.Media.Count > 0)
+                    {
+                        var mediaRows = listing.Media.Select((m, i) => new object?[] { id, m.FilePath, m.MediaType, i });
+                        await ExecuteBatchInsertAsync(conn, tx, "ProductMedia", ["ProductId", "FilePath", "MediaType", "SortOrder"], mediaRows);
+                    }
+
+                    await RecalculateModerationScoreCoreAsync(conn, tx, id);
+                    await _pointsLedger.RecordListingPostedAsync(conn, tx, userId, id);
+                    ids.Add(id);
+                }
+                return ids;
+            });
+        }
+        /// <summary>
+        /// Единый консистентный снимок активных объявлений пользователя в категории
+        /// (продукты + параметры + медиа читаются в одной транзакции) для экспорта в CSV/XLSX.
+        /// ParamValues возвращаются с отображаемыми значениями на языке lang.
+        /// </summary>
+        public async Task<List<ExportListing>> GetListingsForExportAsync(int userId, int categoryId, string lang)
+        {
+            var products = new List<(int Id, string Name, string? Description, int? Qty, string? Address, decimal? Price, int Duration, string? AvatarUrl)>();
+            var paramRows = new List<(int ProductId, int ParamId, string Value, int? Type)>();
+            var mediaRows = new List<(int ProductId, string FilePath, string MediaType)>();
+
+            await using var conn = await OpenConnectionAsync();
+            await using var tx = (SqlTransaction)await conn.BeginTransactionAsync();
+            try
+            {
+                await using (var prodCmd = new SqlCommand(
+                    @"SELECT Id, Name, Description, Qty, Address, Price, PublishDurationDays, AvatarUrl
+                      FROM Products
+                      WHERE UserId = @UserId AND CategoryId = @CategoryId AND (Status = 'Active' OR Status IS NULL)
+                      ORDER BY Id", conn, tx))
+                {
+                    prodCmd.Parameters.AddWithValue("@UserId", userId);
+                    prodCmd.Parameters.AddWithValue("@CategoryId", categoryId);
+                    await using var r = await prodCmd.ExecuteReaderAsync();
+                    while (await r.ReadAsync())
+                        products.Add((r.GetInt32(0), r.GetStringOrDefault(1), r.GetStringOrNull(2), r.GetInt32OrNull(3), r.GetStringOrNull(4), r.GetDecimalOrNull(5), r.GetInt32OrDefault(6), r.GetStringOrNull(7)));
+                }
+
+                if (products.Count > 0)
+                {
+                    var (inClause, pars) = BuildInClause(products.Select(p => p.Id), "@pid");
+                    await using (var paramCmd = new SqlCommand(
+                        $@"SELECT m.ProductId, m.ParamId, m.Value, p.Type
+                           FROM MapperProductParam m JOIN Parameters p ON p.Id = m.ParamId
+                           WHERE m.ProductId IN ({inClause})", conn, tx))
+                    {
+                        foreach (var prm in pars) paramCmd.Parameters.Add(prm);
+                        await using var r = await paramCmd.ExecuteReaderAsync();
+                        while (await r.ReadAsync())
+                            paramRows.Add((r.GetInt32(0), r.GetInt32(1), r.GetStringOrDefault(2), r.GetInt32OrNull(3)));
+                    }
+                    await using (var mediaCmd = new SqlCommand(
+                        $@"SELECT ProductId, FilePath, MediaType FROM ProductMedia WHERE ProductId IN ({inClause}) ORDER BY ProductId, SortOrder", conn, tx))
+                    {
+                        foreach (var prm in pars) mediaCmd.Parameters.Add(prm);
+                        await using var r = await mediaCmd.ExecuteReaderAsync();
+                        while (await r.ReadAsync())
+                            mediaRows.Add((r.GetInt32(0), r.GetString(1), r.GetStringOrDefault(2, "image")));
+                    }
+                }
+                await tx.CommitAsync();
+            }
+            catch
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
+
+            var selectParamIds = paramRows.Where(x => x.Type == 2 || x.Type == 4 || x.Type == 8).Select(x => x.ParamId).Distinct().ToList();
+            var colorParamIds = paramRows.Where(x => x.Type == 6).Select(x => x.ParamId).Distinct().ToList();
+            var options = selectParamIds.Count > 0
+                ? await LoadSelectOptionsDictionaryAsync(selectParamIds)
+                : new Dictionary<int, (string Value, string ValueLV, string ValueRU)>();
+            var colors = colorParamIds.Count > 0
+                ? await LoadColorOptionsDictionaryAsync(colorParamIds)
+                : new Dictionary<int, (string Name, string NameLV, string NameRU, string Hex)>();
+
+            var result = new List<ExportListing>(products.Count);
+            foreach (var p in products)
+            {
+                var values = new Dictionary<int, string>();
+                var multiValues = new Dictionary<int, List<string>>();
+                foreach (var row in paramRows.Where(x => x.ProductId == p.Id))
+                {
+                    string text;
+                    if (row.Type == 2 || row.Type == 8) text = ResolveOptionTextFromDictionary(row.Value, options, lang);
+                    else if (row.Type == 4)
+                    {
+                        var texts = row.Value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                            .Select(id => ResolveOptionTextFromDictionary(id, options, lang));
+                        if (!multiValues.ContainsKey(row.ParamId)) multiValues[row.ParamId] = [];
+                        multiValues[row.ParamId].AddRange(texts);
+                        continue;
+                    }
+                    else if (row.Type == 6) text = int.TryParse(row.Value, out int colorId) && colors.TryGetValue(colorId, out var c) ? Resolve(lang, c.Name, c.NameLV, c.NameRU) : row.Value;
+                    else if (row.Type == 3) text = bool.TryParse(row.Value, out var b) && b ? "TRUE" : "FALSE";
+                    else text = row.Value;
+                    values[row.ParamId] = text;
+                }
+                foreach (var (paramId, list) in multiValues) values[paramId] = string.Join(", ", list);
+
+                // В колонку photos выгружаем только изображения (видео обратно через ссылки не импортируется);
+                // если медиа нет, берём legacy AvatarUrl.
+                var photoUrls = mediaRows.Where(m => m.ProductId == p.Id && m.MediaType == "image").Select(m => m.FilePath).ToList();
+                if (photoUrls.Count == 0 && !string.IsNullOrWhiteSpace(p.AvatarUrl) && p.AvatarUrl.StartsWith('/'))
+                    photoUrls = [p.AvatarUrl];
+
+                result.Add(new ExportListing(p.Id, p.Name, p.Description, p.Qty, p.Address, p.Price, p.Duration,
+                    values, photoUrls));
+            }
+            return result;
         }
         public async Task<List<int>> GetFavouriteSubscriberIdsAsync(int productId, int excludeUserId) => await QueryAsync("SELECT DISTINCT UserId FROM Favourites WHERE ProductId = @ProductId AND Can = 1 AND UserId != @ExcludeUserId", r => r.GetInt32(0), p => { p.AddWithValue("@ProductId", productId); p.AddWithValue("@ExcludeUserId", excludeUserId); });
         public async Task<List<Product>> GetPurchasedByUserAsync(int userId) => await QueryAsync(@"SELECT p.Id,p.Name,p.Address,p.CreatedAt,COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),p.AvatarUrl) AS AvatarUrl,p.Status,o.Price AS Price FROM Products p INNER JOIN (SELECT ProductId,Price,CreatedAt,ROW_NUMBER() OVER (PARTITION BY ProductId ORDER BY CreatedAt DESC) AS rn FROM Orders WHERE UserId = @UserId AND OrderStatus = 1) o ON o.ProductId = p.Id AND o.rn = 1 ORDER BY o.CreatedAt DESC", r => new Product { Id = r.GetInt32(0), Name = r.GetStringOrDefault(1), Address = r.GetStringOrNull(2), CreatedAt = r.GetDateTimeOrNull(3), AvatarUrl = r.GetStringOrNull(4), Status = ProductStatus.Succeeded, Price = r.GetDecimalOrNull(6) }, p => p.AddWithValue("@UserId", userId));

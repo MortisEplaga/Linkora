@@ -1,4 +1,4 @@
-﻿@{
+@{
     var status = (string)ViewBag.Status;
     ViewData["Title"] = "Payment result";
 }
@@ -7,18 +7,22 @@
         @if (status == "completed")
         {
             <div style="font-size:48px;margin-bottom:16px">✅</div>
-            <h2 class="auth-title">Payment successful</h2>
+            <h2 class="auth-title" data-i18n="payment_status_completed">Payment successful</h2>
         }
         else if (status == "already_completed")
         {
             <div style="font-size:48px;margin-bottom:16px">✅</div>
-            <h2 class="auth-title">Already processed</h2>
+            <h2 class="auth-title" data-i18n="payment_status_already">Already processed</h2>
         }
         else
         {
             <div style="font-size:48px;margin-bottom:16px">❌</div>
-            <h2 class="auth-title">Payment not completed</h2>
+            <h2 class="auth-title" data-i18n="payment_status_failed">Payment not completed</h2>
         }
-        <a href="/" class="auth-submit" style="display:inline-block;text-decoration:none;padding:12px 32px;margin-top:16px">Back to home</a>
+        <a href="/" class="auth-submit" style="display:inline-block;text-decoration:none;padding:12px 32px;margin-top:16px" data-i18n="back_to_home">Back to home</a>
     </div>
 </div>
+
+@section Scripts {
+    <script>document.addEventListener('DOMContentLoaded', applyTranslations);</script>
+}

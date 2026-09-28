@@ -1,4 +1,4 @@
-﻿using Linkora.Models;
+using Linkora.Models;
 using Microsoft.Data.SqlClient;
 
 namespace Linkora.Repositories
@@ -8,85 +8,108 @@ namespace Linkora.Repositories
         public PointsLedgerRepository(IConfiguration configuration) : base(configuration) { }
 
         public async Task<int?> TryAddAsync(int userId, PointsLedgerEventType eventType, int? sourceUserId = null, int? sourceProductId = null)
+            => await ExecuteInTransactionAsync(async (conn, tx) =>
+                await TryAddCoreAsync(conn, tx, userId, eventType, sourceUserId, sourceProductId));
+
+        private static async Task<int?> TryAddCoreAsync(SqlConnection conn, SqlTransaction tx, int userId, PointsLedgerEventType eventType, int? sourceUserId = null, int? sourceProductId = null)
         {
             var rule = PointsLedgerRules.Rules[eventType];
             var now = DateTime.UtcNow;
             var monthKey = now.ToString("yyyyMM");
             var typeName = eventType.ToString();
 
-            return await ExecuteInTransactionAsync(async (conn, tx) =>
+            await using (var lockCmd = new SqlCommand("SELECT Id FROM Users WITH (UPDLOCK, HOLDLOCK) WHERE Id = @Id", conn, tx))
             {
-                await using (var lockCmd = new SqlCommand("SELECT Id FROM Users WITH (UPDLOCK, HOLDLOCK) WHERE Id = @Id", conn, tx))
-                {
-                    lockCmd.Parameters.AddWithValue("@Id", userId);
-                    if (await lockCmd.ExecuteScalarAsync() == null) return (int?)null;
-                }
+                lockCmd.Parameters.AddWithValue("@Id", userId);
+                if (await lockCmd.ExecuteScalarAsync() == null) return (int?)null;
+            }
 
-                if (rule.OneTime)
-                {
-                    await using var existsCmd = new SqlCommand(
-                        "SELECT COUNT(*) FROM PointsLedgerEntries WHERE UserId = @UserId AND EventType = @EventType AND Status != 'Rejected'", conn, tx);
-                    existsCmd.Parameters.AddWithValue("@UserId", userId);
-                    existsCmd.Parameters.AddWithValue("@EventType", typeName);
-                    if ((int)(await existsCmd.ExecuteScalarAsync())! > 0) return (int?)null;
-                }
-                else
-                {
-                    await using var capCmd = new SqlCommand(
-                        @"SELECT COUNT(*), ISNULL(SUM(Points),0) FROM PointsLedgerEntries
-                          WHERE UserId = @UserId AND EventType = @EventType AND MonthKey = @MonthKey AND Status != 'Rejected'", conn, tx);
-                    capCmd.Parameters.AddWithValue("@UserId", userId);
-                    capCmd.Parameters.AddWithValue("@EventType", typeName);
-                    capCmd.Parameters.AddWithValue("@MonthKey", monthKey);
-                    await using var reader = await capCmd.ExecuteReaderAsync();
-                    await reader.ReadAsync();
-                    var count = reader.GetInt32(0);
-                    var pointsSoFar = reader.GetInt32(1);
-                    await reader.CloseAsync();
+            if (rule.OneTime)
+            {
+                await using var existsCmd = new SqlCommand(
+                    "SELECT COUNT(*) FROM PointsLedgerEntries WHERE UserId = @UserId AND EventType = @EventType AND Status != 'Rejected'", conn, tx);
+                existsCmd.Parameters.AddWithValue("@UserId", userId);
+                existsCmd.Parameters.AddWithValue("@EventType", typeName);
+                if ((int)(await existsCmd.ExecuteScalarAsync())! > 0) return (int?)null;
+            }
+            else
+            {
+                await using var capCmd = new SqlCommand(
+                    @"SELECT COUNT(*), ISNULL(SUM(Points),0) FROM PointsLedgerEntries
+                      WHERE UserId = @UserId AND EventType = @EventType AND MonthKey = @MonthKey AND Status != 'Rejected'", conn, tx);
+                capCmd.Parameters.AddWithValue("@UserId", userId);
+                capCmd.Parameters.AddWithValue("@EventType", typeName);
+                capCmd.Parameters.AddWithValue("@MonthKey", monthKey);
+                await using var reader = await capCmd.ExecuteReaderAsync();
+                await reader.ReadAsync();
+                var count = reader.GetInt32(0);
+                var pointsSoFar = reader.GetInt32(1);
+                await reader.CloseAsync();
 
-                    if (rule.MonthlyCountCap.HasValue && count >= rule.MonthlyCountCap.Value) return (int?)null;
-                    if (rule.MonthlyPointsCap.HasValue && pointsSoFar + rule.Points > rule.MonthlyPointsCap.Value) return (int?)null;
-                }
+                if (rule.MonthlyCountCap.HasValue && count >= rule.MonthlyCountCap.Value) return (int?)null;
+                if (rule.MonthlyPointsCap.HasValue && pointsSoFar + rule.Points > rule.MonthlyPointsCap.Value) return (int?)null;
+            }
 
-                var status = rule.HoldDays <= 0 ? "Available" : "Pending";
-                var availableAt = now.AddDays(rule.HoldDays);
+            var status = rule.HoldDays <= 0 ? "Available" : "Pending";
+            var availableAt = now.AddDays(rule.HoldDays);
 
-                await using (var insertCmd = new SqlCommand(
-                    @"INSERT INTO PointsLedgerEntries (UserId, Points, EventType, Status, SourceUserId, SourceProductId, MonthKey, CreatedAt, AvailableAt, ConfirmedAt)
-                      OUTPUT INSERTED.Id
-                      VALUES (@UserId, @Points, @EventType, @Status, @SourceUserId, @SourceProductId, @MonthKey, @CreatedAt, @AvailableAt, @ConfirmedAt)", conn, tx))
-                {
-                    insertCmd.Parameters.AddWithValue("@UserId", userId);
-                    insertCmd.Parameters.AddWithValue("@Points", rule.Points);
-                    insertCmd.Parameters.AddWithValue("@EventType", typeName);
-                    insertCmd.Parameters.AddWithValue("@Status", status);
-                    insertCmd.Parameters.AddWithValue("@SourceUserId", (object?)sourceUserId ?? DBNull.Value);
-                    insertCmd.Parameters.AddWithValue("@SourceProductId", (object?)sourceProductId ?? DBNull.Value);
-                    insertCmd.Parameters.AddWithValue("@MonthKey", monthKey);
-                    insertCmd.Parameters.AddWithValue("@CreatedAt", now);
-                    insertCmd.Parameters.AddWithValue("@AvailableAt", availableAt);
-                    insertCmd.Parameters.AddWithValue("@ConfirmedAt", (object?)(status == "Available" ? now : null) ?? DBNull.Value);
+            await using (var insertCmd = new SqlCommand(
+                @"INSERT INTO PointsLedgerEntries (UserId, Points, EventType, Status, SourceUserId, SourceProductId, MonthKey, CreatedAt, AvailableAt, ConfirmedAt)
+                  OUTPUT INSERTED.Id
+                  VALUES (@UserId, @Points, @EventType, @Status, @SourceUserId, @SourceProductId, @MonthKey, @CreatedAt, @AvailableAt, @ConfirmedAt)", conn, tx))
+            {
+                insertCmd.Parameters.AddWithValue("@UserId", userId);
+                insertCmd.Parameters.AddWithValue("@Points", rule.Points);
+                insertCmd.Parameters.AddWithValue("@EventType", typeName);
+                insertCmd.Parameters.AddWithValue("@Status", status);
+                insertCmd.Parameters.AddWithValue("@SourceUserId", (object?)sourceUserId ?? DBNull.Value);
+                insertCmd.Parameters.AddWithValue("@SourceProductId", (object?)sourceProductId ?? DBNull.Value);
+                insertCmd.Parameters.AddWithValue("@MonthKey", monthKey);
+                insertCmd.Parameters.AddWithValue("@CreatedAt", now);
+                insertCmd.Parameters.AddWithValue("@AvailableAt", availableAt);
+                insertCmd.Parameters.AddWithValue("@ConfirmedAt", (object?)(status == "Available" ? now : null) ?? DBNull.Value);
 
-                    return (int?)(int)(await insertCmd.ExecuteScalarAsync())!;
-                }
-            });
+                return (int?)(int)(await insertCmd.ExecuteScalarAsync())!;
+            }
         }
         public async Task RecordListingPostedAsync(int sellerId, int productId)
         {
-            var listingEntryId = await TryAddAsync(sellerId, PointsLedgerEventType.ListingPosted, sourceProductId: productId);
-            if (listingEntryId == null) return;
+            await using var conn = await OpenConnectionAsync();
+            await using var tx = (SqlTransaction)await conn.BeginTransactionAsync();
+            try
+            {
+                await RecordListingPostedCoreAsync(conn, tx, sellerId, productId);
+                await tx.CommitAsync();
+            }
+            catch
+            {
+                await tx.RollbackAsync();
+                throw;
+            }
+        }
+        public async Task RecordListingPostedAsync(SqlConnection conn, SqlTransaction tx, int sellerId, int productId)
+            => await RecordListingPostedCoreAsync(conn, tx, sellerId, productId);
 
-            var referrerId = (await QueryAsync<int?>(
-                "SELECT ReferrerId FROM Users WHERE Id = @Id",
-                r => r.GetInt32OrNull(0),
-                p => p.AddWithValue("@Id", sellerId))).FirstOrDefault();
+        private static async Task RecordListingPostedCoreAsync(SqlConnection conn, SqlTransaction tx, int sellerId, int productId)
+        {
+            if (await TryAddCoreAsync(conn, tx, sellerId, PointsLedgerEventType.ListingPosted, sourceProductId: productId) == null) return;
 
+            int? referrerId;
+            await using (var refCmd = new SqlCommand("SELECT ReferrerId FROM Users WHERE Id = @Id", conn, tx))
+            {
+                refCmd.Parameters.AddWithValue("@Id", sellerId);
+                var scalar = await refCmd.ExecuteScalarAsync();
+                referrerId = scalar is int id ? id : null;
+            }
             if (!referrerId.HasValue) return;
 
-            var listingCount = (await QueryAsync<int>(
-                "SELECT COUNT(*) FROM PointsLedgerEntries WHERE UserId = @UserId AND EventType = 'ListingPosted' AND Status != 'Rejected'",
-                r => r.GetInt32(0),
-                p => p.AddWithValue("@UserId", sellerId))).FirstOrDefault();
+            int listingCount;
+            await using (var countCmd = new SqlCommand(
+                "SELECT COUNT(*) FROM PointsLedgerEntries WHERE UserId = @UserId AND EventType = 'ListingPosted' AND Status != 'Rejected'", conn, tx))
+            {
+                countCmd.Parameters.AddWithValue("@UserId", sellerId);
+                listingCount = (int)(await countCmd.ExecuteScalarAsync())!;
+            }
 
             PointsLedgerEventType? referralEvent = listingCount switch
             {
@@ -96,7 +119,7 @@ namespace Linkora.Repositories
             };
 
             if (referralEvent.HasValue)
-                await TryAddAsync(referrerId.Value, referralEvent.Value, sourceUserId: sellerId, sourceProductId: productId);
+                await TryAddCoreAsync(conn, tx, referrerId.Value, referralEvent.Value, sourceUserId: sellerId, sourceProductId: productId);
         }
         public async Task<PointsSummary> GetSummaryAsync(int userId)
         {

@@ -1,6 +1,14 @@
-﻿@{
+@{
     ViewData["Title"] = "Data Deletion Status";
 }
-<h2>@ViewData["Title"]</h2>
-<p>@ViewBag.Message</p>
-<p><a href="/">Back to home</a></p>
+<div class="auth-page">
+    <div class="auth-card" style="text-align:center">
+        <h2 class="auth-title" style="text-align:center" data-i18n="deletion_status_title">Data Deletion Status</h2>
+        <p style="color:#555;font-size:15px;line-height:1.6;margin-bottom:24px">@ViewBag.Message</p>
+        <a href="/" style="color:#00b0a3;font-size:14px;font-weight:600;text-decoration:none" data-i18n="back_to_home">Back to home</a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>document.addEventListener('DOMContentLoaded', applyTranslations);</script>
+}

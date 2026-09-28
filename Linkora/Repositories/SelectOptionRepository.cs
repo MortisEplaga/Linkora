@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Linkora.Repositories
 {
@@ -32,6 +33,27 @@ namespace Linkora.Repositories
                     p.AddWithValue("@ParamId", paramId);
                     p.AddWithValue("@Text", text.Trim());
                 }))[0];
+        public async Task<int?> FindIdAsync(SqlConnection conn, SqlTransaction tx, int paramId, string text, string lang)
+        {
+            await using var cmd = new SqlCommand(
+                $@"SELECT Id FROM SelectOptions
+                   WHERE ParamId = @ParamId
+                     AND LTRIM(RTRIM({ValueColumn(lang)})) = LTRIM(RTRIM(@Text))", conn, tx);
+            cmd.Parameters.AddWithValue("@ParamId", paramId);
+            cmd.Parameters.AddWithValue("@Text", text.Trim());
+            var scalar = await cmd.ExecuteScalarAsync();
+            return scalar is int id ? id : null;
+        }
+        public async Task<int> CreateAsync(SqlConnection conn, SqlTransaction tx, int paramId, string text)
+        {
+            await using var cmd = new SqlCommand(
+                @"INSERT INTO SelectOptions (ParamId, Value, ValueLV, ValueRU, IsConf)
+                  OUTPUT INSERTED.Id
+                  VALUES (@ParamId, @Text, @Text, @Text, 0)", conn, tx);
+            cmd.Parameters.AddWithValue("@ParamId", paramId);
+            cmd.Parameters.AddWithValue("@Text", text.Trim());
+            return (int)(await cmd.ExecuteScalarAsync())!;
+        }
         public async Task<List<(int Id, string Text)>> GetConfirmedAsync(int paramId, string lang)
         {
             string cacheKey = $"select_options_{paramId}_{lang}";

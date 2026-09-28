@@ -1,4 +1,4 @@
-﻿using Linkora.Repositories;
+using Linkora.Repositories;
 using Linkora.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +18,18 @@ namespace Linkora.Controllers
             try
             {
                 var (data, type, name) = await import.BuildTemplateAsync(categoryId, format, Request.GetLang());
+                return File(data, type, name);
+            }
+            catch (ArgumentException) { return NotFound(); }
+        }
+        [HttpGet] public async Task<IActionResult> Export(int categoryId, string format = "xlsx")
+        {
+            var userId = User.GetUserId();
+            if (await users.IsBannedAsync(userId)) return Forbid();
+            if (format != "csv" && format != "xlsx") return BadRequest();
+            try
+            {
+                var (data, type, name) = await import.BuildExportAsync(userId, categoryId, format, Request.GetLang());
                 return File(data, type, name);
             }
             catch (ArgumentException) { return NotFound(); }

@@ -1,4 +1,4 @@
-﻿using ClosedXML.Excel;
+using ClosedXML.Excel;
 using Linkora.Models;
 using Linkora.Repositories;
 using System.Globalization;
@@ -13,17 +13,25 @@ namespace Linkora.Services
     public interface IListingImportService
     {
         Task<(byte[] Data, string ContentType, string FileName)> BuildTemplateAsync(int categoryId, string format, string lang);
+        Task<(byte[] Data, string ContentType, string FileName)> BuildExportAsync(int userId, int categoryId, string format, string lang);
         Task<ImportResult> ImportAsync(int userId, string userName, IFormFile file, string lang);
     }
 
-    public class ListingImportService(ICategoryRepository categories, ISelectOptionRepository selectOptions, IProductRepository products, IGeocodingService geocoding, IPromotionRepository promotions, IPointsLedgerRepository points, INotificationService notifications, IUserRepository users) : IListingImportService
+    public class ListingImportService(ICategoryRepository categories, IProductRepository products, IGeocodingService geocoding,
+                                      IPromotionRepository promotions, INotificationService notifications, IUserRepository users,
+                                      IMediaStorageService mediaStorage) : IListingImportService
     {
         public const int MaxRows = 200;
         public const long MaxFileBytes = 5 * 1024 * 1024;
+        public const int MaxPhotosPerListing = 10;
+        public const long MaxImportMediaBytes = 100L * 1024 * 1024;   // суммарный лимит фото, скачиваемых за один импорт
+        private const int DownloadDegreeOfParallelism = 6;
         private static readonly Regex ParamHeader = new(@"\[p(\d+)\]\s*$", RegexOptions.Compiled);
-        private static readonly string[] FixedColumns = ["title", "description", "qty", "price", "address", "publish_days"];
+        private static readonly string[] FixedColumns = ["title", "description", "qty", "price", "address", "photos", "publish_days"];
         private static readonly HashSet<string> TrueValues = new(StringComparer.OrdinalIgnoreCase) { "true", "yes", "1", "да", "jā", "ja" };
         private static readonly HashSet<string> FalseValues = new(StringComparer.OrdinalIgnoreCase) { "false", "no", "0", "нет", "nē", "ne" };
+
+        private sealed record PreparedRow(Product Product, Dictionary<int, string> Params, int Duration, List<string> PhotoUrls, List<ProductMedia> Media, int Line);
 
         private async Task<(Category Category, List<Parameter> Params)?> LoadAsync(int categoryId)
         {
@@ -39,6 +47,7 @@ namespace Linkora.Services
             var headers = new List<string> { "title", "description", "qty" };
             if (category.HasPrice == true) headers.Add("price");
             headers.Add("address");
+            headers.Add("photos");
             headers.Add("publish_days");
             headers.AddRange(parameters.Select(p => $"{p.Param.Name} [p{p.Param.Id}]"));
             return headers;
@@ -56,14 +65,44 @@ namespace Linkora.Services
         {
             var loaded = await LoadAsync(categoryId) ?? throw new ArgumentException("Category not found");
             var (category, parameters) = loaded;
-            var headers = BuildHeaders(category, parameters);
-            var fileBase = $"template_{categoryId}";
+            return BuildFile(category, parameters, BuildHeaders(category, parameters), [], format, $"template_{categoryId}");
+        }
 
+        public async Task<(byte[] Data, string ContentType, string FileName)> BuildExportAsync(int userId, int categoryId, string format, string lang)
+        {
+            var loaded = await LoadAsync(categoryId) ?? throw new ArgumentException("Category not found");
+            var (category, parameters) = loaded;
+            var listings = await products.GetListingsForExportAsync(userId, categoryId, lang);
+            var rows = listings.Select(l => BuildExportRow(l, category, parameters)).ToList();
+            return BuildFile(category, parameters, BuildHeaders(category, parameters), rows, format, $"listings_{categoryId}");
+        }
+
+        private static List<string> BuildExportRow(ExportListing listing, Category category, List<Parameter> parameters)
+        {
+            var row = new List<string>
+            {
+                listing.Title,
+                listing.Description ?? "",
+                listing.Qty?.ToString(CultureInfo.InvariantCulture) ?? ""
+            };
+            if (category.HasPrice == true) row.Add(listing.Price?.ToString(CultureInfo.InvariantCulture) ?? "");
+            row.Add(listing.Address ?? "");
+            row.Add(string.Join("|", listing.PhotoUrls));
+            row.Add(listing.PublishDurationDays.ToString(CultureInfo.InvariantCulture));
+            foreach (var p in parameters)
+                row.Add(listing.ParamValues.TryGetValue(p.Param.Id, out var value) ? value : "");
+            return row;
+        }
+
+        private static (byte[] Data, string ContentType, string FileName) BuildFile(Category category, List<Parameter> parameters, List<string> headers, List<List<string>> rows, string format, string fileBase)
+        {
             if (format == "csv")
             {
                 var sb = new StringBuilder();
-                sb.Append("#category=").Append(categoryId).Append('\n');
+                sb.Append("#category=").Append(category.Id).Append('\n');
                 sb.Append(string.Join(';', headers.Select(CsvEscape))).Append('\n');
+                foreach (var row in rows)
+                    sb.Append(string.Join(';', row.Select(CsvEscape))).Append('\n');
                 return (new UTF8Encoding(true).GetPreamble().Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray(), "text/csv", fileBase + ".csv");
             }
 
@@ -72,7 +111,7 @@ namespace Linkora.Services
             var lists = wb.Worksheets.Add("Lists");
             var meta = wb.Worksheets.Add("Meta");
             meta.Cell(1, 1).Value = "category";
-            meta.Cell(1, 2).Value = categoryId;
+            meta.Cell(1, 2).Value = category.Id;
             meta.Visibility = XLWorksheetVisibility.Hidden;
 
             for (int i = 0; i < headers.Count; i++)
@@ -83,6 +122,10 @@ namespace Linkora.Services
                 c.Style.Fill.BackgroundColor = XLColor.LightGray;
             }
 
+            for (int r = 0; r < rows.Count; r++)
+                for (int i = 0; i < headers.Count && i < rows[r].Count; i++)
+                    ws.Cell(r + 2, i + 1).Value = rows[r][i];
+
             int paramOffset = headers.Count - parameters.Count;
             for (int i = 0; i < parameters.Count; i++)
             {
@@ -90,7 +133,6 @@ namespace Linkora.Services
                 if (texts.Count == 0) continue;
                 int listCol = i + 1;
                 for (int r = 0; r < texts.Count; r++) lists.Cell(r + 1, listCol).Value = texts[r];
-                lists.Cell(0 + 1, listCol).Address.ToString();
                 var range = lists.Range(1, listCol, texts.Count, listCol);
 
                 if (parameters[i].Param.Type is 2 or 6 or 3)
@@ -158,6 +200,77 @@ namespace Linkora.Services
             throw new InvalidDataException("Unsupported file type");
         }
 
+        private static string Truncate(string s, int max) => s.Length <= max ? s : s[..max] + "…";
+
+        /// <summary>
+        /// Скачивает все фото из колонки photos. Файлы пишутся на диск до записи в БД,
+        /// поэтому при любом сбое вызывающий код обязан удалить всё из downloadedFiles.
+        /// Возвращает false и заполняет errors, если хотя бы одна ссылка не скачалась.
+        /// </summary>
+        private async Task<bool> TryDownloadPhotosAsync(List<PreparedRow> prepared, List<string> downloadedFiles, List<ImportError> errors)
+        {
+            var rowStart = new int[prepared.Count];
+            var tasks = new List<string>();
+            for (int i = 0; i < prepared.Count; i++)
+            {
+                rowStart[i] = tasks.Count;
+                tasks.AddRange(prepared[i].PhotoUrls);
+            }
+            if (tasks.Count == 0) return true;
+
+            var results = new RemoteImageResult[tasks.Count];
+            var gate = new SemaphoreSlim(DownloadDegreeOfParallelism);
+            long totalBytes = 0;
+
+            await Task.WhenAll(tasks.Select(async (url, idx) =>
+            {
+                await gate.WaitAsync();
+                try
+                {
+                    if (Interlocked.Read(ref totalBytes) > MaxImportMediaBytes)
+                    {
+                        results[idx] = new RemoteImageResult(null, "total media size limit exceeded", 0);
+                        return;
+                    }
+                    results[idx] = await mediaStorage.DownloadImageAsync(url);
+                    if (results[idx].Media != null)
+                        Interlocked.Add(ref totalBytes, results[idx].Bytes);
+                }
+                finally { gate.Release(); }
+            }));
+
+            var ok = true;
+            for (int i = 0; i < prepared.Count; i++)
+            {
+                var row = prepared[i];
+                for (int j = 0; j < row.PhotoUrls.Count; j++)
+                {
+                    var r = results[rowStart[i] + j];
+                    if (r.Media == null)
+                    {
+                        errors.Add(new ImportError(row.Line, $"photos: {r.Error} ('{Truncate(row.PhotoUrls[j], 60)}')"));
+                        ok = false;
+                        continue;
+                    }
+                    r.Media.SortOrder = row.Media.Count;
+                    row.Media.Add(r.Media);
+                    downloadedFiles.Add(r.Media.FilePath);
+                }
+            }
+            return ok;
+        }
+
+        private static void DeleteDownloadedFiles(IEnumerable<string> filePaths)
+        {
+            foreach (var path in filePaths)
+                try
+                {
+                    var full = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", path.TrimStart('/'));
+                    if (File.Exists(full)) File.Delete(full);
+                }
+                catch { /* очистка best-effort */ }
+        }
+
         public async Task<ImportResult> ImportAsync(int userId, string userName, IFormFile file, string lang)
         {
             var errors = new List<ImportError>();
@@ -188,13 +301,12 @@ namespace Linkora.Services
 
             string Cell(List<string> row, string name) => col.TryGetValue(name, out var i) && i < row.Count ? row[i].Trim() : "";
 
-            var prepared = new List<(Product Product, Dictionary<int, string> Params, int Duration)>();
-            var newOptions = new Dictionary<(int ParamId, string Text), int>();
+            var prepared = new List<PreparedRow>();
 
             for (int r = 0; r < data.Rows.Count; r++)
             {
                 var row = data.Rows[r];
-                int line = r + 3; 
+                int line = r + 3;
                 if (row.All(string.IsNullOrWhiteSpace)) continue;
                 int before = errors.Count;
 
@@ -222,6 +334,21 @@ namespace Linkora.Services
                 if (daysText.Length > 0)
                     if (!int.TryParse(daysText, out var days) || !AdDurations.IsAccepted(days)) errors.Add(new(line, $"publish_days must be one of: {AdDurations.OptionsHint}"));
                     else rowDuration = days;
+
+                var photoUrls = new List<string>();
+                var photosText = Cell(row, "photos");
+                if (photosText.Length > 0)
+                {
+                    foreach (var part in photosText.Split(['|', ',', '\n', '\r'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                    {
+                        if (part.Length > 2048) { errors.Add(new(line, "photos: url is too long")); break; }
+                        if (part.StartsWith('/')) { photoUrls.Add(part); continue; }
+                        if (!Uri.TryCreate(part, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+                        { errors.Add(new(line, $"photos: invalid url '{Truncate(part, 60)}'")); break; }
+                        photoUrls.Add(part);
+                    }
+                    if (photoUrls.Count > MaxPhotosPerListing) errors.Add(new(line, $"photos: max {MaxPhotosPerListing} images per listing"));
+                }
 
                 var paramValues = new Dictionary<int, string>();
                 foreach (var p in parameters)
@@ -255,7 +382,7 @@ namespace Linkora.Services
                             {
                                 var o = p.Options.FirstOrDefault(x => x.Text.Equals(raw, StringComparison.OrdinalIgnoreCase));
                                 if (o != null) paramValues[p.Param.Id] = o.Id.ToString();
-                                else paramValues[p.Param.Id] = "new:" + raw; 
+                                else paramValues[p.Param.Id] = "new:" + raw;
                                 break;
                             }
                         case 6:
@@ -295,7 +422,7 @@ namespace Linkora.Services
                     if (g.HasValue) (lat, lng) = g.Value;
                 }
 
-                prepared.Add((new Product
+                prepared.Add(new PreparedRow(new Product
                 {
                     UserId = userId,
                     Name = title,
@@ -306,37 +433,54 @@ namespace Linkora.Services
                     Price = price,
                     Lat = lat,
                     Lng = lng,
-                }, paramValues, rowDuration));
+                }, paramValues, rowDuration, photoUrls, [], line));
             }
 
             if (errors.Count > 0) return new ImportResult(0, errors, []);
             if (prepared.Count == 0) return new ImportResult(0, [new ImportError(0, "No rows")], []);
 
             var subscription = await promotions.GetActiveAsync(userId);
-            var createdIds = new List<int>();
-
-            foreach (var (product, paramValues, rowDuration) in prepared)
+            foreach (var p in prepared)
             {
-                foreach (var key in paramValues.Where(kv => kv.Value.StartsWith("new:")).Select(kv => kv.Key).ToList())
-                {
-                    var text = paramValues[key][4..];
-                    if (!newOptions.TryGetValue((key, text.ToLowerInvariant()), out var optId))
-                    {
-                        optId = await selectOptions.FindIdAsync(key, text, lang) ?? await selectOptions.CreateAsync(key, text);
-                        newOptions[(key, text.ToLowerInvariant())] = optId;
-                    }
-                    paramValues[key] = optId.ToString();
-                }
-
-                product.SubscriptionBoostLevel = subscription?.Tier;
-                product.SubscriptionBoostExpiresAt = subscription?.ExpiresAt;
-
-                var id = await products.CreateAsync(product, paramValues, rowDuration);
-                await points.RecordListingPostedAsync(userId, id);
-                await products.RecalculateModerationScoreAsync(id);
-                await notifications.NotifySubscribersAsync(userId, id, product.Name, userName);
-                createdIds.Add(id);
+                p.Product.SubscriptionBoostLevel = subscription?.Tier;
+                p.Product.SubscriptionBoostExpiresAt = subscription?.ExpiresAt;
             }
+
+            // 1. Сначала скачиваем все фото. Любой сбой — файлы удаляются, в БД не пишем ничего.
+            var downloadedFiles = new List<string>();
+            bool downloadOk;
+            try { downloadOk = await TryDownloadPhotosAsync(prepared, downloadedFiles, errors); }
+            catch (Exception ex)
+            {
+                DeleteDownloadedFiles(downloadedFiles);
+                return new ImportResult(0, [new ImportError(0, "Import failed, nothing was created: " + ex.Message)], []);
+            }
+            if (!downloadOk)
+            {
+                DeleteDownloadedFiles(downloadedFiles);
+                return new ImportResult(0, errors, []);
+            }
+            foreach (var p in prepared)
+                if (p.Media.Count > 0)
+                    p.Product.AvatarUrl = p.Media[0].FilePath;
+
+            // 2. Одна атомарная транзакция: все объявления, параметры, медиа, опции и поинты — либо всё, либо ничего.
+            List<int> createdIds;
+            try
+            {
+                var importListings = prepared.Select(p => new ImportListing(p.Product, p.Params, p.Duration, p.Media)).ToList();
+                createdIds = await products.CreateImportedListingsAsync(userId, importListings, lang);
+            }
+            catch (Exception ex)
+            {
+                DeleteDownloadedFiles(downloadedFiles);
+                return new ImportResult(0, [new ImportError(0, "Import failed, nothing was created: " + ex.Message)], []);
+            }
+
+            // 3. Уведомления подписчикам — после фиксации транзакции; сбой не откатывает импорт.
+            for (int i = 0; i < createdIds.Count; i++)
+                try { await notifications.NotifySubscribersAsync(userId, createdIds[i], prepared[i].Product.Name, userName); }
+                catch { /* уведомление не критично */ }
 
             return new ImportResult(createdIds.Count, [], createdIds);
         }
