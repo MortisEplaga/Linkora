@@ -52,7 +52,7 @@ namespace Linkora.Repositories
             });
         public async Task<int> GetReferralCountAsync(int userId) => (await QueryAsync<int>("SELECT COUNT(*) FROM Users WHERE ReferrerId = @Id", r => r.GetInt32(0), p => p.AddWithValue("@Id", userId))).FirstOrDefault();
         public async Task<User?> GetByEmailAsync(string email) => await QuerySingleAsync("SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration, TelegramUrl, WhatsAppUrl, WebsiteUrl, HomeAddress, HomeLat, HomeLng FROM Users WHERE Email = @E", MapUser, p => p.AddWithValue("@E", email));
-        public async Task<int> CreateGoogleUserAsync(User user) => (await QueryAsync<int>(@"INSERT INTO Users (UserName, Email, Role, AvatarUrl, PasswordHash) OUTPUT INSERTED.Id VALUES (@U, @E, 'user', @A, NULL)",
+        public async Task<int> CreateGoogleUserAsync(User user) => (await QueryAsync<int>(@"INSERT INTO Users (UserName, Email, Role, AvatarUrl, PasswordHash, EmailConfirmed) OUTPUT INSERTED.Id VALUES (@U, @E, 'user', @A, NULL, 1)",
                 r => r.GetInt32(0),
                 p =>
                 {
@@ -93,11 +93,6 @@ namespace Linkora.Repositories
         public async Task<User?> GetByPasswordResetTokenAsync(string token) => await QuerySingleAsync("SELECT Id, UserName, Email, Phone, Role, PasswordHash, AvatarUrl, EmailConfirmed, PreferredAdDuration, TelegramUrl, WhatsAppUrl, WebsiteUrl, HomeAddress, HomeLat, HomeLng FROM Users WHERE PasswordResetToken = @T AND PasswordResetExpiry > GETUTCDATE()", MapUser, p => p.AddWithValue("@T", token));
         public async Task ClearPasswordResetTokenAsync(int userId) => await ExecuteAsync("UPDATE Users SET PasswordResetToken = NULL, PasswordResetExpiry = NULL WHERE Id = @Id", p => p.AddWithValue("@Id", userId));
         public async Task UpdatePasswordHashAsync(int userId, string passwordHash) => await ExecuteAsync("UPDATE Users SET PasswordHash = @H WHERE Id = @Id", p => { p.AddWithValue("@H", passwordHash); p.AddWithValue("@Id", userId); });
-        public async Task AdjustPromotionPointsAsync(int userId, int delta)
-        {
-            if (delta == 0) return;
-            await ExecuteAsync("UPDATE Users SET PromotionPoints = PromotionPoints + @Delta WHERE Id = @Id", p => { p.AddWithValue("@Delta", delta); p.AddWithValue("@Id", userId); });
-        }
         public async Task<bool> IsBannedAsync(int userId) => (await QueryAsync<string>("SELECT Role FROM Users WHERE Id = @Id", r => r.GetStringOrNull(0)!, p => p.AddWithValue("@Id", userId))).FirstOrDefault() == "banned";
         public async Task UpdateProfileAsync(int userId, string userName, string? phone, int? duration, string? newHash, string? telegramUrl, string? whatsAppUrl, string? websiteUrl, string? homeAddress, decimal? homeLat, decimal? homeLng)
         {
@@ -129,7 +124,5 @@ namespace Linkora.Repositories
                 p.AddWithValue("@Id", userId);
             });
         }
-        public async Task<int> GetPromotionPointsAsync(int userId) => (await QueryAsync<int>("SELECT ISNULL(PromotionPoints, 0) FROM Users WHERE Id = @Id", r => r.GetInt32(0), p => p.AddWithValue("@Id", userId))).FirstOrDefault();
-        public async Task<bool> TrySpendPromotionPointsAsync(int userId, int points) => points > 0 && (await ExecuteAsync("UPDATE Users SET PromotionPoints = PromotionPoints - @P WHERE Id = @Id AND PromotionPoints >= @P", p => { p.AddWithValue("@P", points); p.AddWithValue("@Id", userId); })) > 0;
     }
 }

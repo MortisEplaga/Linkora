@@ -23,13 +23,10 @@ namespace Linkora.Repositories
         Task<User?> GetByPasswordResetTokenAsync(string token);
         Task ClearPasswordResetTokenAsync(int userId);
         Task UpdatePasswordHashAsync(int userId, string passwordHash);
-        Task AdjustPromotionPointsAsync(int userId, int delta);
         Task<bool> IsBannedAsync(int userId);
         Task UpdateProfileAsync(int userId, string userName, string? phone, int? duration, string? newHash,
                                 string? telegramUrl, string? whatsAppUrl, string? websiteUrl,
                                 string? homeAddress, decimal? homeLat, decimal? homeLng);
-        Task<int> GetPromotionPointsAsync(int userId);
-        Task<bool> TrySpendPromotionPointsAsync(int userId, int points);
         Task<int> SetReferrerAsync(int userId, int referrerId);
         Task<int> GetReferralCountAsync(int userId);
     }

@@ -165,11 +165,7 @@ namespace Linkora.Controllers
 
             return Ok(new { avatarUrl = newUrl });
         }
-        [HttpGet] public async Task<IActionResult> PointsBalance()
-        {
-            var summary = await _pointsLedgerRepository.GetSummaryAsync(User.GetUserId());
-            return Json(new { summary.Available });
-        }
+        [HttpGet] public async Task<IActionResult> PointsBalance() => Json(new { available = await _pointsRepository.GetBalanceAsync(User.GetUserId()) }); 
         public async Task<IActionResult> Stats()
         {
             var userId = User.GetUserId();

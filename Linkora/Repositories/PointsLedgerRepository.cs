@@ -3,13 +3,10 @@ using Microsoft.Data.SqlClient;
 
 namespace Linkora.Repositories
 {
-    public class PointsLedgerRepository : SqlRepositoryBase, IPointsLedgerRepository
+    public class PointsLedgerRepository(IConfiguration configuration) : SqlRepositoryBase(configuration), IPointsLedgerRepository
     {
-        public PointsLedgerRepository(IConfiguration configuration) : base(configuration) { }
-
         public async Task<int?> TryAddAsync(int userId, PointsLedgerEventType eventType, int? sourceUserId = null, int? sourceProductId = null)
-            => await ExecuteInTransactionAsync(async (conn, tx) =>
-                await TryAddCoreAsync(conn, tx, userId, eventType, sourceUserId, sourceProductId));
+            => await ExecuteInTransactionAsync(async (conn, tx) => await TryAddCoreAsync(conn, tx, userId, eventType, sourceUserId, sourceProductId));
 
         private static async Task<int?> TryAddCoreAsync(SqlConnection conn, SqlTransaction tx, int userId, PointsLedgerEventType eventType, int? sourceUserId = null, int? sourceProductId = null)
         {
@@ -26,16 +23,14 @@ namespace Linkora.Repositories
 
             if (rule.OneTime)
             {
-                await using var existsCmd = new SqlCommand(
-                    "SELECT COUNT(*) FROM PointsLedgerEntries WHERE UserId = @UserId AND EventType = @EventType AND Status != 'Rejected'", conn, tx);
+                await using var existsCmd = new SqlCommand("SELECT COUNT(*) FROM PointsLedgerEntries WHERE UserId = @UserId AND EventType = @EventType AND Status != 'Rejected'", conn, tx);
                 existsCmd.Parameters.AddWithValue("@UserId", userId);
                 existsCmd.Parameters.AddWithValue("@EventType", typeName);
                 if ((int)(await existsCmd.ExecuteScalarAsync())! > 0) return (int?)null;
             }
             else
             {
-                await using var capCmd = new SqlCommand(
-                    @"SELECT COUNT(*), ISNULL(SUM(Points),0) FROM PointsLedgerEntries
+                await using var capCmd = new SqlCommand(@"SELECT COUNT(*), ISNULL(SUM(Points),0) FROM PointsLedgerEntries
                       WHERE UserId = @UserId AND EventType = @EventType AND MonthKey = @MonthKey AND Status != 'Rejected'", conn, tx);
                 capCmd.Parameters.AddWithValue("@UserId", userId);
                 capCmd.Parameters.AddWithValue("@EventType", typeName);
@@ -53,24 +48,20 @@ namespace Linkora.Repositories
             var status = rule.HoldDays <= 0 ? "Available" : "Pending";
             var availableAt = now.AddDays(rule.HoldDays);
 
-            await using (var insertCmd = new SqlCommand(
-                @"INSERT INTO PointsLedgerEntries (UserId, Points, EventType, Status, SourceUserId, SourceProductId, MonthKey, CreatedAt, AvailableAt, ConfirmedAt)
-                  OUTPUT INSERTED.Id
-                  VALUES (@UserId, @Points, @EventType, @Status, @SourceUserId, @SourceProductId, @MonthKey, @CreatedAt, @AvailableAt, @ConfirmedAt)", conn, tx))
-            {
-                insertCmd.Parameters.AddWithValue("@UserId", userId);
-                insertCmd.Parameters.AddWithValue("@Points", rule.Points);
-                insertCmd.Parameters.AddWithValue("@EventType", typeName);
-                insertCmd.Parameters.AddWithValue("@Status", status);
-                insertCmd.Parameters.AddWithValue("@SourceUserId", (object?)sourceUserId ?? DBNull.Value);
-                insertCmd.Parameters.AddWithValue("@SourceProductId", (object?)sourceProductId ?? DBNull.Value);
-                insertCmd.Parameters.AddWithValue("@MonthKey", monthKey);
-                insertCmd.Parameters.AddWithValue("@CreatedAt", now);
-                insertCmd.Parameters.AddWithValue("@AvailableAt", availableAt);
-                insertCmd.Parameters.AddWithValue("@ConfirmedAt", (object?)(status == "Available" ? now : null) ?? DBNull.Value);
+            await using var insertCmd = new SqlCommand(@"INSERT INTO PointsLedgerEntries (UserId, Points, EventType, Status, SourceUserId, SourceProductId, MonthKey, CreatedAt, AvailableAt, ConfirmedAt)
+                  OUTPUT INSERTED.Id VALUES (@UserId, @Points, @EventType, @Status, @SourceUserId, @SourceProductId, @MonthKey, @CreatedAt, @AvailableAt, @ConfirmedAt)", conn, tx);
+            insertCmd.Parameters.AddWithValue("@UserId", userId);
+            insertCmd.Parameters.AddWithValue("@Points", rule.Points);
+            insertCmd.Parameters.AddWithValue("@EventType", typeName);
+            insertCmd.Parameters.AddWithValue("@Status", status);
+            insertCmd.Parameters.AddWithValue("@SourceUserId", (object?)sourceUserId ?? DBNull.Value);
+            insertCmd.Parameters.AddWithValue("@SourceProductId", (object?)sourceProductId ?? DBNull.Value);
+            insertCmd.Parameters.AddWithValue("@MonthKey", monthKey);
+            insertCmd.Parameters.AddWithValue("@CreatedAt", now);
+            insertCmd.Parameters.AddWithValue("@AvailableAt", availableAt);
+            insertCmd.Parameters.AddWithValue("@ConfirmedAt", (object?)(status == "Available" ? now : null) ?? DBNull.Value);
 
-                return (int?)(int)(await insertCmd.ExecuteScalarAsync())!;
-            }
+            return (int)(await insertCmd.ExecuteScalarAsync())!;
         }
         public async Task RecordListingPostedAsync(int sellerId, int productId)
         {
@@ -87,12 +78,11 @@ namespace Linkora.Repositories
                 throw;
             }
         }
-        public async Task RecordListingPostedAsync(SqlConnection conn, SqlTransaction tx, int sellerId, int productId)
-            => await RecordListingPostedCoreAsync(conn, tx, sellerId, productId);
+        public async Task RecordListingPostedAsync(SqlConnection conn, SqlTransaction tx, int sellerId, int productId) => await RecordListingPostedCoreAsync(conn, tx, sellerId, productId);
 
         private static async Task RecordListingPostedCoreAsync(SqlConnection conn, SqlTransaction tx, int sellerId, int productId)
         {
-            if (await TryAddCoreAsync(conn, tx, sellerId, PointsLedgerEventType.ListingPosted, sourceProductId: productId) == null) return;
+            await TryAddCoreAsync(conn, tx, sellerId, PointsLedgerEventType.ListingPosted, sourceProductId: productId);
 
             int? referrerId;
             await using (var refCmd = new SqlCommand("SELECT ReferrerId FROM Users WHERE Id = @Id", conn, tx))
@@ -104,30 +94,32 @@ namespace Linkora.Repositories
             if (!referrerId.HasValue) return;
 
             int listingCount;
-            await using (var countCmd = new SqlCommand(
-                "SELECT COUNT(*) FROM PointsLedgerEntries WHERE UserId = @UserId AND EventType = 'ListingPosted' AND Status != 'Rejected'", conn, tx))
+            await using (var countCmd = new SqlCommand("SELECT COUNT(*) FROM Products WHERE UserId = @UserId", conn, tx))
             {
                 countCmd.Parameters.AddWithValue("@UserId", sellerId);
                 listingCount = (int)(await countCmd.ExecuteScalarAsync())!;
             }
 
-            PointsLedgerEventType? referralEvent = listingCount switch
+            foreach (var (threshold, evt) in new[]
             {
-                1 => PointsLedgerEventType.ReferralFirstListing,
-                5 => PointsLedgerEventType.ReferralFiveListings,
-                _ => null
-            };
+                (1, PointsLedgerEventType.ReferralFirstListing),
+                (5, PointsLedgerEventType.ReferralFiveListings)
+            })
+            {
+                if (listingCount < threshold) continue;
 
-            if (referralEvent.HasValue)
-                await TryAddCoreAsync(conn, tx, referrerId.Value, referralEvent.Value, sourceUserId: sellerId, sourceProductId: productId);
+                await using var existsCmd = new SqlCommand(@"SELECT COUNT(*) FROM PointsLedgerEntries WHERE UserId = @Ref AND EventType = @E AND SourceUserId = @Seller AND Status != 'Rejected'", conn, tx);
+                existsCmd.Parameters.AddWithValue("@Ref", referrerId.Value);
+                existsCmd.Parameters.AddWithValue("@E", evt.ToString());
+                existsCmd.Parameters.AddWithValue("@Seller", sellerId);
+                if ((int)(await existsCmd.ExecuteScalarAsync())! > 0) continue;
+
+                await TryAddCoreAsync(conn, tx, referrerId.Value, evt, sourceUserId: sellerId, sourceProductId: productId);
+            }
         }
         public async Task<PointsSummary> GetSummaryAsync(int userId)
         {
-            var result = await QueryAsync(
-                @"SELECT
-                    ISNULL(SUM(CASE WHEN Status = 'Available' THEN Points END), 0),
-                    ISNULL(SUM(CASE WHEN Status = 'Pending' THEN Points END), 0)
-                  FROM PointsLedgerEntries WHERE UserId = @UserId",
+            var result = await QueryAsync(@"SELECT ISNULL(SUM(CASE WHEN Status = 'Available' THEN Points END), 0), ISNULL(SUM(CASE WHEN Status = 'Pending' THEN Points END), 0) FROM PointsLedgerEntries WHERE UserId = @UserId",
                 r => new PointsSummary { Available = r.GetInt32(0), Pending = r.GetInt32(1) },
                 p => p.AddWithValue("@UserId", userId));
 
@@ -135,13 +127,8 @@ namespace Linkora.Repositories
         }
         public async Task<(int Earned, int Pending)> GetReferralPointsAsync(int userId)
         {
-            var result = await QueryAsync(
-                @"SELECT
-                    ISNULL(SUM(CASE WHEN Status = 'Available' THEN Points END), 0),
-                    ISNULL(SUM(CASE WHEN Status = 'Pending' THEN Points END), 0)
-                  FROM PointsLedgerEntries
-                  WHERE UserId = @UserId AND Status <> 'Rejected'
-                    AND EventType IN ('ReferralFirstListing', 'ReferralFiveListings')",
+            var result = await QueryAsync(@"SELECT ISNULL(SUM(CASE WHEN Status = 'Available' THEN Points END), 0), ISNULL(SUM(CASE WHEN Status = 'Pending' THEN Points END), 0)
+                  FROM PointsLedgerEntries WHERE UserId = @UserId AND Status <> 'Rejected' AND EventType IN ('ReferralFirstListing', 'ReferralFiveListings')",
                 r => (Earned: r.GetInt32(0), Pending: r.GetInt32(1)),
                 p => p.AddWithValue("@UserId", userId));
 
@@ -171,9 +158,7 @@ namespace Linkora.Repositories
                 });
         public async Task<int> PromoteDueEntriesAsync()
         {
-            var due = await QueryAsync(
-                @"SELECT Id, UserId, EventType, SourceUserId, SourceProductId FROM PointsLedgerEntries
-                  WHERE Status = 'Pending' AND AvailableAt <= SYSUTCDATETIME()",
+            var due = await QueryAsync(@"SELECT Id, UserId, EventType, SourceUserId, SourceProductId FROM PointsLedgerEntries WHERE Status = 'Pending' AND AvailableAt <= SYSUTCDATETIME()",
                 r => (Id: r.GetInt32(0), UserId: r.GetInt32(1), EventType: r.GetString(2), SourceUserId: r.GetInt32OrNull(3), SourceProductId: r.GetInt32OrNull(4)));
 
             if (due.Count == 0) return 0;
@@ -185,8 +170,7 @@ namespace Linkora.Repositories
                 var eligible = await IsStillEligibleAsync(entry.UserId, entry.SourceUserId, entry.SourceProductId);
                 var newStatus = eligible ? "Available" : "Rejected";
 
-                await ExecuteAsync(
-                    "UPDATE PointsLedgerEntries SET Status = @Status, ConfirmedAt = @Now WHERE Id = @Id",
+                await ExecuteAsync("UPDATE PointsLedgerEntries SET Status = @Status, ConfirmedAt = @Now WHERE Id = @Id",
                     p =>
                     {
                         p.AddWithValue("@Status", newStatus);
@@ -201,29 +185,20 @@ namespace Linkora.Repositories
         }
         private async Task<bool> IsStillEligibleAsync(int userId, int? sourceUserId, int? sourceProductId)
         {
-            var recipientRole = (await QueryAsync<string>(
-                "SELECT Role FROM Users WHERE Id = @Id",
-                r => r.GetStringOrNull(0)!,
-                p => p.AddWithValue("@Id", userId))).FirstOrDefault();
+            var recipientRole = (await QueryAsync<string>("SELECT Role FROM Users WHERE Id = @Id", r => r.GetStringOrNull(0)!, p => p.AddWithValue("@Id", userId))).FirstOrDefault();
             if (recipientRole == null || recipientRole == "banned") return false;
 
             var checkUserId = sourceUserId ?? userId;
 
             if (checkUserId != userId)
             {
-                var sourceRole = (await QueryAsync<string>(
-                    "SELECT Role FROM Users WHERE Id = @Id",
-                    r => r.GetStringOrNull(0)!,
-                    p => p.AddWithValue("@Id", checkUserId))).FirstOrDefault();
+                var sourceRole = (await QueryAsync<string>("SELECT Role FROM Users WHERE Id = @Id", r => r.GetStringOrNull(0)!, p => p.AddWithValue("@Id", checkUserId))).FirstOrDefault();
                 if (sourceRole == null || sourceRole == "banned") return false;
             }
 
             if (sourceProductId.HasValue)
             {
-                var status = (await QueryAsync<string>(
-                    "SELECT Status FROM Products WHERE Id = @Id",
-                    r => r.GetStringOrNull(0)!,
-                    p => p.AddWithValue("@Id", sourceProductId.Value))).FirstOrDefault();
+                var status = (await QueryAsync<string>("SELECT Status FROM Products WHERE Id = @Id", r => r.GetStringOrNull(0)!, p => p.AddWithValue("@Id", sourceProductId.Value))).FirstOrDefault();
                 if (status == null || status is "Rejected" or "Moderation") return false;
             }
 

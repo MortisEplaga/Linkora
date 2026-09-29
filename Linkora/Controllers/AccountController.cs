@@ -231,6 +231,7 @@ namespace Linkora.Controllers
                 var id = await _userRepository.CreateGoogleUserAsync(user);
                 user.Id = id;
                 await ApplyReferralAsync(id);
+                await _pointsLedgerRepository.TryAddAsync(id, PointsLedgerEventType.EmailConfirmed);
             }
             else if (string.IsNullOrEmpty(user.AvatarUrl) && !string.IsNullOrEmpty(avatarUrl))
             {

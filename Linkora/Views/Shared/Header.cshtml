@@ -235,15 +235,14 @@
             const el = document.getElementById('userPointsValue');
             if (!el) return;
             try {
-                const res = await fetch('/Profile/PointsBalance' { cache: 'no-store' });
+                const res = await fetch('/Profile/PointsBalance', { cache: 'no-store' });
                 if (!res.ok) { el.textContent = '—'; return; }
-                const { balance } = await res.json();
-                el.textContent = balance;
+                const { available } = await res.json();
+                el.textContent = available;
             } catch {
                 el.textContent = '—';
             }
         }
-
         (function() {
             const logo = document.getElementById('siteLogo');
 

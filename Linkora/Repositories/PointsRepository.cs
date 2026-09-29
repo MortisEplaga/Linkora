@@ -66,13 +66,18 @@ namespace Linkora.Repositories
                 UNION ALL
                 SELECT MIN(HisAt), MAX(PaidBoostPoints), 0
                 FROM HIS_Products WHERE UserId = @U AND PaidBoostPoints > 0
-                GROUP BY ProductId, PaidBoostExpiresAt";
+                GROUP BY ProductId, PaidBoostExpiresAt
+                UNION ALL
+                SELECT ConfirmedAt, Points, 1
+                FROM PointsLedgerEntries
+                WHERE UserId = @U AND Status = 'Available' AND ConfirmedAt IS NOT NULL";
 
             await using var cmd = new SqlCommand(sql, conn, tx);
             cmd.Parameters.AddWithValue("@U", userId);
             var result = new List<PointsEvent>();
             await using var r = await cmd.ExecuteReaderAsync();
-            while (await r.ReadAsync()) result.Add(new PointsEvent(r.GetDateTime(0), r.GetInt32(1), r.GetInt32(2) == 1));
+            while (await r.ReadAsync())
+                result.Add(new PointsEvent(r.GetDateTime(0), r.GetInt32(1), r.GetInt32(2) == 1));
             return result;
         }
     }

@@ -18,7 +18,6 @@ namespace Linkora.Models
         [StringLength(100)] public string? ConfirmationToken { get; set; }
         public string? FacebookId { get; set; }
         public int? PreferredAdDuration { get; set; }
-        public int PromotionPoints { get; set; }
         [StringLength(500)] public string? TelegramUrl { get; set; }
         [StringLength(500)] public string? WhatsAppUrl { get; set; }
         [StringLength(500)] public string? WebsiteUrl { get; set; }

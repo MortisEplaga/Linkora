@@ -6,15 +6,18 @@ using Microsoft.AspNetCore.Mvc;
 namespace Linkora.Controllers
 {
     [Authorize]
-    public class PointsController(IPointsLedgerRepository ledgerRepository, IUserRepository userRepository, IConfiguration configuration) : Controller
+    public class PointsController(IPointsLedgerRepository ledgerRepository, IPointsRepository pointsRepository, IUserRepository userRepository, IConfiguration configuration) : Controller
     {
         private readonly IPointsLedgerRepository _ledgerRepository = ledgerRepository;
+        private readonly IPointsRepository _pointsRepository = pointsRepository;
         private readonly IUserRepository _userRepository = userRepository;
         private readonly IConfiguration _configuration = configuration;
         public async Task<IActionResult> Progress()
         {
             var userId = User.GetUserId();
-            ViewBag.Summary = await _ledgerRepository.GetSummaryAsync(userId);
+            var summary = await _ledgerRepository.GetSummaryAsync(userId);
+            summary.Available = await _pointsRepository.GetBalanceAsync(userId);
+            ViewBag.Summary = summary;
             ViewBag.History = await _ledgerRepository.GetHistoryAsync(userId, 20);
             ViewBag.Referral = await GetReferralInfoAsync(userId);
             return View();

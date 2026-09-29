@@ -19,18 +19,18 @@
         };
         public static readonly Dictionary<(PromotionTier, PromotionTermType), decimal> PointPrices = new()
         {
-            [(PromotionTier.Highlight, PromotionTermType.Week)] = 74m,
-            [(PromotionTier.Highlight, PromotionTermType.Month)] = 124m,
-            [(PromotionTier.Highlight, PromotionTermType.ThreeMonth)] = 324m,
-            [(PromotionTier.Highlight, PromotionTermType.Year)] = 999m,
-            [(PromotionTier.Top, PromotionTermType.Week)] = 149m,
-            [(PromotionTier.Top, PromotionTermType.Month)] = 349m,
-            [(PromotionTier.Top, PromotionTermType.ThreeMonth)] = 749m,
-            [(PromotionTier.Top, PromotionTermType.Year)] = 1999m,
-            [(PromotionTier.Vip, PromotionTermType.Week)] = 2299m,
-            [(PromotionTier.Vip, PromotionTermType.Month)] = 699m,
-            [(PromotionTier.Vip, PromotionTermType.ThreeMonth)] = 1499m,
-            [(PromotionTier.Vip, PromotionTermType.Year)] = 3999m,
+            [(PromotionTier.Highlight, PromotionTermType.Week)] = 740m,
+            [(PromotionTier.Highlight, PromotionTermType.Month)] = 1240m,
+            [(PromotionTier.Highlight, PromotionTermType.ThreeMonth)] = 3240m,
+            [(PromotionTier.Highlight, PromotionTermType.Year)] = 9990m,
+            [(PromotionTier.Top, PromotionTermType.Week)] = 1490m,
+            [(PromotionTier.Top, PromotionTermType.Month)] = 3490m,
+            [(PromotionTier.Top, PromotionTermType.ThreeMonth)] = 7490m,
+            [(PromotionTier.Top, PromotionTermType.Year)] = 19990m,
+            [(PromotionTier.Vip, PromotionTermType.Week)] = 2990m,
+            [(PromotionTier.Vip, PromotionTermType.Month)] = 6990m,
+            [(PromotionTier.Vip, PromotionTermType.ThreeMonth)] = 14990m,
+            [(PromotionTier.Vip, PromotionTermType.Year)] = 39990m,
         };
     }
 }

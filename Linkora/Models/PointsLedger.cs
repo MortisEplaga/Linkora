@@ -41,11 +41,11 @@
     {
         public static readonly Dictionary<PointsLedgerEventType, (int Points, bool OneTime, int? MonthlyCountCap, int? MonthlyPointsCap, int HoldDays)> Rules = new()
         {
-            [PointsLedgerEventType.EmailConfirmed] = (30, true, null, null, 0),
-            [PointsLedgerEventType.ProfileCompleted] = (20, true, null, null, 0),
-            [PointsLedgerEventType.ListingPosted] = (10, false, 10, 100, 7),
-            [PointsLedgerEventType.ReferralFirstListing] = (50, false, 5, 250, 7),
-            [PointsLedgerEventType.ReferralFiveListings] = (100, false, 5, 500, 7),
+            [PointsLedgerEventType.EmailConfirmed] = (300, true, null, null, 0),
+            [PointsLedgerEventType.ProfileCompleted] = (200, true, null, null, 0),
+            [PointsLedgerEventType.ListingPosted] = (100, false, 10, 1000, 7),
+            [PointsLedgerEventType.ReferralFirstListing] = (500, false, 5, 2500, 7),
+            [PointsLedgerEventType.ReferralFiveListings] = (1000, false, 5, 5000, 7),
         };
     }
 }
