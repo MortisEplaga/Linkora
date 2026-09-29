@@ -385,6 +385,7 @@
                 document.getElementById('fieldCurrentPwd').value = '';
                 document.getElementById('fieldNewPwd').value = '';
                 document.getElementById('profileRules').style.display = 'none';
+                if (typeof loadUserPoints === 'function') await loadUserPoints();
             } else {
                 const data = await res.json();
                 errorEl.textContent   = data.errors?.join(', ') || 'Error saving profile';

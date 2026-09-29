@@ -167,8 +167,8 @@ namespace Linkora.Controllers
         }
         [HttpGet] public async Task<IActionResult> PointsBalance()
         {
-            var balance = await _pointsRepository.GetBalanceAsync(User.GetUserId());
-            return Json(new { balance });
+            var summary = await _pointsLedgerRepository.GetSummaryAsync(User.GetUserId());
+            return Json(new { summary.Available });
         }
         public async Task<IActionResult> Stats()
         {

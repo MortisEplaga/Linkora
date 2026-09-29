@@ -235,7 +235,7 @@
             const el = document.getElementById('userPointsValue');
             if (!el) return;
             try {
-                const res = await fetch('/Profile/PointsBalance');
+                const res = await fetch('/Profile/PointsBalance' { cache: 'no-store' });
                 if (!res.ok) { el.textContent = '—'; return; }
                 const { balance } = await res.json();
                 el.textContent = balance;
