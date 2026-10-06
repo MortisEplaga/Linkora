@@ -152,6 +152,7 @@
     }
 
     async function deleteAd(id) {
+        if (!confirm(translate('confirm_delete'))) return;
         try {
             const res = await fetch(`/Product/Delete?id=${id}`, {
                 method: 'POST',
@@ -169,4 +170,5 @@
             console.error(translate('network_error'), e);
             alert(translate('network_error'));
         }
+    }
 </script>

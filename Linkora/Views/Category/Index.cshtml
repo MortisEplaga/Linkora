@@ -65,13 +65,39 @@
             var activeFilters = (Dictionary<int, List<string>>)ViewBag.Filters;
             var activeRangeFrom = (Dictionary<int, decimal>)ViewBag.RangeFrom;
             var activeRangeTo = (Dictionary<int, decimal>)ViewBag.RangeTo;
+            var priceFrom = (decimal?)ViewBag.PriceFrom;
+            var priceTo = (decimal?)ViewBag.PriceTo;
+            var priceOnly = (bool)(ViewBag.PriceOnly ?? false);
+            var showPriceFilter = category.HasPrice == true;
+            var showFilters = parameters.Count > 0 || showPriceFilter;
         }
-        @if (parameters.Count > 0)
+        @if (showFilters)
         {
             <form method="get" id="filterForm" class="param-sidebar">
                 <input type="hidden" name="id" value="@category.Id" />
                 <input type="hidden" name="city" value="@(ViewBag.City ?? "")" />
                 <input type="hidden" name="q" value="@(ViewBag.Search ?? "")" />
+
+                @if (showPriceFilter)
+                {
+                    <div class="param-block">
+                        <div class="param-title" data-i18n="price_label">Price, €</div>
+                        <div class="param-range">
+                            <input type="number" class="param-range-input param-range-from"
+                                   name="price_from" min="0" step="0.01"
+                                   placeholder="From" data-i18n-placeholder="filter_from"
+                                   value="@(priceFrom?.ToString(System.Globalization.CultureInfo.InvariantCulture))" />
+                            <input type="number" class="param-range-input param-range-to"
+                                   name="price_to" min="0" step="0.01"
+                                   placeholder="To" data-i18n-placeholder="filter_to"
+                                   value="@(priceTo?.ToString(System.Globalization.CultureInfo.InvariantCulture))" />
+                        </div>
+                        <label class="param-check-row" style="margin-top:8px">
+                            <span data-i18n="filter_price_only">Only listings with price</span>
+                            <input type="checkbox" class="param-check-input" name="price_only" value="1" @(priceOnly ? "checked" : "") />
+                        </label>
+                    </div>
+                }
 
                 @foreach (var vm in parameters)
                 {
@@ -229,7 +255,7 @@
                         }
                     </div>
                 }
-                @if (parameters.Count > 0)
+                @if (showFilters)
                 {
                     <div id="floatingFilterActions" class="floating-filter-actions">
                         <button type="submit" class="param-apply-btn" data-i18n="apply_filters">Apply filters</button>
@@ -241,7 +267,7 @@
     </div>
     <div class="category-content">
         <div class="listing-toolbar">
-            @if (parameters.Count > 0)
+            @if (showFilters)
             {
                 <button type="button" class="listing-filters-btn" onclick="FiltersPanel.open()">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

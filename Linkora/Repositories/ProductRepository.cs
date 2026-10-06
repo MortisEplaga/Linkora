@@ -5,18 +5,16 @@ using System.Text.RegularExpressions;
 
 namespace Linkora.Repositories
 {
-    public class ProductRepository : SqlRepositoryBase, IProductRepository
+    public class ProductRepository(IConfiguration configuration, ILogger<ProductRepository> logger, IMemoryCache cache, ISelectOptionRepository selectOptions, IPointsLedgerRepository pointsLedger) : SqlRepositoryBase(configuration), IProductRepository
     {
-        private readonly ILogger<ProductRepository> _logger;
-        private readonly IMemoryCache _cache;
-        private readonly ISelectOptionRepository _selectOptions;
-        private readonly IPointsLedgerRepository _pointsLedger;
+        private readonly ILogger<ProductRepository> _logger = logger;
+        private readonly IMemoryCache _cache = cache;
+        private readonly ISelectOptionRepository _selectOptions = selectOptions;
+        private readonly IPointsLedgerRepository _pointsLedger = pointsLedger;
         private const string EffectiveBoostExpr = @"(SELECT MAX(v) FROM (VALUES
             (CASE WHEN p.PaidBoostLevel IS NOT NULL AND p.PaidBoostExpiresAt > SYSUTCDATETIME() THEN p.PaidBoostLevel END),
             (CASE WHEN p.SubscriptionBoostLevel IS NOT NULL AND p.SubscriptionBoostExpiresAt > SYSUTCDATETIME() THEN p.SubscriptionBoostLevel END)) AS t(v))";
-        public ProductRepository(IConfiguration configuration, ILogger<ProductRepository> logger, IMemoryCache cache,
-                                 ISelectOptionRepository selectOptions, IPointsLedgerRepository pointsLedger) : base(configuration)
-        { _logger = logger; _cache = cache; _selectOptions = selectOptions; _pointsLedger = pointsLedger; }
+
         public async Task<CategoryRulesDto> GetCategoryRulesAsync(IEnumerable<int> categoryIds)
         {
             var idList = categoryIds.ToList();
@@ -36,7 +34,7 @@ namespace Linkora.Repositories
         }
         public async Task<PagedResult<Product>> GetByCategoryAsync(int rootCategoryId, bool includeDescendants = true, string sort = "new",
             Dictionary<int, List<string>>? filters = null, Dictionary<int, decimal>? rangeFrom = null, Dictionary<int, decimal>? rangeTo = null,
-            string? city = null, string? search = null, int page = 1)
+            string? city = null, string? search = null, int page = 1, decimal? priceFrom = null, decimal? priceTo = null, bool priceOnly = false)
         {
             if (page < 1) page = 1;
             const int pageSize = 20;
@@ -44,7 +42,7 @@ namespace Linkora.Repositories
 
             var promoCount = await GetPromoCountCachedAsync(rootCategoryId, includeDescendants);
             var (_, topCount) = await QueryProductsAsync(rootCategoryId, includeDescendants, sort,
-                            $"{EffectiveBoostExpr} = {(short)PromotionTier.Top}", filters, rangeFrom, rangeTo, city, search, offset: null, limit: 0);
+                            $"{EffectiveBoostExpr} = {(short)PromotionTier.Top}", filters, rangeFrom, rangeTo, city, search, offset: null, limit: 0, priceFrom: priceFrom, priceTo: priceTo, priceOnly: priceOnly);
             var promoTake = Math.Max(0, Math.Min(pageSize, promoCount - skip));
             var promoSkip = Math.Min(skip, promoCount);
             var afterPromo = Math.Max(0, skip - promoCount);
@@ -65,13 +63,13 @@ namespace Linkora.Repositories
             var topTask = topTake > 0
                 ? QueryProductsAsync(rootCategoryId, includeDescendants, sort,
                     $"{EffectiveBoostExpr} = {(short)PromotionTier.Top}",
-                    filters, rangeFrom, rangeTo, city, search, topSkip, topTake)
+                    filters, rangeFrom, rangeTo, city, search, topSkip, topTake, priceFrom, priceTo, priceOnly)
                 : Task.FromResult((new List<Product>(), topCount));
 
             var filteredTask = QueryProductsAsync(rootCategoryId, includeDescendants, sort,
                 $"({EffectiveBoostExpr} IS NULL OR {EffectiveBoostExpr} < {(short)PromotionTier.Top})",
                 filters, rangeFrom, rangeTo, city, search,
-                offset: filteredSkip, limit: filteredTake);
+                offset: filteredSkip, limit: filteredTake, priceFrom: priceFrom, priceTo: priceTo, priceOnly: priceOnly);
 
             var (promoItems, _) = await promoTask;
             var (topItems, _) = await topTask;
@@ -105,7 +103,7 @@ namespace Linkora.Repositories
             return count;
         }
         private async Task<(List<Product> Items, int Total)> QueryProductsAsync(int rootCategoryId, bool includeDescendants, string sort, string promotionClause, Dictionary<int, List<string>>? filters,
-                                                                                Dictionary<int, decimal>? rangeFrom, Dictionary<int, decimal>? rangeTo, string? city, string? search, int? offset, int? limit)
+                                                                                Dictionary<int, decimal>? rangeFrom, Dictionary<int, decimal>? rangeTo, string? city, string? search, int? offset, int? limit, decimal? priceFrom = null, decimal? priceTo = null, bool priceOnly = false)
         {
             var whereClauses = new List<string> { promotionClause };
             var commonParams = new List<SqlParameter>();
@@ -157,6 +155,20 @@ namespace Linkora.Repositories
                 whereClauses.Add("p.Address = @City");
                 commonParams.Add(new SqlParameter("@City", city));
             }
+            var priceConds = new List<string>();
+            if (priceFrom.HasValue)
+            {
+                priceConds.Add("p.Price >= @PriceFrom");
+                commonParams.Add(new SqlParameter("@PriceFrom", priceFrom.Value));
+            }
+            if (priceTo.HasValue)
+            {
+                priceConds.Add("p.Price <= @PriceTo");
+                commonParams.Add(new SqlParameter("@PriceTo", priceTo.Value));
+            }
+
+            if (priceOnly) whereClauses.Add("p.Price IS NOT NULL" + (priceConds.Count > 0 ? " AND " + string.Join(" AND ", priceConds) : ""));
+            else if (priceConds.Count > 0) whereClauses.Add($"(p.Price IS NULL OR ({string.Join(" AND ", priceConds)}))");
 
             if (!string.IsNullOrEmpty(search))
             {
@@ -187,7 +199,12 @@ namespace Linkora.Repositories
 
             if (limit is 0) return (new List<Product>(), total);
 
-            var baseOrder = sort switch { "cheap" => "p.Price ASC", "expensive" => "p.Price DESC", _ => "p.CreatedAt DESC" };
+            var baseOrder = sort switch
+            {
+                "cheap" => "CASE WHEN p.Price IS NULL THEN 1 ELSE 0 END, p.Price ASC",
+                "expensive" => "CASE WHEN p.Price IS NULL THEN 1 ELSE 0 END, p.Price DESC",
+                _ => "p.CreatedAt DESC"
+            };
             var pagingClause = limit.HasValue ? $"OFFSET {offset ?? 0} ROWS FETCH NEXT {limit.Value} ROWS ONLY" : "";
 
             var dataQuery = $@"SELECT p.Id, p.Name, p.Description, p.Address, p.CreatedAt, 

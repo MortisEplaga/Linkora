@@ -49,7 +49,16 @@ namespace Linkora.Controllers
                 }
             }
 
-            var result = await _productRepository.GetByCategoryAsync(id, includeDescendants: true, sort, filters, rangeFrom, rangeTo, city, q, page);
+            decimal? priceFrom = null, priceTo = null;
+            bool priceOnly = false;
+            if (category.HasPrice == true)
+            {
+                priceOnly = Request.Query["price_only"].FirstOrDefault() == "1";
+                if (decimal.TryParse(Request.Query["price_from"].FirstOrDefault(), NumberStyles.Number, CultureInfo.InvariantCulture, out var pf) && pf >= 0) priceFrom = pf;
+                if (decimal.TryParse(Request.Query["price_to"].FirstOrDefault(), NumberStyles.Number, CultureInfo.InvariantCulture, out var pt) && pt >= 0) priceTo = pt;
+            }
+
+            var result = await _productRepository.GetByCategoryAsync(id, includeDescendants: true, sort, filters, rangeFrom, rangeTo, city, q, page, priceFrom, priceTo, priceOnly);
 
             ViewBag.City = city;
             ViewBag.Category = category;
@@ -63,6 +72,9 @@ namespace Linkora.Controllers
             ViewBag.Sort = sort;
             ViewBag.Search = q;
             ViewBag.HasPriceSort = category.HasPrice;
+            ViewBag.PriceFrom = priceFrom;
+            ViewBag.PriceTo = priceTo;
+            ViewBag.PriceOnly = priceOnly;
             ViewBag.Filters = filters;
             ViewBag.RangeFrom = rangeFrom;
             ViewBag.RangeTo = rangeTo;

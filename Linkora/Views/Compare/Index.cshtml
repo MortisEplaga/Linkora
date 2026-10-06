@@ -73,7 +73,7 @@
                 @foreach (var p in products)
                 {
                     <div class="compare-product-card">
-                        <button class="compare-remove-btn" title="Remove from comparison"
+                        <button class="compare-remove-btn" data-i18n-title="compare_remove"
                                 onclick="removeFromCompare(@p.Id)">✕</button>
                         <a href="/Product/Details/@p.Id" class="compare-product-img-wrap">
                             <img src="@(p.AvatarUrl ?? "/img/no-photo.svg")"

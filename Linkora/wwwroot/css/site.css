@@ -622,9 +622,12 @@ button.accept-policy {
     --bg-card: #252525;
     --bg-hover: #2e2e2e;
     --border: #333;
-    --text-primary: #e8e8e8;
-    --text-secondary: #aaa;
-    --input-bg: #2a2a2a;
+    --text-primary: #f2f2f2;
+    --text-secondary: #b8b8b8;
+    --input-bg: #2c2c2c;
+    --input-text: #ffffff;
+    --input-placeholder: #9a9a9a;
+    --input-border: #4a4a4a;
 }
 
     .dark-theme .catmenu-link {
@@ -939,7 +942,7 @@ button.accept-policy {
     }
 
         .dark-theme .msg-input::placeholder {
-            color: #555 !important;
+            color: var(--input-placeholder) !important;
         }
 
         .dark-theme .msg-input:focus {
@@ -1093,9 +1096,29 @@ button.accept-policy {
     }
 
         .dark-theme .create-input::placeholder,
+        .dark-theme .auth-input::placeholder,
         .dark-theme .search-input::placeholder {
-            color: #666;
+            color: var(--input-placeholder);
         }
+
+    .dark-theme input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+    .dark-theme textarea,
+    .dark-theme select {
+        color: var(--input-text) !important;
+        caret-color: var(--input-text);
+    }
+
+        .dark-theme input::placeholder,
+        .dark-theme textarea::placeholder {
+            color: var(--input-placeholder) !important;
+            opacity: 1;
+        }
+
+    .dark-theme .create-input,
+    .dark-theme .auth-input,
+    .dark-theme .search-input {
+        border-color: var(--input-border);
+    }
 
     .dark-theme .create-dropdown,
     .dark-theme .create-drop-item:hover {
@@ -4210,5 +4233,30 @@ body {
         width: 40px;
         height: 60px;
         font-size: 28px;
+    }
+    .dark-theme input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):focus,
+    .dark-theme textarea:focus,
+    .dark-theme select:focus,
+    .dark-theme .create-input:focus,
+    .dark-theme .auth-input:focus,
+    .dark-theme .search-input:focus,
+    .dark-theme .param-range-input:focus,
+    .dark-theme .points-referral-input:focus,
+    .dark-theme .msg-input:focus {
+        background: var(--input-bg) !important;
+        color: var(--input-text) !important;
+        border-color: #777 !important;
+    }
+
+    .dark-theme input:-webkit-autofill,
+    .dark-theme input:-webkit-autofill:hover,
+    .dark-theme input:-webkit-autofill:focus,
+    .dark-theme textarea:-webkit-autofill,
+    .dark-theme select:-webkit-autofill {
+        -webkit-text-fill-color: var(--input-text) !important;
+        -webkit-box-shadow: 0 0 0 1000px var(--input-bg) inset !important;
+        box-shadow: 0 0 0 1000px var(--input-bg) inset !important;
+        caret-color: var(--input-text);
+        transition: background-color 9999s ease-out 0s;
     }
 }

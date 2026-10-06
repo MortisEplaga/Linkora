@@ -114,17 +114,17 @@
                                             {
                                                 <button class="admin-btn admin-btn-approve"
                                                         onclick="resolveReport(@r.Id, 'resolve', this)"
-                                                        title="Confirm report — keep listing blocked">
+                                                        data-i18n-title="admin_report_confirm_title">
                                                     <span data-i18n="admin_report_confirm">Confirm</span>
                                                 </button>
                                                 <button class="admin-btn admin-btn-reject"
                                                         onclick="resolveReport(@r.Id, 'reject_report', this)"
-                                                        title="Dismiss report — restore listing">
+                                                        data-i18n-title="admin_report_dismiss_title">
                                                     <span data-i18n="admin_report_dismiss">Dismiss</span>
                                                 </button>
                                                 <button class="admin-btn admin-btn-view"
                                                         onclick="approveProduct(@r.ProductId, @r.Id, this)"
-                                                        title="Approve listing and close report">
+                                                        data-i18n-title="admin_approve_listing_title">
                                                     <span data-i18n="admin_approve_listing">Approve listing</span>
                                                 </button>
                                             }

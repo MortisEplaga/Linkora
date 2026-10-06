@@ -1,5 +1,13 @@
 const TRANSLATIONS = {
     en: {
+        'filter_price_only': 'Only listings with price',
+        'filter_from': 'From',
+        'filter_to': 'To',
+        'google_signup_title': 'Sign up with Google',
+        'compare_remove': 'Remove from comparison',
+        'admin_report_confirm_title': 'Confirm report — keep listing blocked',
+        'admin_report_dismiss_title': 'Dismiss report — restore listing',
+        'admin_approve_listing_title': 'Approve listing and close report',
         'user_stats_title': 'My statistics',
         'user_stats_back': 'Profile settings',
         'user_stats_open': 'Open statistics →',
@@ -565,6 +573,14 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'filter_price_only': 'Tikai sludinājumi ar norādītu cenu',
+        'filter_from': 'No',
+        'filter_to': 'Līdz',
+        'google_signup_title': 'Reģistrēties ar Google',
+        'compare_remove': 'Noņemt no salīdzinājuma',
+        'admin_report_confirm_title': 'Apstiprināt ziņojumu — sludinājums paliek bloķēts',
+        'admin_report_dismiss_title': 'Noraidīt ziņojumu — atjaunot sludinājumu',
+        'admin_approve_listing_title': 'Apstiprināt sludinājumu un aizvērt ziņojumu',
         'user_stats_title': 'Mana statistika',
         'user_stats_back': 'Profila iestatījumi',
         'user_stats_open': 'Atvērt statistiku →',
@@ -1140,6 +1156,14 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'filter_price_only': 'Только с указанной ценой',
+        'filter_from': 'От',
+        'filter_to': 'До',
+        'google_signup_title': 'Зарегистрироваться через Google',
+        'compare_remove': 'Убрать из сравнения',
+        'admin_report_confirm_title': 'Подтвердить жалобу — объявление остаётся заблокированным',
+        'admin_report_dismiss_title': 'Отклонить жалобу — восстановить объявление',
+        'admin_approve_listing_title': 'Одобрить объявление и закрыть жалобу',
         'user_stats_title': 'Моя статистика',
         'user_stats_back': 'Настройки профиля',
         'user_stats_open': 'Открыть статистику →',
