@@ -40,21 +40,21 @@
 
     async function loadOptionsForWrap(wrap) {
         var paramId = wrap.dataset.param;
+        var forFilter = !!wrap.closest('#filterForm');
+        var cacheKey = paramId + (forFilter ? '_f' : '_p');
 
         if (wrap.dataset.options && wrap.dataset.options !== '[]') {
             try { return JSON.parse(wrap.dataset.options); } catch (e) { }
         }
 
-        if (optionsCache[paramId]) {
-            return optionsCache[paramId];
-        }
+        if (optionsCache[cacheKey]) return optionsCache[cacheKey];
 
         try {
-            var res = await fetch('/Product/GetSelectOptions?paramId=' + paramId);
+            var res = await fetch('/Product/GetSelectOptions?paramId=' + paramId + (forFilter ? '&forFilter=true' : ''));
             if (!res.ok) throw new Error('Ошибка сервера: ' + res.status);
 
-            var data = await res.json(); 
-            optionsCache[paramId] = data; 
+            var data = await res.json();
+            optionsCache[cacheKey] = data;
             return data;
         } catch (e) {
             return [];

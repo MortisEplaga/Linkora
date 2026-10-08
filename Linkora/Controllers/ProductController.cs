@@ -44,12 +44,11 @@ namespace Linkora.Controllers
             foreach (var (k, v) in raw) if (int.TryParse(k, out var pid) && !string.IsNullOrWhiteSpace(v)) result[pid] = v;
             return result;
         }
-
         public async Task<IActionResult> ResolveSelectOption([FromBody] ResolveSelectOptionDto dto)
         {
             if (dto == null || string.IsNullOrWhiteSpace(dto.Text)) return BadRequest("Text is required");
 
-            var existingId = await _selectOptionRepository.FindIdAsync(dto.ParamId, dto.Text, Request.GetLang());
+            var existingId = await _selectOptionRepository.FindIdAsync(dto.ParamId, dto.Text, Request.GetLang(), includeFilterOnly: !dto.CreateIfNotFound);
 
             if (existingId.HasValue) return Json(new { id = existingId.Value, created = false });
 
@@ -58,12 +57,8 @@ namespace Linkora.Controllers
             var newId = await _selectOptionRepository.CreateAsync(dto.ParamId, dto.Text);
             return Json(new { id = newId, created = true });
         }
-
-        [HttpGet]
-        public async Task<IActionResult> GetSelectOptions([FromQuery] int paramId) => Json((await _selectOptionRepository.GetConfirmedAsync(paramId, Request.GetLang())).Select(o => new { id = o.Id, text = o.Text }));
-
-        [HttpPost][EnableRateLimiting("public-api")]
-        public async Task<IActionResult> VerifyRecaptcha([FromBody] RecaptchaDto dto)
+        [HttpGet] public async Task<IActionResult> GetSelectOptions([FromQuery] int paramId, [FromQuery] bool forFilter = false) => Json((await _selectOptionRepository.GetConfirmedAsync(paramId, Request.GetLang(), forFilter)).Select(o => new { id = o.Id, text = o.Text }));
+        [HttpPost][EnableRateLimiting("public-api")] public async Task<IActionResult> VerifyRecaptcha([FromBody] RecaptchaDto dto)
         {
             var secret = _configuration["Recaptcha:SecretKey"]!;
             using var http = new HttpClient();
@@ -73,15 +68,9 @@ namespace Linkora.Controllers
             var success = result.RootElement.GetProperty("success").GetBoolean();
             return Ok(new { success });
         }
-
         public class RecaptchaDto { public string Token { get; set; } = ""; }
-
-        [HttpGet]
-        public async Task<IActionResult> Cities() => Json((await _addressRepository.GetCitiesAsync()).Select(x => new { id = x.Id, name = x.Name }));
-
-        [HttpGet]
-        public async Task<IActionResult> Streets(int cityId) => Json((await _addressRepository.GetStreetsAsync(cityId)).Select(x => new { id = x.Id, name = x.Name }));
-
+        [HttpGet] public async Task<IActionResult> Cities() => Json((await _addressRepository.GetCitiesAsync()).Select(x => new { id = x.Id, name = x.Name }));
+        [HttpGet] public async Task<IActionResult> Streets(int cityId) => Json((await _addressRepository.GetStreetsAsync(cityId)).Select(x => new { id = x.Id, name = x.Name }));
         public async Task<IActionResult> Create()
         {
             if (User.Identity!.IsAuthenticated)
@@ -91,8 +80,7 @@ namespace Linkora.Controllers
             }
             return View();
         }
-        [HttpGet]
-        public async Task<IActionResult> Parameters(int categoryId)
+        [HttpGet] public async Task<IActionResult> Parameters(int categoryId)
         {
             var breadcrumb = await _categoryRepository.GetBreadcrumbAsync(categoryId);
             var parameters = await _categoryRepository.GetParametersAsync(breadcrumb.Select(c => c.Id));
@@ -115,7 +103,6 @@ namespace Linkora.Controllers
 
             return Ok(result);
         }
-
         public async Task<IActionResult> Details(int id)
         {
             var product = await _productRepository.GetByIdAsync(id);
@@ -140,9 +127,7 @@ namespace Linkora.Controllers
             ViewBag.GoogleMapsApiKey = _configuration["GoogleMaps:ApiKey"];
             return View();
         }
-
-        [Authorize]
-        public async Task<IActionResult> My(string tab = "Active")
+        [Authorize] public async Task<IActionResult> My(string tab = "Active")
         {
             var userId = User.GetUserId();
             var counts = await _productRepository.GetCountsByStatusAsync(userId);
@@ -165,9 +150,7 @@ namespace Linkora.Controllers
             ViewBag.StatusCounts = counts;
             return View();
         }
-
-        [Authorize]
-        public async Task<IActionResult> Edit(int id)
+        [Authorize] public async Task<IActionResult> Edit(int id)
         {
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null) return NotFound();
@@ -187,9 +170,7 @@ namespace Linkora.Controllers
 
             return View();
         }
-
-        [HttpGet]
-        public async Task<IActionResult> MediaFiles(int productId) => Json((await _productRepository.GetMediaAsync(productId)).Select(m => new { filePath = m.FilePath, mediaType = m.MediaType }));
+        [HttpGet] public async Task<IActionResult> MediaFiles(int productId) => Json((await _productRepository.GetMediaAsync(productId)).Select(m => new { filePath = m.FilePath, mediaType = m.MediaType }));
 
         [Authorize][HttpPost][RequestSizeLimit(MediaStorageService.MaxTotalBytes)][RequestFormLimits(MultipartBodyLengthLimit = MediaStorageService.MaxTotalBytes)]
         public async Task<IActionResult> Edit(int id, string title, string? description, int? qty, string? address, int? categoryId,
@@ -318,8 +299,7 @@ namespace Linkora.Controllers
 
             return Ok();
         }
-        [Authorize][HttpPost]
-        public async Task<IActionResult> Delete(int id)
+        [Authorize][HttpPost] public async Task<IActionResult> Delete(int id)
         {
             var userId = User.GetUserId();
             if (await _userRepository.IsBannedAsync(userId)) return Forbid();
@@ -332,9 +312,7 @@ namespace Linkora.Controllers
             await _productRepository.DeleteAsync(id);
             return Ok();
         }
-
-        [Authorize][HttpPost]
-        public async Task<IActionResult> Republish(int id)
+        [Authorize][HttpPost] public async Task<IActionResult> Republish(int id)
         {
             var userId = User.GetUserId();
             if (await _userRepository.IsBannedAsync(userId)) return Forbid();
@@ -349,11 +327,8 @@ namespace Linkora.Controllers
             return Ok();
         }
 
-        [HttpGet]
-        public async Task<IActionResult> ParamValues(int productId) => Json(await _productRepository.GetParamDisplayValuesAsync(productId, Request.GetLang()));
-
-        [Authorize][HttpPost]
-        public async Task<IActionResult> CompleteDeal(int id, int otherUserId)
+        [HttpGet] public async Task<IActionResult> ParamValues(int productId) => Json(await _productRepository.GetParamDisplayValuesAsync(productId, Request.GetLang()));
+        [Authorize][HttpPost] public async Task<IActionResult> CompleteDeal(int id, int otherUserId)
         {
             var userId = User.GetUserId();
             if (await _userRepository.IsBannedAsync(userId)) return Forbid();
@@ -382,17 +357,13 @@ namespace Linkora.Controllers
 
             return Ok();
         }
-
-        [Authorize][HttpGet]
-        public async Task<IActionResult> GetConversationPartners(int productId)
+        [Authorize][HttpGet] public async Task<IActionResult> GetConversationPartners(int productId)
         {
             var userId = User.GetUserId();
             var partners = await _messageRepository.GetConversationPartnersAsync(productId, userId);
             return Ok(partners.Select(p => new { p.Id, p.UserName, p.AvatarUrl, p.IsCompany }));
         }
-
-        [Authorize][HttpPost]
-        public async Task<IActionResult> Create(string title, string? description, int? qty, string? address, int? categoryId,
+        [Authorize][HttpPost] public async Task<IActionResult> Create(string title, string? description, int? qty, string? address, int? categoryId,
                                                 List<IFormFile>? photos, string? paramsJson, decimal? price = null,
                                                 int? publishDays = null, string? promotionType = null, bool useHomeAddress = false)
         {
@@ -466,8 +437,7 @@ namespace Linkora.Controllers
 
             return Ok(new { id = newId, promotionType = pendingPromotion });
         }
-        [HttpGet]
-        public async Task<IActionResult> CategoryRules(int categoryId)
+        [HttpGet] public async Task<IActionResult> CategoryRules(int categoryId)
         {
             var breadcrumb = await _categoryRepository.GetBreadcrumbAsync(categoryId);
             var catIds = breadcrumb.Select(c => c.Id).ToList();

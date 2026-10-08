@@ -65,32 +65,32 @@ namespace Linkora.Repositories
             _cache.Set(cacheKey, result, CacheDuration);
             return result;
         }
-        public async Task<List<Parameter>> GetParametersAsync(IEnumerable<int> categoryIds)
+        public async Task<List<Parameter>> GetParametersAsync(IEnumerable<int> categoryIds, bool forFilter = false)
         {
             var idList = categoryIds.OrderBy(x => x).ToList();
             if (idList.Count == 0) return [];
 
-            var cacheKey = $"cat_params_{string.Join(",", idList)}_{_httpContextAccessor.HttpContext.GetLang()}_{SelectOptionsCacheVersion}";
+            var cacheKey = $"cat_params_{string.Join(",", idList)}_{_httpContextAccessor.HttpContext.GetLang()}_{SelectOptionsCacheVersion}_{forFilter}";
 
             if (_cache.TryGetValue(cacheKey, out List<Parameter>? cached) && cached != null) return cached;
 
-            var result = await LoadParameterOptionsAsync(await QueryAsync($"SELECT Id, CategoryId, Name, Type, NameLV, NameRU FROM Parameters WHERE CategoryId IN ({string.Join(",", idList)})", MapPRow));
+            var result = await LoadParameterOptionsAsync(await QueryAsync($"SELECT Id, CategoryId, Name, Type, NameLV, NameRU FROM Parameters WHERE CategoryId IN ({string.Join(",", idList)})", MapPRow), forFilter);
 
             _cache.Set(cacheKey, result, CacheDuration);
             return result;
         }
-        public async Task<List<Parameter>> GetParametersAsync(int categoryId)
+        public async Task<List<Parameter>> GetParametersAsync(int categoryId, bool forFilter = false)
         {
-            var cacheKey = $"cat_params_single_{categoryId}_{_httpContextAccessor.HttpContext.GetLang()}_{SelectOptionsCacheVersion}";
+            var cacheKey = $"cat_params_single_{categoryId}_{_httpContextAccessor.HttpContext.GetLang()}_{SelectOptionsCacheVersion}_{forFilter}";
 
             if (_cache.TryGetValue(cacheKey, out List<Parameter>? cached) && cached != null) return cached;
 
-            var result = await LoadParameterOptionsAsync(await QueryAsync("SELECT Id, CategoryId, Name, Type, NameLV, NameRU FROM Parameters WHERE CategoryId = @CategoryId", MapPRow, p => p.AddWithValue("@CategoryId", categoryId)));
+            var result = await LoadParameterOptionsAsync(await QueryAsync("SELECT Id, CategoryId, Name, Type, NameLV, NameRU FROM Parameters WHERE CategoryId = @CategoryId", MapPRow, p => p.AddWithValue("@CategoryId", categoryId)), forFilter);
 
             _cache.Set(cacheKey, result, CacheDuration);
             return result;
         }
-        private async Task<List<Parameter>> LoadParameterOptionsAsync(List<Param> parameters)
+        private async Task<List<Parameter>> LoadParameterOptionsAsync(List<Param> parameters, bool forFilter)
         {
             if (parameters == null || parameters.Count == 0) return new List<Parameter>();
 
@@ -116,8 +116,8 @@ namespace Linkora.Repositories
             {
                 var (inClause, addParams) = PrepareInClause(selectIds);
 
-                var options = await QueryAsync($"SELECT ParamId, Id, Value, ValueLV, ValueRU FROM SelectOptions WHERE ParamId IN ({inClause}) AND IsConf = 1",
-                    r => new
+                var filterClause = forFilter ? "" : "AND FilterOnly = 0";
+                var options = await QueryAsync($"SELECT ParamId, Id, Value, ValueLV, ValueRU FROM SelectOptions WHERE ParamId IN ({inClause}) AND IsConf = 1 {filterClause}", r => new
                     {
                         ParamId = r.GetInt32(0),
                         Option = new SelectOption

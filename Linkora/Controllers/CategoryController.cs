@@ -4,18 +4,11 @@ using System.Globalization;
 
 namespace Linkora.Controllers
 {
-    public class CategoryController : Controller
+    public class CategoryController(ICategoryRepository categoryRepository, IProductRepository productRepository, IConfiguration configuration) : Controller
     {
-        private readonly ICategoryRepository _categoryRepository;
-        private readonly IProductRepository _productRepository;
-        private readonly IConfiguration _configuration;
-
-        public CategoryController(ICategoryRepository categoryRepository, IProductRepository productRepository, IConfiguration configuration)
-        {
-            _categoryRepository = categoryRepository;
-            _productRepository = productRepository;
-            _configuration = configuration;
-        }
+        private readonly ICategoryRepository _categoryRepository = categoryRepository;
+        private readonly IProductRepository _productRepository = productRepository;
+        private readonly IConfiguration _configuration = configuration;
 
         public async Task<IActionResult> Index(int id, string sort = "new", string? q = null, string? city = null, int page = 1)
         {
@@ -24,7 +17,7 @@ namespace Linkora.Controllers
 
             var breadcrumb = await _categoryRepository.GetBreadcrumbAsync(id);
             var children = await _categoryRepository.GetChildrenAsync(id);
-            var parameters = await _categoryRepository.GetParametersAsync(breadcrumb.Select(c => c.Id));
+            var parameters = await _categoryRepository.GetParametersAsync(breadcrumb.Select(c => c.Id), forFilter: true);
             parameters = parameters.Where(p => p.Param.Type != 7).ToList();
 
             var filters = new Dictionary<int, List<string>>();

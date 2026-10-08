@@ -19,7 +19,7 @@ namespace Linkora.Services
 
     public class ListingImportService(ICategoryRepository categories, IProductRepository products, IGeocodingService geocoding,
                                       IPromotionRepository promotions, INotificationService notifications, IUserRepository users,
-                                      IMediaStorageService mediaStorage) : IListingImportService
+                                      IMediaStorageService mediaStorage, ISelectOptionRepository selectOptions) : IListingImportService
     {
         public const int MaxRows = 200;
         public const long MaxFileBytes = 5 * 1024 * 1024;
@@ -27,12 +27,28 @@ namespace Linkora.Services
         public const long MaxImportMediaBytes = 100L * 1024 * 1024;
         private const int DownloadDegreeOfParallelism = 6;
         private static readonly Regex ParamHeader = new(@"\[p(\d+)\]\s*$", RegexOptions.Compiled);
-        private static readonly string[] FixedColumns = ["title", "description", "qty", "price", "address", "photos", "publish_days"];
         private static readonly HashSet<string> TrueValues = new(StringComparer.OrdinalIgnoreCase) { "true", "yes", "1", "да", "jā", "ja" };
         private static readonly HashSet<string> FalseValues = new(StringComparer.OrdinalIgnoreCase) { "false", "no", "0", "нет", "nē", "ne" };
-
+        private static readonly Regex ParamKey = new(@"^p(\d+)$", RegexOptions.Compiled);
+        private static readonly Dictionary<string, string[]> FixedHeaders = new()
+        {
+            ["en"] = ["Title", "Description", "Quantity", "Price", "Address", "Photos", "Publish days"],
+            ["lv"] = ["Nosaukums", "Apraksts", "Daudzums", "Cena", "Adrese", "Foto", "Publicēšanas dienas"],
+            ["ru"] = ["Название", "Описание", "Количество", "Цена", "Адрес", "Фото", "Срок публикации (дней)"],
+        };
+        private static readonly Dictionary<string, (string MultiTitle, string MultiMsg, string FreeTitle, string FreeMsg, string ErrTitle, string ErrMsg)> Hints = new()
+        {
+            ["en"] = ("Multiple values", "Choose from the list or type several values separated by comma. See sheet 'Lists'.",
+              "Free text", "Choose from the list or type a new value. New values go to moderation.",
+              "Unknown value", "Choose a value from the list."),
+            ["lv"] = ("Vairākas vērtības", "Izvēlieties no saraksta vai ierakstiet vairākas vērtības, atdalot ar komatu. Skatiet lapu 'Lists'.",
+              "Brīvs teksts", "Izvēlieties no saraksta vai ierakstiet jaunu vērtību. Jaunās vērtības tiek nosūtītas moderācijai.",
+              "Nezināma vērtība", "Izvēlieties vērtību no saraksta."),
+            ["ru"] = ("Несколько значений", "Выберите из списка или впишите несколько значений через запятую. Список на листе 'Lists'.",
+              "Свободный ввод", "Выберите из списка или впишите новое значение. Новые значения идут на модерацию.",
+              "Неизвестное значение", "Выберите значение из списка."),
+        };
         private sealed record PreparedRow(Product Product, Dictionary<int, string> Params, int Duration, List<string> PhotoUrls, List<ProductMedia> Media, int Line);
-
         private async Task<(Category Category, List<Parameter> Params)?> LoadAsync(int categoryId)
         {
             var category = await categories.GetByIdAsync(categoryId);
@@ -41,18 +57,24 @@ namespace Linkora.Services
             var parameters = await categories.GetParametersAsync(breadcrumb.Select(c => c.Id));
             return (category, parameters.OrderBy(p => p.Param.Id).ToList());
         }
-
-        private static List<string> BuildHeaders(Category category, List<Parameter> parameters)
+        private static (List<string> Headers, List<string> Keys) BuildHeaders(Category category, List<Parameter> parameters, string lang)
         {
-            var headers = new List<string> { "title", "description", "qty" };
-            if (category.HasPrice == true) headers.Add("price");
-            headers.Add("address");
-            headers.Add("photos");
-            headers.Add("publish_days");
-            headers.AddRange(parameters.Select(p => $"{p.Param.Name} [p{p.Param.Id}]"));
-            return headers;
-        }
+            var names = FixedHeaders.TryGetValue(lang, out var n) ? n : FixedHeaders["en"];
+            var headers = new List<string>();
+            var keys = new List<string>();
+            void Add(string key, string header) { keys.Add(key); headers.Add(header); }
 
+            Add("title", names[0]);
+            Add("description", names[1]);
+            Add("qty", names[2]);
+            if (category.HasPrice == true) Add("price", names[3]);
+            Add("address", names[4]);
+            Add("photos", names[5]);
+            Add("publish_days", names[6]);
+            foreach (var p in parameters) Add($"p{p.Param.Id}", p.Param.Name);
+
+            return (headers, keys);
+        }
         private static IEnumerable<string> OptionTexts(Parameter p) => p.Param.Type switch
         {
             2 or 4 or 8 => p.Options.Select(o => o.Text),
@@ -60,23 +82,22 @@ namespace Linkora.Services
             3 => ["TRUE", "FALSE"],
             _ => []
         };
-
         public async Task<(byte[] Data, string ContentType, string FileName)> BuildTemplateAsync(int categoryId, string format, string lang)
         {
             var loaded = await LoadAsync(categoryId) ?? throw new ArgumentException("Category not found");
             var (category, parameters) = loaded;
-            return BuildFile(category, parameters, BuildHeaders(category, parameters), [], format, $"template_{categoryId}");
+            var (headers, keys) = BuildHeaders(category, parameters, lang);
+            return BuildFile(category, parameters, headers, keys, [], format, $"template_{categoryId}", lang);
         }
-
         public async Task<(byte[] Data, string ContentType, string FileName)> BuildExportAsync(int userId, int categoryId, string format, string lang)
         {
             var loaded = await LoadAsync(categoryId) ?? throw new ArgumentException("Category not found");
             var (category, parameters) = loaded;
             var listings = await products.GetListingsForExportAsync(userId, categoryId, lang);
             var rows = listings.Select(l => BuildExportRow(l, category, parameters)).ToList();
-            return BuildFile(category, parameters, BuildHeaders(category, parameters), rows, format, $"listings_{categoryId}");
+            var (headers, keys) = BuildHeaders(category, parameters, lang);
+            return BuildFile(category, parameters, headers, keys, rows, format, $"listings_{categoryId}", lang);
         }
-
         private static List<string> BuildExportRow(ExportListing listing, Category category, List<Parameter> parameters)
         {
             var row = new List<string>
@@ -93,18 +114,20 @@ namespace Linkora.Services
                 row.Add(listing.ParamValues.TryGetValue(p.Param.Id, out var value) ? value : "");
             return row;
         }
-
-        private static (byte[] Data, string ContentType, string FileName) BuildFile(Category category, List<Parameter> parameters, List<string> headers, List<List<string>> rows, string format, string fileBase)
+        private static (byte[] Data, string ContentType, string FileName) BuildFile(Category category, List<Parameter> parameters, List<string> headers, List<string> keys, List<List<string>> rows, string format, string fileBase, string lang)
         {
             if (format == "csv")
             {
                 var sb = new StringBuilder();
                 sb.Append("#category=").Append(category.Id).Append('\n');
+                sb.Append("#columns=").Append(string.Join(';', keys)).Append('\n');
                 sb.Append(string.Join(';', headers.Select(CsvEscape))).Append('\n');
                 foreach (var row in rows)
                     sb.Append(string.Join(';', row.Select(CsvEscape))).Append('\n');
                 return (new UTF8Encoding(true).GetPreamble().Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray(), "text/csv", fileBase + ".csv");
             }
+
+            var hint = Hints.TryGetValue(lang, out var h) ? h : Hints["en"];
 
             using var wb = new XLWorkbook();
             var ws = wb.Worksheets.Add("Listings");
@@ -112,6 +135,8 @@ namespace Linkora.Services
             var meta = wb.Worksheets.Add("Meta");
             meta.Cell(1, 1).Value = "category";
             meta.Cell(1, 2).Value = category.Id;
+            meta.Cell(2, 1).Value = "columns";
+            for (int i = 0; i < keys.Count; i++) meta.Cell(2, i + 2).Value = keys[i];
             meta.Visibility = XLWorksheetVisibility.Hidden;
 
             for (int i = 0; i < headers.Count; i++)
@@ -129,24 +154,48 @@ namespace Linkora.Services
             int paramOffset = headers.Count - parameters.Count;
             for (int i = 0; i < parameters.Count; i++)
             {
-                var texts = OptionTexts(parameters[i]).ToList();
+                var p = parameters[i];
+                var texts = OptionTexts(p)
+                    .Where(t => !string.IsNullOrWhiteSpace(t))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
                 if (texts.Count == 0) continue;
-                int listCol = i + 1;
-                for (int r = 0; r < texts.Count; r++) lists.Cell(r + 1, listCol).Value = texts[r];
-                var range = lists.Range(1, listCol, texts.Count, listCol);
 
-                if (parameters[i].Param.Type is 2 or 6 or 3)
-                    ws.Range(2, paramOffset + i + 1, MaxRows + 1, paramOffset + i + 1).CreateDataValidation().List(range);
+                int listCol = i + 1;
+                var headerCell = lists.Cell(1, listCol);
+                headerCell.Value = p.Param.Name;
+                headerCell.Style.Font.Bold = true;
+                headerCell.Style.Fill.BackgroundColor = XLColor.LightGray;
+                for (int r = 0; r < texts.Count; r++) lists.Cell(r + 2, listCol).Value = texts[r];
+
+                var source = lists.Range(2, listCol, texts.Count + 1, listCol);
+                var target = ws.Range(2, paramOffset + i + 1, MaxRows + 1, paramOffset + i + 1);
+                var dv = target.CreateDataValidation();
+                dv.List(source, true);
+                dv.IgnoreBlanks = true;
+
+                bool strict = p.Param.Type is 2 or 6 or 3;
+                dv.ShowErrorMessage = strict;
+                if (strict)
+                {
+                    dv.ErrorTitle = hint.ErrTitle;
+                    dv.ErrorMessage = hint.ErrMsg;
+                }
+                else
+                {
+                    dv.ShowInputMessage = true;
+                    dv.InputTitle = p.Param.Type == 4 ? hint.MultiTitle : hint.FreeTitle;
+                    dv.InputMessage = p.Param.Type == 4 ? hint.MultiMsg : hint.FreeMsg;
+                }
             }
             ws.Columns().AdjustToContents();
+            lists.Columns().AdjustToContents();
 
             using var ms = new MemoryStream();
             wb.SaveAs(ms);
             return (ms.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileBase + ".xlsx");
         }
-
         private static string CsvEscape(string s) => s.Contains(';') || s.Contains('"') || s.Contains('\n') ? $"\"{s.Replace("\"", "\"\"")}\"" : s;
-
         private static List<string> ParseCsvLine(string line)
         {
             var result = new List<string>();
@@ -166,8 +215,12 @@ namespace Linkora.Services
             result.Add(sb.ToString());
             return result;
         }
-
-        private static (int CategoryId, List<string> Headers, List<List<string>> Rows) ReadFile(IFormFile file)
+        private static List<string> KeysFromHeaders(List<string> headers) => [.. headers.Select(h =>
+        {
+            var m = ParamHeader.Match(h);
+            return m.Success ? $"p{m.Groups[1].Value}" : h.Trim().ToLowerInvariant();
+        })];
+        private static (int CategoryId, List<string> Keys, List<List<string>> Rows, int FirstLine) ReadFile(IFormFile file)
         {
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             using var stream = file.OpenReadStream();
@@ -180,7 +233,10 @@ namespace Linkora.Services
                 while ((l = reader.ReadLine()) != null) if (!string.IsNullOrWhiteSpace(l)) lines.Add(l);
                 if (lines.Count < 2 || !lines[0].StartsWith("#category=")) throw new InvalidDataException("Missing #category line");
                 var catId = int.Parse(lines[0]["#category=".Length..].Trim(), CultureInfo.InvariantCulture);
-                return (catId, ParseCsvLine(lines[1]), lines.Skip(2).Select(ParseCsvLine).ToList());
+
+                if (lines[1].StartsWith("#columns="))
+                    return (catId, lines[1]["#columns=".Length..].Split(';').Select(k => k.Trim()).ToList(), lines.Skip(3).Select(ParseCsvLine).ToList(), 4);
+                return (catId, KeysFromHeaders(ParseCsvLine(lines[1])), lines.Skip(2).Select(ParseCsvLine).ToList(), 3);
             }
 
             if (ext == ".xlsx")
@@ -190,16 +246,18 @@ namespace Linkora.Services
                 var ws = wb.Worksheet("Listings");
                 var catId = (int)meta.Cell(1, 2).GetDouble();
                 int lastCol = ws.Row(1).LastCellUsed()?.Address.ColumnNumber ?? 0;
-                var headers = Enumerable.Range(1, lastCol).Select(c => ws.Cell(1, c).GetString().Trim()).ToList();
+
+                List<string> keys;
+                if (meta.Cell(2, 1).GetString() == "columns") keys = Enumerable.Range(2, lastCol).Select(c => meta.Cell(2, c).GetString().Trim()).ToList();
+                else keys = KeysFromHeaders(Enumerable.Range(1, lastCol).Select(c => ws.Cell(1, c).GetString().Trim()).ToList());
+
                 var rows = new List<List<string>>();
-                foreach (var row in ws.RowsUsed().Skip(1))
-                    rows.Add(Enumerable.Range(1, lastCol).Select(c => row.Cell(c).GetFormattedString().Trim()).ToList());
-                return (catId, headers, rows);
+                foreach (var row in ws.RowsUsed().Skip(1)) rows.Add(Enumerable.Range(1, lastCol).Select(c => row.Cell(c).GetFormattedString().Trim()).ToList());
+                return (catId, keys, rows, 2);
             }
 
             throw new InvalidDataException("Unsupported file type");
         }
-
         private static string Truncate(string s, int max) => s.Length <= max ? s : s[..max] + "…";
         private async Task<bool> TryDownloadPhotosAsync(List<PreparedRow> prepared, List<string> downloadedFiles, List<ImportError> errors)
         {
@@ -252,7 +310,6 @@ namespace Linkora.Services
             }
             return ok;
         }
-
         private static void DeleteDownloadedFiles(IEnumerable<string> filePaths)
         {
             foreach (var path in filePaths)
@@ -263,11 +320,24 @@ namespace Linkora.Services
                 }
                 catch {}
         }
-
+        private static int? FindOptionId(Parameter p, Dictionary<int, (string Value, string ValueLV, string ValueRU)> texts, string raw)
+        {
+            raw = raw.Trim();
+            foreach (var o in p.Options)
+            {
+                if (o.Text.Equals(raw, StringComparison.OrdinalIgnoreCase)) return o.Id;
+                if (texts.TryGetValue(o.Id, out var t)
+                    && (t.Value.Equals(raw, StringComparison.OrdinalIgnoreCase)
+                     || t.ValueLV.Equals(raw, StringComparison.OrdinalIgnoreCase)
+                     || t.ValueRU.Equals(raw, StringComparison.OrdinalIgnoreCase)))
+                    return o.Id;
+            }
+            return null;
+        }
         public async Task<ImportResult> ImportAsync(int userId, string userName, IFormFile file, string lang)
         {
             var errors = new List<ImportError>();
-            (int CategoryId, List<string> Headers, List<List<string>> Rows) data;
+            (int CategoryId, List<string> Keys, List<List<string>> Rows, int FirstLine) data;
             try { data = ReadFile(file); }
             catch (Exception ex) { return new ImportResult(0, [new ImportError(0, "Invalid file: " + ex.Message)], []); }
 
@@ -278,17 +348,22 @@ namespace Linkora.Services
             if (loaded == null) return new ImportResult(0, [new ImportError(0, "Category not found")], []);
             var (category, parameters) = loaded.Value;
 
+            var selectParamIds = parameters.Where(p => p.Param.Type is 2 or 4 or 8).Select(p => p.Param.Id).ToList();
+            var optionTexts = selectParamIds.Count > 0
+                ? await selectOptions.GetConfirmedTextsAsync(selectParamIds)
+                : new Dictionary<int, (string Value, string ValueLV, string ValueRU)>();
+
             var user = await users.GetByIdAsync(userId);
             int duration = user?.PreferredAdDuration is int d && AdDurations.IsAccepted(d) ? d : AdDurations.Default;
 
             var col = new Dictionary<string, int>();
             var paramCol = new Dictionary<int, int>();
-            for (int i = 0; i < data.Headers.Count; i++)
+            for (int i = 0; i < data.Keys.Count; i++)
             {
-                var h = data.Headers[i];
-                var m = ParamHeader.Match(h);
+                var key = data.Keys[i];
+                var m = ParamKey.Match(key);
                 if (m.Success) paramCol[int.Parse(m.Groups[1].Value)] = i;
-                else col[h.ToLowerInvariant()] = i;
+                else if (key.Length > 0) col[key.ToLowerInvariant()] = i;
             }
             if (!col.ContainsKey("title")) return new ImportResult(0, [new ImportError(1, "Column 'title' not found")], []);
 
@@ -299,7 +374,7 @@ namespace Linkora.Services
             for (int r = 0; r < data.Rows.Count; r++)
             {
                 var row = data.Rows[r];
-                int line = r + 3;
+                int line = r + data.FirstLine;
                 if (row.All(string.IsNullOrWhiteSpace)) continue;
                 int before = errors.Count;
 
@@ -316,10 +391,8 @@ namespace Linkora.Services
                 {
                     var priceText = Cell(row, "price").Replace(',', '.');
                     if (priceText.Length > 0)
-                    {
                         if (!decimal.TryParse(priceText, NumberStyles.Number, CultureInfo.InvariantCulture, out var pv) || pv < 0) errors.Add(new(line, "invalid price"));
                         else price = pv;
-                    }
                 }
 
                 int rowDuration = duration;
@@ -354,28 +427,30 @@ namespace Linkora.Services
                     {
                         case 2:
                             {
-                                var o = p.Options.FirstOrDefault(x => x.Text.Equals(raw, StringComparison.OrdinalIgnoreCase));
-                                if (o == null) errors.Add(new(line, $"{p.Param.Name}: unknown value '{raw}'"));
-                                else paramValues[p.Param.Id] = o.Id.ToString();
+                                var id = FindOptionId(p, optionTexts, raw);
+                                if (id == null) errors.Add(new(line, $"{p.Param.Name}: unknown value '{raw}'"));
+                                else paramValues[p.Param.Id] = id.Value.ToString();
                                 break;
                             }
                         case 4:
                             {
+                                var whole = FindOptionId(p, optionTexts, raw);
+                                if (whole != null) { paramValues[p.Param.Id] = whole.Value.ToString(); break; }
+
                                 var ids = new List<string>();
-                                foreach (var part in raw.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                                foreach (var part in raw.Split([',', '|'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
                                 {
-                                    var o = p.Options.FirstOrDefault(x => x.Text.Equals(part, StringComparison.OrdinalIgnoreCase));
-                                    if (o == null) errors.Add(new(line, $"{p.Param.Name}: unknown value '{part}'"));
-                                    else ids.Add(o.Id.ToString());
+                                    var id = FindOptionId(p, optionTexts, part);
+                                    if (id == null) errors.Add(new(line, $"{p.Param.Name}: unknown value '{part}'"));
+                                    else ids.Add(id.Value.ToString());
                                 }
-                                if (ids.Count > 0) paramValues[p.Param.Id] = string.Join(',', ids);
+                                if (ids.Count > 0) paramValues[p.Param.Id] = string.Join(',', ids.Distinct());
                                 break;
                             }
                         case 8:
                             {
-                                var o = p.Options.FirstOrDefault(x => x.Text.Equals(raw, StringComparison.OrdinalIgnoreCase));
-                                if (o != null) paramValues[p.Param.Id] = o.Id.ToString();
-                                else paramValues[p.Param.Id] = "new:" + raw;
+                                var id = FindOptionId(p, optionTexts, raw);
+                                paramValues[p.Param.Id] = id != null ? id.Value.ToString() : "new:" + raw;
                                 break;
                             }
                         case 6:
