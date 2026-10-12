@@ -262,7 +262,7 @@
             applyLogoForWidth();
             window.addEventListener('resize', applyLogoForWidth);
 
-            const currentLang = localStorage.getItem('lang') || 'en';
+            const currentLang = localStorage.getItem('lang') || 'lv';
             if (currentLang === 'en') document.getElementById('headerLangEN')?.classList.add('active');
             if (currentLang === 'lv') document.getElementById('headerLangLV')?.classList.add('active');
             if (currentLang === 'ru') document.getElementById('headerLangRU')?.classList.add('active');

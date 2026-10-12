@@ -246,7 +246,7 @@
         (function () {
             const dark = localStorage.getItem('theme') === 'dark';
             document.getElementById('profileThemeToggle').classList.toggle('settings-toggle-on', dark);
-            const lang = localStorage.getItem('lang') || 'en';
+            const lang = localStorage.getItem('lang') || 'lv';
             document.getElementById('pl' + lang.toUpperCase())?.classList.add('settings-lang-pill-active');
         })();
 

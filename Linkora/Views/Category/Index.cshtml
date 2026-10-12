@@ -445,8 +445,8 @@ function ensureMapsLoaded() {
 }
 
     function initMoreButtons() {
-        const lang = localStorage.getItem('lang') || 'en';
-        const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
+        const lang = localStorage.getItem('lang') || 'lv';
+        const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['lv'])) || {};
         document.querySelectorAll('.param-show-more').forEach(btn => {
             const block = btn.parentElement;
             const hidden = block.querySelectorAll('.param-option-hidden, .param-swatch-hidden');
@@ -485,8 +485,8 @@ function loadProductsMap() {
     const bounds = new google.maps.LatLngBounds();
     let hasAny = false;
 
-    const lang = localStorage.getItem('lang') || 'en';
-    const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
+    const lang = localStorage.getItem('lang') || 'lv';
+    const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['lv'])) || {};
 
     mapProducts.forEach(p => {
         if (p.lat == null || p.lng == null) return;

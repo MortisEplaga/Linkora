@@ -18,7 +18,7 @@ namespace Linkora.Repositories
         Task<IEnumerable<Product>> GetUserProductsByStatusAsync(int userId, string status);
         Task<bool> UpdateProductStatusAsync(int productId, ProductStatus status);
         Task<int> CreateAsync(Product product, Dictionary<int, string> paramValues, int publishDurationDays = 30);
-        Task<List<int>> CreateImportedListingsAsync(int userId, List<ImportListing> listings, string lang = "en");
+        Task<List<int>> CreateImportedListingsAsync(int userId, List<ImportListing> listings, string lang = "lv");
         Task<List<ExportListing>> GetListingsForExportAsync(int userId, int categoryId, string lang);
         Task<List<ProductMedia>> GetMediaAsync(int productId);
         Task SaveMediaAsync(int productId, List<ProductMedia> media);

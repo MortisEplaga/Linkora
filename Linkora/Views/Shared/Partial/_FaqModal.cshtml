@@ -3,13 +3,13 @@
     <button class="modal-close" onclick="closeFaqModal()">✕</button>
     <h2 class="info-modal-title" data-i18n="faq_title">FAQ</h2>
     <div class="info-modal-lang-tabs">
-        <button class="info-lang-btn active" onclick="switchInfoLang('ru', this)">RU</button>
-        <button class="info-lang-btn" onclick="switchInfoLang('lv', this)">LV</button>
+        <button class="info-lang-btn" onclick="switchInfoLang('ru', this)">RU</button>
+        <button class="info-lang-btn active" onclick="switchInfoLang('lv', this)">LV</button>
         <button class="info-lang-btn" onclick="switchInfoLang('en', this)">EN</button>
     </div>
 
     <div class="info-modal-body">
-        <div class="info-lang-content" data-lang="ru">
+        <div class="info-lang-content" data-lang="ru" style="display:none">
             <div class="faq-item">
                 <div class="faq-q" onclick="toggleFaq(this)">Как зарегистрироваться? <span class="faq-arrow">›</span></div>
                 <div class="faq-a">Нажав на раздел меню, найдите возможность «Зарегистрироваться», после чего откроется бланк, заполнив который вы станете зарегистрированным пользователем. При размещении поста вам потребуется активировать контактную информацию.</div>
@@ -63,7 +63,7 @@
                 <div class="faq-a">Открыв меню возле соответствующего поста, вы найдете возможность «Удалить».</div>
             </div>
         </div>
-        <div class="info-lang-content" data-lang="lv" style="display:none">
+        <div class="info-lang-content" data-lang="lv">
             <div class="faq-item">
                 <div class="faq-q" onclick="toggleFaq(this)">Kā reģistrēties? <span class="faq-arrow">›</span></div>
                 <div class="faq-a">Nospiežot uz izvēlnes sadaļas, atrodiet iespēju "Reģistrēties", pēc tam atvērsies forma, kuru aizpildot jūs kļūsiet par reģistrētu lietotāju. Publicējot sludinājumu, jums būs jāaktivizē kontaktinformācija.</div>

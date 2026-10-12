@@ -1750,14 +1750,14 @@ const TRANSLATIONS = {
 })();
 
 function translate(key) {
-    const lang = localStorage.getItem('lang') || 'en';
-    const dict = TRANSLATIONS[lang] || TRANSLATIONS['en'];
+    const lang = localStorage.getItem('lang') || 'lv';
+    const dict = TRANSLATIONS[lang] || TRANSLATIONS['lv'];
     return dict[key] || TRANSLATIONS['en'][key] || key;
 }
 
 function applyTranslations() {
-    const lang = localStorage.getItem('lang') || 'en';
-    const dict = TRANSLATIONS[lang] || TRANSLATIONS['en'];
+    const lang = localStorage.getItem('lang') || 'lv';
+    const dict = TRANSLATIONS[lang] || TRANSLATIONS['lv'];
 
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.dataset.i18n;
@@ -1797,8 +1797,8 @@ function escapeHtml(str) {
 }
 
 function translateNotificationMessage(message, notif) {
-    const lang = localStorage.getItem('lang') || 'en';
-    const dict = TRANSLATIONS[lang] || TRANSLATIONS['en'];
+    const lang = localStorage.getItem('lang') || 'lv';
+    const dict = TRANSLATIONS[lang] || TRANSLATIONS['lv'];
 
     function tl(key) { return dict[key] || key; }
     function fmt(template) {

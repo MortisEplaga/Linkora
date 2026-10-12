@@ -1013,3 +1013,34 @@
         margin-top: 4px;
     }
 }
+/* ─────────────────────────────────────────────────────────────
+   Крупные смартфоны 6,8″ (19.5:9): боковая панель фильтров на всю
+   динамическую высоту + safe-area, крупнее пагинация и сетка
+   ───────────────────────────────────────────────────────────── */
+@media screen and (max-width: 430px) and (pointer: coarse) {
+    .param-sidebar {
+        height: 100dvh;
+        padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+        overscroll-behavior: contain;
+    }
+
+    .floating-filter-actions {
+        bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    }
+}
+
+@media screen and (min-width: 380px) and (max-width: 430px) and (pointer: coarse) {
+    .listing-grid {
+        gap: 12px;
+    }
+
+    .page-link {
+        min-width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+
+    .pagination-list {
+        gap: 6px;
+    }
+}

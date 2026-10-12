@@ -675,3 +675,17 @@
     gap: 10px;
     justify-content: flex-end;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Крупные смартфоны 6,8″ (19.5:9): dvh + safe-area
+   ───────────────────────────────────────────────────────────── */
+@media screen and (max-width: 430px) and (pointer: coarse) {
+    .admin-layout {
+        min-height: calc(100dvh - 104px);
+    }
+
+    .admin-toast {
+        right: calc(24px + env(safe-area-inset-right, 0px));
+        bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    }
+}

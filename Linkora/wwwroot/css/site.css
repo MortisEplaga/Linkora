@@ -1,4 +1,4 @@
-﻿:root {
+:root {
     --z-content: 1;
     --z-sticky-header: 10;
     --z-catmenu-overlay: 20;
@@ -4258,5 +4258,150 @@ body {
         box-shadow: 0 0 0 1000px var(--input-bg) inset !important;
         caret-color: var(--input-text);
         transition: background-color 9999s ease-out 0s;
+    }
+}
+/* ═══════════════════════════════════════════════════════════════════════
+   Крупные смартфоны с вытянутым экраном — класс 6,8″, 19.5:9
+   (панели 1080×2340 / 1440×3120; вьюпорт 360–430 CSS-px в ширину
+   и 780–930 px в высоту: Galaxy S24 Ultra — 384×832, S20–S23 Ultra —
+   360×780…412×891, iPhone 14–16 Pro Max — 430×932, Pixel 7–9 Pro —
+   412×892). Вырез-отверстие, скруглённые углы и жестовая навигация
+   дают env(safe-area-inset-*), а динамическая панель браузера —
+   расхождение 100vh и видимой высоты, поэтому используем dvh.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* 1) Портрет: динамическая высота вьюпорта + безопасные зоны */
+@media screen and (max-width: 430px) and (pointer: coarse) {
+
+    /* липкая шапка — отступ под статус-бар/вырез */
+    .header-nav {
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    /* выдвижное меню категорий во всю высоту, без цепного скролла */
+    .catmenu {
+        top: 0;
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        overscroll-behavior: contain;
+    }
+
+    /* нижние шторки (отзывы, уведомления): контент не под жестовой полосой */
+    .reviews-modal,
+    .notif-modal {
+        max-height: 85dvh;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        overscroll-behavior: contain;
+    }
+
+    /* центрированные модалки — по видимой области, а не «за» панелью браузера */
+    #authModal,
+    #partnerModal,
+    #captchaModal,
+    #rejectModal,
+    #supportModal,
+    #reportModal {
+        max-height: 90dvh;
+    }
+
+    .info-modal {
+        max-height: 85dvh;
+    }
+
+    #faqModal,
+    #termsModal {
+        max-height: 85dvh !important;
+    }
+
+    /* плавающая кнопка «наверх» — над жестовой полосой */
+    .scroll-top-btn {
+        right: calc(24px + env(safe-area-inset-right, 0px));
+        bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .site-footer {
+        padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    }
+}
+
+/* 2) Ширина 380–430 CSS-px — физически крупные панели 6,7–6,9″
+      (в т.ч. 6,8″ 19.5:9): больше воздуха и крупнее точки касания */
+@media screen and (min-width: 380px) and (max-width: 430px) and (pointer: coarse) {
+    :root {
+        --page-padding: 14px;
+    }
+
+    .user-info-wrapper .msg-btn,
+    .user-info-wrapper .cart-btn,
+    .notif-bell-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .footer-link {
+        font-size: 13px;
+    }
+
+    .footer-sep {
+        font-size: 11px;
+    }
+}
+
+/* 3) Альбомная ориентация на 19.5:9: вырез оказывается сбоку —
+      учитываем левый/правый safe-area */
+@media screen and (max-height: 460px) and (orientation: landscape) and (pointer: coarse) {
+    .header-nav {
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    .navbar-inner,
+    .page-container {
+        padding-left: max(var(--page-padding), env(safe-area-inset-left, 0px));
+        padding-right: max(var(--page-padding), env(safe-area-inset-right, 0px));
+    }
+
+    .header-search-inner {
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px));
+    }
+
+    .site-footer {
+        padding-left: max(10px, env(safe-area-inset-left, 0px));
+        padding-right: max(10px, env(safe-area-inset-right, 0px));
+    }
+
+    .catmenu {
+        padding-left: env(safe-area-inset-left, 0px);
+        padding-right: env(safe-area-inset-right, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    /* модалки — по видимой высоте: в ландшафте панель браузера
+       забирает заметную долю короткой стороны экрана */
+    .info-modal {
+        max-height: 85dvh;
+    }
+
+    #faqModal,
+    #termsModal {
+        max-height: 85dvh !important;
+    }
+
+    #authModal,
+    #partnerModal,
+    #captchaModal,
+    #rejectModal,
+    #supportModal,
+    #reportModal {
+        max-height: 90dvh;
+    }
+
+    .reviews-modal {
+        max-height: 80dvh;
+    }
+
+    .notif-modal {
+        max-height: calc(100dvh - 70px);
+        right: calc(24px + env(safe-area-inset-right, 0px));
     }
 }

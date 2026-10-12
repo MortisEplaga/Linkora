@@ -684,7 +684,7 @@ namespace Linkora.Repositories
             if (await reader.ReadAsync()) return reader.GetInt32(0);
             return 0;
         }
-        public async Task<List<int>> CreateImportedListingsAsync(int userId, List<ImportListing> listings, string lang = "en")
+        public async Task<List<int>> CreateImportedListingsAsync(int userId, List<ImportListing> listings, string lang = "lv")
         {
             if (listings.Count == 0) return [];
             var optionCache = new Dictionary<(int ParamId, string Text), int>();

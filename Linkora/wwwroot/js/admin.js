@@ -9,6 +9,6 @@ function showToast(msg, type = 'success') {
 }
 
 function getJsText(key, dict) {
-    const lang = localStorage.getItem('lang') || 'en';
+    const lang = localStorage.getItem('lang') || 'lv';
     return dict[lang]?.[key] || dict.en[key] || key;
 }
