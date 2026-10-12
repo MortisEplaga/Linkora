@@ -428,7 +428,7 @@ namespace Linkora.Controllers
             }
 
             var resolvedLang = lang ?? Request.GetLang();
-            if (resolvedLang != "lv" && resolvedLang != "ru") resolvedLang = "en";
+            if (resolvedLang != "en" && resolvedLang != "ru") resolvedLang = "lv";
 
             var user = await _userRepository.GetByEmailAsync(email.Trim());
             if (user != null)

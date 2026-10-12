@@ -76,8 +76,8 @@
         var value = getParamValue(paramId);
         var errorText = null;
 
-        var lang = localStorage.getItem('lang') || 'en';
-        var msgs = ERROR_MESSAGES[lang] || ERROR_MESSAGES['en'];
+        var lang = localStorage.getItem('lang') || 'lv';
+        var msgs = ERROR_MESSAGES[lang] || ERROR_MESSAGES['lv'];
 
         for (var i = 0; i < rules.length; i++) {
             var rule = rules[i];

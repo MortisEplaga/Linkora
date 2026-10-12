@@ -1,5 +1,5 @@
 ﻿function getCurrentLanguage() {
-    return localStorage.getItem('lang') || 'en';
+    return localStorage.getItem('lang') || 'lv';
 }
 
 /* ---------- Generic info-modal language switching ---------- */
@@ -96,7 +96,7 @@ function closeContactsModal() { closeInfoModal('contactsOverlay', 'contactsModal
 
 /* ---------- Support ---------- */
 
-let currentSupportLang = 'en';
+let currentSupportLang = 'lv';
 
 function openSupportModal() {
     const afToken = document.getElementById('afToken');
@@ -591,7 +591,7 @@ function setLangSettings(lang) {
 }
 
 function markActiveSettingsLang() {
-    const lang = localStorage.getItem('lang') || 'en';
+    const lang = localStorage.getItem('lang') || 'lv';
     document.querySelectorAll('#settingsLangPills .settings-lang-pill').forEach(b => b.classList.remove('settings-lang-pill-active'));
     document.getElementById('sl' + lang.toUpperCase())?.classList.add('settings-lang-pill-active');
 }

@@ -130,8 +130,8 @@ function buildBlock(p, existingValues = {}) {
     block.innerHTML = `<div class="param-title">${p.name}</div>`;
 
     if (p.type === 3) {
-        const lang = localStorage.getItem('lang') || 'en';
-        const dict = TRANSLATIONS[lang] || TRANSLATIONS['en'];
+        const lang = localStorage.getItem('lang') || 'lv';
+        const dict = TRANSLATIONS[lang] || TRANSLATIONS['lv'];
         const yesText = dict['yes'] || 'Yes';
 
         block.innerHTML += `
@@ -466,8 +466,8 @@ async function initDurationUI() {
 }
 
 function translateDynamicElement(el) {
-    const lang = localStorage.getItem('lang') || 'en';
-    const dict = TRANSLATIONS[lang] || TRANSLATIONS['en'];
+    const lang = localStorage.getItem('lang') || 'lv';
+    const dict = TRANSLATIONS[lang] || TRANSLATIONS['lv'];
 
     const key = el.getAttribute('data-i18n');
     if (key && dict[key] !== undefined) {

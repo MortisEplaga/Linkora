@@ -7,7 +7,7 @@ namespace Linkora.Services
     public interface IEmailService
     {
         Task SendConfirmationEmailAsync(string toEmail, string username, string confirmUrl);
-        Task SendPasswordResetEmailAsync(string toEmail, string username, string resetUrl, string lang = "en");
+        Task SendPasswordResetEmailAsync(string toEmail, string username, string resetUrl, string lang = "lv");
         Task SendNotificationEmailAsync(string toEmail, string subject, string bodyText);
     }
     public class SmtpEmailService : IEmailService
@@ -87,7 +87,7 @@ namespace Linkora.Services
                 throw;
             }
         }
-        public async Task SendPasswordResetEmailAsync(string toEmail, string username, string resetUrl, string lang = "en")
+        public async Task SendPasswordResetEmailAsync(string toEmail, string username, string resetUrl, string lang = "lv")
         {
             var section = _configuration.GetSection("Email");
             var host = section["SmtpHost"]!;

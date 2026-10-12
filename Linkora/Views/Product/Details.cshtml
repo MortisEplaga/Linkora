@@ -334,8 +334,8 @@
 
     function shareProduct(e) {
         navigator.clipboard.writeText(window.location.href).catch(() => {});
-        const lang = localStorage.getItem('lang') || 'en';
-        const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
+        const lang = localStorage.getItem('lang') || 'lv';
+        const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['lv'])) || {};
         const message = dict.link_copied || 'Link copied!';
 
         const tip = document.createElement('div');
@@ -352,8 +352,8 @@
     }
 
     function applyTitleTranslations() {
-        const lang = localStorage.getItem('lang') || 'en';
-        const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
+        const lang = localStorage.getItem('lang') || 'lv';
+        const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['lv'])) || {};
         document.querySelectorAll('[data-i18n-title]').forEach(el => {
             const key = el.getAttribute('data-i18n-title');
             if (dict[key]) el.setAttribute('title', dict[key]);

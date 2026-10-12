@@ -92,8 +92,8 @@ function toggleOptions(btn) {
     const isHidden = hidden[0]?.style.display === 'none';
     hidden.forEach(el => el.style.display = isHidden ? '' : 'none');
 
-    const lang = localStorage.getItem('lang') || 'en';
-    const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
+    const lang = localStorage.getItem('lang') || 'lv';
+    const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['lv'])) || {};
 
     const count = btn.dataset.count || hidden.length;
     btn.textContent = isHidden ? (dict.hide_btn || 'Hide') : (dict.more_btn || 'More') + ' ' + count;

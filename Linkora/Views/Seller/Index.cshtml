@@ -242,8 +242,8 @@
 
 <script>
     function t(key) {
-        const lang = localStorage.getItem('lang') || 'en';
-        const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
+        const lang = localStorage.getItem('lang') || 'lv';
+        const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['lv'])) || {};
         return dict[key] || key;
     }
 

@@ -230,8 +230,8 @@
         const btn = document.querySelector('.create-submit');
         btn.disabled = true;
 
-        const lang = localStorage.getItem('lang') || 'en';
-        const dict = TRANSLATIONS[lang] || TRANSLATIONS['en'];
+        const lang = localStorage.getItem('lang') || 'lv';
+        const dict = TRANSLATIONS[lang] || TRANSLATIONS['lv'];
         btn.textContent = dict['publishing'] || 'Publishing...';
 
         try {

@@ -24,13 +24,14 @@ namespace Linkora.Repositories
     {
         public static string GetLang(this HttpRequest request)
         {
-            var lang = request.Cookies["lang"] ?? "en";
-            if (lang != "lv" && lang != "ru") lang = "en";
+            // Latvian is the default language; en/ru are opt-in via the "lang" cookie
+            var lang = request.Cookies["lang"] ?? "lv";
+            if (lang != "en" && lang != "ru") lang = "lv";
             return lang;
         }
         public static string GetLang(this HttpContext context)
         {
-            if (context == null) return "en";
+            if (context == null) return "lv";
             return context.Request.GetLang();
         }
     }

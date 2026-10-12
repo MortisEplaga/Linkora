@@ -40,8 +40,8 @@
     function setSortLabel() {
         const sortLabel = document.getElementById('sortLabel');
         if (!sortLabel) return;
-        const lang = localStorage.getItem('lang') || 'en';
-        const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['en'])) || {};
+        const lang = localStorage.getItem('lang') || 'lv';
+        const dict = (typeof TRANSLATIONS !== 'undefined' && (TRANSLATIONS[lang] || TRANSLATIONS['lv'])) || {};
         const sortMap = { new: dict.sort_newest, cheap: dict.sort_cheapest, expensive: dict.sort_expensive };
         sortLabel.textContent = sortMap[sortLabel.dataset.sort || 'new'] || dict.sort_newest || 'Newest first';
     }

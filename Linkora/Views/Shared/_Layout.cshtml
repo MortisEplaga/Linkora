@@ -1,9 +1,10 @@
 ﻿@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 <!DOCTYPE html>
-<html lang="en" data-authenticated="@(User.Identity!.IsAuthenticated ? "true" : "false")">
+@* lang: "lv" by default, or the value of the "lang" cookie *@
+<html lang="@(Context.GetLang())" data-authenticated="@(User.Identity!.IsAuthenticated ? "true" : "false")">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>@ViewData["Title"] - Vena</title>
     <link rel="icon" type="image/x-icon" href="~/img/MiniLogo.svg" id="faviconLink" />
     <script src="~/js/icons.js"></script>
