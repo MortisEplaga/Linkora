@@ -1,5 +1,7 @@
+using Linkora.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Caching.Memory;
+using System.Text;
 
 namespace Linkora.Repositories
 {
@@ -66,6 +68,44 @@ namespace Linkora.Repositories
                 r => (Id: r.GetInt32(0), Value: r.GetStringOrDefault(1), ValueLV: r.GetStringOrDefault(2), ValueRU: r.GetStringOrDefault(3)),
                 p => { foreach (var prm in prms) p.Add(prm); });
             return rows.ToDictionary(x => x.Id, x => (x.Value, x.ValueLV, x.ValueRU));
+        }
+        public async Task<List<OptionRelationDto>> GetRelationsAsync(IEnumerable<int>? categoryIds = null, int? parentParamId = null, int? childParamId = null)
+        {
+            var idList = (categoryIds ?? Enumerable.Empty<int>()).Where(x => x > 0).Distinct().OrderBy(x => x).ToList();
+            var cacheKey = $"select_option_relations_{parentParamId}_{childParamId}_{string.Join(",", idList)}";
+
+            if (_cache.TryGetValue(cacheKey, out List<OptionRelationDto>? cached) && cached != null) return cached;
+
+            var sql = new StringBuilder(@"SELECT po.ParamId, co.ParamId, r.ParentOptionId, r.ChildOptionId
+FROM SelectOptionRelations r
+JOIN SelectOptions po ON po.Id = r.ParentOptionId AND po.IsConf = 1
+JOIN SelectOptions co ON co.Id = r.ChildOptionId AND co.IsConf = 1
+WHERE (@ParentParamId IS NULL OR po.ParamId = @ParentParamId)
+  AND (@ChildParamId IS NULL OR co.ParamId = @ChildParamId)");
+
+            if (idList.Count > 0)
+            {
+                var ids = string.Join(",", idList);
+                sql.Append($" AND (po.ParamId IN (SELECT Id FROM Parameters WHERE CategoryId IN ({ids}))")
+                   .Append($" OR co.ParamId IN (SELECT Id FROM Parameters WHERE CategoryId IN ({ids})))");
+            }
+
+            var result = await QueryAsync(sql.ToString(),
+                r => new OptionRelationDto
+                {
+                    ParentParamId = r.GetInt32(0),
+                    ChildParamId = r.GetInt32(1),
+                    ParentOptionId = r.GetInt32(2),
+                    ChildOptionId = r.GetInt32(3)
+                },
+                p =>
+                {
+                    p.AddWithValue("@ParentParamId", (object?)parentParamId ?? DBNull.Value);
+                    p.AddWithValue("@ChildParamId", (object?)childParamId ?? DBNull.Value);
+                });
+
+            _cache.Set(cacheKey, result, TimeSpan.FromMinutes(30));
+            return result;
         }
         private void InvalidateCache(int paramId, string lang)
         {

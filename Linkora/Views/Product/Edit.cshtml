@@ -216,7 +216,7 @@
         }
 
         if (catId) {
-            const valRes = await fetch(`/Product/ParamValues?productId=${productId}`);
+            const valRes = await fetch(`/Product/ParamRawValues?productId=${productId}`);
             const values = await valRes.json();
             await loadParams(catId, values);
         }

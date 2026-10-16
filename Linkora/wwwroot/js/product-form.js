@@ -121,6 +121,21 @@ async function loadParams(categoryId, existingValues = {}) {
     if (typeof updateTranslations === 'function') {
         updateTranslations();
     }
+
+    if (window.ParamRulesEngine && typeof window.ParamRulesEngine.loadCustomScripts === 'function') {
+        window.ParamRulesEngine.loadCustomScripts(categoryId);
+    }
+}
+
+/* Значение параметра может прийти как id варианта (ParamRawValues, драфт формы)
+   или как текст варианта (ParamValues) — принимаем оба формата. */
+function matchOptionId(options, val) {
+    if (val === null || val === undefined || String(val).trim() === '') return null;
+    const str = String(val).trim();
+    const byId = (options || []).find(o => String(o.id) === str);
+    if (byId) return String(byId.id);
+    const byText = (options || []).find(o => String(o.text).trim() === str);
+    return byText ? String(byText.id) : null;
 }
 
 function buildBlock(p, existingValues = {}) {
@@ -141,21 +156,24 @@ function buildBlock(p, existingValues = {}) {
                        ${val && String(val).toLowerCase() === 'true' ? 'checked' : ''} />
             </div>`;
     } else if (p.type === 2) {
+        const activeId = matchOptionId(p.options, val);
         const pills = p.options.map(opt =>
-            `<label class="param-pill ${String(val) === String(opt.id) ? 'param-pill-active' : ''}"
+            `<label class="param-pill ${activeId !== null && activeId === String(opt.id) ? 'param-pill-active' : ''}"
                     data-id="${opt.id}"
                     onclick="pillClick(this)">${opt.text}</label>`
         ).join('');
         block.innerHTML += `<div class="param-pills" data-param="${p.id}">${pills}</div>`;
     } else if (p.type === 8) {
+        var initialId = matchOptionId(p.options, val);
         var initialText = '';
-        if (val) {
-            var found = (p.options || []).find(function (o) { return String(o.id) === String(val); });
+        if (initialId) {
+            var found = (p.options || []).find(function (o) { return String(o.id) === String(initialId); });
             if (found) initialText = found.text;
         }
-        block.innerHTML += FreeTextSelect.buildHtml(p.id, initialText, val || '', p.options || []);
+        block.innerHTML += FreeTextSelect.buildHtml(p.id, initialText, initialId || '', p.options || []);
     } else if (p.type === 6) {
-        const selectedVal = val != null ? String(val) : '';
+        const selectedVal = matchOptionId(
+            (p.colorOptions || []).map(o => ({ id: o.id, text: o.name })), val) ?? '';
         const FALLBACK_VISIBLE = 5;
 
         const visibleIds = new Set();
@@ -194,7 +212,9 @@ function buildBlock(p, existingValues = {}) {
             translateDynamicElement(btn);
         }
     } else if (p.type === 4) {
-        const selected = val ? String(val).split(',').map(s => s.trim()) : [];
+        const selected = val
+            ? String(val).split(',').map(s => s.trim()).map(s => matchOptionId(p.options, s)).filter(id => id !== null)
+            : [];
         const LIMIT = 5;
         const checksHtml = p.options.map((opt, i) =>
             `<label class="param-option" ${i >= LIMIT ? 'style="display:none"' : ''}>
