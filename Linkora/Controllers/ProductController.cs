@@ -351,6 +351,8 @@ namespace Linkora.Controllers
         }
 
         [HttpGet] public async Task<IActionResult> ParamValues(int productId) => Json(await _productRepository.GetParamDisplayValuesAsync(productId, Request.GetLang()));
+        /// <summary>Сырые значения MapperProductParam (id вариантов для типов 2/4/6/8) — используется формой редактирования.</summary>
+        [HttpGet] public async Task<IActionResult> ParamRawValues(int productId) => Json(await _productRepository.GetParamValuesAsync(productId));
         [Authorize][HttpPost] public async Task<IActionResult> CompleteDeal(int id, int otherUserId)
         {
             var userId = User.GetUserId();
