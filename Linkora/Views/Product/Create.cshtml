@@ -106,10 +106,10 @@
             @if (!User.Identity!.IsAuthenticated)
             {
                 <div class="create-login-hint">
-                    <span>Want to manage your ads?</span>
-                    <a href="#" onclick="openAuthModal('login')">Sign in</a>
-                    <span>or</span>
-                    <a href="#" onclick="openAuthModal('register')">Create account</a>
+                    <span data-i18n="create_login_hint">Want to manage your ads?</span>
+                    <a href="#" onclick="openAuthModal('login')" data-i18n="sign_in_btn">Sign in</a>
+                    <span data-i18n="or_text">or</span>
+                    <a href="#" onclick="openAuthModal('register')" data-i18n="create_account_link">Create account</a>
                 </div>
             }
             <div class="create-section">

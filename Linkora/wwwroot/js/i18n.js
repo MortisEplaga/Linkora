@@ -1,5 +1,8 @@
 const TRANSLATIONS = {
     en: {
+        'create_login_hint': 'Want to manage your ads?',
+        'create_account_link': 'Create account',
+        'promo_free': 'Free',
         'filter_price_only': 'Only listings with price',
         'filter_from': 'From',
         'filter_to': 'To',
@@ -573,6 +576,9 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'create_login_hint': 'Vēlaties pārvaldīt savus sludinājumus?',
+        'create_account_link': 'Izveidot kontu',
+        'promo_free': 'Bezmaksas',
         'filter_price_only': 'Tikai sludinājumi ar norādītu cenu',
         'filter_from': 'No',
         'filter_to': 'Līdz',
@@ -1156,6 +1162,9 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'create_login_hint': 'Хотите управлять объявлениями?',
+        'create_account_link': 'Создать аккаунт',
+        'promo_free': 'Бесплатно',
         'filter_price_only': 'Только с указанной ценой',
         'filter_from': 'От',
         'filter_to': 'До',
