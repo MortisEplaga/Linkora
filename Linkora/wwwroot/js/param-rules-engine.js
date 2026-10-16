@@ -143,7 +143,57 @@
         });
     };
 
+    /* ---------- Кастомные скрипты категории (ParameterCustomScripts) ---------- */
+    var _customScripts = {};
+
+    var loadCustomScript = function (path, categoryId) {
+        if (!path) return;
+
+        var state = _customScripts[path];
+        if (state === true) {
+            notifyCustomScriptReady(categoryId);
+            return;
+        }
+        if (state === 'pending') return;
+
+        _customScripts[path] = 'pending';
+        var script = document.createElement('script');
+        script.src = path;
+        script.async = false;
+        script.onload = function () {
+            _customScripts[path] = true;
+            notifyCustomScriptReady(categoryId);
+        };
+        script.onerror = function () {
+            _customScripts[path] = false;
+            console.error('[ParamRulesEngine] custom script failed:', path);
+        };
+        document.head.appendChild(script);
+    };
+
+    var notifyCustomScriptReady = function (categoryId) {
+        if (window.DependentOptions && typeof window.DependentOptions.refresh === 'function') {
+            window.DependentOptions.refresh(categoryId);
+        }
+    };
+
     window.ParamRulesEngine = {
+        categoryId: null,
+        loadCustomScriptPaths: function (paths, categoryId) {
+            (paths || []).forEach(function (p) { loadCustomScript(p, categoryId); });
+        },
+        loadCustomScripts: async function (categoryId) {
+            if (!categoryId) return;
+            window.ParamRulesEngine.categoryId = categoryId;
+            try {
+                var response = await fetch('/Product/CategoryRules?categoryId=' + categoryId);
+                if (!response.ok) return;
+                var data = await response.json();
+                window.ParamRulesEngine.loadCustomScriptPaths(data.customScriptPaths, categoryId);
+            } catch (e) {
+                console.error('[ParamRulesEngine] custom scripts error', e);
+            }
+        },
         loadRules: async function (categoryId) {
             try {
                 var response = await fetch('/Product/CategoryRules?categoryId=' + categoryId);
@@ -156,6 +206,9 @@
                 var data = await response.json();
                 _visibilityRules = data.visibilityRules || [];
                 _validationRules = data.validationRules || [];
+
+                window.ParamRulesEngine.categoryId = categoryId;
+                window.ParamRulesEngine.loadCustomScriptPaths(data.customScriptPaths, categoryId);
 
                 var container = document.getElementById('filterForm');
                 if (container) {

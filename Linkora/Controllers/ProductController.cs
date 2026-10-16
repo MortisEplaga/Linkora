@@ -58,6 +58,29 @@ namespace Linkora.Controllers
             return Json(new { id = newId, created = true });
         }
         [HttpGet] public async Task<IActionResult> GetSelectOptions([FromQuery] int paramId, [FromQuery] bool forFilter = false) => Json((await _selectOptionRepository.GetConfirmedAsync(paramId, Request.GetLang(), forFilter)).Select(o => new { id = o.Id, text = o.Text }));
+
+        /// <summary>Связи «вариант родительского параметра -> варианты дочернего» (SelectOptionRelations).</summary>
+        [HttpGet] public async Task<IActionResult> OptionRelations([FromQuery] int? categoryId = null, [FromQuery] int? parentParamId = null, [FromQuery] int? childParamId = null)
+        {
+            List<int>? categoryIds = null;
+            if (categoryId.HasValue)
+            {
+                var breadcrumb = await _categoryRepository.GetBreadcrumbAsync(categoryId.Value);
+                categoryIds = breadcrumb.Select(c => c.Id).ToList();
+            }
+
+            var relations = await _selectOptionRepository.GetRelationsAsync(categoryIds, parentParamId, childParamId);
+            return Json(new
+            {
+                relations = relations.Select(r => new
+                {
+                    parentParamId = r.ParentParamId,
+                    childParamId = r.ChildParamId,
+                    parentOptionId = r.ParentOptionId,
+                    childOptionId = r.ChildOptionId
+                })
+            });
+        }
         [HttpPost][EnableRateLimiting("public-api")] public async Task<IActionResult> VerifyRecaptcha([FromBody] RecaptchaDto dto)
         {
             var secret = _configuration["Recaptcha:SecretKey"]!;

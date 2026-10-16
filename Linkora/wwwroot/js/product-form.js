@@ -121,6 +121,10 @@ async function loadParams(categoryId, existingValues = {}) {
     if (typeof updateTranslations === 'function') {
         updateTranslations();
     }
+
+    if (window.ParamRulesEngine && typeof window.ParamRulesEngine.loadCustomScripts === 'function') {
+        window.ParamRulesEngine.loadCustomScripts(categoryId);
+    }
 }
 
 function buildBlock(p, existingValues = {}) {

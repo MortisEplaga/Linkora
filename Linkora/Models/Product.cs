@@ -49,6 +49,17 @@ namespace Linkora.Models
         public List<ValidationRuleDto> ValidationRules { get; set; } = [];
         public List<string> CustomScriptPaths { get; set; } = [];
     }
+    /// <summary>
+    /// Строка таблицы SelectOptionRelations: вариант po родительского параметра
+    /// разрешает вариант co дочернего параметра.
+    /// </summary>
+    public class OptionRelationDto
+    {
+        public int ParentParamId { get; set; }
+        public int ChildParamId { get; set; }
+        public int ParentOptionId { get; set; }
+        public int ChildOptionId { get; set; }
+    }
     public class VisibilityRuleDto
     {
         public int TargetParamId { get; set; }

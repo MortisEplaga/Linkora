@@ -1,3 +1,4 @@
+using Linkora.Models;
 using Microsoft.Data.SqlClient;
 
 namespace Linkora.Repositories
@@ -10,5 +11,7 @@ namespace Linkora.Repositories
         Task<int?> FindIdAsync(SqlConnection conn, SqlTransaction tx, int paramId, string text, string lang);
         Task<List<(int Id, string Text)>> GetConfirmedAsync(int paramId, string lang, bool forFilter = false);
         Task<Dictionary<int, (string Value, string ValueLV, string ValueRU)>> GetConfirmedTextsAsync(IEnumerable<int> paramIds);
+        /// <summary>Связи «вариант родительского параметра -> вариант дочернего» (SelectOptionRelations).</summary>
+        Task<List<OptionRelationDto>> GetRelationsAsync(IEnumerable<int>? categoryIds = null, int? parentParamId = null, int? childParamId = null);
     }
 }
