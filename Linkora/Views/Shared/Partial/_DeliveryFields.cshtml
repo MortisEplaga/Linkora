@@ -2,7 +2,7 @@
 @model ProductDeliveryFormModel
 <div class="create-field" id="deliveryFieldWrap">
     <label class="create-label" for="shipEnabled">
-        <input type="checkbox" id="shipEnabled" @(Model.Enabled ? "checked" : null) onchange="toggleDeliveryFields()" />
+        <input type="checkbox" id="shipEnabled" checked="@(Model.Enabled ? "checked" : null)" onchange="toggleDeliveryFields()" />
         <span data-i18n="ship_enable">Deliver to a parcel locker (Omniva)</span>
     </label>
     <div id="shipDetails" class="ship-delivery-details" style="@(Model.Enabled ? "" : "display:none")">
@@ -11,7 +11,7 @@
             <option value="" data-i18n="ship_size_ph">Select a size</option>
             @foreach (var size in ParcelSizes.All)
             {
-                <option value="@size" @(Model.ParcelSize == size ? "selected" : null)>@size</option>
+                <option value="@size" selected="@(Model.ParcelSize == size ? "selected" : null)">@size</option>
             }
         </select>
 
