@@ -305,6 +305,22 @@
             </div>
         </div>
     }
+    @if (p.ShippingEnabled)
+    {
+        <div class="details-section">
+            <h2 class="details-section-title" data-i18n="ship_enable">Deliver to a parcel locker (Omniva)</h2>
+            <div class="details-params">
+                <div class="details-param-row">
+                    <span class="details-param-name" data-i18n="ship_parcel_size">Parcel size</span>
+                    <span class="details-param-value">@(p.ParcelSize ?? "—")</span>
+                </div>
+                <div class="details-param-row">
+                    <span class="details-param-name" data-i18n="ship_weight">Weight, kg</span>
+                    <span class="details-param-value">@(p.WeightKg.HasValue ? p.WeightKg.Value.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture) + " kg" : "—")</span>
+                </div>
+            </div>
+        </div>
+    }
     @if (!string.IsNullOrWhiteSpace(p.Address) && p.Lat.HasValue && p.Lng.HasValue)
     {
         <div class="details-section details-location">

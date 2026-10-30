@@ -68,8 +68,10 @@
             var priceFrom = (decimal?)ViewBag.PriceFrom;
             var priceTo = (decimal?)ViewBag.PriceTo;
             var priceOnly = (bool)(ViewBag.PriceOnly ?? false);
+            var shippingOnly = (bool)(ViewBag.ShippingOnly ?? false);
             var showPriceFilter = category.HasPrice == true;
-            var showFilters = parameters.Count > 0 || showPriceFilter;
+            // The delivery filter is available in every category, so the sidebar is always shown.
+            var showFilters = true;
         }
         @if (showFilters)
         {
@@ -77,6 +79,14 @@
                 <input type="hidden" name="id" value="@category.Id" />
                 <input type="hidden" name="city" value="@(ViewBag.City ?? "")" />
                 <input type="hidden" name="q" value="@(ViewBag.Search ?? "")" />
+
+                <div class="param-block">
+                    <div class="param-title" data-i18n="ship_enable">Deliver to a parcel locker (Omniva)</div>
+                    <label class="param-check-row">
+                        <span data-i18n="filter_shipping_only">Only listings with parcel-locker delivery</span>
+                        <input type="checkbox" class="param-check-input" name="shipping_only" value="1" checked="@(shippingOnly ? "checked" : null)" />
+                    </label>
+                </div>
 
                 @if (showPriceFilter)
                 {

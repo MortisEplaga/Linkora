@@ -51,7 +51,10 @@ namespace Linkora.Controllers
                 if (decimal.TryParse(Request.Query["price_to"].FirstOrDefault(), NumberStyles.Number, CultureInfo.InvariantCulture, out var pt) && pt >= 0) priceTo = pt;
             }
 
-            var result = await _productRepository.GetByCategoryAsync(id, includeDescendants: true, sort, filters, rangeFrom, rangeTo, city, q, page, priceFrom, priceTo, priceOnly);
+            // Delivery filter is available in every category: only listings with Omniva parcel-locker delivery enabled.
+            bool shippingOnly = Request.Query["shipping_only"].FirstOrDefault() == "1";
+
+            var result = await _productRepository.GetByCategoryAsync(id, includeDescendants: true, sort, filters, rangeFrom, rangeTo, city, q, page, priceFrom, priceTo, priceOnly, shippingOnly);
 
             ViewBag.City = city;
             ViewBag.Category = category;
@@ -68,6 +71,7 @@ namespace Linkora.Controllers
             ViewBag.PriceFrom = priceFrom;
             ViewBag.PriceTo = priceTo;
             ViewBag.PriceOnly = priceOnly;
+            ViewBag.ShippingOnly = shippingOnly;
             ViewBag.Filters = filters;
             ViewBag.RangeFrom = rangeFrom;
             ViewBag.RangeTo = rangeTo;

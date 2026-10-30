@@ -34,15 +34,15 @@ namespace Linkora.Repositories
         }
         public async Task<PagedResult<Product>> GetByCategoryAsync(int rootCategoryId, bool includeDescendants = true, string sort = "new",
             Dictionary<int, List<string>>? filters = null, Dictionary<int, decimal>? rangeFrom = null, Dictionary<int, decimal>? rangeTo = null,
-            string? city = null, string? search = null, int page = 1, decimal? priceFrom = null, decimal? priceTo = null, bool priceOnly = false)
+            string? city = null, string? search = null, int page = 1, decimal? priceFrom = null, decimal? priceTo = null, bool priceOnly = false, bool shippingOnly = false)
         {
             if (page < 1) page = 1;
             const int pageSize = 20;
             int skip = (page - 1) * pageSize;
 
-            var promoCount = await GetPromoCountCachedAsync(rootCategoryId, includeDescendants);
+            var promoCount = await GetPromoCountCachedAsync(rootCategoryId, includeDescendants, shippingOnly);
             var (_, topCount) = await QueryProductsAsync(rootCategoryId, includeDescendants, sort,
-                            $"{EffectiveBoostExpr} = {(short)PromotionTier.Top}", filters, rangeFrom, rangeTo, city, search, offset: null, limit: 0, priceFrom: priceFrom, priceTo: priceTo, priceOnly: priceOnly);
+                            $"{EffectiveBoostExpr} = {(short)PromotionTier.Top}", filters, rangeFrom, rangeTo, city, search, offset: null, limit: 0, priceFrom: priceFrom, priceTo: priceTo, priceOnly: priceOnly, shippingOnly: shippingOnly);
             var promoTake = Math.Max(0, Math.Min(pageSize, promoCount - skip));
             var promoSkip = Math.Min(skip, promoCount);
             var afterPromo = Math.Max(0, skip - promoCount);
@@ -57,19 +57,19 @@ namespace Linkora.Repositories
             var promoTask = promoTake > 0
                 ? QueryProductsAsync(rootCategoryId, includeDescendants, sort,
                     $"{EffectiveBoostExpr} = {(short)PromotionTier.Vip}",
-                    null, null, null, null, null, promoSkip, promoTake)
+                    null, null, null, null, null, promoSkip, promoTake, shippingOnly: shippingOnly)
                 : Task.FromResult((new List<Product>(), promoCount));
 
             var topTask = topTake > 0
                 ? QueryProductsAsync(rootCategoryId, includeDescendants, sort,
                     $"{EffectiveBoostExpr} = {(short)PromotionTier.Top}",
-                    filters, rangeFrom, rangeTo, city, search, topSkip, topTake, priceFrom, priceTo, priceOnly)
+                    filters, rangeFrom, rangeTo, city, search, topSkip, topTake, priceFrom, priceTo, priceOnly, shippingOnly)
                 : Task.FromResult((new List<Product>(), topCount));
 
             var filteredTask = QueryProductsAsync(rootCategoryId, includeDescendants, sort,
                 $"({EffectiveBoostExpr} IS NULL OR {EffectiveBoostExpr} < {(short)PromotionTier.Top})",
                 filters, rangeFrom, rangeTo, city, search,
-                offset: filteredSkip, limit: filteredTake, priceFrom: priceFrom, priceTo: priceTo, priceOnly: priceOnly);
+                offset: filteredSkip, limit: filteredTake, priceFrom: priceFrom, priceTo: priceTo, priceOnly: priceOnly, shippingOnly: shippingOnly);
 
             var (promoItems, _) = await promoTask;
             var (topItems, _) = await topTask;
@@ -85,9 +85,9 @@ namespace Linkora.Repositories
                 Total = total
             };
         }
-        private async Task<int> GetPromoCountCachedAsync(int rootCategoryId, bool includeDescendants)
+        private async Task<int> GetPromoCountCachedAsync(int rootCategoryId, bool includeDescendants, bool shippingOnly = false)
         {
-            var cacheKey = $"promo_count_{rootCategoryId}_{includeDescendants}";
+            var cacheKey = $"promo_count_{rootCategoryId}_{includeDescendants}_{shippingOnly}";
 
             if (_cache.TryGetValue(cacheKey, out int cached)) return cached;
 
@@ -96,14 +96,14 @@ namespace Linkora.Repositories
                 : "WHERE p.CategoryId = @RootCategoryId";
             var whereKeyword = includeDescendants ? "WHERE" : "AND";
 
-            var countQuery = $@"SELECT COUNT(*) FROM Products p {catCondition} {whereKeyword} (p.Status = 'active' OR p.Status IS NULL) AND {EffectiveBoostExpr} >= {(short)PromotionTier.Top}"; 
+            var countQuery = $@"SELECT COUNT(*) FROM Products p {catCondition} {whereKeyword} (p.Status = 'active' OR p.Status IS NULL) AND {EffectiveBoostExpr} >= {(short)PromotionTier.Top}{(shippingOnly ? " AND p.ShippingEnabled = 1" : "")}"; 
             var count = (await QueryAsync(countQuery, r => r.GetInt32(0), p => p.AddWithValue("@RootCategoryId", rootCategoryId))).FirstOrDefault();
 
             _cache.Set(cacheKey, count, TimeSpan.FromSeconds(45));
             return count;
         }
         private async Task<(List<Product> Items, int Total)> QueryProductsAsync(int rootCategoryId, bool includeDescendants, string sort, string promotionClause, Dictionary<int, List<string>>? filters,
-                                                                                Dictionary<int, decimal>? rangeFrom, Dictionary<int, decimal>? rangeTo, string? city, string? search, int? offset, int? limit, decimal? priceFrom = null, decimal? priceTo = null, bool priceOnly = false)
+                                                                                Dictionary<int, decimal>? rangeFrom, Dictionary<int, decimal>? rangeTo, string? city, string? search, int? offset, int? limit, decimal? priceFrom = null, decimal? priceTo = null, bool priceOnly = false, bool shippingOnly = false)
         {
             var whereClauses = new List<string> { promotionClause };
             var commonParams = new List<SqlParameter>();
@@ -169,6 +169,8 @@ namespace Linkora.Repositories
 
             if (priceOnly) whereClauses.Add("p.Price IS NOT NULL" + (priceConds.Count > 0 ? " AND " + string.Join(" AND ", priceConds) : ""));
             else if (priceConds.Count > 0) whereClauses.Add($"(p.Price IS NULL OR ({string.Join(" AND ", priceConds)}))");
+
+            if (shippingOnly) whereClauses.Add("p.ShippingEnabled = 1");
 
             if (!string.IsNullOrEmpty(search))
             {
