@@ -39,6 +39,7 @@ namespace Linkora.Repositories
         Task<List<int>> GetSubscriberIdsExcludingAsync(int sellerId, int excludeBuyerId);
         Task<int> ArchiveExpiredProductsAsync();
         Task<int> ProcessMediaDeletionQueueAsync();
+        Task<bool> HasActiveShipmentAsync(int productId);
         Task<List<(int Id, int UserId, string Name)>> GetProductsExpiringSoonAsync();
     }
 }

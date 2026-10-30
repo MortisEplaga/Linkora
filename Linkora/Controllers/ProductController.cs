@@ -58,8 +58,6 @@ namespace Linkora.Controllers
             return Json(new { id = newId, created = true });
         }
         [HttpGet] public async Task<IActionResult> GetSelectOptions([FromQuery] int paramId, [FromQuery] bool forFilter = false) => Json((await _selectOptionRepository.GetConfirmedAsync(paramId, Request.GetLang(), forFilter)).Select(o => new { id = o.Id, text = o.Text }));
-
-        /// <summary>Связи «вариант родительского параметра -> варианты дочернего» (SelectOptionRelations).</summary>
         [HttpGet] public async Task<IActionResult> OptionRelations([FromQuery] int? categoryId = null, [FromQuery] int? parentParamId = null, [FromQuery] int? childParamId = null)
         {
             List<int>? categoryIds = null;
@@ -331,6 +329,7 @@ namespace Linkora.Controllers
             var product = await _productRepository.GetByIdAsync(id);
             if (product == null) return NotFound();
             if (product.UserId != userId && !isAdmin) return Forbid();
+            if (await _productRepository.HasActiveShipmentAsync(id)) return Conflict("The listing has an active shipment");
 
             await _productRepository.DeleteAsync(id);
             return Ok();
@@ -351,7 +350,6 @@ namespace Linkora.Controllers
         }
 
         [HttpGet] public async Task<IActionResult> ParamValues(int productId) => Json(await _productRepository.GetParamDisplayValuesAsync(productId, Request.GetLang()));
-        /// <summary>Сырые значения MapperProductParam (id вариантов для типов 2/4/6/8) — используется формой редактирования.</summary>
         [HttpGet] public async Task<IActionResult> ParamRawValues(int productId) => Json(await _productRepository.GetParamValuesAsync(productId));
         [Authorize][HttpPost] public async Task<IActionResult> CompleteDeal(int id, int otherUserId)
         {

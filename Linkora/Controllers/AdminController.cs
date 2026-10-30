@@ -8,28 +8,19 @@ using System.Security.Claims;
 namespace Linkora.Controllers
 {
     [Authorize]
-    public class AdminController : Controller
+    public class AdminController(IAdminRepository adminRepository,
+                           IProductRepository productRepository,
+                           INotificationRepository notificationRepository,
+                           IAdminService adminService,
+                           ILogger<AdminController> logger) : Controller
     {
-        private readonly IAdminRepository _adminRepository;
-        private readonly IProductRepository _productRepository;
-        private readonly INotificationRepository _notificationRepository;
-        private readonly IAdminService _adminService;
-        private readonly ILogger<AdminController> _logger;
-        public AdminController(IAdminRepository adminRepository,
-                               IProductRepository productRepository,
-                               INotificationRepository notificationRepository,
-                               IAdminService adminService,
-                               ILogger<AdminController> logger)
-        {
-            _adminRepository = adminRepository;
-            _productRepository = productRepository;
-            _notificationRepository = notificationRepository;
-            _adminService = adminService;
-            _logger = logger;
-        }
+        private readonly IAdminRepository _adminRepository = adminRepository;
+        private readonly IProductRepository _productRepository = productRepository;
+        private readonly INotificationRepository _notificationRepository = notificationRepository;
+        private readonly IAdminService _adminService = adminService;
+        private readonly ILogger<AdminController> _logger = logger;
 
         private bool IsAdmin() => User.FindFirst(ClaimTypes.Role)?.Value == "admin";
-
         public async Task<IActionResult> Index()
         {
             if (!IsAdmin()) return Forbid();
@@ -41,7 +32,6 @@ namespace Linkora.Controllers
             ViewBag.Stats = stats;
             return View();
         }
-
         public async Task<IActionResult> Products(string status = "Moderation", int page = 1, string? search = null)
         {
             if (!IsAdmin()) return Forbid();
@@ -61,9 +51,7 @@ namespace Linkora.Controllers
 
             return View();
         }
-
-        [HttpPost]
-        public async Task<IActionResult> SetProductStatus(int id, string status)
+        [HttpPost] public async Task<IActionResult> SetProductStatus(int id, string status)
         {
             if (!IsAdmin()) return Forbid();
             var UserId = await _adminRepository.SetProductStatusAsync(id, status);
@@ -75,7 +63,6 @@ namespace Linkora.Controllers
             }
             return Ok();
         }
-
         public async Task<IActionResult> Users(int page = 1, string? search = null, string role = "all")
         {
             if (!IsAdmin()) return Forbid();
@@ -95,9 +82,7 @@ namespace Linkora.Controllers
 
             return View();
         }
-
-        [HttpPost]
-        public async Task<IActionResult> SetUserRole(int id, string role)
+        [HttpPost] public async Task<IActionResult> SetUserRole(int id, string role)
         {
             if (!IsAdmin()) return Forbid();
             if (id == User.GetUserId()) return BadRequest("Cannot change your own role");
@@ -134,9 +119,7 @@ namespace Linkora.Controllers
 
             return Ok();
         }
-
-        [HttpPost]
-        public async Task<IActionResult> DeleteUser(int id)
+        [HttpPost] public async Task<IActionResult> DeleteUser(int id)
         {
             if (!IsAdmin()) return Forbid();
             if (id == User.GetUserId()) return BadRequest("Cannot delete yourself");
@@ -152,15 +135,13 @@ namespace Linkora.Controllers
                 return Conflict(ex.Message);
             }
         }
-
-        [HttpPost]
-        public async Task<IActionResult> DeleteProduct(int id)
+        [HttpPost] public async Task<IActionResult> DeleteProduct(int id)
         {
             if (!IsAdmin()) return Forbid();
+            if (await _productRepository.HasActiveShipmentAsync(id)) return Conflict("The listing has an active shipment");
             await _productRepository.DeleteAsync(id);
             return Ok();
         }
-
         public async Task<IActionResult> Reports(string status = "Pending", int page = 1)
         {
             if (!IsAdmin()) return Forbid();
@@ -179,25 +160,19 @@ namespace Linkora.Controllers
 
             return View();
         }
-
-        [HttpPost]
-        public async Task<IActionResult> ResolveReport(int id, string action)
+        [HttpPost] public async Task<IActionResult> ResolveReport(int id, string action)
         {
             if (!IsAdmin()) return Forbid();
             var newStatus = await _adminRepository.ResolveReportAsync(id, action);
             return Ok(new { status = newStatus });
         }
-
-        [HttpGet]
-        public async Task<IActionResult> StatsApi()
+        [HttpGet] public async Task<IActionResult> StatsApi()
         {
             if (!IsAdmin()) return Forbid();
             var data = await _adminRepository.GetStatsApiDataAsync();
             return Json(data);
         }
-
-        [HttpGet]
-        public async Task<IActionResult> ConfOptions()
+        [HttpGet] public async Task<IActionResult> ConfOptions()
         {
             if (!IsAdmin()) return Forbid();
 
@@ -212,10 +187,7 @@ namespace Linkora.Controllers
 
             return View();
         }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ApproveOption(int id)
+        [HttpPost] [ValidateAntiForgeryToken] public async Task<IActionResult> ApproveOption(int id)
         {
             if (!IsAdmin()) return Forbid();
             var result = await _adminService.ApproveOptionAsync(id);
@@ -227,10 +199,7 @@ namespace Linkora.Controllers
             }
             return result.Success ? Ok() : BadRequest();
         }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> RejectProductByOption(int optionId, int productId)
+        [HttpPost] [ValidateAntiForgeryToken] public async Task<IActionResult> RejectProductByOption(int optionId, int productId)
         {
             if (!IsAdmin()) return Forbid();
             var result = await _adminService.RejectProductByOptionAsync(optionId, productId);
@@ -242,9 +211,7 @@ namespace Linkora.Controllers
             }
             return result.Success ? Ok() : BadRequest();
         }
-
-        [HttpPost]
-        public async Task<IActionResult> RejectProductWithReason(int id, int reasonId, string? comment = null)
+        [HttpPost] public async Task<IActionResult> RejectProductWithReason(int id, int reasonId, string? comment = null)
         {
             if (!IsAdmin()) return Forbid();
             var result = await _adminRepository.RejectProductWithReasonAsync(id, reasonId, comment);

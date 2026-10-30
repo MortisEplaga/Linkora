@@ -33,6 +33,9 @@ namespace Linkora.Models
         public DateTime? SubscriptionBoostExpiresAt { get; set; }
         public PromotionTier? PaidBoostLevel { get; set; }
         public DateTime? PaidBoostExpiresAt { get; set; }
+        public bool ShippingEnabled { get; set; }
+        public string? ParcelSize { get; set; }
+        public decimal? WeightKg { get; set; }
         [NotMapped] public PromotionTier EffectiveBoostTier
         {
             get

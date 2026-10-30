@@ -8,22 +8,17 @@ using System.Text.Json;
 
 namespace Linkora.Controllers
 {
-    public class PaymentsController : Controller
+    public class PaymentsController(IMaksekeskusService mk, IPaymentRepository paymentRepository, IPromotionRepository promotionRepository, IPointsRepository pointsRepository, IPromotionPricingService pricing, IShipmentRepository shipmentRepository, IShippingService shippingService) : Controller
     {
-        private readonly IMaksekeskusService _mk;
-        private readonly IPaymentRepository _paymentRepository;
-        private readonly IPromotionRepository _promotionRepository;
-        private readonly IPointsRepository _pointsRepository;
-        private readonly IPromotionPricingService _pricing;
-        public PaymentsController(IMaksekeskusService mk, IPaymentRepository paymentRepository, IPromotionRepository promotionRepository, IPointsRepository pointsRepository, IPromotionPricingService pricing)
-        {
-            _mk = mk;
-            _paymentRepository = paymentRepository;
-            _promotionRepository = promotionRepository;
-            _pointsRepository = pointsRepository;
-            _pricing = pricing;
-        }
-        [Authorize] [HttpPost] public async Task<IActionResult> InitiatePromotion(int productId, string promotionType, bool payWithPoints = false)
+        private readonly IMaksekeskusService _mk = mk;
+        private readonly IPaymentRepository _paymentRepository = paymentRepository;
+        private readonly IPromotionRepository _promotionRepository = promotionRepository;
+        private readonly IPointsRepository _pointsRepository = pointsRepository;
+        private readonly IPromotionPricingService _pricing = pricing;
+        private readonly IShipmentRepository _shipmentRepository = shipmentRepository;
+        private readonly IShippingService _shippingService = shippingService;
+
+        [Authorize][HttpPost] public async Task<IActionResult> InitiatePromotion(int productId, string promotionType, bool payWithPoints = false)
         {
             if (!Enum.TryParse<PromotionTier>(promotionType, true, out var tier)) return BadRequest("Unknown promotion type");
 
@@ -50,7 +45,7 @@ namespace Linkora.Controllers
             var paymentId = await _paymentRepository.CreateAsync(userId, "Promotion", productId, promotionType, null, price, reference, 0);
             return await StartTransactionAsync(paymentId, price, reference);
         }
-        [Authorize] [HttpPost] public async Task<IActionResult> InitiateSubscription(string subscriptionType, string termType, bool payWithPoints = false)
+        [Authorize][HttpPost] public async Task<IActionResult> InitiateSubscription(string subscriptionType, string termType, bool payWithPoints = false)
         {
             if (!Enum.TryParse<PromotionTier>(subscriptionType, true, out var tier)) return BadRequest("Unknown subscription tier");
             if (!Enum.TryParse<PromotionTermType>(termType, true, out var term)) return BadRequest("Unknown term type");
@@ -74,6 +69,28 @@ namespace Linkora.Controllers
 
             var reference = $"SUB{userId}{DateTime.UtcNow:HHmmss}";
             var paymentId = await _paymentRepository.CreateAsync(userId, "Subscription", null, null, $"{tier}:{term}", price, reference, 0);
+            return await StartTransactionAsync(paymentId, price, reference);
+        }
+        [Authorize][HttpPost] public async Task<IActionResult> InitiateShipping(int requestId)
+        {
+            var userId = User.GetUserId();
+
+            var request = await _shipmentRepository.GetRequestAsync(requestId);
+            if (request == null) return NotFound();
+            if (request.SellerId != userId) return Forbid();
+            if (request.Status != ShipmentRequestStatus.Accepted) return BadRequest("The request is not awaiting payment");
+            if (!request.Price.HasValue || request.Price.Value <= 0) return BadRequest("The delivery price is not set");
+
+            var price = request.Price.Value;
+            var reference = ShippingService.BuildReference(requestId);
+            var paymentId = await _paymentRepository.CreateAsync(userId, "Shipping", request.ProductId, null, null, price, reference, 0);
+
+            if (!await _shipmentRepository.AttachPaymentAsync(requestId, paymentId))
+            {
+                await _paymentRepository.SetStatusAsync(paymentId, "Failed");
+                return Conflict("The request status has changed");
+            }
+
             return await StartTransactionAsync(paymentId, price, reference);
         }
         private async Task<int?> GetProductOwnerAsync(int productId) => await _paymentRepository.GetProductUserIdAsync(productId);
@@ -101,7 +118,7 @@ namespace Linkora.Controllers
                 return StatusCode(502, "Payment gateway error: " + ex.Message);
             }
         }
-        [AllowAnonymous] [HttpPost] [IgnoreAntiforgeryToken] [Route("Payments/Notification")] public async Task<IActionResult> Notification()
+        [AllowAnonymous][HttpPost][IgnoreAntiforgeryToken][Route("Payments/Notification")] public async Task<IActionResult> Notification()
         {
             var json = Request.Form["json"].ToString();
             var mac = Request.Form["mac"].ToString();
@@ -111,7 +128,7 @@ namespace Linkora.Controllers
             await ProcessPaymentMessageAsync(json);
             return Ok();
         }
-        [AllowAnonymous] [HttpPost] [IgnoreAntiforgeryToken] [Route("Payments/Return")] public async Task<IActionResult> Return()
+        [AllowAnonymous][HttpPost][IgnoreAntiforgeryToken][Route("Payments/Return")] public async Task<IActionResult> Return()
         {
             var json = Request.Form["json"].ToString();
             var mac = Request.Form["mac"].ToString();
@@ -165,10 +182,12 @@ namespace Linkora.Controllers
                 var expiresAt = _pricing.CalculateExpiry(term, startedAt);
                 await _promotionRepository.CreateAsync(payment.UserId, tier, term, startedAt, expiresAt, payment.Price, payment.Id);
             }
+            else if (payment.PurposeType == "Shipping")
+                await _shippingService.OnPaymentCompletedAsync(payment.Id, reference!, payment.UserId, payment.Price);
 
             return "completed";
         }
-        [Authorize] [HttpGet] public async Task<IActionResult> Quote(string type, string? promotionType = null, string? subscriptionType = null, string? termType = null)
+        [Authorize][HttpGet] public async Task<IActionResult> Quote(string type, string? promotionType = null, string? subscriptionType = null, string? termType = null, int? requestId = null)
         {
             var userId = User.GetUserId();
             decimal basePrice;
@@ -187,6 +206,13 @@ namespace Linkora.Controllers
                 basePrice = current != null
                     ? _pricing.CalculateUpgrade(current, tier, term, DateTime.UtcNow).Payable
                     : _pricing.GetPrice(tier, term);
+            }
+            else if (type == "shipping")
+            {
+                var request = requestId.HasValue ? await _shipmentRepository.GetRequestAsync(requestId.Value) : null;
+                if (request == null || request.SellerId != userId || request.Status != ShipmentRequestStatus.Accepted || !request.Price.HasValue) return BadRequest("Unknown shipment request");
+
+                return Ok(new { price = request.Price.Value, pointsEarned = 0, pointsCost = 0, pointsAvailable = 0, canPayWithPoints = false });
             }
             else return BadRequest("Unknown type");
 

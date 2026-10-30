@@ -27,6 +27,9 @@ namespace Linkora.Services
                         "favourite_updated" => "Объявление из вашего избранного было изменено.",
                         "favourite_archived_ban" => "Объявление из вашего избранного перенесено в архив.",
                         "subscription_sold" or "subscription_seller_banned" => "Изменение по отслеживаемому продавцу.",
+                        "shipment_requested" => "Покупатель запросил доставку вашего объявления через пакомат.",
+                        "shipment_accepted" => "Продавец подтвердил запрос на доставку через пакомат.",
+                        "shipment_declined" => "Продавец отклонил запрос на доставку через пакомат.",
                         "listing_expiring_soon" => FormatExpiring(doc),
                         _ => "У вас новое уведомление на Vena.",
                     });

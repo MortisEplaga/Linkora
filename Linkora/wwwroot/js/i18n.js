@@ -1,5 +1,8 @@
 const TRANSLATIONS = {
     en: {
+        'notif_shipment_requested': '{0} requested delivery to a parcel locker',
+        'notif_shipment_accepted': '{0} confirmed the delivery request',
+        'notif_shipment_declined': '{0} declined the delivery request',
         'create_login_hint': 'Want to manage your ads?',
         'create_account_link': 'Create account',
         'promo_free': 'Free',
@@ -576,6 +579,9 @@ const TRANSLATIONS = {
     },
 
     lv: {
+        'notif_shipment_requested': '{0} pieprasīja piegādi uz pakomātu',
+        'notif_shipment_accepted': '{0} apstiprināja piegādes pieprasījumu',
+        'notif_shipment_declined': '{0} noraidīja piegādes pieprasījumu',
         'create_login_hint': 'Vēlaties pārvaldīt savus sludinājumus?',
         'create_account_link': 'Izveidot kontu',
         'promo_free': 'Bezmaksas',
@@ -1162,6 +1168,9 @@ const TRANSLATIONS = {
     },
 
     ru: {
+        'notif_shipment_requested': '{0} запросил доставку в пакомат',
+        'notif_shipment_accepted': '{0} подтвердил запрос на доставку',
+        'notif_shipment_declined': '{0} отклонил запрос на доставку',
         'create_login_hint': 'Хотите управлять объявлениями?',
         'create_account_link': 'Создать аккаунт',
         'promo_free': 'Бесплатно',
@@ -1852,6 +1861,9 @@ function translateNotificationMessage(message, notif) {
                         : lang === 'ru' ? parsed.paramNameRu : parsed.paramName;
                     return fmt(tl('notif_parameter_rejected'), pName || '');
                 }
+                case 'shipment_requested': return fmt(tl('notif_shipment_requested'), from);
+                case 'shipment_accepted': return fmt(tl('notif_shipment_accepted'), from);
+                case 'shipment_declined': return fmt(tl('notif_shipment_declined'), from);
                 case 'listing_expiring_soon': return fmt(tl('notif_listing_expiring'), parsed.productName || '');
                 case 'subscription_sold': return fmt(tl('notif_subscription_sold'), from);
                 case 'favourite_updated': {

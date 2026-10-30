@@ -59,7 +59,7 @@ namespace Linkora.Repositories
         private static async Task<List<PointsEvent>> LoadEventsAsync(SqlConnection conn, SqlTransaction? tx, int userId)
         {
             const string sql = @"SELECT CompletedAt, CAST(ROUND(Price * 100, 0) AS int), 1
-                FROM Payments WHERE UserId = @U AND Status = 'Completed' AND CompletedAt IS NOT NULL
+                FROM Payments WHERE UserId = @U AND Status = 'Completed' AND CompletedAt IS NOT NULL AND PurposeType <> 'Shipping'
                 UNION ALL
                 SELECT StartedAt, CAST(ROUND(PricePaid * 100, 0) AS int) * 10, 0
                 FROM Promotion WHERE UserId = @U AND PaymentId IS NULL

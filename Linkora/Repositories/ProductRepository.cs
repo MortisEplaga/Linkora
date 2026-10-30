@@ -589,6 +589,9 @@ namespace Linkora.Repositories
                     "DELETE FROM Orders WHERE ProductId = @Id",
                     "UPDATE PointsLedgerEntries SET Status = 'Rejected', ConfirmedAt = SYSUTCDATETIME() WHERE Status = 'Pending' AND SourceProductId = @Id",
                     "UPDATE PointsLedgerEntries SET SourceProductId = NULL WHERE SourceProductId = @Id",
+                    "DELETE FROM ShipmentEvents WHERE ShipmentId IN (SELECT s.Id FROM Shipments s JOIN ShipmentRequests r ON r.Id = s.RequestId WHERE r.ProductId = @Id)",
+                    "DELETE FROM Shipments WHERE RequestId IN (SELECT Id FROM ShipmentRequests WHERE ProductId = @Id)",
+                    "DELETE FROM ShipmentRequests WHERE ProductId = @Id",
                     "DELETE FROM Products WHERE Id = @Id"
                 };
 
@@ -881,6 +884,9 @@ namespace Linkora.Repositories
 
             return successCount;
         }
+        public async Task<bool> HasActiveShipmentAsync(int productId) => (await QueryAsync<int>(@"SELECT COUNT(*) FROM ShipmentRequests r LEFT JOIN Shipments s ON s.RequestId = r.Id
+                                            WHERE r.ProductId = @Id AND r.Status = 'Paid' AND (s.Id IS NULL OR s.Status NOT IN ('Delivered', 'Returned', 'Failed'))",
+                                            r => r.GetInt32(0), p => p.AddWithValue("@Id", productId)))[0] > 0;
         public async Task UpdatePublishDurationAsync(int productId, int userId, int days) => await ExecuteAsync(@"UPDATE Products SET PublishDurationDays = @D,ExpiresAt = DATEADD(DAY,@D,GETDATE()) WHERE Id = @Id AND UserId = @UserId", p => { p.AddWithValue("@D", days); p.AddWithValue("@Id", productId); p.AddWithValue("@UserId", userId); });
         public async Task<List<int>> GetSubscriberIdsExcludingAsync(int sellerId, int excludeBuyerId) => await QueryAsync("SELECT FollowerId FROM Subscriptions WHERE FollowingId = @SellerId AND FollowerId != @BuyerId", r => r.GetInt32(0), p => { p.AddWithValue("@SellerId", sellerId); p.AddWithValue("@BuyerId", excludeBuyerId); });
         public async Task<int> ArchiveExpiredProductsAsync() => await ExecuteAsync(@"UPDATE Products SET Status = 'Archived' WHERE Status = 'Active' AND ((ExpiresAt IS NOT NULL AND ExpiresAt < GETDATE()) OR (ExpiresAt IS NULL AND DATEADD(DAY, PublishDurationDays, CreatedAt) < GETDATE()))");

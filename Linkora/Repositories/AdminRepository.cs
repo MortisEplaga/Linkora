@@ -145,7 +145,9 @@ namespace Linkora.Repositories
             $"INSERT INTO MediaDeletionQueue (FilePath) SELECT FilePath FROM ProductMedia WHERE ProductId IN ({UserProductIds}) AND FilePath LIKE '/img/products/%'",
             "INSERT INTO MediaDeletionQueue (FilePath) SELECT AvatarUrl FROM Products WHERE UserId = @Id AND AvatarUrl LIKE '/img/products/%'",
             "INSERT INTO MediaDeletionQueue (FilePath) SELECT AvatarUrl FROM Users WHERE Id = @Id AND AvatarUrl LIKE '/img/avatars/%'",
-
+            $"DELETE FROM ShipmentEvents WHERE ShipmentId IN (SELECT s.Id FROM Shipments s JOIN ShipmentRequests r ON r.Id = s.RequestId WHERE r.BuyerId = @Id OR r.SellerId = @Id OR r.ProductId IN ({UserProductIds}))",
+            $"DELETE FROM Shipments WHERE RequestId IN (SELECT Id FROM ShipmentRequests WHERE BuyerId = @Id OR SellerId = @Id OR ProductId IN ({UserProductIds}))",
+            $"DELETE FROM ShipmentRequests WHERE BuyerId = @Id OR SellerId = @Id OR ProductId IN ({UserProductIds})",
             $"DELETE FROM Messages WHERE ConversationId IN ({UserConversationIds})",
             "UPDATE Messages SET SenderId = NULL WHERE SenderId = @Id", 
             $"DELETE FROM Conversations WHERE Id IN ({UserConversationIds})",

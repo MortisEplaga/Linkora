@@ -34,6 +34,9 @@ builder.Services.AddScoped<IPromotionRepository, PromotionRepository>();
 builder.Services.AddScoped<IPointsRepository, PointsRepository>();
 builder.Services.AddScoped<IPointsLedgerRepository, PointsLedgerRepository>();
 builder.Services.AddScoped<IUserStatsRepository, UserStatsRepository>();
+builder.Services.AddScoped<IParcelLockerRepository, ParcelLockerRepository>();
+builder.Services.AddScoped<IShippingTariffRepository, ShippingTariffRepository>();
+builder.Services.AddScoped<IShipmentRepository, ShipmentRepository>();
 
 builder.Services.AddScoped<IListingImportService, ListingImportService>();
 builder.Services.AddScoped<IPromotionPricingService, PromotionPricingService>();
@@ -44,6 +47,8 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddScoped<IMaksekeskusService, MaksekeskusService>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+builder.Services.AddScoped<IOmnivaService, OmnivaService>();
+builder.Services.AddScoped<IShippingService, ShippingService>();
 builder.Services.AddScoped<IMediaStorageService, MediaStorageService>();
 builder.Services.AddHostedService<PointsLedgerPromotionService>();
 builder.Services.AddHostedService<ArchiveOldProductsService>();
