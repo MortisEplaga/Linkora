@@ -505,3 +505,49 @@ document.addEventListener('DOMContentLoaded', () => {
         initDurationUI();
     }
 });
+
+// ---------- Delivery (Omniva parcel locker) fields of the listing form ----------
+
+function toggleDeliveryFields() {
+    const on = document.getElementById('shipEnabled')?.checked === true;
+    const details = document.getElementById('shipDetails');
+    if (details) details.style.display = on ? '' : 'none';
+}
+
+function readDeliveryFields() {
+    return {
+        enabled: document.getElementById('shipEnabled')?.checked === true,
+        size: document.getElementById('shipParcelSize')?.value || '',
+        weight: document.getElementById('shipWeightKg')?.value || ''
+    };
+}
+
+function restoreDeliveryFields(d) {
+    if (!d) return;
+    const cb = document.getElementById('shipEnabled');
+    if (cb) cb.checked = d.enabled === true;
+    const size = document.getElementById('shipParcelSize');
+    if (size) size.value = d.size || '';
+    const weight = document.getElementById('shipWeightKg');
+    if (weight) weight.value = d.weight || '';
+    toggleDeliveryFields();
+}
+
+/** Returns the message key of the first problem with the delivery fields, or null. Mirrors ParcelRules on the server. */
+function validateDeliveryFields() {
+    const d = readDeliveryFields();
+    if (!d.enabled) return null;
+    if (!['XS', 'S', 'M', 'L', 'XL'].includes(d.size)) return 'ship_err_size_invalid';
+    const w = parseFloat(d.weight);
+    if (!(w > 0 && w <= 100)) return 'ship_err_weight_invalid';
+    return null;
+}
+
+function appendDeliveryFields(fd) {
+    const d = readDeliveryFields();
+    fd.append('shippingEnabled', d.enabled ? 'true' : 'false');
+    if (d.enabled) {
+        fd.append('parcelSize', d.size);
+        fd.append('weightKg', d.weight);
+    }
+}

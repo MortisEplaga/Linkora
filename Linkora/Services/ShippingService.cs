@@ -1,5 +1,6 @@
-﻿using Linkora.Models;
+using Linkora.Models;
 using Linkora.Repositories;
+using Microsoft.Data.SqlClient;
 using System.Text.RegularExpressions;
 
 namespace Linkora.Services
@@ -13,10 +14,16 @@ namespace Linkora.Services
     public partial class ShippingService(IShipmentRepository shipments, IParcelLockerRepository lockers, IOmnivaService omniva, IConfiguration configuration, ILogger<ShippingService> logger) : IShippingService
     {
         private readonly int _handoverDays = configuration.GetValue("Shipping:HandoverDays", 3);
+        private readonly int _maxRegistrationAttempts = configuration.GetValue("Shipping:MaxRegistrationAttempts", 10);
 
         [GeneratedRegex(@"^SHIP(\d+)-")]
         private static partial Regex ReferencePattern();
         public static string BuildReference(int requestId) => $"SHIP{requestId}-{DateTime.UtcNow:HHmmssfff}";
+
+        /// <summary>Errors that may succeed on a later attempt: the network, rate limiting and server errors.</summary>
+        public static bool IsTransientRegistrationError(string? code) =>
+            code is "NETWORK" or "HTTP_429" || (code != null && code.StartsWith("HTTP_5", StringComparison.Ordinal));
+
         public async Task OnPaymentCompletedAsync(int paymentId, string reference, int payerId, decimal amount)
         {
             var match = ReferencePattern().Match(reference);
@@ -37,7 +44,18 @@ namespace Linkora.Services
                 logger.LogWarning("Shipping payment {PaymentId}: amount {Amount} differs from the quoted price {Price} of request {RequestId}", paymentId, amount, request.Price, requestId);
 
             if (request.Status == ShipmentRequestStatus.Accepted)
-                await shipments.TransitionRequestAsync(request.Id, ShipmentRequestStatus.Accepted, ShipmentRequestStatus.Paid);
+            {
+                try
+                {
+                    await shipments.TransitionRequestAsync(request.Id, ShipmentRequestStatus.Accepted, ShipmentRequestStatus.Paid);
+                }
+                catch (SqlException ex) when (ex.Number is 2601 or 2627)
+                {
+                    // Another request for the same listing is already accepted or paid; the unique index refused the transition.
+                    logger.LogError(ex, "Shipping payment {PaymentId} for request {RequestId} conflicts with another paid request for the same listing; a manual refund is required", paymentId, requestId);
+                    return;
+                }
+            }
             else if (request.Status != ShipmentRequestStatus.Paid)
             {
                 logger.LogWarning("Shipping payment {PaymentId} completed for request {RequestId} in status {Status}; a manual refund is required", paymentId, requestId, request.Status);
@@ -49,12 +67,25 @@ namespace Linkora.Services
             var shipmentId = await shipments.GetOrCreateShipmentAsync(request.Id, $"VENA{request.Id}");
 
             try { await TryRegisterAsync(shipmentId); }
-            catch (Exception ex) { logger.LogError(ex, "Shipment {ShipmentId} registration failed unexpectedly; it stays Pending for the retry job", shipmentId); }
+            catch (Exception ex) { logger.LogError(ex, "Shipment {ShipmentId} registration failed unexpectedly; it stays Pending and the retry job will pick it up", shipmentId); }
         }
+
+        /// <summary>
+        /// Registers a Pending shipment in Omniva. Transient failures keep the shipment Pending for the retry job,
+        /// permanent failures mark it Failed. Shipments that exhausted Shipping:MaxRegistrationAttempts are marked Failed.
+        /// </summary>
         public async Task<bool> TryRegisterAsync(int shipmentId, CancellationToken ct = default)
         {
             var shipment = await shipments.GetShipmentAsync(shipmentId);
             if (shipment == null || shipment.Status != ShipmentStatus.Pending || shipment.Barcode != null) return false;
+
+            if (shipment.Attempts >= _maxRegistrationAttempts)
+            {
+                await shipments.MarkRegistrationFailedAsync(shipment.Id, "RETRY_EXHAUSTED", $"Registration failed {shipment.Attempts} times");
+                logger.LogWarning("Shipment {ShipmentId} gave up after {Attempts} registration attempts", shipment.Id, shipment.Attempts);
+                return false;
+            }
+
             if (!await shipments.TryBeginRegistrationAsync(shipment.Id, shipment.Attempts)) return false;
 
             var request = await shipments.GetRequestAsync(shipment.RequestId);
@@ -78,7 +109,8 @@ namespace Linkora.Services
 
             logger.LogWarning("Shipment {ShipmentId} registration error {Code}: {Message}", shipment.Id, result.ErrorCode, result.ErrorMessage);
 
-            if (result.ErrorCode != "NETWORK") await shipments.MarkRegistrationFailedAsync(shipment.Id, result.ErrorCode, result.ErrorMessage);
+            if (!IsTransientRegistrationError(result.ErrorCode))
+                await shipments.MarkRegistrationFailedAsync(shipment.Id, result.ErrorCode, result.ErrorMessage);
             return false;
         }
     }

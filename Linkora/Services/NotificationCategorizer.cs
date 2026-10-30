@@ -14,7 +14,8 @@ namespace Linkora.Services
                     var type = typeProp.GetString();
                     return type switch
                     {
-                        "deal_sold" or "deal_bought" or "subscription_sold" or "shipment_requested" or "shipment_accepted" or "shipment_declined" => "Deals",
+                        "deal_sold" or "deal_bought" or "subscription_sold" or "shipment_requested" or "shipment_accepted" or "shipment_declined"
+                            or "shipment_arrived" or "shipment_delivered" or "shipment_returned" or "shipment_expired" or "shipment_accept_expired" => "Deals",
                         "review_received" => "Reviews",
                         "product_approved" or "parameter_approved" or "parameter_rejected" or "rejected_reason" or "report_on_product" => "Moderation",
                         "user_banned" or "user_unbanned" => "Account",

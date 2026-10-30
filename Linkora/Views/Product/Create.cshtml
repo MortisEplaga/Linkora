@@ -35,6 +35,8 @@
                     <input type="number" class="create-input" id="adPrice" min="0" placeholder="0.00" />
                 </div>
 
+                @await Html.PartialAsync("Partial/_DeliveryFields", new ProductDeliveryFormModel(false, null, null))
+
                 <div class="create-row" id="qtyRow">
                     <div class="create-field" id="qtyFieldWrap" style="grid-column: 1 / -1">
                         <label class="create-label" data-i18n="qty_label">Quantity</label>
@@ -179,6 +181,7 @@
             categoryId: document.getElementById('selectedCategoryId')?.value || '',
             categoryText: document.getElementById('catSelectorText')?.textContent || '',
             publishDays: document.getElementById('pubDurationValue')?.value || '',
+            delivery: readDeliveryFields(),
             params: params,
         };
         sessionStorage.setItem(DRAFT_KEY, JSON.stringify(state));
@@ -206,6 +209,7 @@
         if (state.streetId) document.getElementById('streetField').style.display = 'block';
         if (state.streetId) document.getElementById('houseField').style.display = 'block';
         if (state.publishDays) setVal('pubDurationValue', state.publishDays);
+        restoreDeliveryFields(state.delivery);
 
         if (state.categoryId) {
             document.getElementById('selectedCategoryId').value = state.categoryId;
@@ -220,6 +224,9 @@
         if (!ParamRulesEngine.validateAll()) return;
         const title = document.getElementById('adTitle').value.trim();
         if (!title) { alert(translate('title_required')); return; }
+
+        const deliveryError = validateDeliveryFields();
+        if (deliveryError) { alert(translate(deliveryError)); return; }
 
         const totalBytes = selectedFiles.reduce((s, f) => s + f.size, 0);
         if (totalBytes > MAX_BYTES) {
@@ -242,6 +249,7 @@
             fd.append('categoryId', document.getElementById('selectedCategoryId').value);
             fd.append('publishDays', document.getElementById('pubDurationValue').value || '30');
             fd.append('promotionType', document.getElementById('promotionValue').value || 'Free');
+            appendDeliveryFields(fd);
 
             const priceWrap = document.getElementById('priceFieldWrap');
                 if (priceWrap.style.display !== 'none') {

@@ -321,7 +321,8 @@ namespace Linkora.Repositories
                                                            COALESCE((SELECT TOP 1 pm.FilePath FROM ProductMedia pm WHERE pm.ProductId = p.Id ORDER BY pm.SortOrder),p.AvatarUrl) AS AvatarUrl,
                                                            p.CategoryId,p.Status,p.Qty,u.UserName,u.AvatarUrl,u.IsCompany,u.Phone,u.Id,p.UserId,u.Email,u.CreatedAt,
                                                            u.TelegramUrl,u.WhatsAppUrl,u.WebsiteUrl,p.Lat,p.Lng,p.Price,
-                                                           p.SubscriptionBoostLevel,p.SubscriptionBoostExpiresAt,p.PaidBoostLevel,p.PaidBoostExpiresAt
+                                                           p.SubscriptionBoostLevel,p.SubscriptionBoostExpiresAt,p.PaidBoostLevel,p.PaidBoostExpiresAt,
+                                                           p.ShippingEnabled,p.ParcelSize,p.WeightKg
                                                     FROM Products p
                                                     LEFT JOIN Users u ON u.Id = p.UserId
                                                     WHERE p.Id = @Id",
@@ -356,7 +357,10 @@ namespace Linkora.Repositories
                     SubscriptionBoostLevel = (PromotionTier?)r.GetInt16OrNull(23),
                     SubscriptionBoostExpiresAt = r.GetDateTimeOrNull(24),
                     PaidBoostLevel = (PromotionTier?)r.GetInt16OrNull(25),
-                    PaidBoostExpiresAt = r.GetDateTimeOrNull(26)
+                    PaidBoostExpiresAt = r.GetDateTimeOrNull(26),
+                    ShippingEnabled = r.GetBooleanOrDefault(27),
+                    ParcelSize = r.GetStringOrNull(28),
+                    WeightKg = r.GetDecimalOrNull(29)
                 },
                 p => p.AddWithValue("@Id", id));
 
@@ -392,7 +396,8 @@ namespace Linkora.Repositories
                 await using (var updateCmd = new SqlCommand(@"UPDATE Products
                                                       SET Name = @Name, Description = @Description, Qty = @Qty, Address = @Address,
                                                           CategoryId = @CategoryId, Lat = @Lat, Lng = @Lng, Price = @Price,
-                                                          SubscriptionBoostLevel = @SubBoostLevel, SubscriptionBoostExpiresAt = @SubBoostExp
+                                                          SubscriptionBoostLevel = @SubBoostLevel, SubscriptionBoostExpiresAt = @SubBoostExp,
+                                                          ShippingEnabled = @ShippingEnabled, ParcelSize = @ParcelSize, WeightKg = @WeightKg
                                                       WHERE Id = @Id AND UserId = @UserId", conn, tx))
                 {
                     updateCmd.Parameters.AddWithValue("@Name", product.Name);
@@ -405,6 +410,9 @@ namespace Linkora.Repositories
                     updateCmd.Parameters.AddWithValue("@Price", (object?)product.Price ?? DBNull.Value);
                     updateCmd.Parameters.AddWithValue("@SubBoostLevel", (object?)(short?)product.SubscriptionBoostLevel ?? DBNull.Value);
                     updateCmd.Parameters.AddWithValue("@SubBoostExp", (object?)product.SubscriptionBoostExpiresAt ?? DBNull.Value);
+                    updateCmd.Parameters.AddWithValue("@ShippingEnabled", product.ShippingEnabled);
+                    updateCmd.Parameters.AddWithValue("@ParcelSize", (object?)product.ParcelSize ?? DBNull.Value);
+                    updateCmd.Parameters.AddWithValue("@WeightKg", (object?)product.WeightKg ?? DBNull.Value);
                     updateCmd.Parameters.AddWithValue("@Id", product.Id);
                     updateCmd.Parameters.AddWithValue("@UserId", product.UserId!);
                     var rowsAffected = await updateCmd.ExecuteNonQueryAsync();
@@ -519,10 +527,10 @@ namespace Linkora.Repositories
             await using var insertCmd = new SqlCommand(@"
                     DECLARE @new TABLE (Id int);
                     INSERT INTO Products (Name,Description,Qty,Address,CategoryId,UserId,AvatarUrl,CreatedAt,Status,PublishDurationDays,ExpiresAt,Lat,Lng,Price,
-                                          SubscriptionBoostLevel,SubscriptionBoostExpiresAt,PaidBoostLevel,PaidBoostExpiresAt)
+                                          SubscriptionBoostLevel,SubscriptionBoostExpiresAt,PaidBoostLevel,PaidBoostExpiresAt,ShippingEnabled,ParcelSize,WeightKg)
                     OUTPUT INSERTED.Id INTO @new
                     VALUES (@Name,@Description,@Qty,@Address,@CategoryId,@UserId,@AvatarUrl,GETDATE(),'Active',@Duration,DATEADD(DAY,@Duration,GETDATE()),@Lat,@Lng,@Price,
-                            @SubBoostLevel,@SubBoostExp,@PaidBoostLevel,@PaidBoostExp);
+                            @SubBoostLevel,@SubBoostExp,@PaidBoostLevel,@PaidBoostExp,@ShippingEnabled,@ParcelSize,@WeightKg);
                     SELECT Id FROM @new;", conn, tx);
             insertCmd.Parameters.AddWithValue("@Name", product.Name);
             insertCmd.Parameters.AddWithValue("@Description", (object?)product.Description ?? DBNull.Value);
@@ -539,6 +547,9 @@ namespace Linkora.Repositories
             insertCmd.Parameters.AddWithValue("@SubBoostExp", (object?)product.SubscriptionBoostExpiresAt ?? DBNull.Value);
             insertCmd.Parameters.AddWithValue("@PaidBoostLevel", (object?)(short?)product.PaidBoostLevel ?? DBNull.Value);
             insertCmd.Parameters.AddWithValue("@PaidBoostExp", (object?)product.PaidBoostExpiresAt ?? DBNull.Value);
+            insertCmd.Parameters.AddWithValue("@ShippingEnabled", product.ShippingEnabled);
+            insertCmd.Parameters.AddWithValue("@ParcelSize", (object?)product.ParcelSize ?? DBNull.Value);
+            insertCmd.Parameters.AddWithValue("@WeightKg", (object?)product.WeightKg ?? DBNull.Value);
             await using var reader = await insertCmd.ExecuteReaderAsync();
             if (!await reader.ReadAsync()) throw new InvalidOperationException("INSERT INTO Products did not return an Id.");
             return reader.GetInt32(0);

@@ -1,4 +1,4 @@
-﻿namespace Linkora.Models
+namespace Linkora.Models
 {
     public enum ShipmentRequestStatus
     {
@@ -24,6 +24,23 @@
     {
         public static readonly string[] All = ["XS", "S", "M", "L", "XL"];
         public static bool IsValid(string? size) => size != null && All.Contains(size);
+    }
+
+    public static class ParcelRules
+    {
+        public const decimal MaxWeightKg = 100m;
+
+        /// <summary>
+        /// Returns an error code, or null when the delivery settings are acceptable.
+        /// Size and weight are only checked when delivery is enabled.
+        /// </summary>
+        public static string? Validate(bool enabled, string? size, decimal? weightKg)
+        {
+            if (!enabled) return null;
+            if (!ParcelSizes.IsValid(size)) return "size_invalid";
+            if (!weightKg.HasValue || weightKg.Value <= 0 || weightKg.Value > MaxWeightKg) return "weight_invalid";
+            return null;
+        }
     }
 
     public class ParcelLocker : Base
@@ -108,4 +125,68 @@
         public string? RawJson { get; set; }
         public DateTime CreatedAt { get; set; }
     }
+
+    /// <summary>Delivery settings of a listing, as needed by the shipping flow.</summary>
+    public sealed record ProductShippingInfo(int ProductId, int? SellerId, string Status, bool ShippingEnabled, string? ParcelSize, decimal? WeightKg);
+
+    /// <summary>Shipment request joined with listing, parties and shipment data for the seller and buyer screens.</summary>
+    public class ShipmentRequestView
+    {
+        public int Id { get; set; }
+        public int ProductId { get; set; }
+        public string ProductName { get; set; } = "";
+        public string? ProductSize { get; set; }
+        public decimal? ProductWeightKg { get; set; }
+        public int BuyerId { get; set; }
+        public string BuyerName { get; set; } = "";
+        public int SellerId { get; set; }
+        public ShipmentRequestStatus Status { get; set; }
+        public string LockerName { get; set; } = "";
+        public string? LockerCity { get; set; }
+        public string ReceiverName { get; set; } = "";
+        public string? ReceiverPhone { get; set; }
+        public string? ReceiverEmail { get; set; }
+        public string? Size { get; set; }
+        public decimal? WeightKg { get; set; }
+        public decimal? Price { get; set; }
+        public int? PaymentId { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public int? ShipmentId { get; set; }
+        public ShipmentStatus? ShipmentState { get; set; }
+        public string? Barcode { get; set; }
+        public DateTime? HandoverDeadline { get; set; }
+        public string? ErrorCode { get; set; }
+    }
+
+    public class ProductShippingSettingsDto
+    {
+        public bool Enabled { get; set; }
+        public string? Size { get; set; }
+        public decimal? WeightKg { get; set; }
+    }
+
+    public class CreateShipmentRequestDto
+    {
+        public int ProductId { get; set; }
+        public int LockerId { get; set; }
+        public string? ReceiverName { get; set; }
+        public string? ReceiverPhone { get; set; }
+        public string? ReceiverEmail { get; set; }
+    }
+
+    public class AcceptShipmentRequestDto
+    {
+        public string? Size { get; set; }
+        public decimal? WeightKg { get; set; }
+        public string? SenderName { get; set; }
+        public string? SenderPhone { get; set; }
+        public string? SenderEmail { get; set; }
+        public string? SenderStreet { get; set; }
+        public string? SenderCity { get; set; }
+        public string? SenderPostcode { get; set; }
+        public string? SenderCountry { get; set; }
+    }
+
+    /// <summary>Delivery block of the listing form.</summary>
+    public sealed record ProductDeliveryFormModel(bool Enabled, string? ParcelSize, decimal? WeightKg);
 }

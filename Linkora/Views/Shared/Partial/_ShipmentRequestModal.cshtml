@@ -1,0 +1,40 @@
+<div class="modal-overlay" id="shipBuyOverlay" onclick="closeShipmentModal()"></div>
+<div class="modal ship-modal" id="shipBuyModal" role="dialog" aria-modal="true">
+    <button type="button" class="modal-close" onclick="closeShipmentModal()">✕</button>
+    <h2 class="auth-title" data-i18n="ship_buy_title">Ship to a parcel locker</h2>
+
+    <div id="shipBuyMyRequests" class="ship-my-requests"></div>
+
+    <input type="hidden" id="shipBuyProductId" />
+
+    <div class="auth-field">
+        <label class="auth-label" for="shipLockerSearch" data-i18n="ship_locker_search_label">Find a parcel locker</label>
+        <input class="auth-input" id="shipLockerSearch" type="search" data-i18n-placeholder="ship_locker_search_ph" placeholder="City or address" autocomplete="off" />
+    </div>
+    <div class="auth-field">
+        <label class="auth-label" for="shipLockerSelect" data-i18n="ship_locker">Parcel locker</label>
+        <select class="auth-input ship-locker-list" id="shipLockerSelect" size="6"></select>
+    </div>
+
+    <div class="ship-form-grid">
+        <div class="auth-field">
+            <label class="auth-label" for="shipReceiverName" data-i18n="ship_receiver">Receiver</label>
+            <input class="auth-input" id="shipReceiverName" maxlength="100" data-i18n-placeholder="ship_receiver_ph" placeholder="Full name" />
+        </div>
+        <div class="auth-field">
+            <label class="auth-label" for="shipReceiverPhone" data-i18n="ship_phone">Phone</label>
+            <input class="auth-input" id="shipReceiverPhone" type="tel" maxlength="20" placeholder="+371 ..." />
+        </div>
+        <div class="auth-field">
+            <label class="auth-label" for="shipReceiverEmail" data-i18n="ship_email">Email</label>
+            <input class="auth-input" id="shipReceiverEmail" type="email" maxlength="200" />
+        </div>
+    </div>
+    <p class="ship-hint" data-i18n="ship_contact_hint">Give a phone number or an email: the carrier uses it to notify you.</p>
+
+    <p class="ship-error" id="shipBuyError" hidden></p>
+    <div class="auth-actions ship-actions-row">
+        <button type="button" class="auth-submit" onclick="submitShipmentRequest()" data-i18n="ship_submit">Send request</button>
+        <button type="button" class="auth-submit auth-submit-secondary" onclick="closeShipmentModal()" data-i18n="cancel_btn">Cancel</button>
+    </div>
+</div>

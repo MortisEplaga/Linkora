@@ -1,0 +1,23 @@
+@using System.Globalization
+@model ProductDeliveryFormModel
+<div class="create-field" id="deliveryFieldWrap">
+    <label class="create-label" for="shipEnabled">
+        <input type="checkbox" id="shipEnabled" @(Model.Enabled ? "checked" : null) onchange="toggleDeliveryFields()" />
+        <span data-i18n="ship_enable">Deliver to a parcel locker (Omniva)</span>
+    </label>
+    <div id="shipDetails" class="ship-delivery-details" style="@(Model.Enabled ? "" : "display:none")">
+        <label class="create-label" for="shipParcelSize" data-i18n="ship_parcel_size">Parcel size</label>
+        <select class="create-input" id="shipParcelSize">
+            <option value="" data-i18n="ship_size_ph">Select a size</option>
+            @foreach (var size in ParcelSizes.All)
+            {
+                <option value="@size" @(Model.ParcelSize == size ? "selected" : null)>@size</option>
+            }
+        </select>
+
+        <label class="create-label" for="shipWeightKg" data-i18n="ship_weight">Weight, kg</label>
+        <input type="number" class="create-input" id="shipWeightKg" min="0.01" max="100" step="0.01" placeholder="0.00"
+               value="@(Model.WeightKg?.ToString(CultureInfo.InvariantCulture))" />
+        <p class="ship-hint" data-i18n="ship_weight_hint">Up to 100 kg. Parcel size and weight are needed to price the delivery.</p>
+    </div>
+</div>

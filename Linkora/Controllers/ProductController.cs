@@ -197,10 +197,15 @@ namespace Linkora.Controllers
         public async Task<IActionResult> Edit(int id, string title, string? description, int? qty, string? address, int? categoryId,
                                               string? paramsJson, List<IFormFile>? photos, decimal? price = null,
                                               string? keepMediaJson = null, bool replaceMedia = false,
-                                              int? publishDays = null, string? promotionType = null)
+                                              int? publishDays = null, string? promotionType = null,
+                                              bool shippingEnabled = false, string? parcelSize = null, decimal? weightKg = null)
         {
             var totalBytes = photos?.Sum(f => f.Length) ?? 0;
             if (totalBytes > MediaStorageService.MaxTotalBytes) return BadRequest("Total media size exceeds 50 MB");
+
+            var delivery = NormalizeDelivery(shippingEnabled, parcelSize, weightKg);
+            var deliveryError = ParcelRules.Validate(delivery.Enabled, delivery.Size, delivery.Weight);
+            if (deliveryError != null) return BadRequest(deliveryError);
 
             var userId = User.GetUserId();
             if (await _userRepository.IsBannedAsync(userId)) return Forbid();
@@ -259,6 +264,9 @@ namespace Linkora.Controllers
                 Lat = lat,
                 Lng = lng,
                 Price = price,
+                ShippingEnabled = delivery.Enabled,
+                ParcelSize = delivery.Size,
+                WeightKg = delivery.Weight,
                 SubscriptionBoostLevel = activeSubscription?.Tier,
                 SubscriptionBoostExpiresAt = activeSubscription?.ExpiresAt,
             }, paramValues);
@@ -388,12 +396,17 @@ namespace Linkora.Controllers
         }
         [Authorize][HttpPost] public async Task<IActionResult> Create(string title, string? description, int? qty, string? address, int? categoryId,
                                                 List<IFormFile>? photos, string? paramsJson, decimal? price = null,
-                                                int? publishDays = null, string? promotionType = null, bool useHomeAddress = false)
+                                                int? publishDays = null, string? promotionType = null, bool useHomeAddress = false,
+                                                bool shippingEnabled = false, string? parcelSize = null, decimal? weightKg = null)
         {
             if (string.IsNullOrWhiteSpace(title)) return BadRequest("Title is required");
 
             var totalBytes = photos?.Sum(f => f.Length) ?? 0;
             if (totalBytes > MediaStorageService.MaxTotalBytes) return BadRequest("Total media size exceeds 50 MB");
+
+            var delivery = NormalizeDelivery(shippingEnabled, parcelSize, weightKg);
+            var deliveryError = ParcelRules.Validate(delivery.Enabled, delivery.Size, delivery.Weight);
+            if (deliveryError != null) return BadRequest(deliveryError);
 
             var userId = User.GetUserId();
             var currentUser = await _userRepository.GetByIdAsync(userId);
@@ -441,6 +454,9 @@ namespace Linkora.Controllers
                 Lat = lat,
                 Lng = lng,
                 Price = price,
+                ShippingEnabled = delivery.Enabled,
+                ParcelSize = delivery.Size,
+                WeightKg = delivery.Weight,
                 SubscriptionBoostLevel = activeSubscription?.Tier,
                 SubscriptionBoostExpiresAt = activeSubscription?.ExpiresAt,
             }, paramValues, duration);
@@ -460,6 +476,10 @@ namespace Linkora.Controllers
 
             return Ok(new { id = newId, promotionType = pendingPromotion });
         }
+        /// <summary>Delivery settings as stored: size and weight are kept only while delivery is enabled.</summary>
+        private static (bool Enabled, string? Size, decimal? Weight) NormalizeDelivery(bool enabled, string? size, decimal? weight) =>
+            enabled ? (true, size?.Trim().ToUpperInvariant(), weight) : (false, null, null);
+
         [HttpGet] public async Task<IActionResult> CategoryRules(int categoryId)
         {
             var breadcrumb = await _categoryRepository.GetBreadcrumbAsync(categoryId);

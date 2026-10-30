@@ -105,6 +105,14 @@
                 </button>
             </div>
 
+            @if (p.ShippingEnabled && (!User.Identity.IsAuthenticated || p.UserId != User.GetUserId()))
+            {
+                <button type="button" class="details-btn details-btn-secondary details-ship-btn" onclick="openShipmentModal(@p.Id)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" /><path d="M16 8h4l3 3v5h-7z" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>
+                    <span data-i18n="ship_buy_button">Ship to locker</span>
+                </button>
+            }
+
             <div class="details-seller" style="cursor:pointer">
                  <div class="details-seller-avatar">
                     @if (p.Seller?.AvatarUrl != null)
@@ -320,6 +328,7 @@
 
 @await Html.PartialAsync("Partial/_MessageModal", p)
 @await Html.PartialAsync("Partial/_ReportModal")
+@await Html.PartialAsync("Partial/_ShipmentRequestModal")
 @await Html.PartialAsync("Partial/_CaptchaModal")
 <script src="https://www.google.com/recaptcha/api.js?render=explicit" async defer></script>
 
@@ -384,4 +393,11 @@
         }
     </script>
     <script src="https://maps.googleapis.com/maps/api/js?key=@Uri.EscapeDataString((string?)ViewBag.GoogleMapsApiKey ?? string.Empty)&loading=async&libraries=marker&callback=initProductMap" async defer></script>
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/shipments.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/shipping.js" asp-append-version="true"></script>
 }

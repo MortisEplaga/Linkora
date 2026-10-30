@@ -53,6 +53,10 @@ builder.Services.AddScoped<IMediaStorageService, MediaStorageService>();
 builder.Services.AddHostedService<PointsLedgerPromotionService>();
 builder.Services.AddHostedService<ArchiveOldProductsService>();
 builder.Services.AddHostedService<EmailQueueBackgroundService>();
+builder.Services.AddHostedService<ShipmentRegistrationRetryService>();
+builder.Services.AddHostedService<ShipmentTrackingSyncService>();
+builder.Services.AddHostedService<ShipmentHandoverExpiryService>();
+builder.Services.AddHostedService<ShipmentAcceptanceExpiryService>();
 builder.Services.AddSingleton<IEmailQueue, EmailQueue>();
 builder.Services.AddSignalR();
 

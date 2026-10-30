@@ -1,0 +1,186 @@
+/* Omniva delivery: seller requests page and buyer request window. */
+
+.ship-page {
+    max-width: 960px;
+    margin: 24px auto;
+    padding: 0 16px;
+}
+
+.ship-title {
+    font-size: 24px;
+    margin: 0 0 16px;
+}
+
+.ship-subtitle {
+    font-size: 15px;
+    margin: 18px 0 8px;
+}
+
+.ship-empty,
+.ship-hint {
+    color: #666;
+    font-size: 14px;
+}
+
+.ship-list {
+    display: grid;
+    gap: 14px;
+}
+
+.ship-card {
+    background: #fff;
+    border: 1px solid #e3e3e3;
+    border-radius: 10px;
+    padding: 16px;
+}
+
+.ship-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.ship-product {
+    font-weight: 600;
+    color: inherit;
+    text-decoration: none;
+}
+
+.ship-product:hover {
+    text-decoration: underline;
+}
+
+.ship-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    background: #eee;
+    color: #333;
+    white-space: nowrap;
+}
+
+.ship-badge-Requested { background: #fff4d6; color: #7a5a00; }
+.ship-badge-Accepted { background: #dbeafe; color: #1e40af; }
+.ship-badge-Paid,
+.ship-badge-Registered,
+.ship-badge-Delivered { background: #dcfce7; color: #166534; }
+.ship-badge-Declined,
+.ship-badge-Cancelled,
+.ship-badge-Failed,
+.ship-badge-Returned { background: #fee2e2; color: #991b1b; }
+
+.ship-meta {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 6px 16px;
+    margin: 0 0 12px;
+    font-size: 14px;
+}
+
+.ship-meta dt {
+    color: #666;
+}
+
+.ship-meta dd {
+    margin: 0;
+}
+
+.ship-actions,
+.ship-actions-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.ship-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 14px;
+    border: 1px solid #cfcfcf;
+    border-radius: 8px;
+    background: #fff;
+    color: #222;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.ship-btn:hover {
+    background: #f4f4f4;
+}
+
+.ship-btn-primary {
+    background: #111;
+    border-color: #111;
+    color: #fff;
+}
+
+.ship-btn-primary:hover {
+    background: #333;
+}
+
+.ship-modal {
+    width: min(640px, calc(100vw - 32px));
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+}
+
+.ship-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0 14px;
+}
+
+.ship-locker-list {
+    width: 100%;
+    min-height: 120px;
+}
+
+.ship-price-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    margin: 10px 0;
+    background: #f7f7f7;
+    border-radius: 8px;
+    font-size: 15px;
+}
+
+.ship-error {
+    color: #b91c1c;
+    font-size: 14px;
+    margin: 10px 0 0;
+}
+
+.ship-error[hidden] {
+    display: none;
+}
+
+.ship-my-requests:empty {
+    display: none;
+}
+
+.ship-my-request {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+}
+
+.ship-my-state,
+.ship-my-locker,
+.ship-my-barcode {
+    color: #555;
+}
+
+.details-ship-btn {
+    margin-top: 8px;
+}

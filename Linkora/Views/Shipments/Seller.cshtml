@@ -1,0 +1,153 @@
+@model Linkora.Models.SellerShipmentsViewModel
+@using Linkora.Models
+@using System.Globalization
+@{
+    ViewData["Title"] = "Delivery requests";
+    var requests = Model.Requests;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/shipments.css" asp-append-version="true" />
+}
+
+<div class="ship-page" data-user-phone="@Model.Phone" data-user-email="@Model.Email">
+    <h1 class="ship-title" data-i18n="ship_seller_title">Delivery requests</h1>
+
+    @if (requests.Count == 0)
+    {
+        <p class="ship-empty" data-i18n="ship_seller_empty">No delivery requests yet.</p>
+    }
+    else
+    {
+        <div class="ship-list">
+            @foreach (var r in requests)
+            {
+                <article class="ship-card" data-request-id="@r.Id" data-status="@r.Status"
+                         data-product-size="@r.ProductSize" data-product-weight="@(r.ProductWeightKg?.ToString(CultureInfo.InvariantCulture))">
+                    <div class="ship-card-head">
+                        <a class="ship-product" href="/Product/Details/@r.ProductId">@r.ProductName</a>
+                        <span class="ship-badge ship-badge-@r.Status" data-i18n="ship_status_@r.Status">@r.Status</span>
+                    </div>
+
+                    <dl class="ship-meta">
+                        <dt data-i18n="ship_receiver">Receiver</dt>
+                        <dd>@r.ReceiverName</dd>
+
+                        <dt data-i18n="ship_locker">Parcel locker</dt>
+                        <dd>@r.LockerName@(string.IsNullOrEmpty(r.LockerCity) ? "" : ", " + r.LockerCity)</dd>
+
+                        <dt data-i18n="ship_parcel_size">Parcel size</dt>
+                        <dd>@(r.Size ?? "—")</dd>
+
+                        <dt data-i18n="ship_price">Delivery price</dt>
+                        <dd>@(r.Price.HasValue ? r.Price.Value.ToString("0.00", CultureInfo.InvariantCulture) + " €" : "—")</dd>
+
+                        @if (r.ShipmentState.HasValue)
+                        {
+                            <dt data-i18n="ship_state_label">Shipment</dt>
+                            <dd data-i18n="ship_state_@r.ShipmentState">@r.ShipmentState</dd>
+                        }
+
+                        @if (!string.IsNullOrEmpty(r.Barcode))
+                        {
+                            <dt data-i18n="ship_barcode">Barcode</dt>
+                            <dd>@r.Barcode</dd>
+                        }
+                    </dl>
+
+                    <div class="ship-actions">
+                        @if (r.Status == ShipmentRequestStatus.Requested)
+                        {
+                            <button type="button" class="ship-btn ship-btn-primary" data-action="accept" data-id="@r.Id" data-i18n="ship_accept">Accept</button>
+                            <button type="button" class="ship-btn" data-action="decline" data-id="@r.Id" data-i18n="ship_decline">Decline</button>
+                        }
+                        @if (r.Status == ShipmentRequestStatus.Accepted)
+                        {
+                            <button type="button" class="ship-btn ship-btn-primary" data-action="pay" data-id="@r.Id" data-i18n="ship_pay">Pay delivery</button>
+                        }
+                        @if (!string.IsNullOrEmpty(r.Barcode) && r.ShipmentState != ShipmentStatus.Failed)
+                        {
+                            <a class="ship-btn" href="/Shipping/Request/@r.Id/Label" target="_blank" rel="noopener" data-i18n="ship_label">Download label</a>
+                        }
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</div>
+
+<div class="modal-overlay" id="shipAcceptOverlay"></div>
+<div class="modal ship-modal" id="shipAcceptModal" role="dialog" aria-modal="true">
+    <button type="button" class="modal-close" data-action="close-accept">✕</button>
+    <h2 class="auth-title" data-i18n="ship_accept_title">Accept delivery request</h2>
+    <input type="hidden" id="shipAcceptRequestId" />
+
+    <div class="ship-form-grid">
+        <div class="auth-field">
+            <label class="auth-label" for="shipAcceptSize" data-i18n="ship_parcel_size">Parcel size</label>
+            <select class="auth-input" id="shipAcceptSize">
+                <option value="XS">XS</option>
+                <option value="S">S</option>
+                <option value="M">M</option>
+                <option value="L">L</option>
+                <option value="XL">XL</option>
+            </select>
+        </div>
+        <div class="auth-field">
+            <label class="auth-label" for="shipAcceptWeight" data-i18n="ship_weight">Weight, kg</label>
+            <input class="auth-input" id="shipAcceptWeight" type="number" min="0.01" max="100" step="0.01" />
+        </div>
+    </div>
+
+    <div class="ship-price-line">
+        <span data-i18n="ship_price">Delivery price</span>
+        <strong id="shipAcceptPrice">—</strong>
+    </div>
+
+    <h3 class="ship-subtitle" data-i18n="ship_sender_title">Sender (you)</h3>
+    <div class="ship-form-grid">
+        <div class="auth-field">
+            <label class="auth-label" for="shipSenderName" data-i18n="ship_sender_name">Full name</label>
+            <input class="auth-input" id="shipSenderName" maxlength="100" />
+        </div>
+        <div class="auth-field">
+            <label class="auth-label" for="shipSenderPhone" data-i18n="ship_phone">Phone</label>
+            <input class="auth-input" id="shipSenderPhone" type="tel" maxlength="20" />
+        </div>
+        <div class="auth-field">
+            <label class="auth-label" for="shipSenderEmail" data-i18n="ship_email">Email</label>
+            <input class="auth-input" id="shipSenderEmail" type="email" maxlength="200" />
+        </div>
+        <div class="auth-field">
+            <label class="auth-label" for="shipSenderStreet" data-i18n="ship_street">Street and house</label>
+            <input class="auth-input" id="shipSenderStreet" maxlength="120" />
+        </div>
+        <div class="auth-field">
+            <label class="auth-label" for="shipSenderCity" data-i18n="ship_city">City</label>
+            <input class="auth-input" id="shipSenderCity" maxlength="80" />
+        </div>
+        <div class="auth-field">
+            <label class="auth-label" for="shipSenderPostcode" data-i18n="ship_postcode">Postcode</label>
+            <input class="auth-input" id="shipSenderPostcode" maxlength="10" />
+        </div>
+        <div class="auth-field">
+            <label class="auth-label" for="shipSenderCountry" data-i18n="ship_country">Country</label>
+            <select class="auth-input" id="shipSenderCountry">
+                <option value="LV">Latvia</option>
+                <option value="LT">Lithuania</option>
+                <option value="EE">Estonia</option>
+            </select>
+        </div>
+    </div>
+
+    <p class="ship-error" id="shipAcceptError" hidden></p>
+    <div class="auth-actions ship-actions-row">
+        <button type="button" class="auth-submit" data-action="submit-accept" data-i18n="ship_confirm">Confirm</button>
+        <button type="button" class="auth-submit auth-submit-secondary" data-action="close-accept" data-i18n="cancel_btn">Cancel</button>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/shipping.js" asp-append-version="true"></script>
+    <script>document.addEventListener('DOMContentLoaded', () => initSellerShipments());</script>
+}

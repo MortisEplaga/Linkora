@@ -33,6 +33,8 @@
                     <input type="number" class="create-input" id="adPrice" min="0" placeholder="0.00" />
                 </div>
 
+                @await Html.PartialAsync("Partial/_DeliveryFields", new ProductDeliveryFormModel(p.ShippingEnabled, p.ParcelSize, p.WeightKg))
+
                 <div class="create-row" id="qtyRow">
                     <div class="create-field" id="qtyFieldWrap" style="grid-column: 1 / -1">
                         <label class="create-label" data-i18n="qty_label">Quantity</label>
@@ -194,6 +196,8 @@
         if (state.publishDays) {
             setVal('pubDurationValue', state.publishDays);
         }
+
+        restoreDeliveryFields(state.delivery);
     }
 
     window.addEventListener('DOMContentLoaded', async () => {
@@ -238,6 +242,7 @@
             categoryId: document.getElementById('selectedCategoryId')?.value,
             categoryText: document.getElementById('catSelectorText')?.textContent,
             publishDays: document.getElementById('pubDurationValue')?.value,
+            delivery: readDeliveryFields(),
             params: params,
         }));
     };
@@ -305,6 +310,8 @@
 
     async function submitEdit(id) {
         if (!ParamRulesEngine.validateAll()) return;
+        const deliveryError = validateDeliveryFields();
+        if (deliveryError) { alert(translate(deliveryError)); return; }
         const btn = document.querySelector('.create-submit');
         btn.disabled = true;
 
@@ -341,6 +348,7 @@
             fd.append('keepMediaJson', JSON.stringify(window.existingMediaPaths || []));
             fd.append('publishDays', document.getElementById('pubDurationValue').value || '30');
             fd.append('promotionType', document.getElementById('promotionValue').value || 'Free');
+            appendDeliveryFields(fd);
 
             const priceWrap = document.getElementById('priceFieldWrap');
             if (priceWrap.style.display !== 'none') {

@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Globalization;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -20,6 +21,14 @@ namespace Linkora.Services
         Task<OmnivaLabelResult> GetLabelAsync(string barcode, CancellationToken ct = default);
         Task<OmnivaEventsPage> GetEventsAsync(long fromEventId, int size = 100, CancellationToken ct = default);
         Task<IReadOnlyList<OmnivaLocker>> GetLockersAsync(CancellationToken ct = default);
+        /// <summary>Best-effort cancellation of a registered parcel. Returns false when Omniva did not confirm it.</summary>
+        Task<bool> CancelShipmentAsync(string barcode, CancellationToken ct = default);
+    }
+    /// <summary>Non-success HTTP response from the OMX API.</summary>
+    public sealed class OmnivaApiException(int statusCode, string message) : Exception(message)
+    {
+        public int StatusCode { get; } = statusCode;
+        public bool IsRateLimited => StatusCode == 429;
     }
     public class OmnivaService : IOmnivaService
     {
@@ -132,8 +141,68 @@ namespace Linkora.Services
 
             return new(false, null, $"HTTP_{status}");
         }
-        public Task<OmnivaEventsPage> GetEventsAsync(long fromEventId, int size = 100, CancellationToken ct = default) => throw new NotSupportedException("Event parsing is not implemented: the event JSON structure and event codes are not in the OMX API manual. Take them from the Omniva test environment or the OpenAPI file.");
+        public async Task<OmnivaEventsPage> GetEventsAsync(long fromEventId, int size = 100, CancellationToken ct = default)
+        {
+            size = Math.Clamp(size, 1, 100);
+            var (status, body) = await GetAsync($"{ShipmentsPath}?size={size}&fromTrackEventId={fromEventId}", ct);
+            if (status != 200) throw new OmnivaApiException(status, $"Omniva events request failed with HTTP {status}: {Truncate(body, 300)}");
+
+            using var doc = JsonDocument.Parse(body);
+            var root = doc.RootElement;
+            if (!root.TryGetProperty("content", out var content) || content.ValueKind != JsonValueKind.Array)
+                throw new OmnivaApiException(status, "Omniva events response has no content array");
+
+            var events = new List<OmnivaEvent>();
+            long lastId = fromEventId;
+            int count = 0;
+            foreach (var item in content.EnumerateArray())
+            {
+                count++;
+                // The cursor advances over every event that has an id, even when the event itself is skipped below.
+                if (!item.TryGetProperty("eventId", out var idEl) || !idEl.TryGetInt64(out var eventId)) continue;
+                if (eventId > lastId) lastId = eventId;
+
+                var barcode = Str(item, "shipmentBarcode");
+                var code = Str(item, "eventCode");
+                var occurredAt = ParseUtc(Str(item, "eventDate"));
+                if (string.IsNullOrWhiteSpace(barcode) || string.IsNullOrWhiteSpace(code) || occurredAt == null) continue;
+
+                string? location = null;
+                if (item.TryGetProperty("location", out var loc) && loc.ValueKind == JsonValueKind.Object)
+                    location = Str(loc, "locationName") ?? Str(loc, "zip");
+
+                events.Add(new OmnivaEvent(eventId, barcode, code, occurredAt.Value, location, item.GetRawText()));
+            }
+
+            bool hasMore;
+            if (root.TryGetProperty("last", out var lastEl) && lastEl.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                hasMore = lastEl.ValueKind == JsonValueKind.False;
+            else
+                hasMore = count >= size;
+
+            return new OmnivaEventsPage(events, lastId, hasMore);
+        }
+        public async Task<bool> CancelShipmentAsync(string barcode, CancellationToken ct = default)
+        {
+            try
+            {
+                var (status, body) = await PostAsync($"{ShipmentsPath}/cancel", new { customerCode = _customerCode, barcode }, ct);
+                if (status != 200) return false;
+                if (string.IsNullOrWhiteSpace(body)) return true;
+
+                using var doc = JsonDocument.Parse(body);
+                if (doc.RootElement.TryGetProperty("resultCode", out var rc) && rc.ValueKind == JsonValueKind.String)
+                    return string.Equals(rc.GetString(), "OK", StringComparison.OrdinalIgnoreCase);
+                return true;
+            }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException) { return false; }
+        }
         public Task<IReadOnlyList<OmnivaLocker>> GetLockersAsync(CancellationToken ct = default) => throw new NotSupportedException("Locker list loading is not implemented: the source and format must be confirmed with Omniva.");
+        private async Task<(int Status, string Body)> GetAsync(string pathAndQuery, CancellationToken ct)
+        {
+            using var response = await _http.GetAsync(_baseUrl + pathAndQuery, ct);
+            return ((int)response.StatusCode, await response.Content.ReadAsStringAsync(ct));
+        }
         private async Task<(int Status, string Body)> PostAsync(string path, object payload, CancellationToken ct)
         {
             using var content = new StringContent(JsonSerializer.Serialize(payload, JsonOptions), Encoding.UTF8, "application/json");
@@ -156,6 +225,8 @@ namespace Linkora.Services
         };
         private static string? Str(JsonElement element, string name) => element.ValueKind == JsonValueKind.Object && element.TryGetProperty(name, out var value) ? value.GetString() : null;
         private static string Truncate(string s, int max) => s.Length <= max ? s : s[..max];
+        private static DateTime? ParseUtc(string? value) =>
+            DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var dt) ? dt : null;
     }
     public static class OmnivaPhone
     {
