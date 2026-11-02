@@ -35,6 +35,7 @@ namespace Linkora.Services
                         "shipment_returned" => "Посылка возвращена отправителю.",
                         "shipment_expired" => "Срок сдачи посылки в пакомат истёк, отправление отменено.",
                         "shipment_accept_expired" => "Оплата доставки через пакомат не поступила в срок. Запрос снова открыт.",
+                        "shipment_cancelled" => "Отправление отменено перевозчиком.",
                         "listing_expiring_soon" => FormatExpiring(doc),
                         _ => "У вас новое уведомление на Vena.",
                     });

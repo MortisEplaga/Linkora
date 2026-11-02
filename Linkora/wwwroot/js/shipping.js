@@ -85,7 +85,7 @@
         const weight = card.dataset.productWeight || '';
 
         document.getElementById('shipAcceptRequestId').value = requestId;
-        document.getElementById('shipAcceptSize').value = ['XS', 'S', 'M', 'L', 'XL'].includes(size) ? size : 'M';
+        document.getElementById('shipAcceptSize').value = ['XS', 'S', 'M', 'L'].includes(size) ? size : 'M';
         document.getElementById('shipAcceptWeight').value = weight;
 
         const phone = document.getElementById('shipSenderPhone');

@@ -20,9 +20,9 @@ namespace Linkora.Services
         private static partial Regex ReferencePattern();
         public static string BuildReference(int requestId) => $"SHIP{requestId}-{DateTime.UtcNow:HHmmssfff}";
 
-        /// <summary>Errors that may succeed on a later attempt: the network, rate limiting and server errors.</summary>
+        /// <summary>Errors that may succeed on a later attempt: the network, rate limiting, server errors and missing OMX config.</summary>
         public static bool IsTransientRegistrationError(string? code) =>
-            code is "NETWORK" or "HTTP_429" || (code != null && code.StartsWith("HTTP_5", StringComparison.Ordinal));
+            code is "NETWORK" or "HTTP_429" or "CONFIG_MISSING" || (code != null && code.StartsWith("HTTP_5", StringComparison.Ordinal));
 
         public async Task OnPaymentCompletedAsync(int paymentId, string reference, int payerId, decimal amount)
         {
@@ -99,7 +99,8 @@ namespace Linkora.Services
             var sender = new OmnivaParty(request.SenderName ?? "", request.SenderPhone, request.SenderEmail, request.SenderStreet, request.SenderCity, request.SenderPostcode, request.SenderCountry ?? "LV");
             var receiver = new OmnivaParty(request.ReceiverName, request.ReceiverPhone, request.ReceiverEmail, null, null, null, locker.Country);
 
-            var result = await omniva.RegisterShipmentAsync(new OmnivaShipmentRequest(shipment.PartnerShipmentId, sender, receiver, locker.Code, request.WeightKg), ct);
+            var result = await omniva.RegisterShipmentAsync(
+                new OmnivaShipmentRequest(shipment.PartnerShipmentId, sender, receiver, locker.Code, request.WeightKg, ParcelSize: request.Size), ct);
 
             if (result.Success && !string.IsNullOrEmpty(result.Barcode))
             {

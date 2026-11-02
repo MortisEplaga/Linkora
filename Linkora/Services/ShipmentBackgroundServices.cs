@@ -78,13 +78,19 @@ namespace Linkora.Services
 
         protected override string JobName => nameof(ShipmentTrackingSyncService);
 
-        /// <summary>Maps Omniva event codes to shipment statuses from configuration Omniva:EventStatusMap. Empty until the code catalogue is confirmed.</summary>
+        /// <summary>
+        /// Maps Omniva event codes to shipment statuses. The confirmed OMX catalogue is built in
+        /// (OmnivaEventCodes.DefaultStatusMap); Omniva:EventStatusMap may override or extend it.
+        /// Failed is allowed for TRT_SHIPMENT_CANCELLED. Pending is never a valid event status.
+        /// </summary>
         public static IReadOnlyDictionary<string, ShipmentStatus> LoadStatusMap(IConfiguration configuration, ILogger logger)
         {
             var map = new Dictionary<string, ShipmentStatus>(StringComparer.OrdinalIgnoreCase);
+            foreach (var pair in OmnivaEventCodes.DefaultStatusMap) map[pair.Key] = pair.Value;
+
             foreach (var child in configuration.GetSection("Omniva:EventStatusMap").GetChildren())
             {
-                if (Enum.TryParse<ShipmentStatus>(child.Value, true, out var status) && status is not (ShipmentStatus.Pending or ShipmentStatus.Failed))
+                if (Enum.TryParse<ShipmentStatus>(child.Value, true, out var status) && status is not ShipmentStatus.Pending)
                     map[child.Key] = status;
                 else
                     logger.LogWarning("Omniva:EventStatusMap:{Code} has an unusable status '{Value}' and is ignored", child.Key, child.Value);
@@ -118,6 +124,12 @@ namespace Linkora.Services
                 {
                     await repo.SetLastEventIdAsync(Provider, result.LastEventId);
                     cursor = result.LastEventId;
+                }
+                else if (result.HasMore)
+                {
+                    // A page whose events carry no usable id would otherwise be requested again forever.
+                    Logger.LogWarning("Omniva events page at cursor {Cursor} did not advance the cursor; sync stops until the response format is fixed", cursor);
+                    return;
                 }
 
                 if (!result.HasMore) break;
@@ -156,7 +168,7 @@ namespace Linkora.Services
             {
                 var status = _statusMap.TryGetValue(source.Code, out var mapped) ? (ShipmentStatus?)mapped : null;
                 var applied = await repo.ApplyEventAsync(shipment.Id, status, source.Code, source.OccurredAtUtc);
-                if (!applied || status is not (ShipmentStatus.ArrivedAtLocker or ShipmentStatus.Delivered or ShipmentStatus.Returned)) continue;
+                if (!applied || status is not (ShipmentStatus.ArrivedAtLocker or ShipmentStatus.Delivered or ShipmentStatus.Returned or ShipmentStatus.Failed)) continue;
 
                 var request = await repo.GetRequestAsync(shipment.RequestId);
                 if (request == null) continue;
@@ -172,17 +184,18 @@ namespace Linkora.Services
                         break;
                     case ShipmentStatus.Returned:
                         await NotifyAsync(notifications, Logger, request.SellerId, request.BuyerId, request.ProductId, "shipment_returned", request.Id);
+                        await NotifyAsync(notifications, Logger, request.BuyerId, request.SellerId, request.ProductId, "shipment_returned", request.Id);
+                        break;
+                    // The only event mapped to Failed is TRT_SHIPMENT_CANCELLED.
+                    case ShipmentStatus.Failed:
+                        await NotifyAsync(notifications, Logger, request.BuyerId, request.SellerId, request.ProductId, "shipment_cancelled", request.Id);
+                        await NotifyAsync(notifications, Logger, request.SellerId, request.BuyerId, request.ProductId, "shipment_cancelled", request.Id);
                         break;
                 }
             }
         }
     }
 
-    /// <summary>
-    /// A Registered parcel that was never handed over before its deadline is marked Failed and cancelled at Omniva.
-    /// The database is updated first: the update is refused when a carrier event has arrived meanwhile, so a parcel that
-    /// was just handed over is never cancelled.
-    /// </summary>
     /// <summary>
     /// Releases listings whose accepted request was not paid within Shipping:AcceptPaymentHours (default 24).
     /// The request goes back to Requested, so the seller can accept it again. Requests with a payment still in flight are kept.
@@ -211,6 +224,11 @@ namespace Linkora.Services
         }
     }
 
+    /// <summary>
+    /// A Registered parcel that was never handed over before its deadline is marked Failed and cancelled at Omniva.
+    /// The database is updated first: the update is refused when a carrier event has arrived meanwhile, so a parcel that
+    /// was just handed over is never cancelled.
+    /// </summary>
     public sealed class ShipmentHandoverExpiryService(IServiceScopeFactory scopeFactory, ILogger<ShipmentHandoverExpiryService> logger)
         : PeriodicShipmentJob(scopeFactory, logger, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(1))
     {
@@ -241,6 +259,48 @@ namespace Linkora.Services
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException) { Logger.LogError(ex, "Handover expiry of shipment {ShipmentId} failed", shipment.Id); }
             }
+        }
+    }
+
+    /// <summary>
+    /// Refreshes ParcelLockers from the public Omniva locations feed (Omniva:LocationsUrl, default
+    /// https://www.omniva.ee/locations.json). UpsertAsync deactivates every locker missing from the feed,
+    /// so an empty or failed response leaves the existing directory untouched.
+    /// </summary>
+    public sealed class ParcelLockerSyncService(IServiceScopeFactory scopeFactory, ILogger<ParcelLockerSyncService> logger)
+        : PeriodicShipmentJob(scopeFactory, logger, TimeSpan.FromHours(6), TimeSpan.FromSeconds(20))
+    {
+        private const string Provider = "Omniva";
+
+        protected override string JobName => nameof(ParcelLockerSyncService);
+
+        protected override async Task RunOnceAsync(IServiceProvider services, CancellationToken ct)
+        {
+            var omniva = services.GetRequiredService<IOmnivaService>();
+            var lockers = services.GetRequiredService<IParcelLockerRepository>();
+
+            var source = await omniva.GetLockersAsync(ct);
+            if (source.Count == 0)
+            {
+                Logger.LogWarning("Omniva returned no parcel machines; the existing locker directory is left unchanged");
+                return;
+            }
+
+            var rows = source.Select(l => new ParcelLocker
+            {
+                Provider = Provider,
+                Code = l.Code,
+                Name = l.Name,
+                Country = l.Country,
+                City = l.City,
+                Address = l.Address,
+                Lat = l.Lat,
+                Lng = l.Lng,
+                IsActive = true
+            }).ToList();
+
+            var count = await lockers.UpsertAsync(Provider, rows);
+            Logger.LogInformation("Omniva parcel machine directory refreshed: {Count} locations", count);
         }
     }
 }

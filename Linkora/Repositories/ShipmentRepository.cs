@@ -1,6 +1,7 @@
 ﻿using Linkora.Models;
 using Microsoft.Data.SqlClient;
 using System.Data;
+using System.Linq;
 
 namespace Linkora.Repositories
 {
@@ -12,6 +13,12 @@ namespace Linkora.Repositories
         private const int EventCodeMaxLength = 50;
         private const int LocationMaxLength = 200;
         private const string OpenStatuses = "'Registered', 'InTransit', 'ArrivedAtLocker'";
+        /// <summary>
+        /// Only these OMX events prove that the parcel was actually handed over. A registration or cancellation event
+        /// alone must not stop the handover-expiry job.
+        /// </summary>
+        private static readonly string HandoverEventCodeList =
+            string.Join(",", OmnivaEventCodes.HandoverCodes.Select(c => "'" + c.Replace("'", "''") + "'"));
         private const string ViewSelect = @"SELECT r.Id, r.ProductId, p.Name, p.ParcelSize, p.WeightKg,
                    r.BuyerId, bu.UserName, r.SellerId, r.Status, l.Name, l.City,
                    r.ReceiverName, r.ReceiverPhone, r.ReceiverEmail, r.Size, r.WeightKg, r.Price, r.PaymentId, r.CreatedAt,
@@ -241,20 +248,22 @@ namespace Linkora.Repositories
             MapShipment,
             p => p.AddWithValue("@Age", olderThanMinutes));
         /// <summary>
-        /// Registered shipments whose handover deadline has passed and which have never produced a carrier event,
-        /// i.e. the parcel was never handed over to the locker.
+        /// Registered shipments whose handover deadline has passed and which have no event proving that the parcel
+        /// entered the carrier network, i.e. the parcel was never handed over to the locker.
         /// </summary>
         public async Task<List<Shipment>> GetExpiredHandoverShipmentsAsync() => await QueryAsync(
             $@"SELECT {ShipmentColumns} FROM Shipments s
                WHERE s.Status = 'Registered' AND s.HandoverDeadline < SYSUTCDATETIME()
-                 AND NOT EXISTS (SELECT 1 FROM ShipmentEvents e WHERE e.ShipmentId = s.Id)
+                 AND NOT EXISTS (SELECT 1 FROM ShipmentEvents e
+                                 WHERE e.ShipmentId = s.Id AND e.EventCode IN ({HandoverEventCodeList}))
                ORDER BY s.Id",
             MapShipment);
         public async Task<bool> MarkHandoverExpiredAsync(int shipmentId) => await ExecuteAsync(
-            @"UPDATE Shipments
-              SET Status = 'Failed', ErrorCode = 'HANDOVER_EXPIRED', ErrorMessage = 'Handover deadline passed without any carrier event', UpdatedAt = SYSUTCDATETIME()
+            $@"UPDATE Shipments
+              SET Status = 'Failed', ErrorCode = 'HANDOVER_EXPIRED', ErrorMessage = 'Handover deadline passed without a handover event', UpdatedAt = SYSUTCDATETIME()
               WHERE Id = @Id AND Status = 'Registered'
-                AND NOT EXISTS (SELECT 1 FROM ShipmentEvents e WHERE e.ShipmentId = @Id)",
+                AND NOT EXISTS (SELECT 1 FROM ShipmentEvents e
+                                WHERE e.ShipmentId = @Id AND e.EventCode IN ({HandoverEventCodeList}))",
             p => p.AddWithValue("@Id", shipmentId)) > 0;
         public async Task<bool> TryBeginRegistrationAsync(int shipmentId, int expectedAttempts) => await ExecuteAsync(
             "UPDATE Shipments SET Attempts = Attempts + 1, UpdatedAt = SYSUTCDATETIME() WHERE Id = @Id AND Status = 'Pending' AND Barcode IS NULL AND Attempts = @A",
