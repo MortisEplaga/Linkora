@@ -57,6 +57,7 @@ builder.Services.AddHostedService<ShipmentRegistrationRetryService>();
 builder.Services.AddHostedService<ShipmentTrackingSyncService>();
 builder.Services.AddHostedService<ShipmentHandoverExpiryService>();
 builder.Services.AddHostedService<ShipmentAcceptanceExpiryService>();
+builder.Services.AddHostedService<ParcelLockerSyncService>();
 builder.Services.AddSingleton<IEmailQueue, EmailQueue>();
 builder.Services.AddSignalR();
 

@@ -20,9 +20,21 @@ namespace Linkora.Models
         Failed
     }
 
+    /// <summary>Destination countries supported by the parcel-machine delivery flow.</summary>
+    public static class ShippingCountries
+    {
+        public static readonly string[] All = ["LV", "LT", "EE"];
+        public static bool IsSupported(string? country) =>
+            country != null && All.Contains(country.Trim().ToUpperInvariant());
+    }
+
     public static class ParcelSizes
     {
-        public static readonly string[] All = ["XS", "S", "M", "L", "XL"];
+        /// <summary>
+        /// XL is intentionally absent: Omniva does not deliver XL parcels through parcel machines
+        /// (post office / courier only), and this integration uses deliveryChannel = PARCEL_MACHINE.
+        /// </summary>
+        public static readonly string[] All = ["XS", "S", "M", "L"];
         public static bool IsValid(string? size) => size != null && All.Contains(size);
     }
 
@@ -189,4 +201,15 @@ namespace Linkora.Models
 
     /// <summary>Delivery block of the listing form.</summary>
     public sealed record ProductDeliveryFormModel(bool Enabled, string? ParcelSize, decimal? WeightKg);
+
+    /// <summary>One row of the admin tariff editor (country + size identify the row).</summary>
+    public class ShippingTariffEditDto
+    {
+        public string? DestinationCountry { get; set; }
+        public string? Size { get; set; }
+        public decimal OmnivaPrice { get; set; }
+        public decimal Markup { get; set; }
+        public decimal? MaxWeightKg { get; set; }
+        public bool IsActive { get; set; }
+    }
 }

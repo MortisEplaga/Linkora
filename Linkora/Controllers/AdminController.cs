@@ -1,3 +1,4 @@
+using Linkora.Models;
 using Linkora.Repositories;
 using Linkora.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -12,12 +13,14 @@ namespace Linkora.Controllers
                            IProductRepository productRepository,
                            INotificationRepository notificationRepository,
                            IAdminService adminService,
+                           IShippingTariffRepository shippingTariffRepository,
                            ILogger<AdminController> logger) : Controller
     {
         private readonly IAdminRepository _adminRepository = adminRepository;
         private readonly IProductRepository _productRepository = productRepository;
         private readonly INotificationRepository _notificationRepository = notificationRepository;
         private readonly IAdminService _adminService = adminService;
+        private readonly IShippingTariffRepository _shippingTariffRepository = shippingTariffRepository;
         private readonly ILogger<AdminController> _logger = logger;
 
         private bool IsAdmin() => User.FindFirst(ClaimTypes.Role)?.Value == "admin";
@@ -223,6 +226,48 @@ namespace Linkora.Controllers
             await _notificationRepository.CreateAsync(result.UserId, null, id, message);
 
             return Ok();
+        }
+
+        /// <summary>Admin editor for Omniva shipping tariffs (country x parcel size). Prices come from the contract.</summary>
+        public async Task<IActionResult> ShippingTariffs(bool saved = false)
+        {
+            if (!IsAdmin()) return Forbid();
+
+            ViewBag.Tariffs = await _shippingTariffRepository.GetAllAsync("Omniva");
+            ViewBag.Countries = ShippingCountries.All;
+            ViewBag.Sizes = ParcelSizes.All;
+            ViewBag.Saved = saved;
+            return View();
+        }
+
+        [HttpPost] [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveShippingTariff(ShippingTariffEditDto dto)
+        {
+            if (!IsAdmin()) return Forbid();
+
+            var country = (dto.DestinationCountry ?? "").Trim().ToUpperInvariant();
+            var size = (dto.Size ?? "").Trim().ToUpperInvariant();
+
+            if (!ShippingCountries.IsSupported(country) || !ParcelSizes.IsValid(size))
+                return BadRequest("Unsupported country or parcel size.");
+            if (dto.OmnivaPrice < 0 || dto.Markup < 0 || dto.OmnivaPrice > 999999m || dto.Markup > 999999m)
+                return BadRequest("Prices must be non-negative.");
+            if (dto.MaxWeightKg.HasValue && (dto.MaxWeightKg.Value <= 0 || dto.MaxWeightKg.Value > ParcelRules.MaxWeightKg))
+                return BadRequest("Invalid maximum weight.");
+
+            await _shippingTariffRepository.SaveAsync(new ShippingTariff
+            {
+                Provider = "Omniva",
+                DestinationCountry = country,
+                Size = size,
+                OmnivaPrice = dto.OmnivaPrice,
+                Markup = dto.Markup,
+                MaxWeightKg = dto.MaxWeightKg,
+                IsActive = dto.IsActive
+            });
+
+            _logger.LogInformation("Omniva shipping tariff {Country}/{Size} updated by admin", country, size);
+            return RedirectToAction(nameof(ShippingTariffs), new { saved = true });
         }
     }
 }

@@ -13,7 +13,7 @@ namespace Linkora.Controllers
     public class ShippingController(IShipmentRepository shipments, IParcelLockerRepository lockers, IShippingTariffRepository tariffs, IUserRepository users, INotificationService notifications, ILogger<ShippingController> logger, IOmnivaService omniva) : ControllerBase
     {
         private const string Provider = "Omniva";
-        private static readonly string[] Countries = ["LV", "LT", "EE"];
+        private static readonly string[] Countries = ShippingCountries.All;
 
         [HttpGet("Lockers")] public async Task<IActionResult> Lockers(string country = "LV", string? q = null)
         {
@@ -46,10 +46,14 @@ namespace Linkora.Controllers
             var buyerId = User.GetUserId();
             if (await users.IsBannedAsync(buyerId)) return Forbid();
 
+            var locker = await lockers.GetByIdAsync(dto.LockerId);
+            if (locker == null || !locker.IsActive) return BadRequest(new { error = "locker_invalid" });
+
             var name = dto.ReceiverName?.Trim() ?? "";
             if (name.Length is 0 or > 100) return BadRequest(new { error = "receiver_name_invalid" });
 
-            if (!OmnivaPhone.TryNormalize(dto.ReceiverPhone, out var phone)) return BadRequest(new { error = "phone_invalid" });
+            // A short local number belongs to the locker's country (LV/LT/EE), not always to Latvia.
+            if (!OmnivaPhone.TryNormalize(dto.ReceiverPhone, locker.Country, out var phone)) return BadRequest(new { error = "phone_invalid" });
 
             var email = string.IsNullOrWhiteSpace(dto.ReceiverEmail) ? (await users.GetByIdAsync(buyerId))?.Email : dto.ReceiverEmail.Trim();
             if (email is { Length: > 200 }) email = null;
@@ -59,9 +63,6 @@ namespace Linkora.Controllers
             if (info == null) return NotFound();
             if (info.SellerId == buyerId) return BadRequest(new { error = "own_product" });
             if (info.SellerId == null || !IsActive(info.Status) || !info.ShippingEnabled) return BadRequest(new { error = "shipping_unavailable" });
-
-            var locker = await lockers.GetByIdAsync(dto.LockerId);
-            if (locker == null || !locker.IsActive) return BadRequest(new { error = "locker_invalid" });
 
             int id;
             try
@@ -158,7 +159,7 @@ namespace Linkora.Controllers
             if (senderName.Length is 0 or > 100) return BadRequest(new { error = "sender_name_invalid" });
             if (street.Length is 0 or > 120 || city.Length is 0 or > 80 || postcode.Length is 0 or > 10) return BadRequest(new { error = "sender_address_invalid" });
             if (!Countries.Contains(country)) return BadRequest(new { error = "sender_country_invalid" });
-            if (!OmnivaPhone.TryNormalize(dto.SenderPhone, out var senderPhone)) return BadRequest(new { error = "phone_invalid" });
+            if (!OmnivaPhone.TryNormalize(dto.SenderPhone, country, out var senderPhone)) return BadRequest(new { error = "phone_invalid" });
 
             var senderEmail = string.IsNullOrWhiteSpace(dto.SenderEmail) ? (await users.GetByIdAsync(sellerId))?.Email : dto.SenderEmail.Trim();
             if (senderEmail is { Length: > 200 }) senderEmail = null;

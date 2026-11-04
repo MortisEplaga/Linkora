@@ -1,0 +1,131 @@
+@using Linkora.Models
+@using System.Globalization
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@{
+    var tariffs = (List<ShippingTariff>)ViewBag.Tariffs;
+    var countries = (string[])ViewBag.Countries;
+    var sizes = (string[])ViewBag.Sizes;
+    var saved = ViewBag.Saved == true;
+    ViewData["Title"] = "Admin — Shipping tariffs";
+
+    var existing = tariffs.ToDictionary(
+        t => t.DestinationCountry.Trim() + ":" + t.Size.Trim(),
+        StringComparer.OrdinalIgnoreCase);
+
+    Func<decimal, string> Money = value => value.ToString("0.00", CultureInfo.InvariantCulture);
+}
+
+<link rel="stylesheet" href="~/css/admin.css" />
+
+<style>
+    .tariff-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .tariff-card { background: #fff; border: 1px solid var(--admin-border); border-radius: 10px; padding: 16px; }
+    .tariff-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .tariff-card-title { font-size: 15px; font-weight: 700; color: var(--admin-text); }
+    .tariff-field { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+    .tariff-field label { font-size: 12px; color: #666; }
+    .tariff-input { width: 110px; padding: 6px 8px; border: 1px solid var(--admin-border); border-radius: 6px; font-size: 13px; }
+    .tariff-total { margin: 10px 0 12px; font-size: 13px; font-weight: 700; color: var(--admin-primary); }
+    .tariff-active { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #555; margin-bottom: 12px; }
+    .tariff-meta { font-size: 11px; color: #999; margin-top: 10px; }
+    .tariff-help { background: #fff; border: 1px solid var(--admin-border); border-radius: 10px; padding: 14px 16px; margin-bottom: 18px; font-size: 13px; color: #555; line-height: 1.5; }
+    .tariff-saved { background: #e8f5e9; color: #2e7d32; border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 13px; }
+</style>
+
+<div class="admin-layout">
+    @await Html.PartialAsync("Sidebar", "shipping-tariffs")
+
+    <main class="admin-main">
+        <h1 class="admin-page-title">
+            <span data-i18n="admin_shipping_tariffs">Shipping tariffs</span>
+            <span class="admin-page-subtitle">Omniva</span>
+        </h1>
+
+        @if (saved)
+        {
+            <div class="tariff-saved" data-i18n="admin_tariff_saved">Tariff saved</div>
+        }
+
+        <div class="tariff-help" data-i18n="admin_tariff_help">
+            Prices come from the Omniva contract. Seller price = Omniva price + markup. Inactive tariffs are not offered to sellers.
+        </div>
+
+        <div class="tariff-grid">
+            @foreach (var country in countries)
+            {
+                @foreach (var size in sizes)
+                {
+                    var key = country + ":" + size;
+                    var row = existing.TryGetValue(key, out var found) ? found : null;
+                    var price = row is null ? 0m : row.OmnivaPrice + row.Markup;
+                    var maxWeight = row?.MaxWeightKg is decimal w
+                        ? w.ToString("0.##", CultureInfo.InvariantCulture)
+                        : "";
+                    <div class="tariff-card">
+                        <div class="tariff-card-head">
+                            <span class="tariff-card-title">@country · @size</span>
+                            @if (row is null)
+                            {
+                                <span class="admin-badge admin-badge-pending" data-i18n="admin_tariff_empty">Not configured</span>
+                            }
+                            else if (!row.IsActive)
+                            {
+                                <span class="admin-badge admin-badge-archived" data-i18n="admin_tariff_inactive">Inactive</span>
+                            }
+                            else
+                            {
+                                <span class="admin-badge admin-badge-active" data-i18n="admin_tariff_active">Active</span>
+                            }
+                        </div>
+
+                        <!-- Plain action on purpose: asp-action would auto-generate a second antiforgery token. -->
+                        <form method="post" action="/Admin/SaveShippingTariff">
+                            <input type="hidden" name="__RequestVerificationToken" value="@Antiforgery.GetAndStoreTokens(Context).RequestToken" />
+                            <input type="hidden" name="DestinationCountry" value="@country" />
+                            <input type="hidden" name="Size" value="@size" />
+
+                            <div class="tariff-field">
+                                <label for="price-@country-@size" data-i18n="admin_tariff_omniva_price">Omniva price, EUR</label>
+                                <input class="tariff-input" id="price-@country-@size" name="OmnivaPrice" type="number" min="0" max="999999" step="0.01"
+                                       value="@Money(row?.OmnivaPrice ?? 0m)" required />
+                            </div>
+                            <div class="tariff-field">
+                                <label for="markup-@country-@size" data-i18n="admin_tariff_markup">Markup, EUR</label>
+                                <input class="tariff-input" id="markup-@country-@size" name="Markup" type="number" min="0" max="999999" step="0.01"
+                                       value="@Money(row?.Markup ?? 0m)" required />
+                            </div>
+                            <div class="tariff-field">
+                                <label for="weight-@country-@size" data-i18n="admin_tariff_max_weight">Max weight, kg</label>
+                                <input class="tariff-input" id="weight-@country-@size" name="MaxWeightKg" type="number" min="0.01" step="0.01"
+                                       value="@maxWeight" />
+                            </div>
+
+                            <div class="tariff-total">
+                                <span data-i18n="admin_tariff_price">Seller price, EUR</span>: @Money(price)
+                            </div>
+
+                            <label class="tariff-active" for="active-@country-@size">
+                                @if (row?.IsActive == true)
+                                {
+                                    <input type="checkbox" id="active-@country-@size" name="IsActive" value="true" checked />
+                                }
+                                else
+                                {
+                                    <input type="checkbox" id="active-@country-@size" name="IsActive" value="true" />
+                                }
+                                <span data-i18n="admin_tariff_active">Active</span>
+                            </label>
+
+                            <button type="submit" class="admin-btn admin-btn-primary" data-i18n="admin_tariff_save">Save</button>
+                        </form>
+
+                        @if (row is not null)
+                        {
+                            <div class="tariff-meta">@row.UpdatedAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) UTC</div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    </main>
+</div>

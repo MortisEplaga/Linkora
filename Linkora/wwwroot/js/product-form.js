@@ -537,7 +537,7 @@ function restoreDeliveryFields(d) {
 function validateDeliveryFields() {
     const d = readDeliveryFields();
     if (!d.enabled) return null;
-    if (!['XS', 'S', 'M', 'L', 'XL'].includes(d.size)) return 'ship_err_size_invalid';
+    if (!['XS', 'S', 'M', 'L'].includes(d.size)) return 'ship_err_size_invalid';
     const w = parseFloat(d.weight);
     if (!(w > 0 && w <= 100)) return 'ship_err_weight_invalid';
     return null;
