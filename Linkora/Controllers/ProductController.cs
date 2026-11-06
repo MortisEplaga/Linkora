@@ -35,6 +35,8 @@ namespace Linkora.Controllers
         private readonly IPromotionRepository _promotionRepository = promotionRepository;
         private readonly IPointsLedgerRepository _pointsLedgerRepository = pointsLedgerRepository;
         private readonly ILogger<ProductController> _logger = logger;
+        /// <summary>Matches the [StringLength(50)] limit of Product.Address.</summary>
+        private const int MaxAddressLength = 50;
         private static Dictionary<int, string> ParseParamsJson(string? json)
         {
             var result = new Dictionary<int, string>();
@@ -431,6 +433,15 @@ namespace Linkora.Controllers
                 _logger.LogInformation("Geocode result for user {UserId}, address '{Address}': Lat={Lat}, Lng={Lng}", userId, address, lat, lng);
             }
             else _logger.LogInformation("No address provided for user {UserId}, Lat/Lng will remain null", userId);
+
+            // Checked after the home-address substitution: a saved address is limited to 500 characters in the
+            // profile, while the listing column only fits 50, so a long home address must not reach the INSERT.
+            address = address?.Trim();
+            if (!string.IsNullOrEmpty(address) && address.Length > MaxAddressLength)
+            {
+                _logger.LogWarning("Address for user {UserId} is {Length} characters long, limit is {Limit}", userId, address.Length, MaxAddressLength);
+                return BadRequest($"Address is too long (max {MaxAddressLength} characters)");
+            }
 
             int duration = AdDurations.Default;
             if (publishDays.HasValue && AdDurations.IsAccepted(publishDays.Value)) duration = publishDays.Value;

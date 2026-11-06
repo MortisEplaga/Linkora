@@ -15,7 +15,12 @@ namespace Linkora.Controllers
             if (await users.IsBannedAsync(userId)) return Forbid();
 
             var user = await users.GetByIdAsync(userId);
-            return View(new SellerShipmentsViewModel(await shipments.GetSellerRequestsAsync(userId), user?.Phone, user?.Email));
+            return View(new SellerShipmentsViewModel(
+                await shipments.GetSellerRequestsAsync(userId),
+                user?.UserName,
+                user?.Phone,
+                user?.Email,
+                user?.HomeAddress));
         }
     }
 }

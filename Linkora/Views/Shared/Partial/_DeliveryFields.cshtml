@@ -16,7 +16,7 @@
         </select>
 
         <label class="create-label" for="shipWeightKg" data-i18n="ship_weight">Weight, kg</label>
-        <input type="number" class="create-input" id="shipWeightKg" min="0.01" max="100" step="0.01" placeholder="0.00"
+        <input type="number" class="create-input" id="shipWeightKg" min="0.01" max="@((int)ParcelRules.MaxWeightKg)" step="0.01" placeholder="0.00"
                value="@(Model.WeightKg?.ToString(CultureInfo.InvariantCulture))" />
         <p class="ship-hint" data-i18n="ship_weight_hint">Up to 100 kg. Parcel size and weight are needed to price the delivery.</p>
     </div>

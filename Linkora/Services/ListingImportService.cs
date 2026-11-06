@@ -481,8 +481,9 @@ namespace Linkora.Services
                 if (errors.Count > before) continue;
 
                 var address = Cell(row, "address");
-                if (address.Length > 50) { errors.Add(new(line, "address max 50 characters")); continue; }
                 if (address.Length == 0 && !string.IsNullOrWhiteSpace(user?.HomeAddress)) address = user!.HomeAddress!;
+                // Checked after the home-address fallback: the profile address allows 500 characters, the listing column 50.
+                if (address.Length > 50) { errors.Add(new(line, "address max 50 characters")); continue; }
                 decimal? lat = null, lng = null;
                 if (address.Length > 0)
                 {

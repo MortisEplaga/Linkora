@@ -10,7 +10,11 @@
     <link rel="stylesheet" href="~/css/shipments.css" asp-append-version="true" />
 }
 
-<div class="ship-page" data-user-phone="@Model.Phone" data-user-email="@Model.Email">
+<div class="ship-page"
+     data-user-name="@Model.UserName"
+     data-user-phone="@Model.Phone"
+     data-user-email="@Model.Email"
+     data-home-address="@Model.HomeAddress">
     <h1 class="ship-title" data-i18n="ship_seller_title">Delivery requests</h1>
 
     @if (requests.Count == 0)
@@ -22,8 +26,11 @@
         <div class="ship-list">
             @foreach (var r in requests)
             {
+                var parcelWeight = r.WeightKg ?? r.ProductWeightKg;
                 <article class="ship-card" data-request-id="@r.Id" data-status="@r.Status"
-                         data-product-size="@r.ProductSize" data-product-weight="@(r.ProductWeightKg?.ToString(CultureInfo.InvariantCulture))">
+                         data-product-size="@r.ProductSize"
+                         data-product-weight="@(r.ProductWeightKg?.ToString(CultureInfo.InvariantCulture))"
+                         data-product-address="@r.ProductAddress">
                     <div class="ship-card-head">
                         <a class="ship-product" href="/Product/Details/@r.ProductId">@r.ProductName</a>
                         <span class="ship-badge ship-badge-@r.Status" data-i18n="ship_status_@r.Status">@r.Status</span>
@@ -37,7 +44,10 @@
                         <dd>@r.LockerName@(string.IsNullOrEmpty(r.LockerCity) ? "" : ", " + r.LockerCity)</dd>
 
                         <dt data-i18n="ship_parcel_size">Parcel size</dt>
-                        <dd>@(r.Size ?? "—")</dd>
+                        <dd>@(r.Size ?? r.ProductSize ?? "—")</dd>
+
+                        <dt data-i18n="ship_weight">Weight, kg</dt>
+                        <dd>@(parcelWeight.HasValue ? parcelWeight.Value.ToString("0.##", CultureInfo.InvariantCulture) : "—")</dd>
 
                         <dt data-i18n="ship_price">Delivery price</dt>
                         <dd>@(r.Price.HasValue ? r.Price.Value.ToString("0.00", CultureInfo.InvariantCulture) + " €" : "—")</dd>
@@ -86,15 +96,17 @@
         <div class="auth-field">
             <label class="auth-label" for="shipAcceptSize" data-i18n="ship_parcel_size">Parcel size</label>
             <select class="auth-input" id="shipAcceptSize">
-                <option value="XS">XS</option>
-                <option value="S">S</option>
-                <option value="M">M</option>
-                <option value="L">L</option>
+                <option value="" data-i18n="ship_size_ph">Select a size</option>
+                @foreach (var size in ParcelSizes.All)
+                {
+                    <option value="@size">@size</option>
+                }
             </select>
         </div>
         <div class="auth-field">
             <label class="auth-label" for="shipAcceptWeight" data-i18n="ship_weight">Weight, kg</label>
-            <input class="auth-input" id="shipAcceptWeight" type="number" min="0.01" max="100" step="0.01" />
+            <input class="auth-input" id="shipAcceptWeight" type="number" min="0.01" max="@((int)ParcelRules.MaxWeightKg)" step="0.01" />
+            <p class="ship-hint ship-weight-hint" id="shipAcceptWeightHint" hidden></p>
         </div>
     </div>
 
@@ -132,9 +144,10 @@
         <div class="auth-field">
             <label class="auth-label" for="shipSenderCountry" data-i18n="ship_country">Country</label>
             <select class="auth-input" id="shipSenderCountry">
-                <option value="LV">Latvia</option>
-                <option value="LT">Lithuania</option>
-                <option value="EE">Estonia</option>
+                @foreach (var country in ShippingCountries.All)
+                {
+                    <option value="@country" data-i18n="ship_country_@country">@country</option>
+                }
             </select>
         </div>
     </div>

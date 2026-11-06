@@ -1108,6 +1108,26 @@ button.accept-policy {
         caret-color: var(--input-text);
     }
 
+    /* The dropdown list of a native <select> is drawn by the OS and does not follow the field
+       background: left alone it is white while the inherited text colour is white too. Give the
+       field and the list the same dark colour as the surrounding area and a light-grey text. */
+    .dark-theme select {
+        background-color: var(--input-bg);
+        color: #c9c9c9 !important;
+    }
+
+    .dark-theme select option,
+    .dark-theme select optgroup {
+        background-color: #262626;
+        color: #c9c9c9;
+    }
+
+        .dark-theme select option:checked,
+        .dark-theme select option:hover {
+            background-color: #3a3a3a;
+            color: #f2f2f2;
+        }
+
         .dark-theme input::placeholder,
         .dark-theme textarea::placeholder {
             color: var(--input-placeholder) !important;
