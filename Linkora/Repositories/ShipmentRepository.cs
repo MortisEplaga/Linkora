@@ -19,7 +19,7 @@ namespace Linkora.Repositories
         /// </summary>
         private static readonly string HandoverEventCodeList =
             string.Join(",", OmnivaEventCodes.HandoverCodes.Select(c => "'" + c.Replace("'", "''") + "'"));
-        private const string ViewSelect = @"SELECT r.Id, r.ProductId, p.Name, p.ParcelSize, p.WeightKg,
+        private const string ViewSelect = @"SELECT r.Id, r.ProductId, p.Name, p.ParcelSize, p.WeightKg, p.Address,
                    r.BuyerId, bu.UserName, r.SellerId, r.Status, l.Name, l.City,
                    r.ReceiverName, r.ReceiverPhone, r.ReceiverEmail, r.Size, r.WeightKg, r.Price, r.PaymentId, r.CreatedAt,
                    s.Id, s.Status, s.Barcode, s.HandoverDeadline, s.ErrorCode
@@ -80,25 +80,26 @@ namespace Linkora.Repositories
             ProductName = r.GetStringOrDefault(2),
             ProductSize = r.GetStringOrNull(3),
             ProductWeightKg = r.GetDecimalOrNull(4),
-            BuyerId = r.GetInt32(5),
-            BuyerName = r.GetStringOrDefault(6),
-            SellerId = r.GetInt32(7),
-            Status = Enum.Parse<ShipmentRequestStatus>(r.GetString(8)),
-            LockerName = r.GetStringOrDefault(9),
-            LockerCity = r.GetStringOrNull(10),
-            ReceiverName = r.GetStringOrDefault(11),
-            ReceiverPhone = r.GetStringOrNull(12),
-            ReceiverEmail = r.GetStringOrNull(13),
-            Size = r.GetStringOrNull(14),
-            WeightKg = r.GetDecimalOrNull(15),
-            Price = r.GetDecimalOrNull(16),
-            PaymentId = r.GetInt32OrNull(17),
-            CreatedAt = r.GetDateTime(18),
-            ShipmentId = r.GetInt32OrNull(19),
-            ShipmentState = r.IsDBNull(20) ? null : Enum.Parse<ShipmentStatus>(r.GetString(20)),
-            Barcode = r.GetStringOrNull(21),
-            HandoverDeadline = r.GetDateTimeOrNull(22),
-            ErrorCode = r.GetStringOrNull(23)
+            ProductAddress = r.GetStringOrNull(5),
+            BuyerId = r.GetInt32(6),
+            BuyerName = r.GetStringOrDefault(7),
+            SellerId = r.GetInt32(8),
+            Status = Enum.Parse<ShipmentRequestStatus>(r.GetString(9)),
+            LockerName = r.GetStringOrDefault(10),
+            LockerCity = r.GetStringOrNull(11),
+            ReceiverName = r.GetStringOrDefault(12),
+            ReceiverPhone = r.GetStringOrNull(13),
+            ReceiverEmail = r.GetStringOrNull(14),
+            Size = r.GetStringOrNull(15),
+            WeightKg = r.GetDecimalOrNull(16),
+            Price = r.GetDecimalOrNull(17),
+            PaymentId = r.GetInt32OrNull(18),
+            CreatedAt = r.GetDateTime(19),
+            ShipmentId = r.GetInt32OrNull(20),
+            ShipmentState = r.IsDBNull(21) ? null : Enum.Parse<ShipmentStatus>(r.GetString(21)),
+            Barcode = r.GetStringOrNull(22),
+            HandoverDeadline = r.GetDateTimeOrNull(23),
+            ErrorCode = r.GetStringOrNull(24)
         };
 
         public async Task<int> CreateRequestAsync(ShipmentRequest x) => (await QueryAsync<int>(

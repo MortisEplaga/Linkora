@@ -152,8 +152,12 @@ namespace Linkora.Repositories
 
             if (!string.IsNullOrEmpty(city))
             {
-                whereClauses.Add("p.Address = @City");
-                commonParams.Add(new SqlParameter("@City", city));
+                // Addresses are saved as "City, street, house" (or as the free-form home address), so an exact
+                // match almost never fires. The city is the first comma-separated segment of the address.
+                var cityName = city.Trim();
+                whereClauses.Add("(p.Address = @City OR p.Address LIKE @CityPrefix ESCAPE '\\')");
+                commonParams.Add(new SqlParameter("@City", cityName));
+                commonParams.Add(new SqlParameter("@CityPrefix", EscapeLike(cityName) + ",%"));
             }
             var priceConds = new List<string>();
             if (priceFrom.HasValue)
@@ -226,6 +230,10 @@ namespace Linkora.Repositories
 
             return (items, total);
         }
+        /// <summary>Escapes the LIKE wildcards so a city name is matched literally.</summary>
+        private static string EscapeLike(string value) =>
+            value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_").Replace("[", "\\[");
+
         private static Product MapProductRow(SqlDataReader r) => new()
         {
             Id = r.GetInt32(0),

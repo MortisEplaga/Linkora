@@ -109,6 +109,15 @@ namespace Linkora.Controllers
                 }));
         }
 
+        /// <summary>Contact details of the logged-in buyer: the receiver fields are prefilled from the profile.</summary>
+        [HttpGet("BuyerContact")]
+        public async Task<IActionResult> BuyerContact()
+        {
+            var user = await users.GetByIdAsync(User.GetUserId());
+            if (user == null) return NotFound();
+            return Ok(new { name = user.UserName, phone = user.Phone, email = user.Email });
+        }
+
         [HttpGet("Price")] public async Task<IActionResult> Price(int requestId, string size)
         {
             var request = await shipments.GetRequestAsync(requestId);

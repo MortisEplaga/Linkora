@@ -149,6 +149,8 @@ namespace Linkora.Models
         public string ProductName { get; set; } = "";
         public string? ProductSize { get; set; }
         public decimal? ProductWeightKg { get; set; }
+        /// <summary>Address of the listing ("City, street, house"); used to prefill the sender form.</summary>
+        public string? ProductAddress { get; set; }
         public int BuyerId { get; set; }
         public string BuyerName { get; set; } = "";
         public int SellerId { get; set; }

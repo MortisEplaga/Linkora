@@ -8,12 +8,22 @@
     <input type="hidden" id="shipBuyProductId" />
 
     <div class="auth-field">
+        <label class="auth-label" for="shipLockerCountry" data-i18n="ship_country">Country</label>
+        <select class="auth-input" id="shipLockerCountry">
+            <option value="LV" data-i18n="ship_country_LV">Latvia</option>
+            <option value="LT" data-i18n="ship_country_LT">Lithuania</option>
+            <option value="EE" data-i18n="ship_country_EE">Estonia</option>
+        </select>
+    </div>
+    <div class="auth-field">
         <label class="auth-label" for="shipLockerSearch" data-i18n="ship_locker_search_label">Find a parcel locker</label>
         <input class="auth-input" id="shipLockerSearch" type="search" data-i18n-placeholder="ship_locker_search_ph" placeholder="City or address" autocomplete="off" />
     </div>
     <div class="auth-field">
-        <label class="auth-label" for="shipLockerSelect" data-i18n="ship_locker">Parcel locker</label>
-        <select class="auth-input ship-locker-list" id="shipLockerSelect" size="6"></select>
+        <span class="auth-label" id="shipLockerListLabel" data-i18n="ship_locker">Parcel locker</span>
+        <div class="ship-locker-list" id="shipLockerList" role="listbox"
+             aria-labelledby="shipLockerListLabel" tabindex="0"></div>
+        <p class="ship-locker-selected" id="shipLockerSelected" hidden></p>
     </div>
 
     <div class="ship-form-grid">
