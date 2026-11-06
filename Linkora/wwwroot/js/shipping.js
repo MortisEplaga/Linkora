@@ -331,20 +331,51 @@
         } catch { }
     }
 
+    /** Guards against a slow answer for a previous query overwriting the list for the current one. */
+    let lockerRequestToken = 0;
+
+    function showLockerMessage(text) {
+        const list = document.getElementById('shipLockerList');
+        if (!list) return;
+        list.textContent = '';
+        list.appendChild(el('p', text, 'ship-locker-empty'));
+    }
+
     async function loadLockers(query) {
         const list = document.getElementById('shipLockerList');
         if (!list) return;
 
         const country = document.getElementById('shipLockerCountry')?.value || 'LV';
-        list.textContent = '';
+        const token = ++lockerRequestToken;
 
-        const res = await fetch(`/Shipping/Lockers?country=${encodeURIComponent(country)}&q=${encodeURIComponent(query)}`, { headers: { 'Accept': 'application/json' } });
+        // Visible progress instead of an empty box while the request is in flight.
+        showLockerMessage(tr('ship_lockers_loading') || 'Loading parcel lockers…');
+
+        let res;
+        try {
+            res = await fetch(`/Shipping/Lockers?country=${encodeURIComponent(country)}&q=${encodeURIComponent(query)}`, { headers: { 'Accept': 'application/json' } });
+        } catch {
+            if (token === lockerRequestToken) showLockerMessage(errorText(null));
+            return;
+        }
+        if (token !== lockerRequestToken) return;
+
         if (!res.ok) {
-            list.appendChild(el('p', errorText(await readErrorCode(res)), 'ship-locker-empty'));
+            showLockerMessage(errorText(await readErrorCode(res)));
             return;
         }
 
-        const lockers = await res.json();
+        // A login redirect or an error page is not JSON: without this the list would silently stay empty.
+        let lockers;
+        try {
+            lockers = await res.json();
+        } catch {
+            showLockerMessage(errorText(null));
+            return;
+        }
+        if (token !== lockerRequestToken) return;
+
+        list.textContent = '';
         for (const l of lockers) {
             const item = el('button', null, 'ship-locker-item');
             item.type = 'button';
