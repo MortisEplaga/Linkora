@@ -1,4 +1,4 @@
-﻿@using Linkora.Models
+@using Linkora.Models
 @{
     var seller = (UserSummary)ViewBag.Seller;
     var products = (List<Product>)ViewBag.Products;
@@ -359,7 +359,9 @@
             if (!el) return;
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             el.style.transition = 'background-color 0.3s';
-            el.style.backgroundColor = '#fff7e0';
+            el.style.backgroundColor = document.documentElement.classList.contains('dark-theme')
+                ? 'rgba(245, 166, 35, 0.18)'
+                : '#fff7e0';
             setTimeout(() => { el.style.backgroundColor = ''; }, 2000);
         };
 

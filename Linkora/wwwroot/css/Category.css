@@ -1044,3 +1044,142 @@
         gap: 6px;
     }
 }
+
+/* ── Dark theme overrides for Category, filters, selection controls & cards ── */
+.dark-theme .floating-filter-actions {
+    background: var(--bg-card, #252525);
+    border: 1px solid var(--border, #383838);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
+}
+
+.dark-theme .param-apply-btn {
+    background: #00b0a3;
+    color: #ffffff;
+}
+
+    .dark-theme .param-apply-btn:hover {
+        background: #009688;
+    }
+
+.dark-theme .param-reset-btn {
+    background: var(--input-bg, #2c2c2c);
+    border-color: #444;
+    color: var(--text-secondary, #b8b8b8);
+}
+
+    .dark-theme .param-reset-btn:hover {
+        border-color: #ff6b6b;
+        color: #ff6b6b;
+    }
+
+.dark-theme .param-option input[type="checkbox"],
+.dark-theme .param-check-input {
+    background: var(--input-bg, #2c2c2c);
+    border-color: #555;
+}
+
+    .dark-theme .param-option:hover input[type="checkbox"],
+    .dark-theme .param-check-row:hover .param-check-input,
+    .dark-theme .param-check:hover .param-check-input {
+        border-color: #888;
+    }
+
+    .dark-theme .param-option input[type="checkbox"]:checked,
+    .dark-theme .param-check-input:checked {
+        background: #00b0a3;
+        border-color: #00b0a3;
+    }
+
+.dark-theme .param-show-more {
+    background: var(--input-bg, #2c2c2c);
+    border: 1px solid #444;
+    border-radius: 20px;
+    padding: 4px 12px;
+    color: var(--text-secondary, #b8b8b8) !important;
+}
+
+    .dark-theme .param-show-more:hover {
+        border-color: #00b0a3;
+        color: #26d9cb !important;
+    }
+
+.dark-theme .param-range-input {
+    background: var(--input-bg, #2c2c2c);
+    border-color: var(--input-border, #4a4a4a);
+    color: var(--input-text, #ffffff);
+}
+
+    .dark-theme .param-range-input:focus {
+        background: #333333;
+        border-color: #00b0a3;
+        color: var(--input-text, #ffffff);
+    }
+
+.dark-theme .listing-view-btn.active,
+.dark-theme .listing-view-btn:hover {
+    color: #ffffff !important;
+    border-color: #00b0a3;
+    background: #333;
+}
+
+.dark-theme .listing-sort-drop {
+    background: var(--bg-card, #252525);
+    border-color: #444;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+}
+
+.dark-theme .listing-sort-item {
+    background: transparent;
+    color: var(--text-secondary, #b8b8b8) !important;
+}
+
+    .dark-theme .listing-sort-item:hover {
+        background: #353535;
+        color: #ffffff !important;
+    }
+
+    .dark-theme .listing-sort-item.active {
+        background: rgba(0, 176, 163, 0.16);
+        color: #26d9cb !important;
+    }
+
+.dark-theme .product-card-img {
+    background: #1c1c1c;
+}
+
+.dark-theme .product-card-action-btn {
+    background: rgba(30, 30, 30, 0.88);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ccc;
+}
+
+    .dark-theme .product-card-action-btn:hover {
+        background: #333333;
+        color: #26d9cb;
+    }
+
+.dark-theme .seller-btn:hover {
+    background: #383838 !important;
+    border-color: #00b0a3 !important;
+    color: #ffffff !important;
+}
+
+.dark-theme .seller-sub-badge {
+    background: rgba(245, 166, 35, 0.2);
+    color: #ffb74d;
+}
+
+@media (max-width: 768px) {
+    .dark-theme .param-sidebar {
+        background: var(--bg-secondary, #1e1e1e);
+        border-right: 1px solid var(--border, #333);
+        color: var(--text-primary, #f2f2f2);
+    }
+
+    .dark-theme .listing-filters-btn {
+        background: var(--input-bg, #2c2c2c);
+        border-color: var(--input-border, #4a4a4a);
+        color: var(--text-primary, #f2f2f2);
+    }
+}
+

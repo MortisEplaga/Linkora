@@ -1,4 +1,4 @@
-﻿@import url('/css/Category.css');
+@import url('/css/Category.css');
 
 .fav-page {
     max-width: 1280px;
@@ -124,12 +124,64 @@
     }
 
 .dark-theme .compare-go-btn {
-    border-color: #e0e0e0 !important;
-    color: #e0e0e0 !important;
-    background: transparent !important;
+    border-color: #00b0a3 !important;
+    color: #ffffff !important;
+    background: #00b0a3 !important;
 }
 
     .dark-theme .compare-go-btn:hover {
-        background: #e0e0e0 !important;
-        color: #1a1a1a !important;
+        background: #009688 !important;
+        border-color: #009688 !important;
+        color: #ffffff !important;
     }
+
+.dark-theme .fav-tabs {
+    border-bottom-color: var(--border, #383838);
+}
+
+.dark-theme .fav-tab {
+    color: var(--text-secondary, #b8b8b8);
+}
+
+    .dark-theme .fav-tab:hover {
+        color: var(--text-primary, #f2f2f2);
+    }
+
+.dark-theme .fav-tab-active {
+    color: #26d9cb;
+    border-bottom-color: #00b0a3;
+}
+
+.dark-theme .fav-tab-count {
+    background: #333;
+    color: var(--text-secondary, #b8b8b8);
+}
+
+.dark-theme .fav-tab-active .fav-tab-count {
+    background: rgba(0, 176, 163, 0.2);
+    color: #26d9cb;
+}
+
+.dark-theme .fav-empty {
+    color: var(--text-secondary, #b8b8b8);
+}
+
+.dark-theme .cart-summary {
+    background: var(--bg-card, #252525);
+    border-color: var(--border, #383838);
+    color: var(--text-primary, #f2f2f2);
+}
+
+.dark-theme .cart-summary-row {
+    color: var(--text-secondary, #b8b8b8);
+}
+
+.dark-theme .cart-summary-note {
+    color: #888;
+}
+
+.dark-theme .cart-summary-total {
+    color: var(--text-primary, #f2f2f2);
+    border-top-color: var(--border, #383838);
+}
+

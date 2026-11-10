@@ -1,4 +1,4 @@
-﻿.compare-page {
+.compare-page {
     max-width: 1280px;
     margin: 0 auto;
     padding: 24px 24px 56px;
@@ -424,13 +424,35 @@
     }
 
 .dark-theme .compare-go-btn {
-    background: transparent !important;
-    border-color: #444 !important;
-    color: #ccc !important;
+    background: #00b0a3 !important;
+    border-color: #00b0a3 !important;
+    color: #fff !important;
 }
 
     .dark-theme .compare-go-btn:hover {
-        background: #2a2a2a !important;
-        border-color: #666 !important;
+        background: #009688 !important;
+        border-color: #009688 !important;
         color: #fff !important;
+    }
+
+.dark-theme .compare-back-btn {
+    background: #00b0a3;
+    color: #ffffff;
+}
+
+    .dark-theme .compare-back-btn:hover {
+        background: #009688;
+        color: #ffffff;
+    }
+
+.dark-theme .compare-empty {
+    color: var(--text-secondary, #b8b8b8);
+}
+
+.dark-theme .compare-scroll::-webkit-scrollbar-thumb {
+    background: #444;
+}
+
+    .dark-theme .compare-scroll::-webkit-scrollbar-thumb:hover {
+        background: #666;
     }

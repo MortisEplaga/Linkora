@@ -1,4 +1,4 @@
-﻿@using Linkora.Models
+@using Linkora.Models
 @using System.Globalization
 @{
     var options = (List<AdminConfOptionRow>)ViewBag.Options;
@@ -61,19 +61,19 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <a href="/Seller/Index/@o.UserId" target="_blank" style="color:#333;text-decoration:none;font-size:13px">
+                                        <a href="/Seller/Index/@o.UserId" target="_blank" style="color:var(--text-primary, #333);text-decoration:none;font-size:13px">
                                             @Localized(o.UserName)
                                         </a>
                                     </td>
                                     <td>
-                                        <span style="font-size:13px; color:#555;">
+                                        <span style="font-size:13px; color:var(--text-secondary, #555);">
                                             @Localized(o.CategoryName, o.CategoryNameLV, o.CategoryNameRU)
                                             /
                                             @Localized(o.ParameterName, o.ParameterNameLV, o.ParameterNameRU)
                                         </span>
                                     </td>
                                     <td>
-                                        <span style="font-size:13px; color:#333;">
+                                        <span style="font-size:13px; color:var(--text-primary, #333);">
                                             @Localized(o.OptionValue, o.OptionValueLV, o.OptionValueRU)
                                         </span>
                                     </td>

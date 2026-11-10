@@ -1,4 +1,4 @@
-﻿.points-page {
+.points-page {
     max-width: 640px;
     margin: 40px auto;
     padding: 0 16px 48px;
@@ -446,6 +446,64 @@
     background: #2a2a2a !important;
     border-color: #3a3a3a !important;
     color: #ddd !important;
+}
+
+    .dark-theme .points-referral-share:hover {
+        background: #353535 !important;
+        border-color: #00b0a3 !important;
+        color: #fff !important;
+    }
+
+.dark-theme .points-progress-header,
+.dark-theme .points-referral-hint {
+    color: var(--text-secondary, #b8b8b8);
+}
+
+.dark-theme .points-progress-track,
+.dark-theme .points-history-hold-track {
+    background: #353535;
+}
+
+.dark-theme .points-history-row {
+    background: var(--bg-card, #252525);
+    border-color: var(--border, #383838);
+}
+
+.dark-theme .points-history-row-rejected {
+    background: #1f1f1f;
+}
+
+.dark-theme .points-history-name,
+.dark-theme .points-history-amount {
+    color: var(--text-primary, #f2f2f2);
+}
+
+.dark-theme .points-history-date,
+.dark-theme .points-history-hold-hint {
+    color: var(--text-secondary, #b8b8b8);
+}
+
+.dark-theme .points-history-status-pending {
+    background: rgba(245, 166, 35, 0.16);
+    color: #ffb74d;
+}
+
+.dark-theme .points-history-status-available {
+    background: rgba(0, 176, 163, 0.18);
+    color: #26d9cb;
+}
+
+.dark-theme .points-history-status-rejected {
+    background: rgba(229, 57, 53, 0.16);
+    color: #ff8080;
+}
+
+.dark-theme .points-history-hold-hint-ok {
+    color: #66bb6a;
+}
+
+.dark-theme .points-history-hold-hint-bad {
+    color: #ff8080;
 }
 
 @media (max-width: 520px) {
