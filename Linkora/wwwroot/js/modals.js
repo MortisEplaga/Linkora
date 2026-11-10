@@ -1,4 +1,4 @@
-﻿function getCurrentLanguage() {
+function getCurrentLanguage() {
     return localStorage.getItem('lang') || 'lv';
 }
 
@@ -1462,7 +1462,10 @@ function ensureCaptchaWidget(attempt) {
         return;
     }
 
-    recaptchaWidgetId = grecaptcha.render('recaptchaWidget', { sitekey });
+    recaptchaWidgetId = grecaptcha.render('recaptchaWidget', {
+        sitekey,
+        theme: document.documentElement.classList.contains('dark-theme') ? 'dark' : 'light'
+    });
 }
 
 function closeCaptchaModal() {

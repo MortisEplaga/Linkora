@@ -126,7 +126,7 @@
                     var color = statusColors.TryGetValue(status, out var c) ? c : "#aaa";
                     var pct = total > 0 ? (int)(count * 100.0 / total) : 0;
                     <div style="display:flex;flex-direction:column;gap:4px;min-width:120px">
-                        <div style="font-size:20px;font-weight:700;color:#1a1a1a">@count</div>
+                        <div style="font-size:20px;font-weight:700;color:var(--text-primary, #1a1a1a)">@count</div>
                         <div style="height:4px;border-radius:2px;background:@color;width:@(Math.Max(pct, 4))%"></div>
                         <div style="font-size:12px;color:#888">
                             <span data-i18n="admin_status_@status.ToLower()">@status</span> (@pct%)
@@ -161,7 +161,7 @@
                                 <a href="/Product/Details/@p.Id" target="_blank"
                                    class="admin-table-product-name">@p.Name</a>
                             </td>
-                            <td style="color:#666">@p.UserName</td>
+                            <td style="color:var(--text-secondary, #666)">@p.UserName</td>
                             <td>
                                 <span class="admin-badge admin-badge-@p.Status.ToLower()"
                                       data-i18n="admin_status_@p.Status.ToLower()">@p.Status</span>

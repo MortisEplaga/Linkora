@@ -1,4 +1,4 @@
-﻿.profile-page {
+.profile-page {
     max-width: 520px;
     margin: 40px auto;
     padding: 0 16px 48px;
@@ -527,3 +527,137 @@
     .sm-row:hover {
         color: #00b0a3;
     }
+
+/* ── Dark theme overrides for Auth, Profile, and Seller modals/pages ── */
+.dark-theme .auth-card {
+    background: var(--bg-card, #252525);
+    border: 1px solid var(--border, #383838);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+    color: var(--text-primary, #f2f2f2);
+}
+
+.dark-theme .auth-tabs {
+    border-bottom-color: var(--border, #383838);
+}
+
+.dark-theme .auth-tab {
+    color: var(--text-secondary, #b8b8b8);
+}
+
+    .dark-theme .auth-tab:hover {
+        color: var(--text-primary, #f2f2f2);
+    }
+
+.dark-theme .auth-social {
+    background: var(--input-bg, #2c2c2c);
+    border-color: var(--input-border, #4a4a4a);
+    color: var(--text-primary, #f2f2f2);
+}
+
+    .dark-theme .auth-social:hover {
+        background: #353535;
+        border-color: #666;
+    }
+
+.dark-theme .auth-divider {
+    color: #888;
+}
+
+    .dark-theme .auth-divider::before,
+    .dark-theme .auth-divider::after {
+        background: var(--border, #383838);
+    }
+
+.dark-theme .auth-input {
+    background: var(--input-bg, #2c2c2c);
+    border-color: var(--input-border, #4a4a4a);
+    color: var(--input-text, #ffffff);
+}
+
+    .dark-theme .auth-input:focus {
+        background: #333333;
+        border-color: #00b0a3;
+        color: var(--input-text, #ffffff);
+    }
+
+    .dark-theme .auth-input[readonly] {
+        background: #222222;
+        color: #9e9e9e !important;
+    }
+
+.dark-theme .auth-error {
+    background: rgba(229, 57, 53, 0.14);
+    border-color: rgba(229, 57, 53, 0.4);
+    color: #ff8080;
+}
+
+.dark-theme .auth-type-option {
+    color: var(--text-primary, #f2f2f2);
+}
+
+.dark-theme .auth-type-circle {
+    border-color: #666;
+}
+
+.dark-theme .auth-type-option input[type="radio"]:checked + .auth-type-circle {
+    border-color: #00b0a3;
+}
+
+    .dark-theme .auth-type-option input[type="radio"]:checked + .auth-type-circle::after {
+        background: #00b0a3;
+    }
+
+.dark-theme .auth-type-hint,
+.dark-theme .auth-check-row,
+.dark-theme .auth-forgot,
+.dark-theme .auth-footer {
+    color: var(--text-secondary, #b8b8b8);
+}
+
+    .dark-theme .auth-footer a {
+        color: #26d9cb;
+    }
+
+.dark-theme .auth-rules li {
+    color: #999;
+}
+
+.dark-theme .auth-submit {
+    background: #00b0a3;
+    color: #ffffff;
+}
+
+    .dark-theme .auth-submit:hover:not(:disabled) {
+        background: #009688;
+    }
+
+    .dark-theme .auth-submit:disabled {
+        background: #383838;
+        color: #777;
+        cursor: not-allowed;
+    }
+
+.dark-theme .seller-modal-avatar {
+    background: #333;
+}
+
+.dark-theme .seller-modal-name {
+    color: var(--text-primary, #f2f2f2);
+}
+
+.dark-theme .seller-modal-phone {
+    border-top-color: var(--border, #383838);
+}
+
+.dark-theme .sm-row {
+    color: var(--text-secondary, #b8b8b8);
+}
+
+    .dark-theme .sm-row:hover {
+        color: #26d9cb;
+    }
+
+.dark-theme .duration-pill:hover {
+    border-color: #00b0a3 !important;
+    color: #ffffff !important;
+}

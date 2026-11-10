@@ -101,7 +101,7 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <div style="font-size:12px;color:#555">@(u.Email ?? "—")</div>
+                                        <div style="font-size:12px;color:var(--text-secondary, #555)">@(u.Email ?? "—")</div>
                                         @if (u.Phone != null)
                                         {
                                             <div style="font-size:12px;color:#aaa">@u.Phone</div>
@@ -110,7 +110,7 @@
                                     <td>
                                         @if (u.IsCompany)
                                         {
-                                            <span class="admin-badge" style="background:#e3f2fd;color:#1565c0" data-i18n="admin_company">Company</span>
+                                            <span class="admin-badge seller-badge" style="background:#e3f2fd;color:#1565c0" data-i18n="admin_company">Company</span>
                                         }
                                         else
                                         {
@@ -120,7 +120,7 @@
                                     <td>
                                         <span class="admin-badge admin-badge-@u.Role" id="role-badge-@u.Id">@u.Role</span>
                                     </td>
-                                    <td style="font-weight:600;color:#333">@u.ProductCount</td>
+                                    <td style="font-weight:600;color:var(--text-primary, #333)">@u.ProductCount</td>
                                     <td style="color:#aaa;font-size:12px;white-space:nowrap">
                                         @(u.CreatedAt?.ToString("dd MMM yyyy") ?? "—")
                                     </td>

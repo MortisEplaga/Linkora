@@ -281,17 +281,49 @@
     }
 
 .dark-theme .ship-btn-primary {
-    background: #f2f2f2;
-    border-color: #f2f2f2;
-    color: #111111;
+    background: #00b0a3;
+    border-color: #00b0a3;
+    color: #ffffff;
 }
 
     .dark-theme .ship-btn-primary:hover {
-        background: #d9d9d9;
+        background: #009688;
+        border-color: #009688;
     }
+
+.dark-theme .ship-badge {
+    background: #333;
+    color: #ddd;
+}
+
+.dark-theme .ship-badge-Requested {
+    background: rgba(245, 166, 35, 0.18);
+    color: #ffb74d;
+}
+
+.dark-theme .ship-badge-Accepted {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+}
+
+.dark-theme .ship-badge-Paid,
+.dark-theme .ship-badge-Registered,
+.dark-theme .ship-badge-Delivered {
+    background: rgba(0, 176, 163, 0.2);
+    color: #4dd0c4;
+}
+
+.dark-theme .ship-badge-Declined,
+.dark-theme .ship-badge-Cancelled,
+.dark-theme .ship-badge-Failed,
+.dark-theme .ship-badge-Returned {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
 
 .dark-theme .ship-price-line {
     background: var(--bg-secondary);
+    color: var(--text-primary);
 }
 
 .dark-theme .ship-my-request {
@@ -313,13 +345,18 @@
     border-color: var(--border);
 }
 
+.dark-theme .ship-locker-item {
+    color: var(--text-primary);
+}
+
 .dark-theme .ship-locker-item:hover {
     background: var(--bg-hover);
 }
 
 .dark-theme .ship-locker-item.active {
-    border-color: #f2f2f2;
-    background: #333333;
+    border-color: #00b0a3;
+    background: rgba(0, 176, 163, 0.16);
+    color: #ffffff;
 }
 
 .dark-theme .ship-locker-addr,

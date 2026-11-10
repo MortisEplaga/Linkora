@@ -1,4 +1,4 @@
-﻿.auth-submit-secondary {
+.auth-submit-secondary {
     background: #f0f0f0;
     color: #333;
 }
@@ -565,3 +565,50 @@
         padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
     }
 }
+
+/* ── Dark theme overrides for Product Details & Message Modal ── */
+.dark-theme .auth-submit-secondary {
+    background: var(--input-bg, #2c2c2c) !important;
+    color: var(--text-primary, #f2f2f2) !important;
+    border: 1px solid var(--input-border, #4a4a4a) !important;
+}
+
+    .dark-theme .auth-submit-secondary:hover {
+        background: #383838 !important;
+        color: #ffffff !important;
+    }
+
+.dark-theme .details-btn-primary {
+    background: #00b0a3;
+    color: #ffffff;
+}
+
+    .dark-theme .details-btn-primary:hover {
+        background: #009688;
+    }
+
+.dark-theme .details-map {
+    background: #1e1e1e;
+    border-color: var(--border, #383838);
+}
+
+.dark-theme .msg-modal-header {
+    border-bottom-color: var(--border, #383838);
+}
+
+.dark-theme .msg-modal-textarea {
+    background: var(--input-bg, #2c2c2c);
+    border-color: var(--input-border, #4a4a4a);
+    color: var(--input-text, #ffffff);
+}
+
+    .dark-theme .msg-modal-textarea:focus {
+        background: #333333;
+        border-color: #00b0a3;
+        color: var(--input-text, #ffffff);
+    }
+
+.dark-theme .msg-modal-footer {
+    border-top-color: var(--border, #383838);
+}
+

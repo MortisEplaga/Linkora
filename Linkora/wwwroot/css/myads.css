@@ -1,4 +1,4 @@
-﻿.myads-card-stats {
+.myads-card-stats {
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -260,3 +260,66 @@
     .myads-action-danger:hover {
         background: #fff0f0;
     }
+
+/* ── Dark theme overrides for My Ads & Partner Selection Modal ── */
+.dark-theme .partner-item {
+    border-bottom-color: var(--border, #383838);
+    color: var(--text-primary, #f2f2f2);
+}
+
+    .dark-theme .partner-item:hover {
+        background: #353535;
+        color: #ffffff;
+    }
+
+.dark-theme .partner-item-badge {
+    background: rgba(0, 176, 163, 0.2);
+    color: #26d9cb;
+}
+
+.dark-theme .myads-tab-active {
+    color: #26d9cb !important;
+    border-bottom-color: #00b0a3 !important;
+}
+
+.dark-theme .myads-tab-count {
+    background-color: #333;
+    color: var(--text-secondary, #b8b8b8);
+}
+
+.dark-theme .myads-tab-active .myads-tab-count {
+    background-color: rgba(0, 176, 163, 0.2);
+    color: #26d9cb;
+}
+
+.dark-theme .myads-card-img {
+    background: #1c1c1c;
+}
+
+.dark-theme .myads-action-btn {
+    background: var(--input-bg, #2c2c2c);
+    border-color: var(--input-border, #4a4a4a);
+    color: var(--text-primary, #f2f2f2);
+}
+
+    .dark-theme .myads-action-btn:hover {
+        background: #383838;
+        border-color: #666;
+        color: #ffffff;
+    }
+
+.dark-theme .myads-action-danger {
+    color: #ff6b6b;
+    border-color: rgba(229, 57, 53, 0.45);
+}
+
+    .dark-theme .myads-action-danger:hover {
+        background: rgba(229, 57, 53, 0.16);
+        border-color: #ff6b6b;
+        color: #ff8080;
+    }
+
+.dark-theme .myads-empty {
+    color: var(--text-secondary, #b8b8b8);
+}
+

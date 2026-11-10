@@ -1,4 +1,4 @@
-﻿.msg-conv-banned {
+.msg-conv-banned {
     background-color: rgba(255, 0, 0, 0.08) !important;
 }
 
@@ -552,3 +552,50 @@
         margin-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     }
 }
+
+/* ── Dark theme overrides for Messages & Review Prompt ── */
+.dark-theme .msg-bubble-mine .msg-bubble {
+    background: #00796b;
+    color: #ffffff;
+}
+
+.dark-theme .msg-bubble-mine .msg-bubble-time {
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.dark-theme .msg-bubble-admin .msg-bubble {
+    background: #1b3344;
+    border-color: #2b5470;
+    color: #e3f2fd;
+}
+
+.dark-theme .msg-bubble-admin .msg-bubble-time {
+    color: #90caf9;
+}
+
+.dark-theme .review-submit {
+    background: #00b0a3;
+    color: #ffffff;
+}
+
+    .dark-theme .review-submit:hover {
+        background: #009688;
+    }
+
+.dark-theme .msg-banned-notice {
+    background: rgba(229, 57, 53, 0.14);
+    border: 1px solid rgba(229, 57, 53, 0.35);
+    color: #ff8080;
+}
+
+.dark-theme .msg-nav-icon {
+    background: var(--input-bg, #2c2c2c);
+    border-color: var(--input-border, #4a4a4a);
+    color: var(--text-primary, #f2f2f2);
+}
+
+    .dark-theme .msg-nav-icon:hover {
+        border-color: #666;
+        color: #ffffff;
+    }
+
