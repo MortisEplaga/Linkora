@@ -82,7 +82,7 @@ namespace Linkora.Services
                     await file.CopyToAsync(fs, ct);
                 }
 
-                if (!isVideo) await ProductThumbnails.EnsureAsync(name, ct);
+                if (!isVideo) await ProductThumbnails.GenerateAsync(name, ct);
 
                 result.Add(new ProductMedia
                 {
@@ -218,7 +218,7 @@ namespace Linkora.Services
             var name = $"{Guid.NewGuid():N}{ext}";
             var fullPath = Path.Combine(folder, name);
             await File.WriteAllBytesAsync(fullPath, data, ct);
-            await ProductThumbnails.EnsureAsync(name, ct);
+            await ProductThumbnails.GenerateAsync(name, ct);
 
             return (new ProductMedia { FilePath = $"/img/products/{name}", MediaType = "image" }, null);
         }
