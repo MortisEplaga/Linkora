@@ -1216,7 +1216,7 @@ button.accept-policy {
                 border-color: #666;
             }
 
-    /* Native <select>, <option>, and <optgroup> dark styling */
+
     .dark-theme select,
     .dark-theme select.create-input,
     .dark-theme select.auth-input,
@@ -1249,7 +1249,7 @@ button.accept-policy {
             opacity: 1;
         }
 
-    /* Global dark focus & autofill rules across ALL screen sizes */
+
     .dark-theme input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not(.search-input):not(.region-search):not(.admin-search):not(.catmenu-search-input):focus,
     .dark-theme textarea:focus,
     .dark-theme select:focus,
@@ -1296,7 +1296,7 @@ button.accept-policy {
         transition: background-color 9999s ease-out 0s;
     }
 
-    /* Custom dropdown lists (.create-dropdown & .free-text-select-drop) */
+
     .dark-theme .create-dropdown,
     .dark-theme .free-text-select-drop {
         background: #252525;
@@ -2183,7 +2183,7 @@ body {
     pointer-events: none;
 }
 
-/* ── Notification Modal ── */
+
 .notif-overlay {
     display: none;
     position: fixed;
@@ -2265,7 +2265,7 @@ body {
         background: #eee;
     }
 
-/* Tabs */
+
 .notif-tabs {
     display: flex;
     border-bottom: 1px solid #f0f0f0;
@@ -2310,7 +2310,7 @@ body {
     text-align: center;
 }
 
-/* List */
+
 .notif-modal-list {
     flex: 1;
     overflow-y: auto;
@@ -2355,7 +2355,7 @@ body {
             background: #e6f7f5;
         }
 
-        /* Unread dot */
+
         .notif-item.unread::after {
             content: '';
             position: absolute;
@@ -2421,7 +2421,7 @@ body {
         width: 24px;
         height: 24px;
         border-radius: 4px;
-        object-fit: cover;
+        object-fit: contain;
     }
 
 .notif-modal-empty {
@@ -2435,7 +2435,7 @@ body {
     gap: 10px;
 }
 
-/* Bell button */
+
 .notif-bell-btn {
     width: 36px;
     height: 36px;
@@ -2476,7 +2476,7 @@ body {
     pointer-events: none;
 }
 
-/* Dark theme */
+
 .dark-theme .notif-modal {
     background: #252525;
     border-color: #333;
@@ -3110,7 +3110,7 @@ body {
     margin-top: 6px;
 }
 
-/* Тёмная тема для страницы создания объявления */
+
 .dark-theme .create-form {
     background: #252525 !important;
     border-color: #333 !important;
@@ -3494,7 +3494,7 @@ body {
     resize: vertical;
 }
 
-/* Селектор категории */
+
 .create-cat-selector {
     display: flex;
     align-items: center;
@@ -3518,7 +3518,7 @@ body {
     color: #aaa;
 }
 
-/* Параметры в 2 колонки */
+
 .create-params {
     display: flex;
     gap: 32px;
@@ -3552,7 +3552,7 @@ body {
 .param-hidden {
     display: none;
 }
-/* Кнопка публикации */
+
 .create-submit {
     width: 100%;
     padding: 14px;
@@ -3569,7 +3569,7 @@ body {
     .create-submit:hover {
         background: #333;
     }
-/* Адрес autocomplete */
+
 .create-field {
     position: relative;
 }
@@ -3600,7 +3600,7 @@ body {
         background: #f5f5f5;
     }
 
-/* Фото */
+
 .create-photos-area {
     border: 2px dashed #e0e0e0;
     border-radius: 10px;
@@ -3645,7 +3645,7 @@ body {
     .create-photo-thumb img {
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: contain;
     }
 
     .create-photo-thumb button {
@@ -3663,7 +3663,7 @@ body {
         line-height: 1;
     }
 
-/* Логин */
+
 .create-login-hint {
     display: flex;
     align-items: center;
@@ -3738,7 +3738,7 @@ body {
     .review-author-name:hover {
         color: #00b0a3;
     }
-/* ── Шапка продавца ── */
+
 .seller-header {
     display: flex;
     align-items: center;
@@ -3862,7 +3862,7 @@ body {
         background: #f5f5f5;
     }
 
-/* ── Сайдбар: активный элемент ── */
+
 .sidebar-item-active {
     color: #00b0a3 !important;
     font-weight: 700;
@@ -3874,7 +3874,7 @@ body {
     margin-left: 4px;
 }
 
-/* ── Модалка отзывов ── */
+
 .reviews-overlay {
     display: none;
     position: fixed;
@@ -4621,25 +4621,25 @@ body {
         font-size: 28px;
     }
 }
-/* ═══════════════════════════════════════════════════════════════════════
-   Крупные смартфоны с вытянутым экраном — класс 6,8″, 19.5:9
-   (панели 1080×2340 / 1440×3120; вьюпорт 360–430 CSS-px в ширину
-   и 780–930 px в высоту: Galaxy S24 Ultra — 384×832, S20–S23 Ultra —
-   360×780…412×891, iPhone 14–16 Pro Max — 430×932, Pixel 7–9 Pro —
-   412×892). Вырез-отверстие, скруглённые углы и жестовая навигация
-   дают env(safe-area-inset-*), а динамическая панель браузера —
-   расхождение 100vh и видимой высоты, поэтому используем dvh.
-   ═══════════════════════════════════════════════════════════════════════ */
 
-/* 1) Портрет: динамическая высота вьюпорта + безопасные зоны */
+
+
+
+
+
+
+
+
+
+
 @media screen and (max-width: 430px) and (pointer: coarse) {
 
-    /* липкая шапка — отступ под статус-бар/вырез */
+
     .header-nav {
         padding-top: env(safe-area-inset-top, 0px);
     }
 
-    /* выдвижное меню категорий во всю высоту, без цепного скролла */
+
     .catmenu {
         top: 0;
         padding-top: env(safe-area-inset-top, 0px);
@@ -4647,7 +4647,7 @@ body {
         overscroll-behavior: contain;
     }
 
-    /* нижние шторки (отзывы, уведомления): контент не под жестовой полосой */
+
     .reviews-modal,
     .notif-modal {
         max-height: 85dvh;
@@ -4655,7 +4655,7 @@ body {
         overscroll-behavior: contain;
     }
 
-    /* центрированные модалки — по видимой области, а не «за» панелью браузера */
+
     #authModal,
     #partnerModal,
     #captchaModal,
@@ -4674,7 +4674,7 @@ body {
         max-height: 85dvh !important;
     }
 
-    /* плавающая кнопка «наверх» — над жестовой полосой */
+
     .scroll-top-btn {
         right: calc(24px + env(safe-area-inset-right, 0px));
         bottom: calc(24px + env(safe-area-inset-bottom, 0px));
@@ -4685,8 +4685,8 @@ body {
     }
 }
 
-/* 2) Ширина 380–430 CSS-px — физически крупные панели 6,7–6,9″
-      (в т.ч. 6,8″ 19.5:9): больше воздуха и крупнее точки касания */
+
+
 @media screen and (min-width: 380px) and (max-width: 430px) and (pointer: coarse) {
     :root {
         --page-padding: 14px;
@@ -4708,8 +4708,8 @@ body {
     }
 }
 
-/* 3) Альбомная ориентация на 19.5:9: вырез оказывается сбоку —
-      учитываем левый/правый safe-area */
+
+
 @media screen and (max-height: 460px) and (orientation: landscape) and (pointer: coarse) {
     .header-nav {
         padding-top: env(safe-area-inset-top, 0px);
@@ -4737,8 +4737,8 @@ body {
         padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
-    /* модалки — по видимой высоте: в ландшафте панель браузера
-       забирает заметную долю короткой стороны экрана */
+
+
     .info-modal {
         max-height: 85dvh;
     }

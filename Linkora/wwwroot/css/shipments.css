@@ -1,4 +1,4 @@
-/* Omniva delivery: seller requests page and buyer request window. */
+
 
 .ship-page {
     max-width: 960px;
@@ -135,8 +135,8 @@
     gap: 0 14px;
 }
 
-/* Locker picker: a scrollable list of buttons instead of <select size="6">, because a native
-   list box gives no reliable highlight and its popup ignores the dark-theme background. */
+
+
 .ship-locker-list {
     display: flex;
     flex-direction: column;
@@ -257,7 +257,7 @@
     margin-top: 8px;
 }
 
-/* ---------- Dark theme ---------- */
+
 
 .dark-theme .ship-card {
     background: var(--bg-card);

@@ -1,4 +1,4 @@
-﻿const MAX_BYTES = 52_428_800; // 50 MB
+﻿const MAX_BYTES = 52_428_800;
 let selectedFiles = [];
 let citiesCache = null;
 
@@ -127,8 +127,8 @@ async function loadParams(categoryId, existingValues = {}) {
     }
 }
 
-/* Значение параметра может прийти как id варианта (ParamRawValues, драфт формы)
-   или как текст варианта (ParamValues) — принимаем оба формата. */
+
+
 function matchOptionId(options, val) {
     if (val === null || val === undefined || String(val).trim() === '') return null;
     const str = String(val).trim();
@@ -506,7 +506,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// ---------- Delivery (Omniva parcel locker) fields of the listing form ----------
+
 
 function toggleDeliveryFields() {
     const on = document.getElementById('shipEnabled')?.checked === true;
@@ -533,7 +533,7 @@ function restoreDeliveryFields(d) {
     toggleDeliveryFields();
 }
 
-/** Returns the message key of the first problem with the delivery fields, or null. Mirrors ParcelRules on the server. */
+
 function validateDeliveryFields() {
     const d = readDeliveryFields();
     if (!d.enabled) return null;

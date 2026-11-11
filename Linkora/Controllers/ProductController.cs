@@ -35,7 +35,7 @@ namespace Linkora.Controllers
         private readonly IPromotionRepository _promotionRepository = promotionRepository;
         private readonly IPointsLedgerRepository _pointsLedgerRepository = pointsLedgerRepository;
         private readonly ILogger<ProductController> _logger = logger;
-        /// <summary>Matches the [StringLength(50)] limit of Product.Address.</summary>
+
         private const int MaxAddressLength = 50;
         private static Dictionary<int, string> ParseParamsJson(string? json)
         {
@@ -193,7 +193,7 @@ namespace Linkora.Controllers
 
             return View();
         }
-        [HttpGet] public async Task<IActionResult> MediaFiles(int productId) => Json((await _productRepository.GetMediaAsync(productId)).Select(m => new { filePath = m.FilePath, mediaType = m.MediaType }));
+        [HttpGet] public async Task<IActionResult> MediaFiles(int productId) => Json((await _productRepository.GetMediaAsync(productId)).Select(m => new { filePath = m.FilePath, thumbnailUrl = ProductThumbnails.Url(m.FilePath), mediaType = m.MediaType }));
 
         [Authorize][HttpPost][RequestSizeLimit(MediaStorageService.MaxTotalBytes)][RequestFormLimits(MultipartBodyLengthLimit = MediaStorageService.MaxTotalBytes)]
         public async Task<IActionResult> Edit(int id, string title, string? description, int? qty, string? address, int? categoryId,
@@ -434,8 +434,6 @@ namespace Linkora.Controllers
             }
             else _logger.LogInformation("No address provided for user {UserId}, Lat/Lng will remain null", userId);
 
-            // Checked after the home-address substitution: a saved address is limited to 500 characters in the
-            // profile, while the listing column only fits 50, so a long home address must not reach the INSERT.
             address = address?.Trim();
             if (!string.IsNullOrEmpty(address) && address.Length > MaxAddressLength)
             {
@@ -487,7 +485,7 @@ namespace Linkora.Controllers
 
             return Ok(new { id = newId, promotionType = pendingPromotion });
         }
-        /// <summary>Delivery settings as stored: size and weight are kept only while delivery is enabled.</summary>
+
         private static (bool Enabled, string? Size, decimal? Weight) NormalizeDelivery(bool enabled, string? size, decimal? weight) =>
             enabled ? (true, size?.Trim().ToUpperInvariant(), weight) : (false, null, null);
 

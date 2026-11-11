@@ -146,7 +146,7 @@
                 <div class="msg-product-card">
                     @if (activeConv.ProductImage != null)
                     {
-                        <img src="@activeConv.ProductImage" onerror="this.src='/img/no-photo.svg'" />
+                        <img src="@Linkora.Services.ProductThumbnails.Url(activeConv.ProductImage)" onerror="this.src='/img/no-photo.svg'" />
                     }
                     <a class="msg-product-name" href="/Product/Details/@activeConv.ProductId">
                         @activeConv.ProductName

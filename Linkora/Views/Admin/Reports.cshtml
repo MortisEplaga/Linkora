@@ -63,7 +63,7 @@
                                         <div class="admin-report-product">
                                             @if (r.ProductImage != null)
                                             {
-                                                <img class="admin-report-img" src="@r.ProductImage"
+                                                <img class="admin-report-img" src="@Linkora.Services.ProductThumbnails.Url(r.ProductImage)"
                                                      onerror="this.src='/img/no-photo.svg'" />
                                             }
                                             else

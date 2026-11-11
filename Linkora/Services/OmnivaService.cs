@@ -7,9 +7,7 @@ using System.Text.Json.Serialization;
 namespace Linkora.Services
 {
     public record OmnivaParty(string Name, string? Phone, string? Email, string? Street, string? City, string? Postcode, string Country);
-    /// <param name="PartnerShipmentId">Platform identifier of the shipment, up to 30 characters.</param>
-    /// <param name="LockerCode">Locker identifier sent as offloadPostcode.</param>
-    /// <param name="ParcelSize">Platform parcel size (XS..L), mapped to OMX measurement.length/width/height.</param>
+
     public record OmnivaShipmentRequest(string PartnerShipmentId, OmnivaParty Sender, OmnivaParty Receiver, string LockerCode,
                                         decimal? WeightKg = null, string? Comment = null, string? ParcelSize = null);
     public record OmnivaRegisterResult(bool Success, string? Barcode, string? ErrorCode, string? ErrorMessage);
@@ -23,10 +21,10 @@ namespace Linkora.Services
         Task<OmnivaLabelResult> GetLabelAsync(string barcode, CancellationToken ct = default);
         Task<OmnivaEventsPage> GetEventsAsync(long fromEventId, int size = 100, CancellationToken ct = default);
         Task<IReadOnlyList<OmnivaLocker>> GetLockersAsync(CancellationToken ct = default);
-        /// <summary>Best-effort cancellation of a registered parcel. Returns false when Omniva did not confirm it.</summary>
+
         Task<bool> CancelShipmentAsync(string barcode, CancellationToken ct = default);
     }
-    /// <summary>Non-success HTTP response from the OMX API.</summary>
+
     public sealed class OmnivaApiException(int statusCode, string message) : Exception(message)
     {
         public int StatusCode { get; } = statusCode;
@@ -35,7 +33,7 @@ namespace Linkora.Services
     public class OmnivaService : IOmnivaService
     {
         private const string ShipmentsPath = "/api/v01/omx/shipments";
-        /// <summary>Public Omniva location feed. Overridable with Omniva:LocationsUrl.</summary>
+
         public const string DefaultLocationsUrl = "https://www.omniva.ee/locations.json";
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -43,9 +41,9 @@ namespace Linkora.Services
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
         };
         private readonly HttpClient _http;
-        // The public location feed must never receive the OMX Basic credentials.
+
         private readonly HttpClient _locationsHttp;
-        // null until the OMX credentials are configured: the public locker feed still works without them.
+
         private readonly string? _baseUrl;
         private readonly string _customerCode;
         private readonly string _locationsUrl;
@@ -79,7 +77,6 @@ namespace Linkora.Services
         {
             if (_baseUrl == null) return new(false, null, "CONFIG_MISSING", "Omniva OMX credentials are not configured");
 
-            // The calling code of a short local number depends on the party's country (LV/ LT/ EE), not on a global default.
             if (!OmnivaPhone.TryNormalize(request.Sender.Phone, request.Sender.Country, out var senderPhone) ||
                 !OmnivaPhone.TryNormalize(request.Receiver.Phone, request.Receiver.Country, out var receiverPhone))
                 return new(false, null, "INVALID_PHONE", "Phone must include the country code and contain 9 to 11 digits.");
@@ -90,7 +87,7 @@ namespace Linkora.Services
                 return new(false, null, "SENDER_CONTACT_REQUIRED", "The sender needs a mobile phone or an email.");
             if (receiverPhone == null && string.IsNullOrWhiteSpace(request.Receiver.Email))
                 return new(false, null, "RECEIVER_CONTACT_REQUIRED", "The receiver needs a mobile phone or an email.");
-            // XL and any other unknown size cannot be registered for a parcel machine.
+
             if (!string.IsNullOrWhiteSpace(request.ParcelSize) &&
                 !OmnivaParcelDimensions.TryGet(request.ParcelSize, out _, out _, out _))
                 return new(false, null, "PARCEL_SIZE_INVALID", "Only XS, S, M and L can be delivered to a parcel machine.");
@@ -109,7 +106,7 @@ namespace Linkora.Services
                         mainService = "PARCEL",
                         deliveryChannel = "PARCEL_MACHINE",
                         shipmentComment = request.Comment,
-                        // OMX derives the locker compartment from measurement.length/width/height (metres), not from a "size" field.
+
                         measurement = BuildMeasurement(request.WeightKg, request.ParcelSize),
                         senderAddressee = ToParty(sender),
                         receiverAddressee = ToParty(receiver, request.LockerCode)
@@ -163,7 +160,7 @@ namespace Linkora.Services
 
                 if (root.TryGetProperty("successAddressCards", out var ok))
                 {
-                    // The manual calls the field "filedata", real responses use "fileData"; accept both, array or single object.
+
                     var card = ok.ValueKind == JsonValueKind.Array && ok.GetArrayLength() > 0 ? ok[0] : ok;
                     var file = Str(card, "fileData") ?? Str(card, "filedata");
                     if (!string.IsNullOrEmpty(file)) return new(true, Convert.FromBase64String(file), null);
@@ -195,7 +192,7 @@ namespace Linkora.Services
             foreach (var item in content.EnumerateArray())
             {
                 count++;
-                // The cursor advances over every event that has an id, even when the event itself is skipped below.
+
                 if (!TryGetInt64(item, "eventId", out var eventId)) continue;
                 if (eventId > lastId) lastId = eventId;
 
@@ -237,10 +234,7 @@ namespace Linkora.Services
             }
             catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or InvalidOperationException) { return false; }
         }
-        /// <summary>
-        /// Reads the public Omniva locations feed (TYPE 0 = parcel machine, TYPE 1 = post office).
-        /// ZIP is the offloadPostcode, X_COORDINATE is longitude and Y_COORDINATE is latitude.
-        /// </summary>
+
         public async Task<IReadOnlyList<OmnivaLocker>> GetLockersAsync(CancellationToken ct = default)
         {
             using var response = await _locationsHttp.GetAsync(_locationsUrl, ct);
@@ -265,16 +259,16 @@ namespace Linkora.Services
             foreach (var item in array.EnumerateArray())
             {
                 if (item.ValueKind != JsonValueKind.Object) continue;
-                if (Str(item, "TYPE") is not "0") continue; // 1 = post office, not a parcel machine
+                if (Str(item, "TYPE") is not "0") continue;
 
                 var code = Str(item, "ZIP")?.Trim();
                 var name = Str(item, "NAME")?.Trim();
                 var country = Str(item, "A0_NAME")?.Trim().ToUpperInvariant();
                 if (string.IsNullOrEmpty(code) || string.IsNullOrEmpty(name)) continue;
                 if (country is not ("LV" or "LT" or "EE")) continue;
-                // "1. eelistus / Picapac" is a delivery preference, not a physical locker with an address.
+
                 if (IsPreferencePoint(name!)) continue;
-                if (!seenCodes.Add(code!)) continue; // offloadPostcode must be unique for (Provider, Code)
+                if (!seenCodes.Add(code!)) continue;
 
                 result.Add(new OmnivaLocker(
                     Truncate(code!, 50),
@@ -314,7 +308,7 @@ namespace Linkora.Services
             decimal.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed) && parsed is >= -180m and <= 180m
                 ? parsed
                 : null;
-        /// <summary>OMX has no "size" attribute: the compartment is derived from the parcel dimensions in metres.</summary>
+
         private static object? BuildMeasurement(decimal? weightKg, string? parcelSize)
         {
             OmnivaParcelDimensions.TryGet(parcelSize, out var length, out var width, out var height);
@@ -346,10 +340,7 @@ namespace Linkora.Services
                 country = p.Country
             }
         };
-        /// <summary>
-        /// Reads a scalar field without assuming its JSON type. JsonElement.GetString() throws on numbers and booleans,
-        /// which used to abort the whole response parse; the carrier may return e.g. a numeric barcode or message code.
-        /// </summary>
+
         private static string? Str(JsonElement element, string name)
         {
             if (element.ValueKind != JsonValueKind.Object || !element.TryGetProperty(name, out var value)) return null;
@@ -360,7 +351,7 @@ namespace Linkora.Services
                 _ => null
             };
         }
-        /// <summary>Event ids may arrive as JSON numbers or as strings.</summary>
+
         private static bool TryGetInt64(JsonElement element, string name, out long result)
         {
             result = 0;
@@ -374,10 +365,7 @@ namespace Linkora.Services
         private static DateTime? ParseUtc(string? value) =>
             DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var dt) ? dt : null;
     }
-    /// <summary>
-    /// Maximum dimensions of Omniva parcel-machine lockers, in metres (OMX measurement.length/width/height).
-    /// XL is not listed: Omniva delivers XL only through a post office or a courier, never a parcel machine.
-    /// </summary>
+
     public static class OmnivaParcelDimensions
     {
         public static bool TryGet(string? size, out decimal? length, out decimal? width, out decimal? height)
@@ -399,7 +387,6 @@ namespace Linkora.Services
         public const string DefaultCountryCode = "371";
         private static readonly string[] KnownCallingCodes = ["371", "370", "372"];
 
-        /// <summary>Calling code used for a short local number of the given Baltic country.</summary>
         public static string CallingCodeFor(string? country) => country?.Trim().ToUpperInvariant() switch
         {
             "LT" => "370",
@@ -420,12 +407,11 @@ namespace Linkora.Services
             var hasInternationalPrefix = trimmed.StartsWith('+') || digits.StartsWith("00", StringComparison.Ordinal);
             if (digits.StartsWith("00", StringComparison.Ordinal)) digits = digits[2..];
 
-            // A short local number is completed with the calling code of the party's own country.
             if (!hasInternationalPrefix && (digits.Length == 7 || digits.Length == 8))
                 digits = defaultCountryCode + digits;
 
             if (digits.Length < 9 || digits.Length > 11) return false;
-            // A long number without "+" / "00" is only accepted when it already carries a known Baltic calling code.
+
             if (!hasInternationalPrefix && !KnownCallingCodes.Any(code => digits.StartsWith(code, StringComparison.Ordinal))) return false;
 
             normalized = "+" + digits;

@@ -143,7 +143,7 @@
         });
     };
 
-    /* ---------- Кастомные скрипты категории (ParameterCustomScripts) ---------- */
+
     var _customScripts = {};
 
     var loadCustomScript = function (path, categoryId) {

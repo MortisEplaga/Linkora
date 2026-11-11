@@ -228,7 +228,6 @@ namespace Linkora.Controllers
             return Ok();
         }
 
-        /// <summary>Admin editor for Omniva shipping tariffs (country x parcel size). Prices come from the contract.</summary>
         public async Task<IActionResult> ShippingTariffs(bool saved = false)
         {
             if (!IsAdmin()) return Forbid();

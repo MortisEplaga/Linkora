@@ -76,7 +76,7 @@ namespace Linkora.Controllers
                 fromUserAvatar = n.FromUserAvatar,
                 productId = n.ProductId,
                 productName = n.ProductName,
-                productImage = n.ProductImage,
+                productImage = n.ProductImage == null ? null : ProductThumbnails.Url(n.ProductImage),
             }));
         [HttpPost] public async Task<IActionResult> MarkRead(int id)
         {

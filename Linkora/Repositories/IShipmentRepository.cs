@@ -12,7 +12,7 @@ namespace Linkora.Repositories
         Task<bool> AcceptRequestAsync(ShipmentRequest request);
         Task<bool> HasReservedRequestAsync(int productId, int exceptRequestId);
         Task<bool> AttachPaymentAsync(int requestId, int paymentId);
-        /// <summary>Returns accepted-but-unpaid requests older than the cutoff to Requested and returns them.</summary>
+
         Task<List<ReleasedAcceptance>> ResetStaleAcceptancesAsync(DateTime cutoffUtc);
         Task<bool> TransitionRequestAsync(int id, ShipmentRequestStatus from, ShipmentRequestStatus to);
         Task<ProductShippingInfo?> GetProductShippingAsync(int productId);
@@ -35,6 +35,5 @@ namespace Linkora.Repositories
         Task SetLastEventIdAsync(string provider, long eventId);
     }
 
-    /// <summary>A request whose acceptance was released because it was not paid in time.</summary>
     public sealed record ReleasedAcceptance(int RequestId, int BuyerId, int SellerId, int ProductId);
 }

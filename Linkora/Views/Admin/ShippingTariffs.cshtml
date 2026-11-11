@@ -84,7 +84,7 @@
                             }
                         </div>
 
-                        <!-- Plain action on purpose: asp-action would auto-generate a second antiforgery token. -->
+
                         <form method="post" action="/Admin/SaveShippingTariff">
                             <input type="hidden" name="__RequestVerificationToken" value="@Antiforgery.GetAndStoreTokens(Context).RequestToken" />
                             <input type="hidden" name="DestinationCountry" value="@country" />

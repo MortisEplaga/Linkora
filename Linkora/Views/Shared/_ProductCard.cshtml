@@ -8,7 +8,7 @@
    data-promo-top="@(p.EffectiveBoostTier >= PromotionTier.Top ? "true" : "false")"
    asp-controller="Product" asp-action="Details" asp-route-id="@p.Id">
     <div class="product-card-img">
-        <img src="@(p.AvatarUrl ?? "/img/no-photo.svg")" alt="@p.Name"
+        <img src="@Linkora.Services.ProductThumbnails.Url(p.AvatarUrl)" alt="@p.Name"
              onerror="this.src='/img/no-photo.svg'" />
 
         <div class="product-card-price-tag" @(p.Price.HasValue ? "" : Html.Raw("data-i18n=\"price_on_request\""))>

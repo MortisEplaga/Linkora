@@ -1,13 +1,13 @@
-// Omniva delivery: buyer request window on the product page and the seller's request page.
+
 (function () {
     'use strict';
 
     function csrf() { return document.getElementById('afToken')?.value ?? ''; }
 
-    /**
-     * The cookie scheme redirects anonymous requests to the login page instead of answering 401,
-     * so a redirect (followed or not) also means "login required".
-     */
+
+
+
+
     function needsLogin(res) {
         return res.status === 401 || res.redirected || res.type === 'opaqueredirect';
     }
@@ -21,12 +21,12 @@
         return text && text !== key ? text : null;
     }
 
-    /** Localized text for an API error code; falls back to the generic message. */
+
     function errorText(code) {
         return tr('ship_err_' + (code || 'generic')) || tr('ship_err_generic') || 'Error';
     }
 
-    /** Localized template with {0} replaced by `value`; `fallback` is used when there is no translation. */
+
     function trFormat(key, value, fallback) {
         return (tr(key) || fallback).replace('{0}', value);
     }
@@ -62,7 +62,7 @@
         return isNaN(d) ? '' : d.toLocaleDateString();
     }
 
-    // ---------- Seller page ----------
+
 
     let sellerInitialized = false;
 
@@ -87,14 +87,14 @@
     }
 
     const POSTCODE_PATTERN = /\b(LV|LT|EE)[-\s]?(\d{4,5})\b/i;
-    /** A whole comma-separated segment that is only a postcode, e.g. "LV-1010". */
+
     const POSTCODE_SEGMENT = /^\s*(LV|LT|EE)[-\s]?\d{4,5}\s*$/i;
 
-    /**
-     * Addresses are stored as "City, street, house" (listing address and profile home address
-     * use the same placeholder), so the first segment is the city and the rest is the street.
-     * Postcode and country are only known when the address carries a "LV-1234" style code.
-     */
+
+
+
+
+
     function parseAddress(raw) {
         const text = (raw || '').trim();
         const parsed = { city: '', street: '', postcode: '', country: 'LV' };
@@ -122,11 +122,11 @@
         const productSize = (card.dataset.productSize || '').toUpperCase();
 
         document.getElementById('shipAcceptRequestId').value = requestId;
-        // No silent default: the price depends on the size, so the seller has to choose one when the listing has none.
+
         document.getElementById('shipAcceptSize').value = ['XS', 'S', 'M', 'L'].includes(productSize) ? productSize : '';
         document.getElementById('shipAcceptWeight').value = card.dataset.productWeight || '';
 
-        // The sender is the seller: the listing address is the best guess, the profile is the fallback.
+
         const address = parseAddress(card.dataset.productAddress || page?.dataset.homeAddress);
         setSender('shipSenderName', page?.dataset.userName);
         setSender('shipSenderPhone', page?.dataset.userPhone);
@@ -141,7 +141,7 @@
         updateAcceptPrice();
     }
 
-    /** Overwrites a sender field on every opening, so values from the previous request never leak in. */
+
     function setSender(id, value) {
         const field = document.getElementById(id);
         if (!field) return;
@@ -151,7 +151,7 @@
 
     function closeAccept() { closeOverlay('shipAcceptOverlay', 'shipAcceptModal'); }
 
-    /** Guards against a slow answer for a previously chosen size overwriting the current price. */
+
     let priceRequestToken = 0;
 
     async function updateAcceptPrice() {
@@ -186,10 +186,10 @@
         applyWeightLimit();
     }
 
-    /**
-     * The carrier limit belongs to the tariff of the chosen size, so the field max and the hint
-     * follow the price response instead of the global 100 kg fallback.
-     */
+
+
+
+
     function applyWeightLimit() {
         const input = document.getElementById('shipAcceptWeight');
         const hint = document.getElementById('shipAcceptWeightHint');
@@ -276,11 +276,11 @@
         box.hidden = true;
     }
 
-    // ---------- Buyer request window (product page) ----------
+
 
     let buyProductId = null;
     let lockerSearchTimer = null;
-    /** Locker chosen in the window; kept across searches so typing a query does not lose the choice. */
+
     let selectedLocker = null;
 
     window.openShipmentModal = async function (productId) {
@@ -290,7 +290,7 @@
         document.getElementById('shipBuyProductId').value = productId;
         hideBuyError();
 
-        // A fresh window for a fresh request: no locker or receiver details carried over.
+
         selectedLocker = null;
         renderLockerSelection();
         setValue('shipLockerSearch', '');
@@ -318,7 +318,7 @@
         lockerSearchTimer = setTimeout(() => loadLockers(document.getElementById('shipLockerSearch').value.trim()), 300);
     };
 
-    /** Name, phone and e-mail of the logged-in buyer, used to prefill the receiver fields. */
+
     async function loadMyContact() {
         try {
             const res = await fetch('/Shipping/BuyerContact', { headers: { 'Accept': 'application/json' } });
@@ -369,7 +369,7 @@
         hideBuyError();
     }
 
-    /** The chosen locker is shown as a separate line: a highlighted row inside the list is easy to miss. */
+
     function renderLockerSelection() {
         const box = document.getElementById('shipLockerSelected');
 
@@ -464,9 +464,9 @@
         box.hidden = true;
     }
 
-    // ---------- Modal helpers (same markup pattern as the report modal) ----------
 
-    // Named differently from the global showModal(key) in modals.js, which shows the notification modal.
+
+
     function openOverlay(overlayId, modalId) {
         document.getElementById(overlayId)?.classList.add('modal-open');
         document.getElementById(modalId)?.classList.add('modal-open');
@@ -477,7 +477,7 @@
         document.getElementById(modalId)?.classList.remove('modal-open');
     }
 
-    // Price refresh when the seller changes the parcel size; a new delivery country resets the locker choice.
+
     document.addEventListener('change', e => {
         if (e.target && e.target.id === 'shipAcceptSize') updateAcceptPrice();
         if (e.target && e.target.id === 'shipLockerCountry') {

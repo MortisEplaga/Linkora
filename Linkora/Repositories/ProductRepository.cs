@@ -1,3 +1,4 @@
+using Linkora.Services;
 using Linkora.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Caching.Memory;
@@ -152,8 +153,7 @@ namespace Linkora.Repositories
 
             if (!string.IsNullOrEmpty(city))
             {
-                // Addresses are saved as "City, street, house" (or as the free-form home address), so an exact
-                // match almost never fires. The city is the first comma-separated segment of the address.
+
                 var cityName = city.Trim();
                 whereClauses.Add("(p.Address = @City OR p.Address LIKE @CityPrefix ESCAPE '\\')");
                 commonParams.Add(new SqlParameter("@City", cityName));
@@ -230,7 +230,7 @@ namespace Linkora.Repositories
 
             return (items, total);
         }
-        /// <summary>Escapes the LIKE wildcards so a city name is matched literally.</summary>
+
         private static string EscapeLike(string value) =>
             value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_").Replace("[", "\\[");
 
@@ -493,7 +493,7 @@ namespace Linkora.Repositories
                 throw;
             }
             if (!string.IsNullOrEmpty(imagePath))
-                try { var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", imagePath.TrimStart('/')); if (File.Exists(fullPath)) File.Delete(fullPath); } catch (Exception ex) { Console.Error.WriteLine(ex); }
+                try { var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", imagePath.TrimStart('/')); if (File.Exists(fullPath)) File.Delete(fullPath); ProductThumbnails.Delete(imagePath); } catch (Exception ex) { Console.Error.WriteLine(ex); }
             return true;
         }
         public async Task<bool> ReactivateProductAsync(int productId, int userId) => (await ExecuteAsync(@"UPDATE Products SET Status = 'Active',ArchivedAt = NULL,CreatedAt = SYSUTCDATETIME(),ExpiresAt = DATEADD(day,PublishDurationDays,SYSUTCDATETIME()) WHERE Id = @Id AND UserId = @UserId AND Status = 'Archived'", p => { p.AddWithValue("@Id", productId); p.AddWithValue("@UserId", userId); })) > 0;
@@ -576,9 +576,10 @@ namespace Linkora.Repositories
         }
         public async Task DeleteMediaAsync(int productId)
         {
+            var paths = await QueryAsync<string>("SELECT FilePath FROM ProductMedia WHERE ProductId = @Id", r => r.GetString(0), p => p.AddWithValue("@Id", productId));
             await ExecuteAsync("DELETE FROM ProductMedia WHERE ProductId = @Id", p => p.AddWithValue("@Id", productId));
-            foreach (var path in await QueryAsync<string>("SELECT FilePath FROM ProductMedia WHERE ProductId = @Id", r => r.GetString(0), p => p.AddWithValue("@Id", productId)))
-                try { var full = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", path.TrimStart('/')); if (File.Exists(full)) File.Delete(full); } catch (Exception ex) { Console.Error.WriteLine(ex); }
+            foreach (var path in paths)
+                try { var full = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", path.TrimStart('/')); if (File.Exists(full)) File.Delete(full); ProductThumbnails.Delete(path); } catch (Exception ex) { Console.Error.WriteLine(ex); }
         }
         public async Task IncrementViewCountAsync(int productId) => await ExecuteAsync("UPDATE Products SET ViewCount = ViewCount + 1 WHERE Id = @Id", p => p.AddWithValue("@Id", productId));
         public async Task DeleteAsync(int productId) => await DeleteProductCascade(productId);
@@ -897,6 +898,7 @@ namespace Linkora.Repositories
                 {
                     var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", filePath.TrimStart('/'));
                     if (File.Exists(fullPath)) File.Delete(fullPath);
+                    ProductThumbnails.Delete(filePath);
                     successCount++;
                 }
                 catch (Exception ex) { Console.Error.WriteLine(ex); }
