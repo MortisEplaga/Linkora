@@ -2,7 +2,7 @@ function getCurrentLanguage() {
     return localStorage.getItem('lang') || 'lv';
 }
 
-/* ---------- Generic info-modal language switching ---------- */
+
 
 const MODAL_TITLES = {
     faqModal: { en: 'FAQ', lv: 'Bieži uzdotie jautājumi', ru: 'FAQ' },
@@ -68,7 +68,7 @@ function closeInfoModal(overlayId, modalId) {
     document.body.style.overflow = '';
 }
 
-/* ---------- FAQ ---------- */
+
 
 function openFaqModal() { openInfoModalWithLang('faqOverlay', 'faqModal'); }
 function closeFaqModal() { closeInfoModal('faqOverlay', 'faqModal'); }
@@ -79,22 +79,22 @@ function toggleFaq(el) {
     answer.classList.toggle('open');
 }
 
-/* ---------- Rules ---------- */
+
 
 function openRulesModal() { openInfoModalWithLang('rulesOverlay', 'rulesModal'); }
 function closeRulesModal() { closeInfoModal('rulesOverlay', 'rulesModal'); }
 
-/* ---------- Policy ---------- */
+
 
 function openPolicyModal() { openInfoModalWithLang('policyOverlay', 'policyModal'); }
 function closePolicyModal() { closeInfoModal('policyOverlay', 'policyModal'); }
 
-/* ---------- Contacts ---------- */
+
 
 function openContactsModal() { openInfoModalWithLang('contactsOverlay', 'contactsModal'); }
 function closeContactsModal() { closeInfoModal('contactsOverlay', 'contactsModal'); }
 
-/* ---------- Support ---------- */
+
 
 let currentSupportLang = 'lv';
 
@@ -191,7 +191,7 @@ async function submitSupportForm(event) {
     }
 }
 
-/* ---------- Generic notification (OK) modal ---------- */
+
 
 function showModal(messageKeyOrText) {
     const overlay = document.getElementById('notificationOverlay');
@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-/* ---------- Auth modal ---------- */
+
 function getReferralCode() {
     try {
         const fromUrl = new URLSearchParams(location.search).get('ref');
@@ -368,7 +368,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('modalChkTerms')?.addEventListener('change', updateRegisterButton); });
 
-/* ---------- User dropdown ---------- */
+
 
 function toggleUserMenu() {
     document.getElementById('userDropdown')?.classList.toggle('open');
@@ -380,7 +380,7 @@ document.addEventListener('click', e => {
     }
 });
 
-/* ---------- Region modal ---------- */
+
 
 let regionCities = [];
 let selectedRegion = null;
@@ -445,7 +445,7 @@ function selectRegion(city, label) {
     }
 }
 
-/* ---------- Favourites / cart toggle ---------- */
+
 
 async function toggleFav(btn, productId, can) {
     const res = await fetch(`/Favourite/Toggle?productId=${productId}&can=${can}`, {
@@ -466,7 +466,7 @@ async function toggleFav(btn, productId, can) {
     if (res.ok && typeof updateFavAndCartBadges === 'function') { await updateFavAndCartBadges(); }
 }
 
-/* ---------- Seller modal ---------- */
+
 
 function openSellerModalFromEl(el) {
     const d = el.dataset;
@@ -563,7 +563,7 @@ function closeSellerModal() {
     document.getElementById('sellerModal').classList.remove('open');
 }
 
-/* ---------- Settings modal ---------- */
+
 
 function openSettingsModal() {
     if (!document.getElementById('settingsOverlay')) return;
@@ -605,7 +605,7 @@ function toggleTheme() {
     if (logo) Icons.applyAsset(logo, isDark ? 'logoDark' : 'logo');
 }
 
-/* ---------- Reviews modal ---------- */
+
 
 async function openMyReviewsModal() {
     if (!document.getElementById('myReviewsOverlay')) return;
@@ -672,7 +672,7 @@ async function loadReviewTab(tab) {
     }
 }
 
-/* ---------- Deal review modal ---------- */
+
 
 let dealReviewTargetId = null;
 let dealReviewProductId = null;
@@ -720,7 +720,7 @@ async function submitDealReview() {
     if (res.ok) closeDealReviewModal();
 }
 
-/* ---------- Notification preferences modal ---------- */
+
 
 async function openNotifPrefsModal() {
     closeSettingsModal();
@@ -778,7 +778,7 @@ async function saveNotifPrefs() {
     });
     if (res.ok) closeNotifPrefsModal();
 }
-/* ---------- Facebook login ---------- */
+
 
 window.fbAsyncInit = function () {
     FB.init({
@@ -833,7 +833,7 @@ function loginWithFacebook(returnUrl) {
     }, { scope: 'public_profile,email' });
 }
 
-/* ---------- Scroll-to-top button ---------- */
+
 
 window.addEventListener("load", function () {
     const scrollBtn = document.getElementById("scrollTopBtn");
@@ -850,7 +850,7 @@ window.addEventListener("load", function () {
     toggleBtn();
 });
 
-/* ---------- Notifications Modal & Badges ---------- */
+
 
 let notifAllData = [];
 let notifCurrentTab = 'all';
@@ -1088,7 +1088,7 @@ async function updateMsgBadge() {
     }
 }
 
-/* ---------- Shared Rules Modal (Promo / Subscription) ---------- */
+
 
 const sharedRulesState = {};
 

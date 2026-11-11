@@ -52,7 +52,6 @@ namespace Linkora.Controllers
             var name = dto.ReceiverName?.Trim() ?? "";
             if (name.Length is 0 or > 100) return BadRequest(new { error = "receiver_name_invalid" });
 
-            // A short local number belongs to the locker's country (LV/LT/EE), not always to Latvia.
             if (!OmnivaPhone.TryNormalize(dto.ReceiverPhone, locker.Country, out var phone)) return BadRequest(new { error = "phone_invalid" });
 
             var email = string.IsNullOrWhiteSpace(dto.ReceiverEmail) ? (await users.GetByIdAsync(buyerId))?.Email : dto.ReceiverEmail.Trim();
@@ -87,7 +86,6 @@ namespace Linkora.Controllers
             return Ok(new { id });
         }
 
-        /// <summary>The buyer's own requests, optionally for one listing (shown in the buyer's request window).</summary>
         [HttpGet("Requests/Buyer")] public async Task<IActionResult> BuyerRequests(int? productId = null)
         {
             var requests = await shipments.GetBuyerRequestsAsync(User.GetUserId());
@@ -109,7 +107,6 @@ namespace Linkora.Controllers
                 }));
         }
 
-        /// <summary>Contact details of the logged-in buyer: the receiver fields are prefilled from the profile.</summary>
         [HttpGet("BuyerContact")]
         public async Task<IActionResult> BuyerContact()
         {
@@ -199,7 +196,7 @@ namespace Linkora.Controllers
 
             if (!accepted)
             {
-                // The request is no longer Requested, or another request for the same listing was accepted first.
+
                 if (await shipments.HasReservedRequestAsync(request.ProductId, id)) return Conflict(new { error = "product_reserved" });
                 return Conflict(new { error = "status_changed" });
             }
@@ -232,7 +229,6 @@ namespace Linkora.Controllers
             return cancelled ? Ok() : Conflict(new { error = "status_changed" });
         }
 
-        /// <summary>Omniva parcel label (PDF) for the seller of a paid shipment.</summary>
         [HttpGet("Request/{id:int}/Label")] public async Task<IActionResult> Label(int id)
         {
             var request = await shipments.GetRequestAsync(id);

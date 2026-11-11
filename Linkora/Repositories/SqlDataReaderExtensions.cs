@@ -24,7 +24,7 @@ namespace Linkora.Repositories
     {
         public static string GetLang(this HttpRequest request)
         {
-            // Latvian is the default language; en/ru are opt-in via the "lang" cookie
+
             var lang = request.Cookies["lang"] ?? "lv";
             if (lang != "en" && lang != "ru") lang = "lv";
             return lang;

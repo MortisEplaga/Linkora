@@ -316,7 +316,7 @@
         width: 40px;
         height: 40px;
         border-radius: 6px;
-        object-fit: cover;
+        object-fit: contain;
         flex-shrink: 0;
     }
 
@@ -541,11 +541,11 @@
     }
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Крупные смартфоны 6,8″ (19.5:9): высота чата считается от
-   динамического вьюпорта (dvh) — панель браузера не «съедает»
-   нижнюю часть, отступ снизу учитывает жестовую полосу
-   ───────────────────────────────────────────────────────────── */
+
+
+
+
+
 @media screen and (max-width: 430px) and (pointer: coarse) {
     .msg-page {
         height: calc(100dvh - 140px);
@@ -553,7 +553,7 @@
     }
 }
 
-/* ── Dark theme overrides for Messages & Review Prompt ── */
+
 .dark-theme .msg-bubble-mine .msg-bubble {
     background: #00796b;
     color: #ffffff;

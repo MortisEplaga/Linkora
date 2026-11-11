@@ -75,7 +75,7 @@
                                         <div class="admin-table-product">
                                             @if (p.AvatarUrl != null)
                                             {
-                                                <img class="admin-table-img" src="@p.AvatarUrl"
+                                                <img class="admin-table-img" src="@Linkora.Services.ProductThumbnails.Url(p.AvatarUrl)"
                                                      onerror="this.src='/img/no-photo.svg'" />
                                             }
                                             else

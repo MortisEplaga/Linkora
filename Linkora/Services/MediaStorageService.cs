@@ -10,16 +10,13 @@ namespace Linkora.Services
     {
         Task<List<ProductMedia>> SaveUploadedFilesAsync(List<IFormFile> files, CancellationToken ct = default);
         Task<string?> SaveAvatarAsync(IFormFile file, CancellationToken ct = default);
-        /// <summary>
-        /// Скачивает изображение по прямой ссылке (или копирует уже лежащий на сервере файл /img/...)
-        /// и сохраняет его в wwwroot/img/products. Файл проходит те же проверки, что и загружаемый вручную.
-        /// </summary>
+
         Task<RemoteImageResult> DownloadImageAsync(string url, CancellationToken ct = default);
     }
     public sealed class MediaStorageService(IHttpClientFactory httpClientFactory) : IMediaStorageService
     {
-        public const long MaxSingleFileBytes = 10L * 1024 * 1024;   // 10 МБ
-        public const long MaxTotalBytes = 52_428_800L;         // 50 МБ
+        public const long MaxSingleFileBytes = 10L * 1024 * 1024;
+        public const long MaxTotalBytes = 52_428_800L;
 
         private static readonly HashSet<string> AllowedImageExtensions = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -85,6 +82,8 @@ namespace Linkora.Services
                     await file.CopyToAsync(fs, ct);
                 }
 
+                if (!isVideo) await ProductThumbnails.EnsureAsync(name, ct);
+
                 result.Add(new ProductMedia
                 {
                     FilePath = $"/img/products/{name}",
@@ -136,9 +135,7 @@ namespace Linkora.Services
             url = url.Trim();
             if (url.Length > 2048) return new(null, "url is too long", 0);
 
-            // Ссылка на уже существующий файл на этом сервере (/img/products/...):
-            // копируем файл напрямую, без HTTP-запроса к самому себе.
-            if (url.StartsWith('/')) return CopyLocalImage(url);
+            if (url.StartsWith('/')) return await CopyLocalImageAsync(url, ct);
 
             if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
                 return new(null, "only absolute http(s) urls are supported", 0);
@@ -180,11 +177,11 @@ namespace Linkora.Services
             catch (OperationCanceledException) { return new(null, "download timed out", 0); }
             catch { return new(null, "download failed", 0); }
 
-            var saved = SaveValidatedImage(data);
+            var saved = await SaveValidatedImageAsync(data, ct);
             return new(saved.Media, saved.Error, saved.Media == null ? 0 : data.LongLength);
         }
 
-        private static RemoteImageResult CopyLocalImage(string relativeUrl)
+        private static async Task<RemoteImageResult> CopyLocalImageAsync(string relativeUrl, CancellationToken ct)
         {
             var baseDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
             var root = Path.GetFullPath(Path.Combine(baseDir, "img", "products"));
@@ -201,11 +198,11 @@ namespace Linkora.Services
             catch { return new(null, "local file not readable", 0); }
             if (data.Length > MaxSingleFileBytes) return new(null, $"file is larger than {MaxSingleFileBytes / (1024 * 1024)} MB", 0);
 
-            var saved = SaveValidatedImage(data);
+            var saved = await SaveValidatedImageAsync(data, ct);
             return new(saved.Media, saved.Error, saved.Media == null ? 0 : data.LongLength);
         }
 
-        private static (ProductMedia? Media, string? Error) SaveValidatedImage(byte[] data)
+        private static async Task<(ProductMedia? Media, string? Error)> SaveValidatedImageAsync(byte[] data, CancellationToken ct)
         {
             if (data.Length == 0) return (null, "empty file");
 
@@ -220,7 +217,8 @@ namespace Linkora.Services
 
             var name = $"{Guid.NewGuid():N}{ext}";
             var fullPath = Path.Combine(folder, name);
-            File.WriteAllBytes(fullPath, data);
+            await File.WriteAllBytesAsync(fullPath, data, ct);
+            await ProductThumbnails.EnsureAsync(name, ct);
 
             return (new ProductMedia { FilePath = $"/img/products/{name}", MediaType = "image" }, null);
         }
@@ -234,7 +232,6 @@ namespace Linkora.Services
             MatchesPrefix(data, [0x42, 0x4D]) ? ".bmp" :
             null;
 
-        /// <summary>Защита от SSRF: хост должен разрешаться в публичный адрес (не loopback/приватную сеть).</summary>
         private static async Task<bool> IsPublicHostAsync(string host, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(host)) return false;
@@ -256,9 +253,9 @@ namespace Linkora.Services
             {
                 var b = address.GetAddressBytes();
                 if (b[0] == 0 || b[0] == 10 || b[0] == 127) return false;
-                if (b[0] == 172 && b[1] >= 16 && b[1] <= 31) return false;   // 172.16.0.0/12
-                if (b[0] == 192 && b[1] == 168) return false;                // 192.168.0.0/16
-                if (b[0] == 169 && b[1] == 254) return false;                // 169.254.0.0/16
+                if (b[0] == 172 && b[1] >= 16 && b[1] <= 31) return false;
+                if (b[0] == 192 && b[1] == 168) return false;
+                if (b[0] == 169 && b[1] == 254) return false;
             }
             return true;
         }
@@ -272,17 +269,17 @@ namespace Linkora.Services
         }
         private static bool HasExecutableOrScriptSignature(byte[] data)
         {
-            if (MatchesPrefix(data, [0x4D, 0x5A])) return true; // MZ (PE/DLL/EXE)
-            if (MatchesPrefix(data, [0x7F, 0x45, 0x4C, 0x46])) return true; // ELF
-            if (MatchesPrefix(data, [0xFE, 0xED, 0xFA])) return true; // Mach-O (BE)
-            if (MatchesPrefix(data, [0xCE, 0xFA, 0xED, 0xFE])) return true; // Mach-O (LE)
-            if (MatchesPrefix(data, [0xCF, 0xFA, 0xED, 0xFE])) return true; // Mach-O 64 (LE)
-            if (MatchesPrefix(data, [0xCA, 0xFE, 0xBA, 0xBE])) return true; // Java class
-            if (MatchesPrefix(data, [0x23, 0x21])) return true; // shebang #!
-            if (MatchesPrefix(data, [0x3C, 0x3F, 0x70, 0x68, 0x70])) return true; // <?php
-            if (MatchesPrefix(data, [0x3C, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74])) return true; // <script
-            if (MatchesPrefix(data, [0x3C, 0x25, 0x40])) return true; // <%@ (ASP)
-            if (MatchesPrefix(data, [0x3C, 0x68, 0x74, 0x6D, 0x6C])) return true; // <html
+            if (MatchesPrefix(data, [0x4D, 0x5A])) return true;
+            if (MatchesPrefix(data, [0x7F, 0x45, 0x4C, 0x46])) return true;
+            if (MatchesPrefix(data, [0xFE, 0xED, 0xFA])) return true;
+            if (MatchesPrefix(data, [0xCE, 0xFA, 0xED, 0xFE])) return true;
+            if (MatchesPrefix(data, [0xCF, 0xFA, 0xED, 0xFE])) return true;
+            if (MatchesPrefix(data, [0xCA, 0xFE, 0xBA, 0xBE])) return true;
+            if (MatchesPrefix(data, [0x23, 0x21])) return true;
+            if (MatchesPrefix(data, [0x3C, 0x3F, 0x70, 0x68, 0x70])) return true;
+            if (MatchesPrefix(data, [0x3C, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74])) return true;
+            if (MatchesPrefix(data, [0x3C, 0x25, 0x40])) return true;
+            if (MatchesPrefix(data, [0x3C, 0x68, 0x74, 0x6D, 0x6C])) return true;
             return false;
         }
         private static bool ValidateContentSignature(byte[] data, string ext, out bool isVideo)
@@ -296,12 +293,12 @@ namespace Linkora.Services
                 {
                     ".mp4" or ".mov" => data.Length >= 8
                                          && data[4] == 0x66 && data[5] == 0x74
-                                         && data[6] == 0x79 && data[7] == 0x70,    // "ftyp" по смещению 4
+                                         && data[6] == 0x79 && data[7] == 0x70,
                     ".webm" => MatchesPrefix(data, [0x1A, 0x45, 0xDF, 0xA3]),
-                    ".avi" => MatchesPrefix(data, [0x52, 0x49, 0x46, 0x46])           // "RIFF"
+                    ".avi" => MatchesPrefix(data, [0x52, 0x49, 0x46, 0x46])
                                && data.Length >= 12
                                && data[8] == 0x41 && data[9] == 0x56
-                               && data[10] == 0x49 && data[11] == 0x20,                // "AVI "
+                               && data[10] == 0x49 && data[11] == 0x20,
                     _ => false
                 };
             }
@@ -311,12 +308,12 @@ namespace Linkora.Services
                 {
                     ".jpg" or ".jpeg" => MatchesPrefix(data, [0xFF, 0xD8, 0xFF]),
                     ".png" => MatchesPrefix(data, [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]),
-                    ".gif" => MatchesPrefix(data, [0x47, 0x49, 0x46, 0x38, 0x37, 0x61]) // GIF87a
-                               || MatchesPrefix(data, [0x47, 0x49, 0x46, 0x38, 0x39, 0x61]), // GIF89a
-                    ".webp" => MatchesPrefix(data, [0x52, 0x49, 0x46, 0x46])             // "RIFF"
+                    ".gif" => MatchesPrefix(data, [0x47, 0x49, 0x46, 0x38, 0x37, 0x61])
+                               || MatchesPrefix(data, [0x47, 0x49, 0x46, 0x38, 0x39, 0x61]),
+                    ".webp" => MatchesPrefix(data, [0x52, 0x49, 0x46, 0x46])
                                && data.Length >= 12
                                && data[8] == 0x57 && data[9] == 0x45
-                               && data[10] == 0x42 && data[11] == 0x50,                  // "WEBP"
+                               && data[10] == 0x42 && data[11] == 0x50,
                     ".bmp" => MatchesPrefix(data, [0x42, 0x4D]),
                     _ => false
                 };

@@ -7,7 +7,7 @@ namespace Linkora.Controllers
 {
     public class ShipmentsController(IShipmentRepository shipments, IUserRepository users) : Controller
     {
-        /// <summary>Seller's delivery requests: accept or decline, pay the delivery, download the label.</summary>
+
         [Authorize]
         public async Task<IActionResult> Seller()
         {

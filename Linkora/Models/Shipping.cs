@@ -20,7 +20,6 @@ namespace Linkora.Models
         Failed
     }
 
-    /// <summary>Destination countries supported by the parcel-machine delivery flow.</summary>
     public static class ShippingCountries
     {
         public static readonly string[] All = ["LV", "LT", "EE"];
@@ -30,10 +29,7 @@ namespace Linkora.Models
 
     public static class ParcelSizes
     {
-        /// <summary>
-        /// XL is intentionally absent: Omniva does not deliver XL parcels through parcel machines
-        /// (post office / courier only), and this integration uses deliveryChannel = PARCEL_MACHINE.
-        /// </summary>
+
         public static readonly string[] All = ["XS", "S", "M", "L"];
         public static bool IsValid(string? size) => size != null && All.Contains(size);
     }
@@ -42,10 +38,6 @@ namespace Linkora.Models
     {
         public const decimal MaxWeightKg = 100m;
 
-        /// <summary>
-        /// Returns an error code, or null when the delivery settings are acceptable.
-        /// Size and weight are only checked when delivery is enabled.
-        /// </summary>
         public static string? Validate(bool enabled, string? size, decimal? weightKg)
         {
             if (!enabled) return null;
@@ -138,10 +130,8 @@ namespace Linkora.Models
         public DateTime CreatedAt { get; set; }
     }
 
-    /// <summary>Delivery settings of a listing, as needed by the shipping flow.</summary>
     public sealed record ProductShippingInfo(int ProductId, int? SellerId, string Status, bool ShippingEnabled, string? ParcelSize, decimal? WeightKg);
 
-    /// <summary>Shipment request joined with listing, parties and shipment data for the seller and buyer screens.</summary>
     public class ShipmentRequestView
     {
         public int Id { get; set; }
@@ -149,7 +139,7 @@ namespace Linkora.Models
         public string ProductName { get; set; } = "";
         public string? ProductSize { get; set; }
         public decimal? ProductWeightKg { get; set; }
-        /// <summary>Address of the listing ("City, street, house"); used to prefill the sender form.</summary>
+
         public string? ProductAddress { get; set; }
         public int BuyerId { get; set; }
         public string BuyerName { get; set; } = "";
@@ -201,10 +191,8 @@ namespace Linkora.Models
         public string? SenderCountry { get; set; }
     }
 
-    /// <summary>Delivery block of the listing form.</summary>
     public sealed record ProductDeliveryFormModel(bool Enabled, string? ParcelSize, decimal? WeightKg);
 
-    /// <summary>One row of the admin tariff editor (country + size identify the row).</summary>
     public class ShippingTariffEditDto
     {
         public string? DestinationCountry { get; set; }

@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace Linkora.Services
 {
-    /// <summary>Base loop for shipment jobs: runs once after a delay, then periodically. Each run gets its own DI scope.</summary>
+
     public abstract class PeriodicShipmentJob(IServiceScopeFactory scopeFactory, ILogger logger, TimeSpan interval, TimeSpan initialDelay) : BackgroundService
     {
         protected readonly ILogger Logger = logger;
@@ -42,7 +42,6 @@ namespace Linkora.Services
         }
     }
 
-    /// <summary>Retries registration of Pending shipments whose previous attempt failed on a transient error.</summary>
     public sealed class ShipmentRegistrationRetryService(IServiceScopeFactory scopeFactory, ILogger<ShipmentRegistrationRetryService> logger)
         : PeriodicShipmentJob(scopeFactory, logger, TimeSpan.FromMinutes(2), TimeSpan.FromSeconds(30))
     {
@@ -53,7 +52,6 @@ namespace Linkora.Services
             var repo = services.GetRequiredService<IShipmentRepository>();
             var shipping = services.GetRequiredService<IShippingService>();
 
-            // Only shipments that have not been touched for 2 minutes, so a registration that is still running is not retried.
             var pending = await repo.GetPendingShipmentsAsync(2);
             foreach (var shipment in pending)
             {
@@ -64,10 +62,6 @@ namespace Linkora.Services
         }
     }
 
-    /// <summary>
-    /// Pulls Omniva tracking events by a persisted cursor (CarrierSyncState). The cursor moves only after a page has been
-    /// stored and applied, so a crash replays the page; applying is idempotent because of the LastEventAt guard.
-    /// </summary>
     public sealed class ShipmentTrackingSyncService(IServiceScopeFactory scopeFactory, IConfiguration configuration, ILogger<ShipmentTrackingSyncService> logger)
         : PeriodicShipmentJob(scopeFactory, logger, TimeSpan.FromMinutes(5), TimeSpan.FromSeconds(45))
     {
@@ -78,11 +72,6 @@ namespace Linkora.Services
 
         protected override string JobName => nameof(ShipmentTrackingSyncService);
 
-        /// <summary>
-        /// Maps Omniva event codes to shipment statuses. The confirmed OMX catalogue is built in
-        /// (OmnivaEventCodes.DefaultStatusMap); Omniva:EventStatusMap may override or extend it.
-        /// Failed is allowed for TRT_SHIPMENT_CANCELLED. Pending is never a valid event status.
-        /// </summary>
         public static IReadOnlyDictionary<string, ShipmentStatus> LoadStatusMap(IConfiguration configuration, ILogger logger)
         {
             var map = new Dictionary<string, ShipmentStatus>(StringComparer.OrdinalIgnoreCase);
@@ -127,7 +116,7 @@ namespace Linkora.Services
                 }
                 else if (result.HasMore)
                 {
-                    // A page whose events carry no usable id would otherwise be requested again forever.
+
                     Logger.LogWarning("Omniva events page at cursor {Cursor} did not advance the cursor; sync stops until the response format is fixed", cursor);
                     return;
                 }
@@ -147,7 +136,7 @@ namespace Linkora.Services
                     shipment = await repo.GetShipmentByBarcodeAsync(e.Barcode);
                     shipmentsByBarcode[e.Barcode] = shipment;
                 }
-                // Events for parcels that are not ours are skipped; the cursor still moves past them.
+
                 if (shipment != null) matched.Add((shipment, e));
             }
             if (matched.Count == 0) return;
@@ -162,8 +151,6 @@ namespace Linkora.Services
                 RawJson = m.Source.RawJson
             }));
 
-            // Apply every event of the page in time order, not only the newly stored ones: the LastEventAt guard makes
-            // replays harmless, and it recovers a status update that was lost when a previous run failed after saving.
             foreach (var (shipment, source) in matched.OrderBy(m => m.Source.OccurredAtUtc).ThenBy(m => m.Source.EventId))
             {
                 var status = _statusMap.TryGetValue(source.Code, out var mapped) ? (ShipmentStatus?)mapped : null;
@@ -186,7 +173,7 @@ namespace Linkora.Services
                         await NotifyAsync(notifications, Logger, request.SellerId, request.BuyerId, request.ProductId, "shipment_returned", request.Id);
                         await NotifyAsync(notifications, Logger, request.BuyerId, request.SellerId, request.ProductId, "shipment_returned", request.Id);
                         break;
-                    // The only event mapped to Failed is TRT_SHIPMENT_CANCELLED.
+
                     case ShipmentStatus.Failed:
                         await NotifyAsync(notifications, Logger, request.BuyerId, request.SellerId, request.ProductId, "shipment_cancelled", request.Id);
                         await NotifyAsync(notifications, Logger, request.SellerId, request.BuyerId, request.ProductId, "shipment_cancelled", request.Id);
@@ -196,10 +183,6 @@ namespace Linkora.Services
         }
     }
 
-    /// <summary>
-    /// Releases listings whose accepted request was not paid within Shipping:AcceptPaymentHours (default 24).
-    /// The request goes back to Requested, so the seller can accept it again. Requests with a payment still in flight are kept.
-    /// </summary>
     public sealed class ShipmentAcceptanceExpiryService(IServiceScopeFactory scopeFactory, IConfiguration configuration, ILogger<ShipmentAcceptanceExpiryService> logger)
         : PeriodicShipmentJob(scopeFactory, logger, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(1))
     {
@@ -224,11 +207,6 @@ namespace Linkora.Services
         }
     }
 
-    /// <summary>
-    /// A Registered parcel that was never handed over before its deadline is marked Failed and cancelled at Omniva.
-    /// The database is updated first: the update is refused when a carrier event has arrived meanwhile, so a parcel that
-    /// was just handed over is never cancelled.
-    /// </summary>
     public sealed class ShipmentHandoverExpiryService(IServiceScopeFactory scopeFactory, ILogger<ShipmentHandoverExpiryService> logger)
         : PeriodicShipmentJob(scopeFactory, logger, TimeSpan.FromMinutes(10), TimeSpan.FromMinutes(1))
     {
@@ -262,11 +240,6 @@ namespace Linkora.Services
         }
     }
 
-    /// <summary>
-    /// Refreshes ParcelLockers from the public Omniva locations feed (Omniva:LocationsUrl, default
-    /// https://www.omniva.ee/locations.json). UpsertAsync deactivates every locker missing from the feed,
-    /// so an empty or failed response leaves the existing directory untouched.
-    /// </summary>
     public sealed class ParcelLockerSyncService(IServiceScopeFactory scopeFactory, ILogger<ParcelLockerSyncService> logger)
         : PeriodicShipmentJob(scopeFactory, logger, TimeSpan.FromHours(6), TimeSpan.FromSeconds(20))
     {

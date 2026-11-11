@@ -9,14 +9,11 @@ namespace Linkora.Repositories
     {
         private const string RequestColumns = "Id, ProductId, BuyerId, SellerId, LockerId, Status, ReceiverName, ReceiverPhone, ReceiverEmail, SenderName, SenderPhone, SenderEmail, SenderStreet, SenderCity, SenderPostcode, SenderCountry, Size, WeightKg, Price, PaymentId, CreatedAt, UpdatedAt";
         private const string ShipmentColumns = "Id, RequestId, Provider, PartnerShipmentId, Barcode, Status, LastEventCode, LastEventAt, Attempts, ErrorCode, ErrorMessage, HandoverDeadline, RegisteredAt, DeliveredAt, CreatedAt, UpdatedAt";
-        /// <summary>Lengths of the event columns in the schema (ShipmentEvents.EventCode, Shipments.LastEventCode, ShipmentEvents.Location).</summary>
+
         private const int EventCodeMaxLength = 50;
         private const int LocationMaxLength = 200;
         private const string OpenStatuses = "'Registered', 'InTransit', 'ArrivedAtLocker'";
-        /// <summary>
-        /// Only these OMX events prove that the parcel was actually handed over. A registration or cancellation event
-        /// alone must not stop the handover-expiry job.
-        /// </summary>
+
         private static readonly string HandoverEventCodeList =
             string.Join(",", OmnivaEventCodes.HandoverCodes.Select(c => "'" + c.Replace("'", "''") + "'"));
         private const string ViewSelect = @"SELECT r.Id, r.ProductId, p.Name, p.ParcelSize, p.WeightKg, p.Address,
@@ -121,11 +118,7 @@ namespace Linkora.Repositories
         public async Task<ShipmentRequest?> GetRequestByPaymentAsync(int paymentId) => await QuerySingleAsync($"SELECT {RequestColumns} FROM ShipmentRequests WHERE PaymentId = @P", MapRequest, p => p.AddWithValue("@P", paymentId));
         public async Task<List<ShipmentRequestView>> GetSellerRequestsAsync(int sellerId) => await QueryAsync($"{ViewSelect} WHERE r.SellerId = @U ORDER BY r.CreatedAt DESC", MapView, p => p.AddWithValue("@U", sellerId));
         public async Task<List<ShipmentRequestView>> GetBuyerRequestsAsync(int buyerId) => await QueryAsync($"{ViewSelect} WHERE r.BuyerId = @U ORDER BY r.CreatedAt DESC", MapView, p => p.AddWithValue("@U", buyerId));
-        /// <summary>
-        /// Accepts a requested shipment only if no other request for the same listing is already accepted or paid.
-        /// The filtered unique index on ShipmentRequests(ProductId) WHERE Status IN ('Accepted','Paid') is the final guard
-        /// against concurrent accepts; a violation surfaces as SqlException 2601/2627.
-        /// </summary>
+
         public async Task<bool> AcceptRequestAsync(ShipmentRequest x) => await ExecuteAsync(
             @"UPDATE ShipmentRequests
               SET Status = 'Accepted', SenderName = @SName, SenderPhone = @SPhone, SenderEmail = @SEmail, SenderStreet = @SStreet,
@@ -164,12 +157,7 @@ namespace Linkora.Repositories
                 p.AddWithValue("@P", paymentId);
                 p.AddWithValue("@Id", requestId);
             }) > 0;
-        /// <summary>
-        /// Releases Accepted requests that were not paid in time: the request goes back to Requested, and the abandoned
-        /// shipping payments of that request (created before the cutoff, still Created/Pending) are marked Failed.
-        /// A request is kept while its current payment is still in flight (created after the cutoff) or already completed,
-        /// so a payment callback never meets a request that was reset under it. Runs in one transaction.
-        /// </summary>
+
         public async Task<List<ReleasedAcceptance>> ResetStaleAcceptancesAsync(DateTime cutoffUtc) => await ExecuteInTransactionAsync(async (conn, tx) =>
         {
             await using var cmd = new SqlCommand(
@@ -222,10 +210,7 @@ namespace Linkora.Repositories
                 p.AddWithValue("@Id", productId);
                 p.AddWithValue("@U", sellerId);
             }) > 0;
-        /// <summary>
-        /// Returns the shipment of a request, creating it on first use. Runs in one transaction; the check is
-        /// serialized by UPDLOCK/HOLDLOCK so two concurrent payment callbacks cannot create two shipments.
-        /// </summary>
+
         public async Task<int> GetOrCreateShipmentAsync(int requestId, string partnerShipmentId) => await ExecuteInTransactionAsync(async (conn, tx) =>
         {
             await using (var insert = new SqlCommand(@"IF NOT EXISTS (SELECT 1 FROM Shipments WITH (UPDLOCK, HOLDLOCK) WHERE RequestId = @R)
@@ -248,10 +233,7 @@ namespace Linkora.Repositories
             $"SELECT {ShipmentColumns} FROM Shipments WHERE Status = 'Pending' AND Barcode IS NULL AND UpdatedAt <= DATEADD(MINUTE, -@Age, SYSUTCDATETIME()) ORDER BY Id",
             MapShipment,
             p => p.AddWithValue("@Age", olderThanMinutes));
-        /// <summary>
-        /// Registered shipments whose handover deadline has passed and which have no event proving that the parcel
-        /// entered the carrier network, i.e. the parcel was never handed over to the locker.
-        /// </summary>
+
         public async Task<List<Shipment>> GetExpiredHandoverShipmentsAsync() => await QueryAsync(
             $@"SELECT {ShipmentColumns} FROM Shipments s
                WHERE s.Status = 'Registered' AND s.HandoverDeadline < SYSUTCDATETIME()
@@ -298,11 +280,7 @@ namespace Linkora.Repositories
                 p.AddWithValue("@M", (object?)Truncate(errorMessage, 1000) ?? DBNull.Value);
             });
         }
-        /// <summary>
-        /// Applies an event to the shipment. Only events strictly newer than the last applied one change the shipment,
-        /// so replaying a page of events is harmless. A Failed shipment is terminal and is not changed.
-        /// Returns true when the shipment was updated.
-        /// </summary>
+
         public async Task<bool> ApplyEventAsync(int shipmentId, ShipmentStatus? status, string eventCode, DateTime eventAtUtc) => await ExecuteAsync(
             @"UPDATE Shipments
               SET Status = COALESCE(@S, Status), LastEventCode = @C, LastEventAt = @At,
@@ -316,7 +294,7 @@ namespace Linkora.Repositories
                 p.Add("@C", SqlDbType.NVarChar, EventCodeMaxLength).Value = Truncate(eventCode, EventCodeMaxLength)!;
                 p.Add("@At", SqlDbType.DateTime2).Value = eventAtUtc;
             }) > 0;
-        /// <summary>Stores events that are not stored yet (deduplicated by shipment and Omniva event id) and returns the newly stored ones.</summary>
+
         public async Task<List<ShipmentEvent>> SaveEventsAsync(IEnumerable<ShipmentEvent> events)
         {
             var inserted = new List<ShipmentEvent>();

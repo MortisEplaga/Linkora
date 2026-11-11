@@ -101,7 +101,7 @@
                             <tr>
                                 <td>
                                     <div class="admin-table-product">
-                                        <img class="admin-table-img" src="@(p.AvatarUrl ?? "/img/no-photo.svg")" onerror="this.src='/img/no-photo.svg'" />
+                                        <img class="admin-table-img" src="@Linkora.Services.ProductThumbnails.Url(p.AvatarUrl)" onerror="this.src='/img/no-photo.svg'" />
                                         <div>
                                             <a class="admin-table-product-name" href="/Product/Details/@p.Id">@p.Name</a>
                                             <div class="admin-table-product-meta">#@p.Id</div>

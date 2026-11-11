@@ -175,7 +175,7 @@
                         else
                         {
                             <img class="lb-thumb @(i == 0 ? "lb-thumb-active" : "")"
-                                 src="@mediaList[i].FilePath"
+                                 src="@Linkora.Services.ProductThumbnails.Url(mediaList[i].FilePath)"
                                  onclick="lbGoto(@i)"
                                  onerror="this.src='/img/no-photo.svg'" />
                         }

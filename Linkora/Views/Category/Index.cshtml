@@ -70,7 +70,7 @@
             var priceOnly = (bool)(ViewBag.PriceOnly ?? false);
             var shippingOnly = (bool)(ViewBag.ShippingOnly ?? false);
             var showPriceFilter = category.HasPrice == true;
-            // The delivery filter is available in every category, so the sidebar is always shown.
+
             var showFilters = true;
         }
         @if (showFilters)
@@ -436,7 +436,7 @@
 <script>
     var mapProducts = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
         products.Select(p => new {
-            id = p.Id, name = p.Name, price = p.Price, image = p.AvatarUrl ?? "/img/no-photo.svg",
+            id = p.Id, name = p.Name, price = p.Price, image = Linkora.Services.ProductThumbnails.Url(p.AvatarUrl),
             lat = p.Lat, lng = p.Lng
         })
     ));
@@ -510,7 +510,7 @@ const marker = new google.maps.marker.AdvancedMarkerElement({
         const priceText = p.price ? p.price.toFixed(2) + ' €' : (dict.price_on_request || 'Price on request');
         const info = new google.maps.InfoWindow({
             content: `<a href="/Product/Details/${p.id}" style="text-decoration:none;color:#1a1a1a;display:block;width:140px">
-                <img src="${p.image}" style="width:100%;height:90px;object-fit:cover;border-radius:6px" onerror="this.src='/img/no-photo.svg'" />
+                <img src="${p.image}" style="width:100%;height:90px;object-fit:contain;border-radius:6px" onerror="this.src='/img/no-photo.svg'" />
                 <div style="font-weight:600;font-size:13px;margin-top:4px">${p.name}</div>
                 <div style="font-size:13px;color:#00b0a3">${priceText}</div>
             </a>`

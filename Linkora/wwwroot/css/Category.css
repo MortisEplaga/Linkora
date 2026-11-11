@@ -461,7 +461,7 @@
         .listing-list .product-card-img img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            object-fit: contain;
         }
 
     .listing-list .product-card-body {
@@ -523,7 +523,7 @@
     .product-card-img img {
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: contain;
     }
 
 .product-card-no-img {
@@ -1013,10 +1013,10 @@
         margin-top: 4px;
     }
 }
-/* ─────────────────────────────────────────────────────────────
-   Крупные смартфоны 6,8″ (19.5:9): боковая панель фильтров на всю
-   динамическую высоту + safe-area, крупнее пагинация и сетка
-   ───────────────────────────────────────────────────────────── */
+
+
+
+
 @media screen and (max-width: 430px) and (pointer: coarse) {
     .param-sidebar {
         height: 100dvh;
@@ -1045,7 +1045,7 @@
     }
 }
 
-/* ── Dark theme overrides for Category, filters, selection controls & cards ── */
+
 .dark-theme .floating-filter-actions {
     background: var(--bg-card, #252525);
     border: 1px solid var(--border, #383838);

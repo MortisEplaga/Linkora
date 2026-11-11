@@ -270,7 +270,7 @@
     width: 44px;
     height: 44px;
     border-radius: 8px;
-    object-fit: cover;
+    object-fit: contain;
     background: #f0f0f0;
     flex-shrink: 0;
 }
@@ -598,7 +598,7 @@
     width: 52px;
     height: 52px;
     border-radius: 8px;
-    object-fit: cover;
+    object-fit: contain;
     background: #f0f0f0;
     flex-shrink: 0;
 }
@@ -676,9 +676,9 @@
     justify-content: flex-end;
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Крупные смартфоны 6,8″ (19.5:9): dvh + safe-area
-   ───────────────────────────────────────────────────────────── */
+
+
+
 @media screen and (max-width: 430px) and (pointer: coarse) {
     .admin-layout {
         min-height: calc(100dvh - 104px);
@@ -690,7 +690,7 @@
     }
 }
 
-/* ── Dark theme overrides for Admin panel & User Statistics (/Profile/Stats) ── */
+
 .dark-theme {
     --admin-bg: #121212;
     --admin-card: #252525;

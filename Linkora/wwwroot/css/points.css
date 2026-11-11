@@ -144,7 +144,7 @@
 .dark-theme .points-activity-name {
     color: #e0e0e0 !important;
 }
-/* -------- History list -------- */
+
 .points-history-list {
     display: flex;
     flex-direction: column;
@@ -221,7 +221,7 @@
     color: #1f2328;
 }
 
-/* -------- Status pill -------- */
+
 .points-history-status {
     display: inline-flex;
     align-items: center;
@@ -248,7 +248,7 @@
     color: #a02727;
 }
 
-/* -------- Hold progress -------- */
+
 .points-history-hold {
     grid-area: hold;
     display: flex;

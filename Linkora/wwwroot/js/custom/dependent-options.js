@@ -1,35 +1,35 @@
-/* ============================================================
-   dependent-options.js — зависимые (каскадные) списки вариантов
-   ------------------------------------------------------------
-   Данные: dbo.SelectOptionRelations (ParentOptionId -> ChildOptionId).
-   Правило: выбранный вариант родительского параметра
-   (например «Профессия») оставляет в дочернем параметре
-   («Специализация») только связанные с ним варианты.
-   Если в родителе ничего не выбрано — показываются все варианты.
 
-   Работает:
-     * в форме создания/редактирования объявления (#createParams);
-     * в панели фильтров на странице категории (#filterForm);
-   с параметрами типов 2 (пилюли), 4 (чекбоксы), 6 (цвета)
-   и 8 (свободный ввод с подсказками).
 
-   Скрипт подключается автоматически: его путь лежит в
-   dbo.ParameterCustomScripts, а ParamRulesEngine подгружает
-   эти пути из /Product/CategoryRules.
-   ============================================================ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 (function (window, document) {
     'use strict';
 
     var HIDDEN_CLASS = 'dependent-option-hidden';
 
-    var relationsByParent = {};   // "parentOptionId" -> ["childOptionId", ...]
-    var groups = [];              // [{ parentParamId, childParamId }, ...]
+    var relationsByParent = {};
+    var groups = [];
     var loadedCategoryId = null;
     var loading = false;
     var styleInjected = false;
     var applyScheduled = false;
 
-    /* ---------- helpers ---------- */
+
 
     function injectStyle() {
         if (styleInjected) return;
@@ -80,7 +80,7 @@
         return null;
     }
 
-    /* Все элементы вариантов дочернего параметра: { el, id } */
+
     function optionItems(paramId) {
         var block = findBlock(paramId);
         if (!block) return [];
@@ -102,7 +102,7 @@
             if (input) push(el, input.dataset.id || input.value);
         });
 
-        // форма объявления: чекбоксы лежат в .param-options[data-param]
+
         document.querySelectorAll('.param-options[data-param="' + paramId + '"] input[type="checkbox"]').forEach(function (input) {
             push(input.closest('label') || input, input.dataset.id);
         });
@@ -110,7 +110,7 @@
         return items;
     }
 
-    /* Выбранные значения параметра (массив id вариантов) */
+
     function selectedIds(paramId) {
         var ids = [];
         var add = function (raw) {
@@ -142,7 +142,7 @@
         return ids;
     }
 
-    /* Снять выбор с варианта, который больше не доступен */
+
     function deselect(el, paramId) {
         if (!el || !el.classList) return;
 
@@ -183,7 +183,7 @@
         deselect(el, paramId);
     }
 
-    /* Кнопка «Ещё N»: пересчитать количество скрытых вариантов */
+
     function updateMoreButton(block) {
         var btn = block.querySelector('.param-show-more');
         if (!btn) return;
@@ -209,7 +209,7 @@
         }
     }
 
-    /* Тип 8 (свободный ввод): ограничить список подсказок */
+
     function applyFreeText(paramId, allowed) {
         var wrap = document.querySelector('.free-text-select[data-param="' + paramId + '"]');
         if (!wrap) return;
@@ -239,7 +239,7 @@
         if (drop) drop.style.display = 'none';
     }
 
-    /* ---------- применение правил ---------- */
+
 
     function applyGroup(group) {
         var parents = selectedIds(group.parentParamId);
@@ -278,7 +278,7 @@
         }, 0);
     }
 
-    /* ---------- загрузка связей ---------- */
+
 
     function buildIndex(list) {
         relationsByParent = {};
@@ -299,7 +299,7 @@
         groups = Object.keys(groupMap).map(function (k) { return groupMap[k]; });
     }
 
-    /* Оставляем только те связи, у которых оба параметра есть на странице */
+
     function filterGroupsToPage() {
         groups = groups.filter(function (g) {
             return !!(findBlock(g.parentParamId) && findBlock(g.childParamId));
@@ -329,7 +329,7 @@
         }
     }
 
-    /* ---------- public ---------- */
+
 
     window.DependentOptions = {
         load: load,

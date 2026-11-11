@@ -59,7 +59,7 @@
             {
                 <div class="myads-card">
                     <a asp-controller="Product" asp-action="Details" asp-route-id="@p.Id" class="myads-card-img">
-                        <img src="@(p.AvatarUrl ?? "/img/no-photo.svg")"
+                        <img src="@Linkora.Services.ProductThumbnails.Url(p.AvatarUrl)"
                              onerror="this.src='/img/no-photo.svg'" alt="@p.Name" />
                     </a>
                     <div class="myads-card-body">

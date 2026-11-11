@@ -269,7 +269,7 @@
                         <button type="button" onclick="removeExisting(this)">✕</button>`;
                 } else {
                     wrap.innerHTML = `
-                        <img src="${item.filePath}" onerror="this.src='/img/no-photo.svg'" />
+                        <img src="${item.thumbnailUrl}" onerror="this.src='/img/no-photo.svg'" />
                         <button type="button" onclick="removeExisting(this)">✕</button>`;
                 }
                 preview.appendChild(wrap);

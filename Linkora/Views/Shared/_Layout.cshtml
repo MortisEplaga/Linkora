@@ -1,6 +1,6 @@
 ﻿@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 <!DOCTYPE html>
-@* lang: "lv" by default, or the value of the "lang" cookie *@
+
 <html lang="@(Context.GetLang())" data-authenticated="@(User.Identity!.IsAuthenticated ? "true" : "false")">
 <head>
     <meta charset="utf-8" />
@@ -42,7 +42,7 @@
     @await Html.PartialAsync("Partial/_RegionModal")
     @await Html.PartialAsync("Partial/_SellerModal")
 
-    <!-- Hidden forms -->
+
     <form id="loginForm" method="post" asp-controller="Account" asp-action="Login" style="display:none">
         <input type="hidden" name="username" id="fLoginUsername" />
         <input type="hidden" name="password" id="fLoginPassword" />

@@ -97,7 +97,7 @@ namespace Linkora.Controllers
         private async Task<IActionResult> StartTransactionAsync(int paymentId, decimal price, string reference)
         {
             var scheme = Request.Scheme;
-            var host = "vena.lv";//Request.Host.Value;
+            var host = "vena.lv";
             var returnUrl = $"{scheme}://{host}/Payments/Return";
             var cancelUrl = $"{scheme}://{host}/Payments/Return";
             var notificationUrl = $"{scheme}://{host}/Payments/Notification";

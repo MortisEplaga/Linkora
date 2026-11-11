@@ -20,7 +20,6 @@ namespace Linkora.Services
         private static partial Regex ReferencePattern();
         public static string BuildReference(int requestId) => $"SHIP{requestId}-{DateTime.UtcNow:HHmmssfff}";
 
-        /// <summary>Errors that may succeed on a later attempt: the network, rate limiting, server errors and missing OMX config.</summary>
         public static bool IsTransientRegistrationError(string? code) =>
             code is "NETWORK" or "HTTP_429" or "CONFIG_MISSING" || (code != null && code.StartsWith("HTTP_5", StringComparison.Ordinal));
 
@@ -51,7 +50,7 @@ namespace Linkora.Services
                 }
                 catch (SqlException ex) when (ex.Number is 2601 or 2627)
                 {
-                    // Another request for the same listing is already accepted or paid; the unique index refused the transition.
+
                     logger.LogError(ex, "Shipping payment {PaymentId} for request {RequestId} conflicts with another paid request for the same listing; a manual refund is required", paymentId, requestId);
                     return;
                 }
@@ -70,10 +69,6 @@ namespace Linkora.Services
             catch (Exception ex) { logger.LogError(ex, "Shipment {ShipmentId} registration failed unexpectedly; it stays Pending and the retry job will pick it up", shipmentId); }
         }
 
-        /// <summary>
-        /// Registers a Pending shipment in Omniva. Transient failures keep the shipment Pending for the retry job,
-        /// permanent failures mark it Failed. Shipments that exhausted Shipping:MaxRegistrationAttempts are marked Failed.
-        /// </summary>
         public async Task<bool> TryRegisterAsync(int shipmentId, CancellationToken ct = default)
         {
             var shipment = await shipments.GetShipmentAsync(shipmentId);

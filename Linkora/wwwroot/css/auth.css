@@ -528,7 +528,7 @@
         color: #00b0a3;
     }
 
-/* ── Dark theme overrides for Auth, Profile, and Seller modals/pages ── */
+
 .dark-theme .auth-card {
     background: var(--bg-card, #252525);
     border: 1px solid var(--border, #383838);
