@@ -108,10 +108,12 @@
         </div>
         <label class="auth-check-row">
             <input type="checkbox" id="modalChkTerms" onchange="updateRegisterButton()" />
-            <span data-i18n="auth_terms_prefix">I accept the </span>
-            <a href="#" id="rulesLink" class="terms-link" onclick="openRulesModal(); return false;" data-i18n="auth_rules_link">Rules</a>
-            <span> & </span>
-            <a href="#" id="policyLink" class="terms-link" onclick="openPolicyModal(); return false;" data-i18n="auth_policy_link">Privacy Policy</a>
+            <span class="auth-check-text">
+                <span data-i18n="auth_terms_prefix">I accept the </span>
+                <a href="#" id="rulesLink" class="terms-link" onclick="openRulesModal(); return false;" data-i18n="auth_rules_link">Rules</a>
+                <span data-i18n="auth_terms_and">and</span>
+                <a href="#" id="policyLink" class="terms-link" onclick="openPolicyModal(); return false;" data-i18n="auth_policy_link">Privacy Policy</a>
+            </span>
         </label>
 
         <button class="auth-submit" id="registerBtn" onclick="submitRegister()" data-i18n="auth_submit_register" disabled>Register</button>
