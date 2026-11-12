@@ -450,6 +450,10 @@
     cursor: pointer;
 }
 
+.auth-check-text {
+    min-width: 0;
+}
+
 .auth-check-row a {
     color: #00b0a3;
     text-decoration: none;

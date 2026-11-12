@@ -114,8 +114,10 @@
 
             <label class="auth-check-row">
                 <input type="checkbox" id="modalChkTerms" required />
-                <span data-i18n="accept_terms_prefix">I accept the </span>
-                <a href="#" onclick="openTermsModal(); return false;" data-i18n="terms_link">Terms of Service</a>
+                <span class="auth-check-text">
+                    <span data-i18n="accept_terms_prefix">I accept the </span>
+                    <a href="#" onclick="openTermsModal(); return false;" data-i18n="terms_link">Terms of Service</a>
+                </span>
             </label>
 
             <button type="submit" class="auth-submit" data-i18n="register_button">Register</button>
