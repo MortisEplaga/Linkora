@@ -114,8 +114,8 @@ namespace Linkora.Controllers
                 }
             }
 
-            if (_passwordHasher.IsLegacyHash(user.PasswordHash) && string.IsNullOrWhiteSpace(dto.NewPassword)) newHash = _passwordHasher.Hash(dto.CurrentPassword);
-
+            // Legacy hashes are upgraded on password login, after the password has been verified.
+            // Editing profile fields must never change a password without verification.
             await _userRepository.UpdateProfileAsync(userId, dto.UserName, dto.Phone, duration, newHash, dto.TelegramUrl, dto.WhatsAppUrl, dto.WebsiteUrl, dto.HomeAddress, homeLat, homeLng);
             
             var isComplete = !string.IsNullOrWhiteSpace(dto.Phone) && (!string.IsNullOrWhiteSpace(dto.TelegramUrl) ||
